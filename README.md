@@ -1,54 +1,131 @@
-# React + TypeScript + Vite
+# 🎓 TOFAŞ Fen Lisesi - Öğrenci Bilgi Sistemi
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Modern ve kullanıcı dostu bir okul bilgi sistemi. Bu proje, öğrenciler, öğretmenler, veliler ve yöneticiler için kapsamlı bir eğitim yönetim platformu sunmaktadır.
 
-Currently, two official plugins are available:
+## ✨ Özellikler
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 🔐 Rol Bazlı Erişim
+- **Öğrenci Paneli**: Ödevler, notlar, ders programı, duyurular ve kulüp yönetimi
+- **Öğretmen Paneli**: Sınıf yönetimi, not girişi, ödev takibi ve kulüp danışmanlığı  
+- **Veli Paneli**: Çocuğun akademik durumu, devam takibi ve okul iletişimi
+- **Yönetici Paneli**: Sistem yönetimi, raporlama ve genel denetim
 
-## Expanding the ESLint configuration
+### 🎨 Modern Tasarım
+- **Glassmorphism UI**: Modern cam efektli tasarım
+- **Smooth Animations**: Framer Motion ile akıcı animasyonlar
+- **Responsive Design**: Tüm cihazlarda mükemmel görünüm
+- **Dark Theme**: Göz yormayan koyu tema
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 🚀 Teknolojiler
+- **React 19**: Modern React hooks ve bileşenler
+- **TypeScript**: Tip güvenliği ve geliştirilmiş geliştirici deneyimi
+- **Framer Motion**: Profesyonel animasyonlar
+- **Tailwind CSS**: Utility-first CSS framework
+- **Vite**: Hızlı geliştirme ve build süreci
+- **React Router**: SPA routing yönetimi
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 🛠️ Kurulum
+
+1. **Depoyu klonlayın**
+   ```bash
+   git clone [repo-url]
+   cd tofas-fen-webapp
+   ```
+
+2. **Bağımlılıkları yükleyin**
+   ```bash
+   npm install
+   ```
+
+3. **Geliştirme sunucusunu başlatın**
+   ```bash
+   npm run dev
+   ```
+
+4. **Tarayıcınızda açın**
+   ```
+   http://localhost:5173
+   ```
+
+## 🔑 Test Kullanıcıları
+
+### Öğrenci
+- **ID**: `2024001`
+- **Şifre**: `ogrenci123`
+
+### Öğretmen  
+- **ID**: `T001`
+- **Şifre**: `ogretmen123`
+
+### Veli
+- **ID**: `V001` 
+- **Şifre**: `veli123`
+
+### Yönetici
+- **ID**: `A001`
+- **Şifre**: `admin123`
+
+## 📱 Ekran Görüntüleri
+
+### Giriş Sayfası
+- Modern glassmorphism tasarım
+- Animasyonlu arka plan
+- Rol bazlı otomatik yönlendirme
+
+### Öğrenci Paneli
+- Kişiselleştirilmiş dashboard
+- Hızlı erişim menüleri
+- Gerçek zamanlı istatistikler
+
+### Responsive Tasarım
+- Mobil uyumlu arayüz
+- Tablet optimizasyonu
+- Desktop deneyimi
+
+## 🎯 Gelecek Özellikler
+
+- [ ] **Gerçek Zamanlı Bildirimler**: WebSocket entegrasyonu
+- [ ] **Çevrimdışı Destek**: Progressive Web App özellikleri
+- [ ] **Çoklu Dil Desteği**: i18n entegrasyonu
+- [ ] **Tema Seçenekleri**: Light/Dark mode toggle
+- [ ] **API Entegrasyonu**: Backend servis bağlantısı
+- [ ] **Dosya Yükleme**: Ödev ve döküman paylaşımı
+- [ ] **Video Konferans**: Uzaktan eğitim desteği
+- [ ] **Mobil Uygulama**: React Native versiyonu
+
+## 🏗️ Proje Yapısı
+
+```
+src/
+├── components/          # Yeniden kullanılabilir bileşenler
+├── pages/              # Sayfa bileşenleri
+│   ├── Dashboard/      # Panel sayfaları
+│   └── LoginPage.tsx   # Giriş sayfası
+├── data/               # JSON veri dosyaları
+├── hooks/              # Custom React hooks
+├── contexts/           # React context'leri  
+├── types/              # TypeScript tip tanımları
+└── assets/             # Statik dosyalar
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🤝 Katkıda Bulunma
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. Fork edin
+2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
+3. Değişikliklerinizi commit edin (`git commit -m 'Add amazing feature'`)
+4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
+5. Pull Request oluşturun
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## 📄 Lisans
+
+Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
+
+## 🎓 TOFAŞ Fen Lisesi
+
+Bu proje, TOFAŞ Fen Lisesi öğrencileri ve eğitim kadrosu için geliştirilmiştir. Modern eğitim teknolojilerini kullanarak, öğrenme deneyimini geliştirmeyi hedeflemektedir.
+
+---
+
+**Geliştirici**: TOFAŞ Fen Lisesi IT Ekibi  
+**Version**: 1.0.0  
+**Son Güncelleme**: 2024
