@@ -1,0 +1,266 @@
+/* Skeleton Demo Page Styles */
+
+.demo-icon {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Demo Navigation */
+.demo-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 32px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);
+  border: 2px solid rgba(139, 0, 0, 0.1);
+}
+
+.demo-nav-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(139, 0, 0, 0.05);
+  border: 2px solid rgba(139, 0, 0, 0.1);
+  border-radius: 12px;
+  color: #8B0000;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.demo-nav-button:hover {
+  background: rgba(139, 0, 0, 0.1);
+  border-color: rgba(139, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.demo-nav-button.active {
+  background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+  border-color: #8B0000;
+  color: white;
+  box-shadow: 0 4px 16px rgba(139, 0, 0, 0.3);
+}
+
+.demo-nav-icon {
+  font-size: 16px;
+}
+
+/* Demo Content */
+.demo-content-wrapper {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);
+  border: 2px solid rgba(139, 0, 0, 0.1);
+}
+
+.demo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.demo-section h3 {
+  color: #8B0000;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(139, 0, 0, 0.1);
+}
+
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+/* Demo Controls */
+.demo-controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.demo-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(139, 0, 0, 0.2);
+}
+
+.demo-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 0, 0, 0.3);
+}
+
+.demo-button-error {
+  background: linear-gradient(135deg, #DC143C 0%, #B22222 100%);
+}
+
+.demo-button-error:hover {
+  box-shadow: 0 6px 20px rgba(220, 20, 60, 0.3);
+}
+
+/* Demo Content */
+.demo-content {
+  padding: 24px;
+  background: rgba(139, 0, 0, 0.05);
+  border-radius: 12px;
+  border: 2px solid rgba(139, 0, 0, 0.1);
+}
+
+.demo-content h4 {
+  color: #8B0000;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.demo-content p {
+  color: #666;
+  font-size: 16px;
+  margin: 0 0 20px 0;
+  line-height: 1.6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .demo-nav {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .demo-nav-button {
+    justify-content: center;
+  }
+  
+  .demo-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .demo-controls {
+    flex-direction: column;
+  }
+  
+  .demo-content-wrapper {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .demo-nav-button {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  
+  .demo-nav-icon {
+    font-size: 14px;
+  }
+  
+  .demo-section h3 {
+    font-size: 20px;
+  }
+  
+  .demo-content-wrapper {
+    padding: 16px;
+  }
+}
+
+/* Animation for demo elements */
+.demo-section {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover effects for demo cards */
+.demo-grid .skeleton-card:hover,
+.demo-grid .skeleton-club-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(139, 0, 0, 0.15);
+}
+
+/* Special styling for demo notifications */
+.demo-grid .skeleton-notification {
+  margin-bottom: 12px;
+}
+
+.demo-grid .skeleton-notification:last-child {
+  margin-bottom: 0;
+}
+
+/* Demo section transitions */
+.demo-section {
+  transition: all 0.3s ease;
+}
+
+.demo-section:hover {
+  transform: scale(1.01);
+}
+
+/* Loading state demo styling */
+.demo-section .error-state {
+  margin-top: 20px;
+}
+
+.demo-section .skeleton-dashboard {
+  margin-top: 20px;
+}
+
+/* Chart demo specific styling */
+.demo-section .skeleton-chart {
+  min-height: 300px;
+}
+
+/* Calendar demo specific styling */
+.demo-section .skeleton-calendar {
+  min-height: 400px;
+}
+
+/* Profile demo specific styling */
+.demo-section .skeleton-profile {
+  min-height: 500px;
+}
+
+/* Table demo specific styling */
+.demo-section .skeleton-table {
+  min-height: 300px;
+}
+
+/* Form demo specific styling */
+.demo-section .skeleton-form {
+  min-height: 400px;
+}
+
+/* List demo specific styling */
+.demo-section .skeleton-list {
+  min-height: 300px;
+}

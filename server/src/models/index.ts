@@ -1,0 +1,45 @@
+// Export all models from a single index file
+export { User } from './User';
+export { default as Note } from './Note';
+export { default as Announcement } from './Announcement';
+export { Homework } from './Homework';
+export { Schedule } from './Schedule';
+export { Club } from './Club';
+export { ClubEvent } from './ClubEvent';
+export { ClubAnnouncement } from './ClubAnnouncement';
+export { ClubChat } from './ClubChat';
+export { Notification } from './Notification';
+export { Request } from './Request';
+export { MealList } from './MealList';
+export { SupervisorList } from './SupervisorList';
+export { MaintenanceRequest } from './MaintenanceRequest';
+export { EvciRequest } from './EvciRequest';
+export { Analytics } from './Analytics';
+export { Report } from './Report';
+export { CalendarEvent, Calendar } from './Calendar';
+export { File, Folder } from './File';
+export { Message, Conversation, Email, ChatRoom, Contact } from './Communication';
+export { PerformanceMetric, OptimizationLog, PerformanceConfig } from './Performance';
+
+// Export interfaces for type safety
+export type { IUser } from './User';
+export type { INote } from './Note';
+export type { IAnnouncement } from './Announcement';
+export type { IHomework } from './Homework';
+export type { ISchedule } from './Schedule';
+export type { IClub } from './Club';
+export type { IClubEvent } from './ClubEvent';
+export type { IClubAnnouncement } from './ClubAnnouncement';
+export type { IClubChat } from './ClubChat';
+export type { INotification } from './Notification';
+export type { IRequest } from './Request';
+export type { IMealList } from './MealList';
+export type { ISupervisorList } from './SupervisorList';
+export type { IMaintenanceRequest } from './MaintenanceRequest';
+export type { IEvciRequest } from './EvciRequest';
+export type { IAnalytics } from './Analytics';
+export type { IReport } from './Report';
+export type { ICalendarEvent, ICalendar } from './Calendar';
+export type { IFile, IFolder } from './File';
+export type { IMessage, IConversation, IEmail, IChatRoom, IContact } from './Communication';
+export type { IPerformanceMetric, IOptimizationLog, IPerformanceConfig } from './Performance';

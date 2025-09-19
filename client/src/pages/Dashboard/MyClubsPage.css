@@ -1,0 +1,480 @@
+/* MyClubsPage - Modern Tofaş Fen Lisesi Styles */
+
+/* Import theme variables */
+@import url('../../styles/theme.css');
+
+/* Page Container */
+.my-clubs-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+  padding: var(--space-6);
+}
+
+/* Loading and Error States */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--gray-200);
+  border-top: 4px solid var(--primary-red);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--space-4);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--gray-200);
+}
+
+.error-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--primary-red);
+  margin-bottom: var(--space-4);
+}
+
+/* Tabs */
+.my-clubs-tabs {
+  display: flex;
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  padding: var(--space-2);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--gray-200);
+  overflow: hidden;
+}
+
+.my-clubs-tabs__button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  border: none;
+  background: transparent;
+  color: var(--gray-600);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-lg);
+  position: relative;
+}
+
+.my-clubs-tabs__button:hover {
+  background: var(--gray-50);
+  color: var(--gray-800);
+}
+
+.my-clubs-tabs__button.active {
+  background: var(--gradient-primary);
+  color: var(--white);
+  box-shadow: var(--shadow-md);
+}
+
+.my-clubs-tabs__badge {
+  background: var(--primary-red-light);
+  color: var(--white);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-xl);
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.my-clubs-tabs__button.active .my-clubs-tabs__badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--white);
+}
+
+/* Content */
+.my-clubs-content {
+  margin-top: var(--space-6);
+}
+
+/* Grids */
+.my-clubs-grid,
+.my-invites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--space-6);
+  margin-top: var(--space-4);
+}
+
+/* Club Cards */
+.club-card {
+  background: var(--white);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--gray-200);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.club-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-primary);
+}
+
+.club-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-red-light);
+}
+
+.club-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-red-lighter);
+  margin-bottom: var(--space-4);
+  overflow: hidden;
+}
+
+.club-logo__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-xl);
+}
+
+.club-logo__default {
+  width: 32px;
+  height: 32px;
+  color: var(--primary-red);
+}
+
+.club-info__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0 0 var(--space-2) 0;
+  line-height: 1.3;
+}
+
+.club-info__description {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  line-height: 1.5;
+  margin: 0 0 var(--space-6) 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.club-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: auto;
+}
+
+/* Invite Cards */
+.invite-card {
+  background: var(--white);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--gray-200);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.invite-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, var(--secondary-blue) 0%, var(--secondary-purple) 100%);
+}
+
+.invite-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--secondary-blue);
+}
+
+.invite-content__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0 0 var(--space-2) 0;
+  line-height: 1.3;
+}
+
+.invite-content__role {
+  font-size: 0.875rem;
+  color: var(--secondary-blue);
+  font-weight: 600;
+  margin: 0 0 var(--space-1) 0;
+  padding: var(--space-1) var(--space-3);
+  background: var(--primary-red-lighter);
+  border-radius: var(--radius-lg);
+  display: inline-block;
+}
+
+.invite-content__date {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin: 0 0 var(--space-6) 0;
+}
+
+.invite-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: auto;
+}
+
+/* Buttons */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.button:hover::before {
+  left: 100%;
+}
+
+.button--primary {
+  background: var(--gradient-primary);
+  color: var(--white);
+  box-shadow: var(--shadow-md);
+}
+
+.button--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.button--success {
+  background: linear-gradient(135deg, var(--secondary-green) 0%, #10B981 100%);
+  color: var(--white);
+  box-shadow: var(--shadow-md);
+}
+
+.button--success:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.button--danger {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: var(--white);
+  box-shadow: var(--shadow-md);
+}
+
+.button--danger:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.button__icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Empty States */
+.my-clubs-empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-16);
+  background: var(--white);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--gray-200);
+}
+
+.my-clubs-empty-state__icon {
+  width: 80px;
+  height: 80px;
+  color: var(--gray-400);
+  margin-bottom: var(--space-4);
+}
+
+.my-clubs-empty-state h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.my-clubs-empty-state p {
+  font-size: 1rem;
+  color: var(--gray-600);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .my-clubs-page {
+    padding: var(--space-4);
+  }
+  
+  .my-clubs-grid,
+  .my-invites-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  
+  .my-clubs-tabs__button {
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.8rem;
+  }
+  
+  .club-card,
+  .invite-card {
+    padding: var(--space-4);
+  }
+  
+  .club-actions,
+  .invite-actions {
+    flex-direction: column;
+  }
+  
+  .button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .my-clubs-page {
+    padding: var(--space-3);
+  }
+  
+  .my-clubs-tabs {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  
+  .my-clubs-tabs__button {
+    border-radius: var(--radius-md);
+  }
+  
+  .club-logo {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .club-logo__default {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.slide-up {
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Print Styles */
+@media print {
+  .my-clubs-tabs,
+  .club-actions,
+  .invite-actions,
+  .button {
+    display: none !important;
+  }
+  
+  .club-card,
+  .invite-card {
+    box-shadow: none !important;
+    border: 1px solid var(--gray-300) !important;
+    break-inside: avoid;
+  }
+}

@@ -1,0 +1,355 @@
+/* Modern Back Button Component Styles */
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(220, 20, 60, 0.1);
+  color: #DC143C;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 12px 20px;
+  border-radius: 16px;
+  text-decoration: none;
+  box-shadow: 
+    0 8px 30px rgba(220, 20, 60, 0.08),
+    0 3px 15px rgba(220, 20, 60, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  position: relative;
+  overflow: hidden;
+  max-width: 280px;
+  border: none;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Gradient border effect */
+.back-button::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #DC143C, #8B0000, #DC143C, #8B0000);
+  background-size: 400% 400%;
+  border-radius: 18px;
+  opacity: 0;
+  z-index: -1;
+  animation: gradientShift 3s ease infinite;
+  transition: opacity 0.3s ease;
+}
+
+.back-button:hover::before {
+  opacity: 0.3;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Shimmer effect */
+.back-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.4), 
+    rgba(255, 255, 255, 0.6),
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.back-button:hover::after {
+  left: 100%;
+}
+
+/* Icon container */
+.back-button__icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.back-button__icon-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(220, 20, 60, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.4s ease;
+}
+
+.back-button:hover .back-button__icon {
+  transform: translateX(-2px);
+}
+
+.back-button:hover .back-button__icon-glow {
+  width: 40px;
+  height: 40px;
+}
+
+/* Content container */
+.back-button__content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.back-button__text {
+  font-weight: 600;
+  color: #DC143C;
+  transition: color 0.3s ease;
+}
+
+.back-button__subtitle {
+  font-size: 11px;
+  color: #6B7280;
+  font-weight: 500;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+/* Ripple effect */
+.back-button__ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(220, 20, 60, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+
+.back-button:active .back-button__ripple {
+  width: 200px;
+  height: 200px;
+}
+
+/* Hover effects */
+.back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 40px rgba(220, 20, 60, 0.15),
+    0 6px 20px rgba(220, 20, 60, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border-color: rgba(220, 20, 60, 0.2);
+}
+
+.back-button:hover .back-button__text {
+  color: #8B0000;
+}
+
+.back-button:hover .back-button__subtitle {
+  opacity: 1;
+}
+
+/* Active state */
+.back-button:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+/* Focus state */
+.back-button:focus {
+  outline: none;
+  box-shadow: 
+    0 8px 30px rgba(220, 20, 60, 0.08),
+    0 3px 15px rgba(220, 20, 60, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 0 0 3px rgba(220, 20, 60, 0.2);
+}
+
+/* Size variants */
+.back-button--sm {
+  padding: 8px 16px;
+  font-size: 12px;
+  border-radius: 12px;
+  max-width: 200px;
+  gap: 8px;
+}
+
+.back-button--sm .back-button__subtitle {
+  font-size: 10px;
+}
+
+.back-button--lg {
+  padding: 16px 24px;
+  font-size: 16px;
+  border-radius: 20px;
+  max-width: 320px;
+  gap: 16px;
+}
+
+.back-button--lg .back-button__subtitle {
+  font-size: 12px;
+}
+
+/* Variant styles */
+.back-button--minimal {
+  background: transparent;
+  border: 2px solid rgba(220, 20, 60, 0.2);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.back-button--minimal:hover {
+  background: rgba(220, 20, 60, 0.05);
+  border-color: rgba(220, 20, 60, 0.3);
+  box-shadow: 0 4px 20px rgba(220, 20, 60, 0.1);
+}
+
+.back-button--floating {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  box-shadow: 
+    0 8px 30px rgba(0, 0, 0, 0.12),
+    0 3px 15px rgba(0, 0, 0, 0.08);
+  border: none;
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.back-button--floating:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Disabled state */
+.back-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  pointer-events: none;
+}
+
+.back-button:disabled:hover {
+  transform: none;
+  box-shadow: 
+    0 8px 30px rgba(220, 20, 60, 0.08),
+    0 3px 15px rgba(220, 20, 60, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .back-button {
+    padding: 10px 16px;
+    font-size: 13px;
+    max-width: 240px;
+    gap: 10px;
+  }
+  
+  .back-button--sm {
+    padding: 6px 12px;
+    font-size: 11px;
+    max-width: 160px;
+    gap: 6px;
+  }
+  
+  .back-button--lg {
+    padding: 14px 20px;
+    font-size: 15px;
+    max-width: 280px;
+    gap: 14px;
+  }
+  
+  .back-button--floating {
+    top: 15px;
+    left: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .back-button {
+    padding: 8px 14px;
+    font-size: 12px;
+    max-width: 200px;
+    gap: 8px;
+  }
+  
+  .back-button__subtitle {
+    display: none;
+  }
+  
+  .back-button--floating {
+    top: 10px;
+    left: 10px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .back-button {
+    background: rgba(30, 30, 30, 0.95);
+    color: #FF6B6B;
+    border-color: rgba(255, 107, 107, 0.2);
+  }
+  
+  .back-button__text {
+    color: #FF6B6B;
+  }
+  
+  .back-button:hover .back-button__text {
+    color: #FF8E8E;
+  }
+  
+  .back-button--minimal {
+    background: transparent;
+    border-color: rgba(255, 107, 107, 0.3);
+  }
+  
+  .back-button--minimal:hover {
+    background: rgba(255, 107, 107, 0.1);
+  }
+  
+  .back-button--floating {
+    background: rgba(30, 30, 30, 0.98);
+  }
+}
+
+/* Animation for page transitions */
+.back-button-enter {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.back-button-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 0.3s ease;
+}
+
+.back-button-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.back-button-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: all 0.3s ease;
+}
