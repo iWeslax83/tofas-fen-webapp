@@ -1,0 +1,39 @@
+[
+  {
+    "id": "acecf7a4-2890-402e-8a43-1b405949584e",
+    "name": "2",
+    "presidentId": "200",
+    "logo": "",
+    "members": [],
+    "roles": {},
+    "chats": [],
+    "events": [],
+    "announcements": [],
+    "requests": []
+  },
+  {
+    "id": "73e8c41b-c316-455f-84ce-735f0bf98628",
+    "name": "20",
+    "presidentId": "200",
+    "logo": "",
+    "members": [
+      "200",
+      "201"
+    ],
+    "roles": {
+      "200": "Ana Başkan",
+      "201": "Üye"
+    },
+    "chats": [],
+    "events": [],
+    "announcements": [],
+    "requests": [
+      {
+        "clubId": "73e8c41b-c316-455f-84ce-735f0bf98628",
+        "userId": "201",
+        "role": "Üye",
+        "timestamp": 1753117653328
+      }
+    ]
+  }
+]

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tofas-frontend
+  namespace: tofas-fen
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tofas-frontend
+  template:
+    metadata:
+      labels:
+        app: tofas-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: ghcr.io/your-username/tofas-fen-frontend:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: VITE_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: tofas-config
+              key: VITE_API_URL
+        - name: VITE_WS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: tofas-config
+              key: VITE_WS_URL
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      imagePullSecrets:
+      - name: ghcr-secret

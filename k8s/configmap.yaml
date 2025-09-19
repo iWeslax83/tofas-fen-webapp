@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tofas-config
+  namespace: tofas-fen
+data:
+  NODE_ENV: "production"
+  PORT: "3001"
+  CORS_ORIGIN: "https://tofas-fen.com"
+  VITE_API_URL: "https://api.tofas-fen.com"
+  VITE_WS_URL: "wss://api.tofas-fen.com"
