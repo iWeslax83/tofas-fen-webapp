@@ -1,0 +1,50 @@
+[
+  {
+    "_id": "note1",
+    "studentId": "student1",
+    "teacherId": "teacher1",
+    "lesson": "Matematik",
+    "exam1": 85,
+    "exam2": 90,
+    "oral": 88,
+    "average": 87.7,
+    "semester": "1",
+    "academicYear": "2024-2025",
+    "gradeLevel": "9",
+    "classSection": "A",
+    "lastUpdated": "2024-09-16T10:00:00.000Z",
+    "isActive": true
+  },
+  {
+    "_id": "note2",
+    "studentId": "student1",
+    "teacherId": "teacher1",
+    "lesson": "Fizik",
+    "exam1": 78,
+    "exam2": 82,
+    "oral": 80,
+    "average": 80.0,
+    "semester": "1",
+    "academicYear": "2024-2025",
+    "gradeLevel": "9",
+    "classSection": "A",
+    "lastUpdated": "2024-09-16T10:00:00.000Z",
+    "isActive": true
+  },
+  {
+    "_id": "note3",
+    "studentId": "student1",
+    "teacherId": "teacher1",
+    "lesson": "Kimya",
+    "exam1": 92,
+    "exam2": 88,
+    "oral": 90,
+    "average": 90.0,
+    "semester": "1",
+    "academicYear": "2024-2025",
+    "gradeLevel": "9",
+    "classSection": "A",
+    "lastUpdated": "2024-09-16T10:00:00.000Z",
+    "isActive": true
+  }
+]

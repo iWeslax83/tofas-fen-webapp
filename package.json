@@ -1,0 +1,53 @@
+{
+  "name": "tofas-fen-webapp",
+  "version": "1.0.0",
+  "description": "Tofaş Fen Lisesi Bilgi Sistemi - Full Stack Web Application",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "start": "cd server && npm start",
+    "start:server": "cd server && npm start",
+    "start:client": "cd client && npm run preview",
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "test": "npm run test:server && npm run test:client",
+    "test:server": "cd server && npm test",
+    "test:client": "cd client && npm test",
+    "lint": "npm run lint:server && npm run lint:client",
+    "lint:server": "cd server && npm run lint",
+    "lint:client": "cd client && npm run lint",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "clean": "rm -rf server/dist client/dist server/node_modules client/node_modules node_modules",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build"
+  },
+  "dependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/mongoose": "^5.11.96",
+    "@types/nodemailer": "^6.4.17",
+    "axios": "^1.11.0",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.2.0",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.0.1",
+    "express-session": "^1.18.1",
+    "framer-motion": "^12.23.12",
+    "mongoose": "^8.16.4",
+    "nodemailer": "^7.0.5",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-toastify": "^11.0.5",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/express-session": "^1.18.2",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "@types/react-router-dom": "^5.3.3",
+    "@types/react-toastify": "^4.0.2",
+    "concurrently": "^8.2.2"
+  }
+}

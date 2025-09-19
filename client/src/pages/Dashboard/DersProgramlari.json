@@ -1,0 +1,267 @@
+{
+  "9": {
+    "A": {
+      "Pazartesi": [
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Matematik", "Matematik",
+        "Fen Bilimleri", "Fen Bilimleri",
+        "İngilizce", "İngilizce"
+      ],
+      "Salı": [
+        "Sosyal Bilgiler", "Sosyal Bilgiler",
+        "Matematik", "Matematik",
+        "Beden Eğitimi", "Beden Eğitimi",
+        "Din Kültürü", "Din Kültürü"
+      ],
+      "Çarşamba": [
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Fen Bilimleri", "Fen Bilimleri",
+        "Matematik", "Matematik",
+        "Görsel Sanatlar", "Görsel Sanatlar"
+      ],
+      "Perşembe": [
+        "İngilizce", "İngilizce",
+        "Matematik", "Matematik",
+        "Sosyal Bilgiler", "Sosyal Bilgiler",
+        "Bilişim Teknolojileri", "Bilişim Teknolojileri"
+      ],
+      "Cuma": [
+        "Fen Bilimleri", "Fen Bilimleri",
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Matematik", "Matematik",
+        "Müzik", "Müzik"
+      ]
+    },
+    "B": {
+      "Pazartesi": [
+        "Matematik", "Matematik",
+        "Fen Bilimleri", "Fen Bilimleri",
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "İngilizce", "İngilizce"
+      ],
+      "Salı": [
+        "Beden Eğitimi", "Beden Eğitimi",
+        "Matematik", "Matematik",
+        "Sosyal Bilgiler", "Sosyal Bilgiler",
+        "Din Kültürü", "Din Kültürü"
+      ],
+      "Çarşamba": [
+        "Fen Bilimleri", "Fen Bilimleri",
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Matematik", "Matematik",
+        "Görsel Sanatlar", "Görsel Sanatlar"
+      ],
+      "Perşembe": [
+        "Sosyal Bilgiler", "Sosyal Bilgiler",
+        "İngilizce", "İngilizce",
+        "Matematik", "Matematik",
+        "Bilişim Teknolojileri", "Bilişim Teknolojileri"
+      ],
+      "Cuma": [
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Fen Bilimleri", "Fen Bilimleri",
+        "Matematik", "Matematik",
+        "Müzik", "Müzik"
+      ]
+    }
+  },
+  "10": {
+    "A": {
+      "Pazartesi": [
+        "Bilişim", "Bilişim",
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "İkinci Yabancı Dil", "İkinci Yabancı Dil",
+        "İngilizce", "İngilizce"
+      ],
+      "Salı": [
+        "Görsel Sanatlar / Müzik", "Görsel Sanatlar / Müzik",
+        "Beden Eğitimi", "Beden Eğitimi",
+        "Biyoloji", "Biyoloji",
+        "İngilizce", "İngilizce"
+      ],
+      "Çarşamba": [
+        "Fizik", "Fizik",
+        "Tarih", "Tarih",
+        "Matematik", "Matematik",
+        "Spor Eğitimi", "Türk Dili ve Edebiyatı"
+      ],
+      "Perşembe": [
+        "Kimya", "Kimya",
+        "Matematik", "Matematik",
+        "Rehberlik",
+        "Coğrafya", "Coğrafya",
+        "Seçmeli Türk Düşünce Tarihi"
+      ],
+      "Cuma": [
+        "Matematik", "Matematik",
+        "Din", "Din",
+        "Felsefe", "Felsefe",
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı"
+      ]
+    },
+    "B": {
+      "Pazartesi": [
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Bilişim", "Bilişim",
+        "Matematik", "Matematik",
+        "Tarih", "Tarih"
+      ],
+      "Salı": [
+        "İngilizce", "İngilizce",
+        "Din", "Din",
+        "Kimya", "Kimya",
+        "Görsel Sanatlar / Müzik", "Görsel Sanatlar / Müzik"
+      ],
+      "Çarşamba": [
+        "Beden Eğitimi", "Beden Eğitimi",
+        "Fizik", "Fizik",
+        "İkinci Yabancı Dil", "İkinci Yabancı Dil",
+        "Matematik", "Matematik"
+      ],
+      "Perşembe": [
+        "Biyoloji", "Biyoloji",
+        "Felsefe", "Felsefe",
+        "Rehberlik", "Türk Dili ve Edebiyatı",
+        "Seçmeli Türk Düşünce Tarihi", "Spor Eğitimi"
+      ],
+      "Cuma": [
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Matematik", "Matematik",
+        "İngilizce", "İngilizce",
+        "Coğrafya", "Coğrafya"
+      ]
+    }
+  },
+  "11": {
+    "A": {
+      "Pazartesi": [
+        "Matematik", "Matematik",
+        "Fizik", "Fizik",
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "İngilizce", "İngilizce"
+      ],
+      "Salı": [
+        "Kimya", "Kimya",
+        "Biyoloji", "Biyoloji",
+        "Matematik", "Matematik",
+        "Beden Eğitimi", "Beden Eğitimi"
+      ],
+      "Çarşamba": [
+        "Tarih", "Tarih",
+        "Coğrafya", "Coğrafya",
+        "Matematik", "Matematik",
+        "Felsefe", "Felsefe"
+      ],
+      "Perşembe": [
+        "Fizik", "Fizik",
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Matematik", "Matematik",
+        "Din Kültürü", "Din Kültürü"
+      ],
+      "Cuma": [
+        "Biyoloji", "Biyoloji",
+        "Kimya", "Kimya",
+        "İngilizce", "İngilizce",
+        "Seçmeli Ders", "Seçmeli Ders"
+      ]
+    },
+    "B": {
+      "Pazartesi": [
+        "Fizik", "Fizik",
+        "Matematik", "Matematik",
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Biyoloji", "Biyoloji"
+      ],
+      "Salı": [
+        "Matematik", "Matematik",
+        "Kimya", "Kimya",
+        "İngilizce", "İngilizce",
+        "Beden Eğitimi", "Beden Eğitimi"
+      ],
+      "Çarşamba": [
+        "Coğrafya", "Coğrafya",
+        "Tarih", "Tarih",
+        "Matematik", "Matematik",
+        "Felsefe", "Felsefe"
+      ],
+      "Perşembe": [
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Fizik", "Fizik",
+        "Matematik", "Matematik",
+        "Din Kültürü", "Din Kültürü"
+      ],
+      "Cuma": [
+        "Kimya", "Kimya",
+        "Biyoloji", "Biyoloji",
+        "Seçmeli Ders", "Seçmeli Ders",
+        "İngilizce", "İngilizce"
+      ]
+    }
+  },
+  "12": {
+    "A": {
+      "Pazartesi": [
+        "Matematik", "Matematik",
+        "Fizik", "Fizik",
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Rehberlik", "Rehberlik"
+      ],
+      "Salı": [
+        "Kimya", "Kimya",
+        "Biyoloji", "Biyoloji",
+        "Matematik", "Matematik",
+        "İngilizce", "İngilizce"
+      ],
+      "Çarşamba": [
+        "Tarih", "Tarih",
+        "Coğrafya", "Coğrafya",
+        "Matematik", "Matematik",
+        "Felsefe", "Felsefe"
+      ],
+      "Perşembe": [
+        "Fizik", "Fizik",
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Matematik", "Matematik",
+        "Din Kültürü", "Din Kültürü"
+      ],
+      "Cuma": [
+        "Biyoloji", "Biyoloji",
+        "Kimya", "Kimya",
+        "Seçmeli Ders", "Seçmeli Ders",
+        "Beden Eğitimi", "Beden Eğitimi"
+      ]
+    },
+    "B": {
+      "Pazartesi": [
+        "Fizik", "Fizik",
+        "Matematik", "Matematik",
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Rehberlik", "Rehberlik"
+      ],
+      "Salı": [
+        "Matematik", "Matematik",
+        "Kimya", "Kimya",
+        "Biyoloji", "Biyoloji",
+        "İngilizce", "İngilizce"
+      ],
+      "Çarşamba": [
+        "Coğrafya", "Coğrafya",
+        "Tarih", "Tarih",
+        "Matematik", "Matematik",
+        "Felsefe", "Felsefe"
+      ],
+      "Perşembe": [
+        "Türk Dili ve Edebiyatı", "Türk Dili ve Edebiyatı",
+        "Fizik", "Fizik",
+        "Matematik", "Matematik",
+        "Din Kültürü", "Din Kültürü"
+      ],
+      "Cuma": [
+        "Kimya", "Kimya",
+        "Biyoloji", "Biyoloji",
+        "Beden Eğitimi", "Beden Eğitimi",
+        "Seçmeli Ders", "Seçmeli Ders"
+      ]
+    }
+  }
+} 
