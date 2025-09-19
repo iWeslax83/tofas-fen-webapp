@@ -1,0 +1,8 @@
+[
+    { "id": "200", "sifre": "200", "adSoyad": "Ahmet Yılmaz", "sinif": "9", "sube": "A"},
+    { "id": "201", "sifre": "201", "adSoyad": "Ayşe Yılmaz", "sinif": "9", "sube": "B"},
+
+    { "id": "301", "sifre": "301", "adSoyad": "Ayşe Demir", "sinif": "10", "sube": "A"},
+    { "id": "302", "sifre": "302", "adSoyad": "Ali Veli", "sinif": "11", "sube": "C"}
+  ]
+  
