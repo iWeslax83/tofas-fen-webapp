@@ -282,8 +282,8 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosy
 
 ## 📞 İletişim
 
-- **Email**: your-email@example.com
-- **GitHub**: [@your-username](https://github.com/your-username)
+- **Email**: weslax83@gmail.com
+- **GitHub**: [@your-username](https://github.com/iWeslax83)
 
 ## 🙏 Teşekkürler
 
