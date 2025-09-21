@@ -17,6 +17,10 @@ const LoadingSpinner = () => (
 const ModernDashboard = lazy(() => import('../components/ModernDashboard'));
 const NotFoundPage = lazy(() => import('../pages/Dashboard/NotFoundPage'));
 
+// Auth Pages
+const LoginPage = lazy(() => import('../pages/LoginPage'));
+const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
+
 // Academic Pages
 const OdevlerPage = lazy(() => import('../pages/Dashboard/OdevlerPage'));
 const DersProgramiPage = lazy(() => import('../pages/Dashboard/DersProgramiPage'));
@@ -49,6 +53,12 @@ const PerformancePage = lazy(() => import('../pages/Dashboard/PerformancePage'))
 const NotificationManagementPage = lazy(() => import('../pages/Dashboard/NotificationManagementPage'));
 const NotificationAutomationPage = lazy(() => import('../pages/Dashboard/NotificationAutomationPage'));
 const MyStudentsPage = lazy(() => import('../pages/Dashboard/MyStudentsPage'));
+
+// Club Pages
+const JoinClubPage = lazy(() => import('../pages/Dashboard/JoinClubPage'));
+const ClubDetailPage = lazy(() => import('../pages/Dashboard/ClubDetailPage'));
+const AdminClubsPage = lazy(() => import('../pages/Dashboard/AdminClubsPage'));
+const MyClubsPage = lazy(() => import('../pages/Dashboard/MyClubsPage'));
 
 // Demo Pages
 const SkeletonDemoPage = lazy(() => import('../pages/Dashboard/SkeletonDemoPage'));
