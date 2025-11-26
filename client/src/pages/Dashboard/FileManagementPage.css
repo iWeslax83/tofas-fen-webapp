@@ -1,4 +1,7 @@
 /* File Management Page Styles */
+
+/* Import theme variables */
+@import url('../../styles/theme.css');
 .file-management-page {
   min-height: 100vh;
   background: var(--bg-primary);
@@ -26,10 +29,7 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* @keyframes spin moved to theme.css */
 
 /* Header */
 .file-header {

@@ -66,7 +66,7 @@ export default function MyStudentsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Students data will be fetched from API
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStudents = async () => {

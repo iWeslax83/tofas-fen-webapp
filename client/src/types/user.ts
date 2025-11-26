@@ -40,10 +40,7 @@ export interface RefreshTokenResponse {
   expiresIn: number;
 }
 
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-}
+// ChangePasswordRequest kaldırıldı - artık TCKN kullanılıyor
 
 export interface EmailVerificationRequest {
   userId: string;

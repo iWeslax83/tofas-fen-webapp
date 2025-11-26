@@ -4,17 +4,14 @@ import {
   FileText, 
   Plus, 
   Search, 
-  Filter, 
   Download, 
-  Edit, 
   Trash2,
   Eye,
   Calendar,
   User,
   BarChart3,
   Settings,
-  RefreshCw,
-  MoreVertical
+  RefreshCw
 } from 'lucide-react';
 import { SecureAPI } from '../../utils/api';
 import { useAuthContext } from '../../contexts/AuthContext';
@@ -68,7 +65,7 @@ interface CreateReportForm {
 
 const ReportManagement: React.FC = () => {
   // All hooks must be called unconditionally at the top level
-  const { user } = useAuthContext();
+  const { } = useAuthContext();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

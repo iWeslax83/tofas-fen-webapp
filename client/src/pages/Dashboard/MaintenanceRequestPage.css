@@ -1,4 +1,7 @@
 /* Maintenance Request Page Styles */
+
+/* Import theme variables */
+@import url('../../styles/theme.css');
 .maintenance-request-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
@@ -8,7 +11,7 @@
 /* Header Styles - Override for full width */
 .modern-header {
   background: rgba(255, 255, 255, 0.98) !important;
-  backdrop-filter: blur(15px);
+  /* backdrop-filter: blur(15px); */
   padding: var(--space-4) var(--space-6);
   min-height: 60px;
   border-bottom: 1px solid var(--gray-200);
@@ -44,7 +47,7 @@
 
 .panel-header {
   background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(15px);
+  /* backdrop-filter: blur(15px); */
   padding: var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--gray-200);
   display: flex;
@@ -130,10 +133,7 @@
   color: var(--secondary-orange);
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* @keyframes spin moved to theme.css */
 
 /* Content Header */
 .content-header {

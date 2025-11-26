@@ -14,18 +14,11 @@ import {
   Cpu, 
   MemoryStick,
   RefreshCw,
-  Play,
-  Pause,
   Trash2,
   Plus,
   Search,
   Filter,
-  Download,
-  Upload,
-  Eye,
-  Edit,
-  Save,
-  X
+  Edit
 } from 'lucide-react';
 import { SecureAPI } from '../../utils/api';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
@@ -129,12 +122,12 @@ const PerformancePage: React.FC = () => {
     startDate: '',
     endDate: ''
   });
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [, setShowCreateModal] = useState(false);
+  const [, setSelectedItem] = useState<any>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [sortBy, setSortBy] = useState('timestamp');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy] = useState('timestamp');
+  const [sortOrder] = useState<'asc' | 'desc'>('desc');
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
 
@@ -166,7 +159,7 @@ const PerformancePage: React.FC = () => {
   };
 
   const fetchDashboardData = async () => {
-    const [dashboardData, systemData] = await Promise.all([
+    const [, systemData] = await Promise.all([
       SecureAPI.get('/performance/dashboard'),
       SecureAPI.get('/performance/system')
     ]);
@@ -264,25 +257,8 @@ const PerformancePage: React.FC = () => {
     }
   };
 
-  const getImpactColor = (impact: string) => {
-    switch (impact) {
-      case 'low': return 'green';
-      case 'medium': return 'yellow';
-      case 'high': return 'red';
-      default: return 'gray';
-    }
-  };
-
   const formatDate = (date: string | Date) => {
     return new Date(date).toLocaleString('tr-TR');
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const renderDashboard = () => (

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Plus, Calendar, Trash2, FileText, Download } from 'lucide-react';
 import { useAuth } from "../../hooks/useAuth";
 import { HomeworkService } from "../../utils/apiService";
-import { toast } from "react-toastify";
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import BackButton from '../../components/BackButton';
 import './OdevlerPage.css';
@@ -20,11 +19,6 @@ interface Homework {
   file?: string;
 }
 
-interface ApiResponse<T> {
-  data: T;
-  message?: string;
-  success: boolean;
-}
 
 export default function OdevlerPage() {
   const { user, isLoading: authLoading } = useAuth(["admin", "teacher", "student", "parent"]);
@@ -36,7 +30,7 @@ export default function OdevlerPage() {
   useEffect(() => {
     // Check if user has the correct role
     if (!authLoading && user && !["admin", "teacher", "student", "parent"].includes(user.rol || '')) {
-      console.warn(`User role ${user.rol} not allowed for odevler page`);
+      console.warn(`User role ${user.rol || 'undefined'} not allowed for odevler page`);
       // The original code had navigate(`/${user.rol || 'login'}`, { replace: true });
       // This line was removed as per the edit hint.
       return;
@@ -276,13 +270,12 @@ export default function OdevlerPage() {
                       // Create the homework with file URL if uploaded
                       const homeworkData = {
                         title: formData.get('title') as string,
-                        content: formData.get('content') as string,
+                        description: formData.get('content') as string,
                         subject: formData.get('subject') as string,
-                        startDate: formData.get('startDate') as string,
-                        endDate: formData.get('endDate') as string,
-                        grade: formData.get('grade') as string,
-                        date: new Date().toISOString(),
-                        ...(fileUrl && { file: fileUrl })
+                        classLevel: formData.get('grade') as string,
+                        classSection: formData.get('section') as string || 'A',
+                        dueDate: formData.get('endDate') as string,
+                        attachments: fileUrl ? [fileUrl] : []
                       };
                       
                       const { error } = await HomeworkService.createHomework(homeworkData);

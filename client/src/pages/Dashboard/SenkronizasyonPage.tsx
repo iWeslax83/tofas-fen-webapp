@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Users, Plus, RefreshCw, X, Save } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Plus, X, Save } from 'lucide-react';
 import { UserService } from '../../utils/apiService';
 import { useAuthContext } from "../../contexts/AuthContext";
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
@@ -75,7 +75,7 @@ export default function SenkronizasyonPage() {
   // Only allow admins
   useEffect(() => {
     if (!authLoading && user && user.rol !== 'admin') {
-      console.warn(`User role ${user.rol} not allowed for senkronizasyon page`);
+      console.warn(`User role ${user.rol || 'undefined'} not allowed for senkronizasyon page`);
       navigate(`/${user.rol || 'login'}`, { replace: true });
       return;
     }
@@ -309,7 +309,7 @@ export default function SenkronizasyonPage() {
                       <span className={`user-role role-${u.rol}`}>
                         {u.rol === 'admin' ? 'Yönetici' :
                          u.rol === 'teacher' ? 'Öğretmen' :
-                         u.rol === 'student' ? 'Öğrenci' :
+                         u.rol === 'student' ? `Öğrenci ${u.pansiyon ? '(Yatılı)' : '(Gündüzlü)'}` :
                          u.rol === 'parent' ? 'Veli' :
                          u.rol === 'hizmetli' ? 'Hizmetli' : u.rol}
                       </span>
@@ -326,17 +326,11 @@ export default function SenkronizasyonPage() {
                       <div className="stat-value">{u.sube || '-'}</div>
                       <div className="stat-label">Şube</div>
                     </div>
-                    {u.rol === 'student' && (
-                      <>
-                        <div className="stat-item">
-                          <div className="stat-value">{u.oda || '-'}</div>
-                          <div className="stat-label">Oda</div>
-                        </div>
-                        <div className="stat-item">
-                          <div className="stat-value">{u.pansiyon ? 'Yatılı' : 'Gündüzlü'}</div>
-                          <div className="stat-label">Durum</div>
-                        </div>
-                      </>
+                    {u.rol === 'student' && u.pansiyon && (
+                      <div className="stat-item">
+                        <div className="stat-value">{u.oda || '-'}</div>
+                        <div className="stat-label">Oda</div>
+                      </div>
                     )}
                     {u.rol === 'parent' && u.childId && u.childId.length > 0 && (
                       <div className="stat-item" style={{ gridColumn: '1 / -1' }}>
@@ -667,7 +661,7 @@ export default function SenkronizasyonPage() {
                           setEditForm(prev => ({ 
                             ...prev, 
                             pansiyon: isPansiyon,
-                            oda: isPansiyon ? prev.oda : '' // Eğer gündüzlü yapılırsa oda bilgisini temizle
+                            oda: isPansiyon ? (prev.oda || '') : '' // Eğer gündüzlü yapılırsa oda bilgisini temizle
                           }));
                         }}
                       >

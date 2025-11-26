@@ -2,19 +2,11 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { UserService } from '../../utils/apiService';
-import NotificationBell from '../../components/NotificationBell';
+// Removed unused imports
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { dashboardButtons } from './dashboardButtonConfig';
 import { 
-  GraduationCap, 
-  ChevronRight, 
-  Home, 
-  UserCheck, 
-  Settings, 
-  LogOut,
-  Star,
-  TrendingUp
+  ChevronRight
 } from 'lucide-react';
 
 interface PageButton {
@@ -41,17 +33,17 @@ const getTeacherButtons = (): PageButton[] => {
 };
 
 const TeacherPanel: React.FC = () => {
-  const { user, logout, isLoading: authLoading } = useAuthContext();
+  const { user, isLoading: authLoading } = useAuthContext();
   const [pageButtons, setPageButtons] = useState<PageButton[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!authLoading && user) {
-      console.log('Setting up teacher panel with user:', user);
+      console.log('[TeacherPanel] Setting up teacher panel with user:', user);
       
-      console.log('Getting teacher buttons...');
+      console.log('[TeacherPanel] Getting teacher buttons...');
       const buttons = getTeacherButtons();
-      console.log('Teacher buttons:', buttons);
+      console.log('[TeacherPanel] Teacher buttons:', buttons);
       setPageButtons(buttons);
       
       setIsLoading(false);
@@ -106,7 +98,7 @@ const TeacherPanel: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
-              <Link to={button.path} className="action-card">
+              <Link to={button.path} className="action-card" data-color={button.color || 'blue'}>
                 <div className="action-icon">
                   <button.icon className="w-6 h-6" />
                 </div>

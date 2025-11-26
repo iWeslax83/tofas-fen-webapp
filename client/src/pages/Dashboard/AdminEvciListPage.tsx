@@ -29,7 +29,7 @@ interface Student {
   pansiyon?: boolean;
 }
 
-export function AdminEvciListPage() {
+export default function AdminEvciListPage() {
   const { user: authUser } = useAuth(["admin", "teacher"]);
   const [requests, setRequests] = useState<EvciTalep[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -369,7 +369,7 @@ export function AdminEvciListPage() {
                         <div className="info-item">
                           <Calendar className="info-icon" />
                           <span className="info-label">Sınıf:</span>
-                          <span className="info-value">{st?.sinif || "-"}</span>
+                          <span className="info-value">{st?.sinif ? `${String(st.sinif)}${st.sube ? String(st.sube) : ''}` : "-"}</span>
                         </div>
                         <div className="info-item">
                           <MapPin className="info-icon" />
@@ -413,5 +413,3 @@ export function AdminEvciListPage() {
     </ModernDashboardLayout>
   );
 }
-
-export default AdminEvciListPage;

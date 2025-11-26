@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Calendar, 
-  Clock, 
   MapPin, 
   User, 
   BookOpen, 
   Plus,
   Edit,
   Trash2,
-  Search,
-  Filter
+  Search
 } from 'lucide-react';
 import { ScheduleService } from '../../utils/apiService';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
@@ -52,7 +50,7 @@ export default function SchedulePage() {
     type: ''
   });
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
+  const [, setEditingItem] = useState<ScheduleItem | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const fetchSchedule = async () => {

@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PerformanceMetric, OptimizationLog, PerformanceConfig } from '../models/Performance';
 import { NotificationService } from './NotificationService';
 import { createReadStream, createWriteStream, existsSync, mkdirSync, readdirSync, statSync } from 'fs';
-import { join } from 'path';
+// import { join } from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -488,11 +488,11 @@ export class PerformanceService {
       console.error('Error executing optimization:', error);
       
       optimization.status = 'failed';
-      optimization.error = error.message;
+      optimization.error = (error as Error).message;
       optimization.completedAt = new Date();
       await optimization.save();
 
-      await this.notifyOptimizationFailure(optimization, error.message);
+      await this.notifyOptimizationFailure(optimization, (error as Error).message);
     }
   }
 
@@ -655,7 +655,7 @@ export class PerformanceService {
     return true;
   }
 
-  private static async getMetricValue(metric: string): Promise<number> {
+  private static async getMetricValue(_metric: string): Promise<number> {
     // This would get the current value of a specific metric
     // For now, return a mock value
     return Math.random() * 100;
@@ -712,7 +712,7 @@ export class PerformanceService {
 
   private static isCacheValid(key: string): boolean {
     const expiry = this.cacheExpiry.get(key);
-    return expiry && Date.now() < expiry;
+    return Boolean(expiry && Date.now() < expiry);
   }
 
   private static updateMetricCache(type: string, category: string): void {

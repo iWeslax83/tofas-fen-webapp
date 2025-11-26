@@ -102,7 +102,7 @@ async retryOperation<T>(
 ): Promise<T> {
   // Exponential backoff ile retry logic
   // Progress göstergesi
-  // Maksimum deneme kontrolü
+  // Maksimum deneme kontrolü               
 }
 ```
 

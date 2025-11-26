@@ -12,6 +12,7 @@
     "start": "node dist/index.js",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
+    "type-check": "tsc --noEmit",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
@@ -27,7 +28,8 @@
     "test:clean": "rimraf coverage",
     "test:reset": "npm run test:clean && npm run test:coverage",
     "seed": "ts-node src/seed/seed.ts",
-    "seed:users": "ts-node src/seed/testUsers.ts"
+    "seed:users": "ts-node src/seed/testUsers.ts",
+    "create-indexes": "ts-node src/scripts/createIndexes.ts"
   },
   "keywords": [
     "tofas",
@@ -79,6 +81,7 @@
     "@types/express": "^4.17.17",
     "@types/express-session": "^1.17.7",
     "@types/jsonwebtoken": "^9.0.2",
+    "@types/lodash": "^4.17.20",
     "@types/morgan": "^1.9.4",
     "@types/multer": "^1.4.7",
     "@types/node": "^20.5.0",

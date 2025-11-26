@@ -1,71 +1,7 @@
 /* AdminPanel Styles - Modern Dashboard Compatible */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
-/* CSS Variables - Tofaş Fen Lisesi Brand Colors */
-:root {
-  /* Primary Colors - Tofaş Red */
-  --primary-red: #DC143C;
-  --primary-red-dark: #8B0000;
-  --primary-red-light: #FF6B6B;
-  --primary-red-lighter: #FFE5E5;
-  
-  /* Secondary Colors */
-  --secondary-blue: #1E40AF;
-  --secondary-green: #059669;
-  --secondary-purple: #7C3AED;
-  --secondary-orange: #EA580C;
-  --secondary-yellow: #D97706;
-  --secondary-indigo: #4338CA;
-  --secondary-teal: #0D9488;
-  
-  /* Neutral Colors */
-  --white: #FFFFFF;
-  --gray-50: #F9FAFB;
-  --gray-100: #F3F4F6;
-  --gray-200: #E5E7EB;
-  --gray-300: #D1D5DB;
-  --gray-400: #9CA3AF;
-  --gray-500: #6B7280;
-  --gray-600: #4B5563;
-  --gray-700: #374151;
-  --gray-800: #1F2937;
-  --gray-900: #111827;
-  
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, var(--primary-red-dark) 0%, var(--primary-red) 100%);
-  --gradient-secondary: linear-gradient(135deg, var(--secondary-blue) 0%, var(--secondary-purple) 100%);
-  --gradient-success: linear-gradient(135deg, var(--secondary-green) 0%, #10B981 100%);
-  --gradient-warning: linear-gradient(135deg, var(--secondary-orange) 0%, var(--secondary-yellow) 100%);
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  
-  /* Border Radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
-  
-  /* Spacing */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
-  --space-20: 5rem;
-  --space-24: 6rem;
-  --space-32: 8rem;
-}
+/* Import theme variables */
+@import url('../../styles/theme.css');
 
 /* Modern Dashboard Layout */
 .modern-dashboard {
@@ -253,7 +189,7 @@
 /* Header Styles - Override for full width */
 .modern-header {
   background: rgba(255, 255, 255, 0.98) !important;
-  backdrop-filter: blur(15px) !important;
+  /* backdrop-filter: blur(15px) !important; */
   padding: var(--space-4) var(--space-6) !important;
   min-height: 60px !important;
   border-bottom: 1px solid var(--gray-200) !important;
@@ -712,10 +648,7 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* @keyframes spin moved to theme.css */
 
 /* Print Styles */
 @media print {

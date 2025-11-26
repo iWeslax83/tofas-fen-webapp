@@ -159,8 +159,8 @@
 }
 
 .action-button {
-  width: 36px;
-  height: 36px;
+  width: 56px;
+  height: 56px;
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
@@ -271,17 +271,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-6);
+  gap: var(--space-4);
+  padding: 16px 32px;
   border: none;
   border-radius: var(--radius-lg);
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 1.125rem;
   text-decoration: none;
   cursor: pointer;
   transition: all var(--transition-fast);
   position: relative;
   overflow: hidden;
+  min-height: 56px;
+  min-width: 120px;
 }
 
 .btn::before {
@@ -322,8 +324,13 @@
 }
 
 .btn .icon {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
+}
+
+.action-button svg {
+  width: 24px;
+  height: 24px;
 }
 
 /* Modal Styles */
@@ -338,7 +345,7 @@
   align-items: center;
   justify-content: center;
   z-index: var(--z-modal);
-  backdrop-filter: blur(4px);
+  /* backdrop-filter: blur(4px); */
   padding: var(--space-4);
 }
 
@@ -469,11 +476,18 @@
 /* Form Actions */
 .form-actions {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-4);
   justify-content: flex-end;
   margin-top: var(--space-6);
   padding-top: var(--space-4);
   border-top: 1px solid var(--gray-200);
+}
+
+.form-actions .btn {
+  min-width: 160px;
+  font-size: 1.125rem;
+  padding: 18px 36px;
+  min-height: 60px;
 }
 
 /* Loading States */
@@ -496,10 +510,7 @@
   margin-bottom: var(--space-4);
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* @keyframes spin moved to theme.css */
 
 /* Error States */
 .error-container {
@@ -610,6 +621,7 @@
   
   .action-button {
     width: 100%;
+    height: 56px;
   }
 }
 

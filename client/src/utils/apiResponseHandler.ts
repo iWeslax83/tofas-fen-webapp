@@ -153,8 +153,8 @@ export class ApiResponseHandler {
   static createError(message: string, code?: string, status?: number): ApiError {
     return {
       message,
-      code,
-      status
+      code: code || 'UNKNOWN_ERROR',
+      status: status || 500
     };
   }
 

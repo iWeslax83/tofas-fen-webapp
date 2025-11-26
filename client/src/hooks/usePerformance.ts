@@ -1,235 +1,311 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
+import { useUIStore } from '../stores/uiStore';
+import { safeConsoleError } from '../utils/safeLogger';
 
-// Debounce hook for search and filtering
-export function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+/**
+ * Performance monitoring and optimization hooks
+ */
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
-
-// Search hook with debouncing
-export function useSearch<T>(
-  items: T[],
-  searchTerm: string,
-  searchFields: (keyof T)[],
-  delay: number = 300
-) {
-  const debouncedSearchTerm = useDebounce(searchTerm, delay);
-
-  const filteredItems = useCallback(() => {
-    if (!debouncedSearchTerm.trim()) {
-      return items;
-    }
-
-    const searchLower = debouncedSearchTerm.toLowerCase();
-    return items.filter(item =>
-      searchFields.some(field => {
-        const value = item[field];
-        if (typeof value === 'string') {
-          return value.toLowerCase().includes(searchLower);
-        }
-        if (typeof value === 'number') {
-          return value.toString().includes(searchLower);
-        }
-        return false;
-      })
-    );
-  }, [items, debouncedSearchTerm, searchFields]);
-
-  return {
-    filteredItems: filteredItems(),
-    searchTerm: debouncedSearchTerm,
-    isSearching: searchTerm !== debouncedSearchTerm
-  };
-}
-
-// Infinite scroll hook
-export function useInfiniteScroll(
-  hasMore: boolean,
-  isLoading: boolean,
-  onLoadMore: () => void,
-  threshold: number = 0.8
-) {
-  const [ref, setRef] = useState<HTMLDivElement | null>(null);
+/**
+ * Hook to measure component render performance
+ */
+export const useRenderPerformance = (componentName: string) => {
+  const renderStart = useRef<number>(0);
+  const renderCount = useRef<number>(0);
 
   useEffect(() => {
-    if (!ref) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting && hasMore && !isLoading) {
-          onLoadMore();
-        }
-      },
-      { threshold }
-    );
-
-    observer.observe(ref);
+    renderStart.current = performance.now();
+    renderCount.current += 1;
 
     return () => {
-      if (ref) {
-        observer.unobserve(ref);
+      const renderTime = performance.now() - renderStart.current;
+      
+      if (renderTime > 16) { // More than one frame (60fps)
+        console.warn(`[Performance] ${componentName} render took ${renderTime.toFixed(2)}ms (render #${renderCount.current})`);
       }
     };
-  }, [ref, hasMore, isLoading, onLoadMore, threshold]);
+  });
+};
 
-  return setRef;
-}
+/**
+ * Hook to debounce function calls
+ */
+export const useDebounce = <T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number
+): T => {
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
-// Pagination hook
-export function usePagination<T>(
-  items: T[],
-  itemsPerPage: number = 10
-) {
-  const [currentPage, setCurrentPage] = useState(1);
+  return useCallback(
+    ((...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
 
-  const totalPages = Math.ceil(items.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentItems = items.slice(startIndex, endIndex);
+      timeoutRef.current = setTimeout(() => {
+        callback(...(args as any));
+      }, delay);
+    }) as T,
+    [callback, delay]
+  );
+};
 
-  const goToPage = useCallback((page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-  }, [totalPages]);
+/**
+ * Hook to throttle function calls
+ */
+export const useThrottle = <T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number
+): T => {
+  const lastCallRef = useRef<number>(0);
 
-  const nextPage = useCallback(() => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+  return useCallback(
+    ((...args: Parameters<T>) => {
+      const now = Date.now();
+      
+      if (now - lastCallRef.current >= delay) {
+        lastCallRef.current = now;
+        callback(...args);
+      }
+    }) as T,
+    [callback, delay]
+  );
+};
+
+/**
+ * Hook to memoize expensive calculations
+ */
+export const useMemoizedCallback = <T extends (...args: any[]) => any>(
+  callback: T,
+  deps: React.DependencyList
+): T => {
+  const memoizedCallback = useRef<T>();
+  const depsRef = useRef<React.DependencyList>();
+
+  if (
+    !memoizedCallback.current ||
+    !depsRef.current ||
+    deps.some((dep, index) => dep !== depsRef.current?.[index])
+  ) {
+    memoizedCallback.current = callback;
+    depsRef.current = deps;
+  }
+
+  return memoizedCallback.current;
+};
+
+/**
+ * Hook to measure and log performance metrics
+ */
+export const usePerformanceMetrics = () => {
+  const { setGlobalLoading } = useUIStore();
+
+  const measureAsync = useCallback(async <T>(
+    name: string,
+    asyncFn: () => Promise<T>,
+    showLoading: boolean = false
+  ): Promise<T> => {
+    const startTime = performance.now();
+    
+    if (showLoading) {
+      setGlobalLoading(true, `Loading ${name}...`);
     }
-  }, [currentPage, totalPages]);
 
-  const prevPage = useCallback(() => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+    try {
+      const result = await asyncFn();
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+
+      console.log(`[Performance] ${name} completed in ${duration.toFixed(2)}ms`);
+
+      // Log slow operations
+      if (duration > 1000) {
+        console.warn(`[Performance] Slow operation detected: ${name} took ${duration.toFixed(2)}ms`);
+      }
+
+      return result;
+    } catch (error) {
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      
+      safeConsoleError(`[Performance] ${name} failed after ${duration.toFixed(2)}ms:`, error);
+      throw error;
+    } finally {
+      if (showLoading) {
+        setGlobalLoading(false);
+      }
     }
-  }, [currentPage]);
+  }, [setGlobalLoading]);
 
-  const resetPagination = useCallback(() => {
-    setCurrentPage(1);
+  const measureSync = useCallback(<T>(
+    name: string,
+    syncFn: () => T
+  ): T => {
+    const startTime = performance.now();
+    
+    try {
+      const result = syncFn();
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+
+      if (duration > 16) { // More than one frame
+        console.warn(`[Performance] Slow sync operation: ${name} took ${duration.toFixed(2)}ms`);
+      }
+
+      return result;
+    } catch (error) {
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      
+      safeConsoleError(`[Performance] ${name} failed after ${duration.toFixed(2)}ms:`, error);
+      throw error;
+    }
   }, []);
 
   return {
-    currentItems,
-    currentPage,
-    totalPages,
-    hasNextPage: currentPage < totalPages,
-    hasPrevPage: currentPage > 1,
-    goToPage,
-    nextPage,
-    prevPage,
-    resetPagination
+    measureAsync,
+    measureSync
   };
-}
+};
 
-// Performance monitoring hook
-export function usePerformanceMonitor(componentName: string) {
-  const renderCount = useRef(0);
-  const startTime = useRef<number>(Date.now());
+/**
+ * Hook to optimize list rendering with virtualization
+ */
+export const useVirtualization = (
+  itemCount: number,
+  itemHeight: number,
+  containerHeight: number
+) => {
+  const [scrollTop, setScrollTop] = useState(0);
 
-  useEffect(() => {
-    renderCount.current += 1;
-    
-    // Log performance metrics in development
-    if (process.env.NODE_ENV === 'development') {
-      const timeSinceMount = Date.now() - startTime.current;
-      console.log(`[Performance] ${componentName}: Render #${renderCount.current}, Time since mount: ${timeSinceMount}ms`);
-    }
-  });
+  const visibleStart = Math.floor(scrollTop / itemHeight);
+  const visibleEnd = Math.min(
+    visibleStart + Math.ceil(containerHeight / itemHeight) + 1,
+    itemCount
+  );
 
-  // Memory usage monitoring (if available)
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && 'memory' in performance) {
-      const memory = (performance as { memory: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
-      if (memory) {
-        const usedMB = Math.round(memory.usedJSHeapSize / 1024 / 1024);
-        const totalMB = Math.round(memory.totalJSHeapSize / 1024 / 1024);
-        
-        if (usedMB > 100) { // Warning threshold
-          console.warn(`[Memory] ${componentName}: High memory usage - ${usedMB}MB / ${totalMB}MB`);
-        }
-      }
-    }
-  }, [componentName]);
+  const visibleItems = Array.from(
+    { length: visibleEnd - visibleStart },
+    (_, index) => visibleStart + index
+  );
+
+  const totalHeight = itemCount * itemHeight;
+  const offsetY = visibleStart * itemHeight;
 
   return {
-    renderCount: renderCount.current,
-    timeSinceMount: Date.now() - startTime.current
+    visibleItems,
+    totalHeight,
+    offsetY,
+    setScrollTop
   };
-}
+};
 
-// Optimized callback hook
-export function useOptimizedCallback<T extends (...args: unknown[]) => unknown>(
-  callback: T,
-  dependencies: React.DependencyList
-): T {
-  return useCallback(callback, dependencies);
-}
+/**
+ * Hook to optimize image loading
+ */
+export const useImageOptimization = () => {
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+  const [loadingImages, setLoadingImages] = useState<Set<string>>(new Set());
 
-// Throttle hook for scroll and resize events
-export function useThrottle<T extends (...args: unknown[]) => unknown>(
-  callback: T,
-  delay: number
-): T {
-  const lastCall = useRef(0);
-  const lastCallTimer = useRef<NodeJS.Timeout | undefined>(undefined);
-
-  return useCallback((...args: Parameters<T>) => {
-    const now = Date.now();
-
-    if (now - lastCall.current >= delay) {
-      lastCall.current = now;
-      callback(...args);
-    } else {
-      if (lastCallTimer.current) {
-        clearTimeout(lastCallTimer.current);
+  const loadImage = useCallback((src: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (loadedImages.has(src)) {
+        resolve();
+        return;
       }
-      lastCallTimer.current = setTimeout(() => {
-        lastCall.current = Date.now();
-        callback(...args);
-      }, delay - (now - lastCall.current));
-    }
-  }, [callback, delay]) as T;
-}
 
-// Image loading optimization hook
-export function useImageLoader(src: string) {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
+      if (loadingImages.has(src)) {
+        // Wait for existing load to complete
+        const checkLoaded = () => {
+          if (loadedImages.has(src)) {
+            resolve();
+          } else {
+            setTimeout(checkLoaded, 100);
+          }
+        };
+        checkLoaded();
+        return;
+      }
+
+      setLoadingImages(prev => new Set(prev).add(src));
+
+      const img = new Image();
+      img.onload = () => {
+        setLoadedImages(prev => new Set(prev).add(src));
+        setLoadingImages(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(src);
+          return newSet;
+        });
+        resolve();
+      };
+      img.onerror = () => {
+        setLoadingImages(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(src);
+          return newSet;
+        });
+        reject(new Error(`Failed to load image: ${src}`));
+      };
+      img.src = src;
+    });
+  }, [loadedImages, loadingImages]);
+
+  const isImageLoaded = useCallback((src: string) => {
+    return loadedImages.has(src);
+  }, [loadedImages]);
+
+  const isImageLoading = useCallback((src: string) => {
+    return loadingImages.has(src);
+  }, [loadingImages]);
+
+  return {
+    loadImage,
+    isImageLoaded,
+    isImageLoading
+  };
+};
+
+/**
+ * Hook to monitor memory usage
+ */
+export const useMemoryMonitor = () => {
+  const [memoryInfo, setMemoryInfo] = useState<{
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  } | null>(null);
 
   useEffect(() => {
-    if (!src) return;
-
-    setIsLoaded(false);
-    setHasError(false);
-
-    const img = new Image();
-    
-    img.onload = () => {
-      setIsLoaded(true);
+    const updateMemoryInfo = () => {
+      if ('memory' in performance) {
+        const memory = (performance as any).memory;
+        setMemoryInfo({
+          usedJSHeapSize: memory.usedJSHeapSize,
+          totalJSHeapSize: memory.totalJSHeapSize,
+          jsHeapSizeLimit: memory.jsHeapSizeLimit
+        });
+      }
     };
 
-    img.onerror = () => {
-      setHasError(true);
-    };
+    updateMemoryInfo();
+    const interval = setInterval(updateMemoryInfo, 5000); // Check every 5 seconds
 
-    img.src = src;
+    return () => clearInterval(interval);
+  }, []);
 
-    return () => {
-      img.onload = null;
-      img.onerror = null;
-    };
-  }, [src]);
+  const getMemoryUsagePercentage = useCallback(() => {
+    if (!memoryInfo) return 0;
+    return (memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit) * 100;
+  }, [memoryInfo]);
 
-  return { isLoaded, hasError };
-}
+  const isMemoryHigh = useCallback(() => {
+    return getMemoryUsagePercentage() > 80;
+  }, [getMemoryUsagePercentage]);
+
+  return {
+    memoryInfo,
+    getMemoryUsagePercentage,
+    isMemoryHigh
+  };
+};

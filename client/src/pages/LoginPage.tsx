@@ -1,53 +1,85 @@
 // src/pages/LoginPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../contexts/AuthContext';
+import { useAuthActions, useUser } from '../stores/authStore';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { getUserRolePath } from '../utils/navigation';
 import './LoginPage.css';
 
-export function LoginPage() {
+export default function LoginPage() {
   const [id, setId] = useState('');
   const [sifre, setSifre] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login, user, isLoading } = useAuthContext();
+  const { login } = useAuthActions();
+  const user = useUser();
 
-  // Kullanıcı zaten giriş yapmışsa yönlendir
+  // Handle redirect when user logs in successfully
   useEffect(() => {
-    if (user && user.rol) {
-      const redirectPath = getUserRolePath(user.rol);
-      console.log('[LoginPage] User already authenticated, redirecting to:', redirectPath);
-      navigate(redirectPath, { replace: true });
+    if (user?.rol) {
+      // User is logged in, redirect to their dashboard
+      navigate(`/${user.rol}`, { replace: true });
     }
   }, [user, navigate]);
 
-  // Kullanıcı giriş yaptıktan sonra yönlendirme
-  useEffect(() => {
-    if (user && user.rol && !isLoading) {
-      const redirectPath = getUserRolePath(user.rol);
-      console.log('[LoginPage] User logged in, redirecting to:', redirectPath);
-      navigate(redirectPath, { replace: true });
-    }
-  }, [user, isLoading, navigate]);
+  // If user is already logged in, redirect them
+  if (user?.rol) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Yönlendiriliyor...</p>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log('Login attempt started:', { id, sifre: '***' });
+    console.log('API URL:', import.meta.env.VITE_API_URL || 'http://localhost:3001');
+    
+    // Basic validation
+    if (!id.trim()) {
+      setError('Kullanıcı ID gereklidir');
+      return;
+    }
+    
+    if (!sifre.trim()) {
+      setError('Şifre gereklidir');
+      return;
+    }
+    
     setIsSubmitting(true);
     setError('');
 
     try {
-      await login(id, sifre);
+      console.log('Calling login function...');
+      
+      // Test API connection first
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/health`);
+        console.log('API health check:', response.status);
+      } catch (healthError) {
+        console.error('API health check failed:', healthError);
+        setError('Sunucuya bağlanılamıyor. Lütfen daha sonra tekrar deneyin.');
+        toast.error('Sunucuya bağlanılamıyor');
+        return;
+      }
+      
+      await login(id.trim(), sifre);
+      console.log('Login successful!');
       toast.success('Giriş başarılı!');
       
-      // Giriş başarılı olduktan sonra kısa bir gecikme
-      console.log('[LoginPage] Login successful, waiting for user state update...');
-    } catch (error: any) {
-      console.error('Login error:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Giriş başarısız';
+      // The redirect will be handled by useEffect when user state updates
+    } catch (error: unknown) {
+      console.error('Login error details:', {
+        error,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      const errorMessage = (error as any)?.response?.data?.message || (error as any)?.message || 'Giriş başarısız';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -55,113 +87,113 @@ export function LoginPage() {
     }
   };
 
-
   return (
-    <div className="login-bg">
+    <div className="login-bg" role="main">
       {/* Background Blobs */}
-      <div className="login-blob login-blob-1"></div>
-      <div className="login-blob login-blob-2"></div>
-      <div className="login-blob login-blob-3"></div>
+      <div className="login-blob login-blob-1" aria-hidden="true"></div>
+      <div className="login-blob login-blob-2" aria-hidden="true"></div>
+      <div className="login-blob login-blob-3" aria-hidden="true"></div>
       
       {/* Gradient Border */}
-      <div className="login-gradient-border"></div>
-      
-      {/* Login Card */}
-      <div className="login-card">
-        {/* Card Highlight */}
-        
-        {/* Logo */}
-        <div className="login-logo-container">
-          <div className="login-logo">
-            <img src="/tofaslogo.png" alt="Tofaş Fen Lisesi" className="login-logo-image" />
-          </div>
-        </div>
-        
-        {/* Title */}
-        <h1 className="login-title">Tofaş Fen Lisesi</h1>
-        <p className="login-subtitle">Öğrenci Bilgi Sistemi</p>
-        
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="login-form">
-          {/* ID Input */}
-          <div className="input-group">
-            <input
-              type="text"
-              id="id"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-              className="login-input"
-              placeholder=" "
-              required
-            />
-            <label htmlFor="id" className="login-label">
-              Kullanıcı ID
-            </label>
-            <User className="input-icon" />
-          </div>
-          
-          {/* Password Input */}
-          <div className="input-group">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              id="sifre"
-              value={sifre}
-              onChange={(e) => setSifre(e.target.value)}
-              className="login-input"
-              placeholder=" "
-              required
-            />
-            <label htmlFor="sifre" className="login-label">
-              Şifre
-            </label>
-            <Lock className="input-icon" />
-            
-            {/* Password Toggle */}
+      <div className="login-gradient-border">
+        <div className="login-container">
+          {/* Header */}
+          <header className="login-header">
+            <div className="login-logo">
+              <img src="/tofaslogo.png" alt="Tofaş Fen Lisesi logosu" className="login-logo-img" />
+            </div>
+            <h1 className="login-title">Tofaş Fen Lisesi</h1>
+            <p className="login-subtitle">Bilgi Sistemi</p>
+          </header>
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="login-form" role="form" aria-label="Giriş formu">
+            <div className="login-form-group">
+              <label htmlFor="id" className="login-label">
+                <User className="login-icon" />
+                Kullanıcı ID
+              </label>
+              <input
+                type="text"
+                id="id"
+                value={id}
+                onChange={(e) => {
+                  setId(e.target.value);
+                  if (error) setError(''); // Clear error when user starts typing
+                }}
+                className="login-input"
+                placeholder="Kullanıcı ID'nizi girin"
+                required
+                disabled={isSubmitting}
+                autoComplete="username"
+                maxLength={50}
+              />
+            </div>
+
+            <div className="login-form-group">
+              <label htmlFor="sifre" className="login-label">
+                <Lock className="login-icon" />
+                Şifre(TCKN)
+              </label>
+              <div className="login-password-container">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="sifre"
+                  value={sifre}
+                  onChange={(e) => {
+                    setSifre(e.target.value);
+                    if (error) setError(''); // Clear error when user starts typing
+                  }}
+                  className="login-input"
+                  placeholder="Şifrenizi girin"
+                  required
+                  disabled={isSubmitting}
+                  autoComplete="current-password"
+                  maxLength={100}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="login-password-toggle"
+                  disabled={isSubmitting}
+                  aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                  title={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div id="error-message" className="login-error" role="alert" aria-live="polite">
+                {error}
+              </div>
+            )}
+
             <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="password-toggle"
+              type="submit"
+              className="login-button"
+              disabled={isSubmitting}
+              aria-describedby={error ? 'error-message' : undefined}
             >
-              {showPassword ? (
-                <EyeOff className="toggle-icon" />
+              {isSubmitting ? (
+                <>
+                  <div className="loading-spinner" style={{ marginRight: '8px' }}></div>
+                  Giriş yapılıyor...
+                </>
               ) : (
-                <Eye className="toggle-icon" />
+                'Giriş Yap'
               )}
             </button>
-          </div>
-          
-          {/* Error Message */}
-          {error && (
-            <div className="error-message">
-              {error}
-            </div>
-          )}
-          
-          {/* Divider */}
-          <div className="login-divider">
-            <div className="divider-line"></div>
-            <span className="divider-text"></span>
-            <div className="divider-line"></div>
-          </div>
-          
+          </form>
 
-          
-          {/* Login Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="login-submit-button"
-          >
-            {isSubmitting ? (
-              <div className="loading-spinner"></div>
-            ) : (
-              'Giriş Yap'
-            )}
-          </button>
-        </form>
-        
-        {/* Card Glow */}
-        <div className="login-card-glow"></div>
+          {/* Footer */}
+          <footer className="login-footer">
+            <p className="login-footer-text">
+              © 2024 Tofaş Fen Lisesi. Tüm hakları saklıdır.
+            </p>
+          </footer>
+        </div>
       </div>
     </div>
   );

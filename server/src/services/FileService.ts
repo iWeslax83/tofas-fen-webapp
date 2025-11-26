@@ -1,4 +1,4 @@
-import { Request } from 'express';
+// import { Request } from 'express';
 import { File, Folder, IFile, IFolder } from '../models/File';
 import { User } from '../models/User';
 import { NotificationService } from './NotificationService';
@@ -711,7 +711,7 @@ export class FileService {
         ]
       }).sort({ createdAt: -1 });
 
-      results.files = files.filter((file: any) => file.hasPermission(userId));
+      results.files = files.filter((file: any) => file.hasPermission(userId)) as any;
     }
 
     if (type === 'all' || type === 'folders') {
@@ -734,7 +734,7 @@ export class FileService {
         ]
       }).sort({ name: 1 });
 
-      results.folders = folders.filter((folder: any) => folder.hasPermission(userId));
+      results.folders = folders.filter((folder: any) => folder.hasPermission(userId)) as any;
     }
 
     return results;

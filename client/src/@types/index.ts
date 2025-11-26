@@ -129,16 +129,6 @@ export interface NavigationItem {
   roles?: UserRole[];
 }
 
-// Notification Types
-export interface Notification {
-  id: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  title: string;
-  message: string;
-  timestamp: Date;
-  read: boolean;
-  actionUrl?: string;
-}
 
 // Theme Types
 export interface Theme {
