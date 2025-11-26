@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 // import { useNavigate } from "react-router-dom"; // Not used
 import { Check, X, Loader2, CheckCircle, XCircle, FileText, User } from 'lucide-react';
 import { toast } from "sonner";
-import { RequestService, NotificationService, UserService } from "../../utils/apiService";
+import { RequestService, UserService } from "../../utils/apiService";
 import BackButton from "../../components/BackButton";
 import ModernDashboardLayout from "../../components/ModernDashboardLayout";
 // import { useAuthContext } from "../../contexts/AuthContext"; // Not used
@@ -35,7 +35,7 @@ export default function AdminRequestsPage() {
       setRequests(Array.isArray(data) ? (data as RequestType[]) : ((data as { data: RequestType[] })?.data || []));
       setSuccess();
     }
-  }, [startLoading, setError, setLoadingError, setSuccess]);
+  }, []); // Remove dependencies to prevent infinite loop
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
@@ -63,19 +63,7 @@ export default function AdminRequestsPage() {
           });
         }
       }
-      // 3. Kullanıcıya bildirim gönder
-      const { error: notificationError } = await NotificationService.createNotification({
-        userId: req.userId,
-        type: "request",
-        message: status === "approved"
-          ? (req.type === "class-change" ? `Sınıf/şube değişikliği talebin onaylandı.` : `Oda değişikliği talebin onaylandı.`)
-          : (req.type === "class-change" ? `Sınıf/şube değişikliği talebin reddedildi.` : `Oda değişikliği talebin reddedildi.`),
-        meta: req.details,
-      });
-      if (notificationError) {
-        console.error('Error creating notification:', notificationError);
-        toast.error("Bildirim gönderilemedi");
-      }
+      // Notification service removed - no longer sending notifications
       toast.success("İşlem başarılı");
       fetchRequests();
       return true;

@@ -20,6 +20,10 @@ export { CalendarEvent, Calendar } from './Calendar';
 export { File, Folder } from './File';
 export { Message, Conversation, Email, ChatRoom, Contact } from './Communication';
 export { PerformanceMetric, OptimizationLog, PerformanceConfig } from './Performance';
+export { AuditLog } from './AuditLog';
+export { Attendance } from './Attendance';
+export { CarziRequest } from './CarziRequest';
+export { Dilekce } from './Dilekce';
 
 // Export interfaces for type safety
 export type { IUser } from './User';
@@ -43,3 +47,7 @@ export type { ICalendarEvent, ICalendar } from './Calendar';
 export type { IFile, IFolder } from './File';
 export type { IMessage, IConversation, IEmail, IChatRoom, IContact } from './Communication';
 export type { IPerformanceMetric, IOptimizationLog, IPerformanceConfig } from './Performance';
+export type { IAuditLog } from './AuditLog';
+export type { IAttendance } from './Attendance';
+export type { ICarziRequest } from './CarziRequest';
+export type { IDilekce } from './Dilekce';

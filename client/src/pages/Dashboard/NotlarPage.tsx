@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BookOpen, RefreshCw, AlertCircle, ArrowLeft } from 'lucide-react';
+// import { useNavigate } from 'react-router-dom'; // Not used
+import { BookOpen, AlertCircle } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
 import { NotesService } from '../../utils/apiService';
@@ -34,7 +34,7 @@ function getAverageClass(average: number): string {
 
 export default function NotlarPage() {
   const { user } = useAuthContext();
-  const navigate = useNavigate();
+  // const navigate = useNavigate(); // Removed unused variable
   
   const [notes, setNotes] = useState<NoteEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,22 +87,7 @@ export default function NotlarPage() {
     }
   }, [user]);
   
-  const handleRefresh = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Simulate API call with mock data
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setNotes([]);
-      toast.success('Notlar yenilendi');
-    } catch (error) {
-      console.error('Error refreshing notes:', error);
-      setError('Notlar yenilenirken bir hata oluştu.');
-      toast.error('Notlar yenilenirken hata oluştu');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Removed unused handleRefresh function
 
   if (isLoading) {
     return (

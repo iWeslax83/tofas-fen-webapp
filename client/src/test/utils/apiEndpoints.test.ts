@@ -6,7 +6,7 @@ describe('API Endpoints', () => {
     it('should have correct auth endpoints', () => {
       expect(API_ENDPOINTS.AUTH.LOGIN).toBe('/api/auth/login');
       expect(API_ENDPOINTS.AUTH.LOGOUT).toBe('/api/auth/logout');
-      expect(API_ENDPOINTS.AUTH.REFRESH).toBe('/api/auth/refresh');
+      expect(API_ENDPOINTS.AUTH.REFRESH).toBe('/api/auth/refresh-token');
       expect(API_ENDPOINTS.AUTH.ME).toBe('/api/auth/me');
     });
   });

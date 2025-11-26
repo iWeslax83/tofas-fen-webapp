@@ -2,9 +2,9 @@ import { Message, Conversation, Email, ChatRoom, Contact, IMessage, IConversatio
 import { User } from '../models/User';
 import { NotificationService } from './NotificationService';
 import { v4 as uuidv4 } from 'uuid';
-import { createHash } from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
+// import { createHash } from 'crypto';
+// import * as fs from 'fs';
+// import * as path from 'path';
 
 export interface MessageCreateData {
   conversationId: string;
@@ -441,7 +441,7 @@ export class CommunicationService {
     } catch (error) {
       email.status = 'failed';
       email.failedAt = new Date();
-      email.failureReason = error.message;
+      email.failureReason = (error as Error).message;
       await email.save();
     }
 
@@ -674,8 +674,8 @@ export class CommunicationService {
     }
 
     contact.isBlocked = false;
-    contact.blockedAt = undefined;
-    contact.blockReason = undefined;
+    contact.blockedAt = undefined as any;
+    contact.blockReason = undefined as any;
     contact.updatedAt = new Date();
     await contact.save();
 
@@ -683,7 +683,7 @@ export class CommunicationService {
   }
 
   // Search and Analytics
-  static async searchMessages(userId: string, query: string, filters?: MessageFilters): Promise<IMessage[]> {
+  static async searchMessages(_userId: string, query: string, filters?: MessageFilters): Promise<IMessage[]> {
     let searchQuery: any = {
       $or: [
         { content: { $regex: query, $options: 'i' } },

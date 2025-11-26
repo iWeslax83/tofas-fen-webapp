@@ -227,7 +227,10 @@ router.get('/me', async (req, res) => {
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'M8taRuNgdgKCpGdJJQQdaW78') as any;
+        if (!process.env.JWT_SECRET) {
+          throw new Error('JWT_SECRET environment variable is not set');
+        }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
         userId = decoded.userId;
       } catch (error) {
         console.error('JWT verify error:', error);
@@ -331,8 +334,8 @@ router.post('/reset-password', async (req, res) => {
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, process.env.NODE_ENV === 'production' ? 10 : 8);
     user.sifre = hashedPassword;
-    user.resetToken = undefined;
-    user.resetTokenExpiry = undefined;
+    user.resetToken = undefined as any;
+    user.resetTokenExpiry = undefined as any;
     await user.save();
 
     res.json({ success: true, message: 'Şifre başarıyla güncellendi' });

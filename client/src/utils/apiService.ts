@@ -4,7 +4,7 @@ import {
   handleResponseArray
 } from './apiResponseHandler';
 import { API_ENDPOINTS } from './apiEndpoints';
-import { useErrorHandler } from './errorHandling';
+// Removed unused import
 
 // Standard API service class
 export class ApiService {
@@ -13,7 +13,7 @@ export class ApiService {
    */
   static async get<T>(
     endpoint: string,
-    config?: any
+    config?: Record<string, unknown>
   ): Promise<{ data: T; error: string | null }> {
     return handleResponse(
       SecureAPI.get(endpoint, config),
@@ -26,8 +26,8 @@ export class ApiService {
    */
   static async post<T>(
     endpoint: string,
-    data?: any,
-    config?: any
+    data?: Record<string, unknown>,
+    config?: Record<string, unknown>
   ): Promise<{ data: T; error: string | null }> {
     return handleResponse(
       SecureAPI.post(endpoint, data, config),
@@ -40,8 +40,8 @@ export class ApiService {
    */
   static async put<T>(
     endpoint: string,
-    data?: any,
-    config?: any
+    data?: Record<string, unknown>,
+    config?: Record<string, unknown>
   ): Promise<{ data: T; error: string | null }> {
     return handleResponse(
       SecureAPI.put(endpoint, data, config),
@@ -54,8 +54,8 @@ export class ApiService {
    */
   static async patch<T>(
     endpoint: string,
-    data?: any,
-    config?: any
+    data?: Record<string, unknown>,
+    config?: Record<string, unknown>
   ): Promise<{ data: T; error: string | null }> {
     return handleResponse(
       SecureAPI.patch(endpoint, data, config),
@@ -68,7 +68,7 @@ export class ApiService {
    */
   static async delete<T>(
     endpoint: string,
-    config?: any
+    config?: Record<string, unknown>
   ): Promise<{ data: T; error: string | null }> {
     return handleResponse(
       SecureAPI.delete(endpoint, config),
@@ -82,7 +82,7 @@ export class ApiService {
   static async upload<T>(
     endpoint: string,
     formData: FormData,
-    config?: any
+    config?: Record<string, unknown>
   ): Promise<{ data: T; error: string | null }> {
     return handleResponse(
       SecureAPI.upload(endpoint, formData, config),
@@ -95,7 +95,7 @@ export class ApiService {
    */
   static async getArray<T>(
     endpoint: string,
-    config?: any
+    config?: Record<string, unknown>
   ): Promise<{ data: T[]; error: string | null }> {
     return handleResponseArray(
       SecureAPI.get(endpoint, config),
@@ -130,11 +130,11 @@ export class UserService {
     return ApiService.getArray(API_ENDPOINTS.USER.GET_CHILDREN(parentId));
   }
 
-  static async createUser(userData: any) {
+  static async createUser(userData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.USER.CREATE, userData);
   }
 
-  static async updateUser(id: string, userData: any) {
+  static async updateUser(id: string, userData: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.USER.UPDATE(id), userData);
   }
 
@@ -143,9 +143,7 @@ export class UserService {
     return ApiService.delete(API_ENDPOINTS.USER.DELETE(id));
   }
 
-  static async changePassword(passwordData: { currentPassword: string; newPassword: string }) {
-    return ApiService.post(API_ENDPOINTS.USER.CHANGE_PASSWORD, passwordData);
-  }
+  // Şifre değiştirme fonksiyonu kaldırıldı - artık TCKN kullanılıyor
 
   static async sendEmailVerification(userId: string, email: string) {
     return ApiService.post(API_ENDPOINTS.USER.EMAIL.SEND_CODE, { userId, email });
@@ -173,11 +171,11 @@ export class NotesService {
     return ApiService.getArray(API_ENDPOINTS.NOTES.BASE);
   }
 
-  static async createNote(noteData: any) {
+  static async createNote(noteData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.NOTES.CREATE, noteData);
   }
 
-  static async updateNote(id: string, noteData: any) {
+  static async updateNote(id: string, noteData: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.NOTES.UPDATE(id), noteData);
   }
 
@@ -622,32 +620,6 @@ export class RequestService {
   }
 }
 
-// Notifications service
-export class NotificationService {
-  static async getNotifications() {
-    return ApiService.getArray(API_ENDPOINTS.NOTIFICATIONS.BASE);
-  }
-
-  static async createNotification(notificationData: any) {
-    return ApiService.post(API_ENDPOINTS.NOTIFICATIONS.CREATE, notificationData);
-  }
-
-  static async markNotificationAsRead(id: string) {
-    return ApiService.post(API_ENDPOINTS.NOTIFICATIONS.MARK_READ(id));
-  }
-
-  static async markAllNotificationsAsRead() {
-    return ApiService.post(API_ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ);
-  }
-
-  static async getNotificationsByUser(userId: string) {
-    return ApiService.getArray(API_ENDPOINTS.NOTIFICATIONS.GET_BY_USER(userId));
-  }
-
-  static async getUnreadNotifications(userId: string) {
-    return ApiService.getArray(API_ENDPOINTS.NOTIFICATIONS.GET_UNREAD(userId));
-  }
-}
 
 // Monitoring service
 export class MonitoringService {

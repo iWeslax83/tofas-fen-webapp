@@ -1,23 +1,9 @@
 import { toast } from 'react-hot-toast';
 import { Analytics } from './monitoring';
+import { AppError, ErrorType, ErrorSeverity, ErrorContext } from './AppError';
 
-// Error Types
-export enum ErrorType {
-  NETWORK = 'NETWORK',
-  AUTHENTICATION = 'AUTHENTICATION',
-  AUTHORIZATION = 'AUTHORIZATION',
-  VALIDATION = 'VALIDATION',
-  SERVER = 'SERVER',
-  CLIENT = 'CLIENT',
-  UNKNOWN = 'UNKNOWN'
-}
-
-export enum ErrorSeverity {
-  LOW = 'LOW',
-  MEDIUM = 'MEDIUM',
-  HIGH = 'HIGH',
-  CRITICAL = 'CRITICAL'
-}
+// Re-export for backward compatibility
+export { AppError, ErrorType, ErrorSeverity };
 
 // Error Categories
 export interface ErrorCategory {
@@ -28,47 +14,6 @@ export interface ErrorCategory {
   shouldRetry: boolean;
   maxRetries: number;
   retryDelay: number;
-}
-
-// Error Context
-export interface ErrorContext {
-  component?: string;
-  action?: string;
-  userId?: string;
-  timestamp: number;
-  url?: string;
-  userAgent?: string;
-}
-
-// Enhanced Error Class
-export class AppError extends Error {
-  public readonly type: ErrorType;
-  public readonly severity: ErrorSeverity;
-  public readonly context: ErrorContext;
-  public readonly originalError?: Error;
-  public readonly retryCount: number;
-
-  constructor(
-    message: string,
-    type: ErrorType = ErrorType.UNKNOWN,
-    severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-    context: Partial<ErrorContext> = {},
-    originalError?: Error,
-    retryCount: number = 0
-  ) {
-    super(message);
-    this.name = 'AppError';
-    this.type = type;
-    this.severity = severity;
-    this.context = {
-      timestamp: Date.now(),
-      url: window.location.href,
-      userAgent: navigator.userAgent,
-      ...context
-    };
-    this.originalError = originalError;
-    this.retryCount = retryCount;
-  }
 }
 
 // Error Categories Configuration
@@ -125,6 +70,51 @@ const ERROR_CATEGORIES: Record<ErrorType, ErrorCategory> = {
     recoveryAction: 'Sayfayı yenileyin',
     shouldRetry: true,
     maxRetries: 1,
+    retryDelay: 1000
+  },
+  [ErrorType.NOT_FOUND]: {
+    type: ErrorType.NOT_FOUND,
+    severity: ErrorSeverity.MEDIUM,
+    userMessage: 'Aradığınız kaynak bulunamadı.',
+    recoveryAction: 'URL\'yi kontrol edin',
+    shouldRetry: false,
+    maxRetries: 0,
+    retryDelay: 0
+  },
+  [ErrorType.TIMEOUT]: {
+    type: ErrorType.TIMEOUT,
+    severity: ErrorSeverity.MEDIUM,
+    userMessage: 'İstek zaman aşımına uğradı.',
+    recoveryAction: 'Tekrar deneyin',
+    shouldRetry: true,
+    maxRetries: 2,
+    retryDelay: 3000
+  },
+  [ErrorType.RATE_LIMIT]: {
+    type: ErrorType.RATE_LIMIT,
+    severity: ErrorSeverity.MEDIUM,
+    userMessage: 'Çok fazla istek gönderdiniz.',
+    recoveryAction: 'Biraz bekleyin',
+    shouldRetry: true,
+    maxRetries: 1,
+    retryDelay: 5000
+  },
+  [ErrorType.PARSING]: {
+    type: ErrorType.PARSING,
+    severity: ErrorSeverity.MEDIUM,
+    userMessage: 'Veri işleme hatası oluştu.',
+    recoveryAction: 'Sayfayı yenileyin',
+    shouldRetry: true,
+    maxRetries: 1,
+    retryDelay: 2000
+  },
+  [ErrorType.STORAGE]: {
+    type: ErrorType.STORAGE,
+    severity: ErrorSeverity.HIGH,
+    userMessage: 'Veri saklama hatası oluştu.',
+    recoveryAction: 'Tarayıcı ayarlarını kontrol edin',
+    shouldRetry: true,
+    maxRetries: 2,
     retryDelay: 1000
   },
   [ErrorType.UNKNOWN]: {
@@ -204,13 +194,12 @@ export class ErrorHandler {
       message = (error as any).message || 'İstemci hatası';
     }
 
-    const category = ERROR_CATEGORIES[type];
     return new AppError(
       message,
       type,
-      category.severity,
-      context,
-      error as Error
+      undefined, // statusCode
+      true, // isOperational
+      context
     );
   }
 
@@ -251,10 +240,8 @@ export class ErrorHandler {
 
   // Process individual error
   private async processError(error: AppError): Promise<void> {
-    const category = ERROR_CATEGORIES[error.type];
-    
     // Handle authentication errors
-    if (error.type === ErrorType.AUTHENTICATION) {
+    if (error.code === ErrorType.AUTHENTICATION) {
       // Redirect to login
       setTimeout(() => {
         window.location.href = '/login';
@@ -262,7 +249,7 @@ export class ErrorHandler {
     }
     
     // Handle critical errors
-    if (error.severity === ErrorSeverity.CRITICAL) {
+    if (error.isOperational === false) {
       // Log critical error and potentially show modal
       // Critical error logged to monitoring service
     }
@@ -270,18 +257,20 @@ export class ErrorHandler {
 
   // Show user-friendly notification
   private showUserNotification(error: AppError): void {
-    const category = ERROR_CATEGORIES[error.type];
+    const category = ERROR_CATEGORIES[error.code as ErrorType];
+    
+    if (!category) return;
     
     // Don't show toast for low severity errors
-    if (error.severity === ErrorSeverity.LOW) {
+    if (category.severity === ErrorSeverity.LOW) {
       return;
     }
 
     const toastOptions = {
-      duration: this.getToastDuration(error.severity),
-      icon: this.getToastIcon(error.type),
+      duration: this.getToastDuration(category.severity),
+      icon: this.getToastIcon(error.code as ErrorType),
       style: {
-        background: this.getToastBackground(error.severity),
+        background: this.getToastBackground(category.severity),
         color: '#fff',
         borderRadius: '8px',
         padding: '12px 16px',
@@ -333,9 +322,8 @@ export class ErrorHandler {
     const analytics = Analytics.getInstance();
     
     analytics.trackError(error, {
-      type: error.type,
-      severity: error.severity,
-      retryCount: error.retryCount,
+      type: error.code,
+      severity: error.isOperational ? 'medium' : 'high',
       ...error.context
     });
   }
@@ -357,10 +345,10 @@ export class ErrorHandler {
           ...context
         });
 
-        const category = ERROR_CATEGORIES[lastError.type];
+        const category = ERROR_CATEGORIES[lastError.code as ErrorType];
         
         // Don't retry if error type doesn't support retry
-        if (!category.shouldRetry || attempt >= category.maxRetries) {
+        if (!category?.shouldRetry || attempt >= category.maxRetries) {
           throw lastError;
         }
 
@@ -386,14 +374,14 @@ export class ErrorHandler {
 
   // Get error recovery suggestion
   getRecoverySuggestion(error: AppError): string | null {
-    const category = ERROR_CATEGORIES[error.type];
-    return category.recoveryAction || null;
+    const category = ERROR_CATEGORIES[error.code as ErrorType];
+    return category ? category.recoveryAction || null : null;
   }
 
   // Check if error should be retried
   shouldRetry(error: AppError): boolean {
-    const category = ERROR_CATEGORIES[error.type];
-    return category.shouldRetry && error.retryCount < category.maxRetries;
+    const category = ERROR_CATEGORIES[error.code as ErrorType];
+    return category ? category.shouldRetry : false;
   }
 
   // Get error statistics
@@ -405,8 +393,12 @@ export class ErrorHandler {
     };
 
     this.errorQueue.forEach(error => {
-      stats.byType[error.type] = (stats.byType[error.type] || 0) + 1;
-      stats.bySeverity[error.severity] = (stats.bySeverity[error.severity] || 0) + 1;
+      const errorType = error.code as ErrorType;
+      const category = ERROR_CATEGORIES[errorType];
+      if (category) {
+        stats.byType[errorType] = (stats.byType[errorType] || 0) + 1;
+        stats.bySeverity[category.severity] = (stats.bySeverity[category.severity] || 0) + 1;
+      }
     });
 
     return stats;

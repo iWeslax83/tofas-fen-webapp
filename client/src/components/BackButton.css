@@ -4,7 +4,7 @@
   align-items: center;
   gap: 12px;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
+  /* backdrop-filter: blur(20px); */
   border: 2px solid rgba(220, 20, 60, 0.1);
   color: #DC143C;
   cursor: pointer;

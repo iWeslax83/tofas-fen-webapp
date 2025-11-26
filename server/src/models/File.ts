@@ -428,12 +428,12 @@ FileSchema.methods = {
     if (this.permissions.owner === userId) return true;
     
     const sharedPermission = this.permissions.sharedWith.find(
-      share => share.userId === userId
+      (share: any) => share.userId === userId
     );
     
     if (!sharedPermission) return false;
     
-    const permissionLevels = { read: 1, write: 2, admin: 3 };
+    const permissionLevels: { [key: string]: number } = { read: 1, write: 2, admin: 3 };
     const requiredLevel = permissionLevels[permission];
     const userLevel = permissionLevels[sharedPermission.permission];
     
@@ -473,12 +473,12 @@ FolderSchema.methods = {
     if (this.permissions.owner === userId) return true;
     
     const sharedPermission = this.permissions.sharedWith.find(
-      share => share.userId === userId
+      (share: any) => share.userId === userId
     );
     
     if (!sharedPermission) return false;
     
-    const permissionLevels = { read: 1, write: 2, admin: 3 };
+    const permissionLevels: { [key: string]: number } = { read: 1, write: 2, admin: 3 };
     const requiredLevel = permissionLevels[permission];
     const userLevel = permissionLevels[sharedPermission.permission];
     
@@ -521,7 +521,7 @@ FileSchema.statics = {
     const folders = await Folder.find({ parentFolder: folderId, isActive: true }).sort({ name: 1 });
     
     // Filter by permissions
-    const accessibleFiles = files.filter(file => file.hasPermission(userId));
+    const accessibleFiles = files.filter((file: any) => file.hasPermission(userId));
     const accessibleFolders = folders.filter(folder => folder.hasPermission(userId));
     
     return { files: accessibleFiles, folders: accessibleFolders };

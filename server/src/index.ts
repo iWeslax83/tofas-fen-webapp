@@ -1,9 +1,12 @@
 // Load environment variables first
 import './config/environment';
 
+// Initialize OpenTelemetry before other imports
+import { initializeTelemetry } from './utils/telemetry';
+initializeTelemetry();
+
 import express from "express";
 import cors from "cors";
-import session from "express-session";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -13,20 +16,26 @@ import compression from "compression";
 
 // Middleware imports
 import { 
-  sessionSecurity, 
   csrfProtection,
-  sessionCache 
+  sessionCache
 } from './middleware';
+import { 
+  preventSQLInjection,
+  preventXSS,
+  sanitizeInput
+} from './middleware/security';
+import { globalErrorHandler } from './middleware/errorHandler';
 
 // Monitoring ve logging imports
 import logger from './utils/logger';
-import monitoringService, { startRequestTimer, endRequestTimer, logRequestMetrics } from './utils/monitoring';
+import monitoringService from './utils/monitoring';
 
-import authRoutes from './routes/auth';
+// Modular routes
+import authRoutes from './modules/auth/routes/authRoutes';
+import userRoutes from './routes/User'; // Keep existing for now
 import clubsRouter from "./routes/clubs";
 import notificationRoutes from './routes/Notification';
 import requestRoutes from './routes/Request';
-import userRoutes from './routes/User';
 import homeworkRoutes from "./routes/Homework";
 import announcementRoutes from "./routes/Announcement";
 import notesRoutes from "./routes/Notes";
@@ -42,10 +51,13 @@ import calendarRoutes from './routes/Calendar';
 import fileRoutes from './routes/files';
 import communicationRoutes from './routes/Communication';
 import performanceRoutes from './routes/Performance';
+import auditLogRoutes from './routes/AuditLog';
+import attendanceRoutes from './routes/Attendance';
+import carziRequestRoutes from './routes/CarziRequest';
+import dilekceRoutes from './routes/Dilekce';
 import { connectDB } from "./db";
 import { sendMail } from "./mailService";
-import { specs, swaggerOptions } from './utils/swagger';
-import swaggerUi from 'swagger-ui-express';
+import { setupSwagger } from './utils/swagger';
 import { initializeWebSocket } from './utils/websocket';
 
 const app = express();
@@ -77,7 +89,7 @@ const generalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req: any, res: any) => {
+  handler: (_req: any, res: any) => {
     res.status(429).json({
       error: 'Rate limit exceeded',
       message: 'Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.',
@@ -98,7 +110,7 @@ const readOnlyLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req: any, res: any) => {
+  handler: (_req: any, res: any) => {
     res.status(429).json({
       error: 'Read rate limit exceeded',
       message: 'Çok fazla okuma isteği gönderildi. Lütfen biraz bekleyin.',
@@ -119,7 +131,7 @@ const mealsLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req: any, res: any) => {
+  handler: (_req: any, res: any) => {
     res.status(429).json({
       error: 'Meals rate limit exceeded',
       message: 'Çok fazla yemek listesi isteği gönderildi. Lütfen biraz bekleyin.',
@@ -170,7 +182,7 @@ if (!fs.existsSync(logsDir)) {
 }
 
 // Status monitor middleware - Basit monitoring dashboard
-app.get('/status', (req: any, res: any) => {
+app.get('/status', (_req: any, res: any) => {
   const metrics = monitoringService.generateReport();
   res.json({
     title: 'Tofaş Fen Webapp Status',
@@ -189,10 +201,10 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Multer konfigürasyonu
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (_req, _file, cb) => {
     cb(null, uploadsDir);
   },
-  filename: (req, file, cb) => {
+  filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   }
@@ -203,7 +215,7 @@ const upload = multer({
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
-  fileFilter: (req, file, cb) => {
+  fileFilter: (_req, file, cb) => {
     // Sadece resim ve video dosyalarına izin ver
     if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
       cb(null, true);
@@ -215,7 +227,7 @@ const upload = multer({
 
 // CORS middleware, frontend port ve cookie desteği ile
 app.use(cors({
-  origin: "http://localhost:5173", // Tam frontend URL'si
+  origin: process.env.CORS_ORIGIN || "http://localhost:5173", // Environment variable'dan al
   credentials: false, // JWT token'ları localStorage'da saklandığı için false
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
@@ -237,11 +249,23 @@ app.use('/uploads', express.static(uploadsDir));
 // JWT kullanıldığı için session security gerekmez
 // app.use(sessionSecurity);
 
-// CSRF koruması ve rate limiting aktif edildi
+// Metrics middleware (before other middleware to track all requests)
+import { metricsMiddleware } from './middleware/metrics';
+app.use(metricsMiddleware);
+
+// API versioning middleware
+import { apiVersioningMiddleware, deprecationWarningMiddleware } from './middleware/apiVersioning';
+app.use('/api', apiVersioningMiddleware);
+app.use('/api', deprecationWarningMiddleware);
+
+// Security middleware'leri
 app.use(csrfProtection);
+app.use(preventSQLInjection);
+app.use(preventXSS);
+app.use(sanitizeInput);
 
 // Rate limiting uygula - specific limiters for different endpoint types
-// Development ortamında rate limiting'i devre dışı bırak
+// Always apply rate limiting, but with different limits for development
 if (process.env.NODE_ENV === 'production') {
   app.use('/api', generalLimiter);
   
@@ -251,10 +275,10 @@ if (process.env.NODE_ENV === 'production') {
   app.use('/api/notes', readOnlyLimiter);
   app.use('/api/schedule', readOnlyLimiter);
 } else {
-  // Development ortamında sadece çok yüksek limitler
+  // Development ortamında daha yüksek limitler ama yine de koruma
   const devLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
-    max: 1000, // 1000 requests per minute in development
+    max: 500, // 500 requests per minute in development (reduced from 1000)
     message: {
       error: 'Development rate limit exceeded',
       message: 'Çok fazla istek gönderildi. Lütfen biraz bekleyin.',
@@ -266,20 +290,17 @@ if (process.env.NODE_ENV === 'production') {
   
   app.use('/api', devLimiter);
 }
-if ((process.env.NODE_ENV || 'development') === 'production') {
-  app.use('/api/auth', authLimiter);
-}
+// Always apply auth rate limiting for security
+app.use('/api/auth', authLimiter);
 app.use('/api/upload', uploadLimiter);
 
 // Cache middleware
 app.use(sessionCache);
 
-// Swagger API Documentation
-app.use('/api-docs', swaggerUi.serve);
-app.get('/api-docs', swaggerUi.setup(specs, swaggerOptions));
+// Swagger API Documentation is handled by setupSwagger function
 
 // API Documentation endpoint
-app.get('/api-docs-info', (req: any, res: any) => {
+app.get('/api-docs-info', (_req: any, res: any) => {
   res.json({
     message: 'API Documentation',
     endpoints: {
@@ -331,6 +352,10 @@ app.use('/api/calendar', calendarRoutes as any);
 app.use('/api/files', fileRoutes as any);
 app.use('/api/communication', communicationRoutes as any);
 app.use('/api/performance', performanceRoutes as any);
+app.use('/api/audit-logs', auditLogRoutes as any);
+app.use('/api/attendance', attendanceRoutes as any);
+app.use('/api/carzi-requests', carziRequestRoutes as any);
+app.use('/api/dilekce', dilekceRoutes as any);
 
 // Dashboard stats endpoint
 app.use('/api/dashboard', analyticsRoutes as any);
@@ -353,13 +378,27 @@ app.post('/api/upload', upload.single('file'), (req: any, res: any) => {
 
 
 
+// Prometheus metrics endpoint
+app.get("/metrics", async (_req: any, res: any) => {
+  try {
+    const { register } = await import('./utils/metrics');
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    logger.error('Metrics endpoint failed', { error: errMsg });
+    res.status(500).json({ error: 'Failed to fetch metrics' });
+  }
+});
+
 // Health check endpoint
-app.get("/health", async (req: any, res: any) => {
+app.get("/health", async (_req: any, res: any) => {
   try {
     const healthCheck = await monitoringService.performHealthCheck();
     res.json(healthCheck);
   } catch (error) {
-    logger.error('Health check failed', { error: error.message });
+    const errMsg = error instanceof Error ? error.message : String(error);
+    logger.error('Health check failed', { error: errMsg });
     res.status(503).json({
       status: 'unhealthy',
       error: 'Health check failed',
@@ -369,7 +408,7 @@ app.get("/health", async (req: any, res: any) => {
 });
 
 // Basit ana sayfa kontrolü
-app.get("/", (req: any, res: any) => {
+app.get("/", (_req: any, res: any) => {
   res.send("Backend çalışıyor!");
 });
 
@@ -379,37 +418,45 @@ app.post("/api/test-mail", async (req: any, res: any) => {
     const info = await sendMail(to, subject, text);
     res.json({ success: true, info });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    const errMsg = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ success: false, error: errMsg });
   }
 });
 
+// Setup Swagger documentation
+setupSwagger(app);
+
+// Setup GraphQL server (BFF layer)
+if (process.env.ENABLE_GRAPHQL === 'true' || process.env.NODE_ENV !== 'production') {
+  import('./graphql/server')
+    .then(({ createApolloServer }) => {
+      const apolloServer = createApolloServer();
+      apolloServer.start().then(() => {
+        apolloServer.applyMiddleware({ app, path: '/graphql' });
+        console.log(`🚀 GraphQL server ready at http://localhost:${PORT}${apolloServer.graphqlPath}`);
+      });
+    })
+    .catch((err) => {
+      // GraphQL is optional in local dev; log and continue if dependencies are missing
+      logger && logger.warn
+        ? logger.warn('GraphQL server could not be initialized (optional in dev)', { error: err.message })
+        : console.warn('GraphQL server could not be initialized (optional in dev):', err.message);
+    });
+}
+
 // 404 handler
-app.use('*', (req: any, res: any) => {
+app.use('*', (_req: any, res: any) => {
   res.status(404).json({ error: 'Endpoint bulunamadı' });
 });
 
 // Global error handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error('Global error occurred', {
-    error: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
-    ip: req.ip,
-    userId: 'anonymous', // Session devre dışı olduğu için geçici olarak
-  });
-  
-  res.status(err.status || 500).json({ 
-    error: process.env.NODE_ENV === 'production' ? 'Sunucu hatası' : err.message,
-    timestamp: new Date().toISOString(),
-  });
-});
+app.use(globalErrorHandler);
 
 // Sunucu başlat
 const PORT = process.env.PORT || 3001;
 connectDB()
-  .then(() => {
-    const server = app.listen(PORT, () => {
+  .then(async () => {
+  const server = app.listen(PORT, async () => {
       logger.info(`🚀 Server started successfully`, {
         port: PORT,
         environment: process.env.NODE_ENV || 'development',
@@ -429,6 +476,11 @@ connectDB()
       // Initialize WebSocket for real-time notifications
       initializeWebSocket(server);
       console.log(`🔔 WebSocket notifications enabled`);
+      
+      // Initialize event-driven architecture
+      const { initializeEventDrivenWebSocket } = await import('./utils/websocket-enhanced');
+      initializeEventDrivenWebSocket();
+      console.log(`⚡ Event-driven architecture enabled`);
     });
   })
   .catch((err) => {

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { SecureAPI } from '../utils/api';
 import { toast } from 'react-hot-toast';
 
-export function ResetPasswordPage() {
+export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
@@ -43,8 +43,8 @@ export function ResetPasswordPage() {
       
       toast.success('Şifreniz başarıyla güncellendi');
       navigate('/login');
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Şifre sıfırlama başarısız';
+    } catch (error: unknown) {
+      const errorMessage = (error as any)?.response?.data?.error || 'Şifre sıfırlama başarısız';
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -204,6 +204,4 @@ export function ResetPasswordPage() {
       </div>
     </div>
   );
-}
-
-export default ResetPasswordPage; 
+} 

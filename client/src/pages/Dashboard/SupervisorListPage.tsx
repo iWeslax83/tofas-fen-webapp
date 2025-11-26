@@ -2,16 +2,11 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { DormitoryService } from "../../utils/apiService";
 import { toast } from "react-toastify";
-import { FileText, Loader2, RefreshCw, Upload, Calendar, Download, GraduationCap, ArrowLeft, Trash2, Users } from 'lucide-react';
+import { FileText, Loader2, RefreshCw, Upload, Calendar, Download, Trash2 } from 'lucide-react';
 import BackButton from "../../components/BackButton";
 import ModernDashboardLayout from "../../components/ModernDashboardLayout";
 import './SupervisorListPage.css';
 
-interface User {
-  adSoyad: string;
-  email: string;
-  role?: string;
-}
 
 interface SupervisorList {
   _id: string;
@@ -27,7 +22,7 @@ export default function SupervisorListPage() {
   const { user } = useAuth();
   const [supervisorLists, setSupervisorLists] = useState<SupervisorList[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>("");
+  const [, setError] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [uploading, setUploading] = useState(false);

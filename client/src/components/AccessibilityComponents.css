@@ -248,9 +248,7 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+/* @keyframes spin moved to theme.css */
 
 .accessible-button__icon {
   display: flex;
@@ -285,7 +283,7 @@
   justify-content: center;
   z-index: 1000;
   padding: var(--accessibility-spacing-md);
-  backdrop-filter: blur(4px);
+  /* backdrop-filter: blur(4px); */
 }
 
 .accessible-modal {
@@ -540,7 +538,7 @@
   align-items: center;
   gap: var(--accessibility-spacing-sm);
   z-index: 998;
-  backdrop-filter: blur(4px);
+  /* backdrop-filter: blur(4px); */
 }
 
 /* Responsive Design */

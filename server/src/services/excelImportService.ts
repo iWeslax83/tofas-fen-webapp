@@ -38,7 +38,7 @@ export class ExcelImportService {
               subject: String(subject).trim(),
               note: Number(note),
               date: String(date),
-              description: description ? String(description).trim() : undefined
+              description: description ? String(description).trim() : ''
             });
           }
         }
@@ -77,7 +77,7 @@ export class ExcelImportService {
               subject,
               note: Number(note),
               date,
-              description: description || undefined
+              description: description || ''
             });
           }
         }

@@ -95,6 +95,34 @@ router.post("/", authenticateJWT, authorizeRoles(['teacher', 'admin']), validate
   }
 });
 
+// Yeni ödev ekle - /create endpoint (sadece öğretmen ve admin)
+router.post("/create", authenticateJWT, authorizeRoles(['teacher', 'admin']), validateHomework, async (req, res) => {
+  try {
+    const { title, description, subject, classLevel, classSection, dueDate, attachments } = req.body;
+    
+    const newHomework = new Homework({
+      id: `hw_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title,
+      description,
+      subject,
+      teacherId: req.user.userId,
+      teacherName: req.user.adSoyad || 'Bilinmeyen Öğretmen',
+      classLevel,
+      classSection,
+      dueDate: new Date(dueDate),
+      attachments: attachments || [],
+      status: 'active',
+      isPublished: true
+    });
+
+    const savedHomework = await newHomework.save();
+    res.status(201).json(savedHomework);
+  } catch (error) {
+    console.error('Homework creation error:', error);
+    res.status(500).json({ error: 'Ödev oluşturulurken hata oluştu' });
+  }
+});
+
 // Ödev güncelle (sadece oluşturan öğretmen veya admin)
 router.put("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), validateHomework, async (req, res) => {
   try {

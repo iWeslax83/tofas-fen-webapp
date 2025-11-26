@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-export function HomePage() {
+export default function HomePage() {
   return (
     <div className="home-page">
       <h1>TOFAŞ Fen Lisesi Bilgi Sistemi</h1>

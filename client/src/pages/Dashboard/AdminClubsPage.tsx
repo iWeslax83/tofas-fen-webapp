@@ -6,7 +6,6 @@ import { ClubService } from "../../utils/apiService";
 import BackButton from "../../components/BackButton";
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import './AdminClubsPage.css';
-import '../../index.css';
 
 // const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'; // Not used
 

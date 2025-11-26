@@ -367,7 +367,7 @@ export class CalendarService {
       const newEndDate = new Date(currentDate.getTime() + eventDuration);
 
       const recurringEvent = new CalendarEvent({
-        ...parentEvent.toObject(),
+        ...(parentEvent.toObject() as any),
         id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         startDate: newStartDate,
         endDate: newEndDate,
@@ -461,7 +461,7 @@ export class CalendarService {
     }
   }
 
-  private static async notifyEventOrganizer(event: ICalendarEvent, action: string, data: any): Promise<void> {
+  private static async notifyEventOrganizer(event: ICalendarEvent, _action: string, data: any): Promise<void> {
     const notificationData: any = {
       title: 'Etkinlik yanıtı',
       message: `Bir katılımcı etkinliğinize yanıt verdi.`,

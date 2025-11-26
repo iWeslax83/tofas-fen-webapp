@@ -4,12 +4,12 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/api/auth/login',
     LOGOUT: '/api/auth/logout',
-    REFRESH: '/api/auth/refresh',
+    REFRESH: '/api/auth/refresh-token',
     ME: '/api/auth/me',
-    VERIFY_EMAIL: '/api/auth/verify-email',
-    SEND_VERIFICATION: '/api/auth/send-verification',
-    FORGOT_PASSWORD: '/api/auth/forgot-password',
+    PROFILE: '/api/auth/profile',
+    FORGOT_PASSWORD: '/api/auth/request-password-reset',
     RESET_PASSWORD: '/api/auth/reset-password',
+    // CHANGE_PASSWORD kaldırıldı - artık TCKN kullanılıyor
   },
 
   // User management endpoints
@@ -21,11 +21,8 @@ export const API_ENDPOINTS = {
     GET_BY_ID: (id: string) => `/api/user/${id}`,
     GET_BY_ROLE: (role: string) => `/api/user?role=${role}`,
     GET_CHILDREN: (parentId: string) => `/api/user/${parentId}/children`,
-    CHANGE_PASSWORD: '/api/user/change-password',
-    EMAIL: {
-      SEND_CODE: '/api/user/email/send-code',
-      VERIFY_CODE: '/api/user/email/verify-code',
-    },
+    // CHANGE_PASSWORD kaldırıldı - artık TCKN kullanılıyor
+    EMAIL: '/api/user/email',
     PARENT_CHILD: {
       LINK: '/api/user/parent-child-link',
       UNLINK: '/api/user/parent-child-link',
@@ -140,7 +137,7 @@ export const API_ENDPOINTS = {
   // Evci (leave) endpoints
   EVCI: {
     BASE: '/api/evci-requests',
-    CREATE: '/api/evci-requests/create',
+    CREATE: '/api/evci-requests',
     UPDATE: (id: string) => `/api/evci-requests/${id}`,
     DELETE: (id: string) => `/api/evci-requests/${id}`,
     GET_BY_STUDENT: (studentId: string) => `/api/evci-requests/student/${studentId}`,
@@ -157,15 +154,6 @@ export const API_ENDPOINTS = {
     GET_BY_STATUS: (status: string) => `/api/requests/status/${status}`,
   },
 
-  // Notifications endpoints
-  NOTIFICATIONS: {
-    BASE: '/api/notifications',
-    CREATE: '/api/notifications/create',
-    MARK_READ: (id: string) => `/api/notifications/${id}/read`,
-    MARK_ALL_READ: '/api/notifications/mark-all-read',
-    GET_BY_USER: (userId: string) => `/api/notifications/user/${userId}`,
-    GET_UNREAD: (userId: string) => `/api/notifications/user/${userId}/unread`,
-  },
 
   // Calendar endpoints
   CALENDAR: {
@@ -259,11 +247,6 @@ export const API_ENDPOINTS = {
         REMOVE: (id: string, userId: string) => `/api/communication/conversations/${id}/participants/${userId}`,
       },
     },
-    EMAILS: {
-      BASE: '/api/communication/emails',
-      CREATE: '/api/communication/emails',
-      SEND: (id: string) => `/api/communication/emails/${id}/send`,
-    },
     CHATROOMS: {
       BASE: '/api/communication/chatrooms',
       CREATE: '/api/communication/chatrooms',
@@ -280,6 +263,11 @@ export const API_ENDPOINTS = {
     SEARCH: '/api/communication/search',
     STATS: '/api/communication/stats',
     UPLOAD: '/api/communication/upload',
+    EMAILS: {
+      BASE: '/api/communication/emails',
+      SEND: '/api/communication/emails/send',
+      GET: (id: string) => `/api/communication/emails/${id}`,
+    },
   },
 
   // Performance endpoints
@@ -346,4 +334,4 @@ export const addQueryParams = (
 };
 
 // Export individual endpoint groups for easier imports
-export const { AUTH, USER, NOTES, HOMEWORKS, ANNOUNCEMENTS, SCHEDULE, CLUBS, DORMITORY, EVCI, REQUESTS, NOTIFICATIONS, CALENDAR, MONITORING, FILES, COMMUNICATION, PERFORMANCE } = API_ENDPOINTS;
+export const { AUTH, USER, NOTES, HOMEWORKS, ANNOUNCEMENTS, SCHEDULE, CLUBS, DORMITORY, EVCI, REQUESTS, CALENDAR, MONITORING, FILES, COMMUNICATION, PERFORMANCE } = API_ENDPOINTS;

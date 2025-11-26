@@ -1,9 +1,6 @@
-import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthRoutes } from './authRoutes';
-import { DashboardRoutes } from './dashboardRoutes';
-import { ClubRoutes } from './clubRoutes';
-import { AcademicRoutes } from './academicRoutes';
+import React, { lazy, Suspense } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '../stores/authStore';
 
 // Loading component for Suspense
 const LoadingSpinner = () => (
@@ -26,6 +23,7 @@ const OdevlerPage = lazy(() => import('../pages/Dashboard/OdevlerPage'));
 const DersProgramiPage = lazy(() => import('../pages/Dashboard/DersProgramiPage'));
 const NotlarPage = lazy(() => import('../pages/Dashboard/NotlarPage'));
 const NotEkleme = lazy(() => import('../pages/Dashboard/NotEkleme'));
+const YoklamaPage = lazy(() => import('../pages/Dashboard/YoklamaPage'));
 
 // Communication Pages
 const DuyurularPage = lazy(() => import('../pages/Dashboard/DuyurularPage'));
@@ -39,6 +37,10 @@ const AdminRequestsPage = lazy(() => import('../pages/Dashboard/AdminRequestsPag
 
 // Evci Pages
 const StudentEvciPage = lazy(() => import('../pages/Dashboard/StudentEvciPage'));
+const StudentCarziPage = lazy(() => import('../pages/Dashboard/StudentCarziPage'));
+const DilekcePage = lazy(() => import('../pages/Dashboard/DilekcePage'));
+const AdminCarziListPage = lazy(() => import('../pages/Dashboard/AdminCarziListPage'));
+const AdminDilekceListPage = lazy(() => import('../pages/Dashboard/AdminDilekceListPage'));
 const ParentEvciPage = lazy(() => import('../pages/Dashboard/ParentEvciPage'));
 const AdminEvciListPage = lazy(() => import('../pages/Dashboard/AdminEvciListPage'));
 
@@ -50,8 +52,6 @@ const CalendarPage = lazy(() => import('../pages/Dashboard/CalendarPage'));
 const FileManagementPage = lazy(() => import('../pages/Dashboard/FileManagementPage'));
 const CommunicationPage = lazy(() => import('../pages/Dashboard/CommunicationPage'));
 const PerformancePage = lazy(() => import('../pages/Dashboard/PerformancePage'));
-const NotificationManagementPage = lazy(() => import('../pages/Dashboard/NotificationManagementPage'));
-const NotificationAutomationPage = lazy(() => import('../pages/Dashboard/NotificationAutomationPage'));
 const MyStudentsPage = lazy(() => import('../pages/Dashboard/MyStudentsPage'));
 
 // Club Pages
@@ -68,10 +68,33 @@ const NavigationDemoPage = lazy(() => import('../pages/Dashboard/NavigationDemoP
 const AccessibilityDemoPage = lazy(() => import('../pages/Dashboard/AccessibilityDemoPage'));
 const DebugPage = lazy(() => import('../pages/DebugPage'));
 
-// Root redirect component
+// Root redirect component - Optimized to prevent unnecessary renders
 function RootRedirect() {
-  // This will be handled by AuthContext
-  return null;
+  const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
+  const hasNavigated = React.useRef(false);
+
+  // Show loading while checking auth
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  // Use useEffect to handle navigation after render - only once
+  React.useEffect(() => {
+    if (hasNavigated.current) return; // Prevent multiple navigations
+    
+    if (user?.rol) {
+      // If user is logged in, redirect to their dashboard
+      hasNavigated.current = true;
+      navigate(`/${user.rol}`, { replace: true });
+    } else {
+      // If not logged in, redirect to login
+      hasNavigated.current = true;
+      navigate('/login', { replace: true });
+    }
+  }, [user, navigate]);
+
+  return <LoadingSpinner />;
 }
 
 export default function AppRoutes() {
@@ -113,6 +136,8 @@ export default function AppRoutes() {
         <Route path="/teacher/file-import" element={<NotEkleme />} />
         
         <Route path="/teacher/ogrencilerim" element={<MyStudentsPage />} />
+        <Route path="/teacher/yoklama" element={<YoklamaPage />} />
+        <Route path="/admin/yoklama" element={<YoklamaPage />} />
         
         {/* Communication Routes */}
         <Route path="/yardim" element={<HelpPage />} />
@@ -147,16 +172,19 @@ export default function AppRoutes() {
         <Route path="/student/kuluplerim" element={<MyClubsPage />} />
         <Route path="/parent/kuluplerim" element={<MyClubsPage />} />
         
-        {/* Notification Routes */}
-        <Route path="/admin/bildirimler" element={<NotificationManagementPage />} />
-        <Route path="/teacher/bildirimler" element={<NotificationManagementPage />} />
-        <Route path="/admin/bildirim-otomasyonu" element={<NotificationAutomationPage />} />
-        <Route path="/teacher/bildirim-otomasyonu" element={<NotificationAutomationPage />} />
         
         {/* Evci Routes */}
         <Route path="/student/evci" element={<StudentEvciPage />} />
+        <Route path="/student/carzi" element={<StudentCarziPage />} />
         <Route path="/parent/evci" element={<ParentEvciPage />} />
+        
+        {/* Dilekçe Routes */}
+        <Route path="/student/dilekce" element={<DilekcePage />} />
+        <Route path="/teacher/dilekce" element={<DilekcePage />} />
+        <Route path="/parent/dilekce" element={<DilekcePage />} />
         <Route path="/admin/evci-listesi" element={<AdminEvciListPage />} />
+        <Route path="/admin/carzi-listesi" element={<AdminCarziListPage />} />
+        <Route path="/admin/dilekce-listesi" element={<AdminDilekceListPage />} />
         
         {/* Settings and Admin Routes */}
         <Route path="/ayarlar" element={<SettingsPage />} />

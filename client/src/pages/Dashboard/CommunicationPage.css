@@ -1,4 +1,7 @@
 /* Communication Page Styles */
+
+/* Import theme variables */
+@import url('../../styles/theme.css');
 .communication-page {
   display: flex;
   flex-direction: column;

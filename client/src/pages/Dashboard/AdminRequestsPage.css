@@ -1,8 +1,11 @@
 /* AdminRequestsPage Styles */
+
+/* Import theme variables */
+@import url('../../styles/theme.css');
 .dashboard-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  background: var(--gradient-purple);
+  padding: var(--space-5);
 }
 
 .dashboard-header {
@@ -231,10 +234,7 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
+/* @keyframes spin moved to theme.css */
 
 .loading-container {
   display: flex;

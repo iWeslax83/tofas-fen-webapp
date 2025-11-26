@@ -1,14 +1,17 @@
+/* Import theme variables */
+@import url('../../styles/theme.css');
+
 .report-management {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-  font-family: 'Inter', sans-serif;
+  background: var(--gradient-purple);
+  padding: var(--space-5);
+  font-family: var(--font-sans);
 }
 
 /* Page Header */
 .page-header {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  /* backdrop-filter: blur(10px); */
   border-radius: 20px;
   padding: 24px;
   margin-bottom: 24px;
@@ -117,7 +120,7 @@
 /* Filters Section */
 .filters-section {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  /* backdrop-filter: blur(10px); */
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;
@@ -209,10 +212,7 @@
   margin-bottom: 16px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* @keyframes spin moved to theme.css */
 
 .loading-state p {
   color: #6b7280;
@@ -228,7 +228,7 @@
 
 .report-card {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  /* backdrop-filter: blur(10px); */
   border-radius: 20px;
   padding: 24px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -417,10 +417,7 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
+/* @keyframes spin moved to theme.css */
 
 /* Error State */
 .error-state {
@@ -449,7 +446,7 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  /* backdrop-filter: blur(4px); */
   display: flex;
   align-items: center;
   justify-content: center;

@@ -1,46 +1,38 @@
-import { useEffect, useState } from "react";
-import { Settings, User, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { User } from 'lucide-react';
 import { useAuthContext } from "../../contexts/AuthContext";
 import { UserService } from "../../utils/apiService";
 import toast from "react-hot-toast";
-import { useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import BackButton from '../../components/BackButton';
-import { classChangeRequestSchema, roomChangeRequestSchema, validateForm } from "../../utils/validation";
 import './SettingsPage.css';
 
-type Tab = "Hesap" | "Okul" | "Pansiyon";
-const TABS: Tab[] = ["Hesap", "Okul", "Pansiyon"];
+type Tab = "Hesap";
+const TABS: Tab[] = ["Hesap"];
 
 export default function SettingsPage() {
   const { user: authUser, isLoading: authLoading } = useAuthContext();
   const [activeTab, setActiveTab] = useState<Tab>("Hesap");
   const [user, setUser] = useState<{ id: string; adSoyad: string; telefon?: string; rol: string; oda?: string } | null>(null);
-  const [roomReq, setRoomReq] = useState({ oda: '', reason: '' });
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>("");
-  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Hesap
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  // Şifre değiştirme kaldırıldı - artık TCKN kullanılıyor
 
-  // Okul
-  const [classReq, setClassReq] = useState({ sinif: "", sube: "", reason: "" });
 
   useEffect(() => {
     // Check if user has the correct role
     if (!authLoading && authUser && !["admin", "teacher", "student", "parent"].includes(authUser.rol || '')) {
-      console.warn(`User role ${authUser.rol} not allowed for settings page`);
-      window.location.href = `/${authUser.rol || 'login'}`;
+      console.warn(`User role ${authUser.rol || 'undefined'} not allowed for settings page`);
+      navigate(`/${authUser.rol || 'login'}`);
       return;
     }
 
     // Redirect to login if no user
     if (!authLoading && !authUser) {
-      window.location.href = '/login';
+      navigate('/login');
       return;
     }
 
@@ -55,220 +47,9 @@ export default function SettingsPage() {
 
 
 
-  // Şifre değiştir
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validation
-    if (!currentPassword || !newPassword) {
-      return toast.error("Lütfen tüm alanları doldurun", {
-        duration: 4000,
-        style: {
-          background: '#dc2626',
-          color: '#fff',
-        },
-      });
-    }
-
-    if (newPassword.length < 6) {
-      return toast.error("Yeni şifre en az 6 karakter olmalıdır", {
-        duration: 4000,
-        style: {
-          background: '#dc2626',
-          color: '#fff',
-        },
-      });
-    }
-
-    if (currentPassword === newPassword) {
-      return toast.error("Yeni şifre mevcut şifre ile aynı olamaz", {
-        duration: 4000,
-        style: {
-          background: '#dc2626',
-          color: '#fff',
-        },
-      });
-    }
-    
-    setIsChangingPassword(true);
-    const loadingToast = toast.loading("Şifre değiştiriliyor...", {
-      duration: 0, // Don't auto-dismiss
-    });
-    
-    try {
-      const response = await UserService.changePassword({
-        currentPassword,
-        newPassword,
-      });
-      
-      const { error } = response;
-      
-      if (error) {
-        toast.dismiss(loadingToast);
-        
-        // Specific error messages based on server response
-        if (error.includes("Mevcut şifre yanlış")) {
-          toast.error("Mevcut şifre yanlış. Lütfen doğru şifreyi girin.", {
-            duration: 5000,
-            style: {
-              background: '#dc2626',
-              color: '#fff',
-            },
-          });
-        } else if (error.includes("en az 6 karakter")) {
-          toast.error("Yeni şifre en az 6 karakter olmalıdır.", {
-            duration: 4000,
-            style: {
-              background: '#dc2626',
-              color: '#fff',
-            },
-          });
-        } else {
-          toast.error(error, {
-            duration: 5000,
-            style: {
-              background: '#dc2626',
-              color: '#fff',
-            },
-          });
-        }
-      } else {
-        toast.dismiss(loadingToast);
-        toast.success("Şifre başarıyla değiştirildi! 🎉", {
-          duration: 4000,
-          style: {
-            background: '#16a34a',
-            color: '#fff',
-          },
-        });
-        setCurrentPassword("");
-        setNewPassword("");
-      }
-    } catch (err: any) {
-      toast.dismiss(loadingToast);
-      console.error("Password change exception:", err);
-      
-      // Network or server error
-      if (err.message?.includes("Network Error") || err.code === "NETWORK_ERROR") {
-        toast.error("Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.", {
-          duration: 5000,
-          style: {
-            background: '#dc2626',
-            color: '#fff',
-          },
-        });
-      } else if (err.response?.status === 401) {
-        toast.error("Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.", {
-          duration: 5000,
-          style: {
-            background: '#dc2626',
-            color: '#fff',
-          },
-        });
-      } else {
-        toast.error("Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.", {
-          duration: 5000,
-          style: {
-            background: '#dc2626',
-            color: '#fff',
-          },
-        });
-      }
-    } finally {
-      setIsChangingPassword(false);
-    }
-  };
+  // Şifre değiştirme fonksiyonu kaldırıldı - artık TCKN kullanılıyor
 
 
-  // Sınıf/şube değişikliği talebi
-  const handleClassReq = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate form data
-    const { isValid, errors } = await validateForm(classChangeRequestSchema, classReq);
-    if (!isValid) {
-      const firstError = Object.values(errors)[0];
-      toast.error(firstError, {
-        duration: 4000,
-        style: {
-          background: '#dc2626',
-          color: '#fff',
-        },
-      });
-      return;
-    }
-    
-    // try {
-    //   const { error } = await RequestService.createClassChangeRequest({
-    //     userId: user.id,
-    //     currentClass: user.sinif || '',
-    //     currentSection: user.sube || '',
-    //     newClass: classReq.sinif,
-    //     newSection: classReq.sube,
-    //     reason: classReq.reason
-    //   });
-    //   if (error) {
-    //     toast.error(error);
-    //   } else {
-    //     toast.success("Talep gönderildi");
-    //     setClassReq({ sinif: "", sube: "", reason: "" });
-    //   }
-    // } catch (err: any) {
-    //   toast.error("Hata oluştu");
-    // }
-    toast.success("Sınıf değişikliği talebi gönderildi! 📝", {
-      duration: 4000,
-      style: {
-        background: '#16a34a',
-        color: '#fff',
-      },
-    });
-    setClassReq({ sinif: "", sube: "", reason: "" });
-  };
-
-  // Oda değişikliği talebi (pansiyon)
-  const handleRoomReq = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate form data
-    const { isValid, errors } = await validateForm(roomChangeRequestSchema, roomReq);
-    if (!isValid) {
-      const firstError = Object.values(errors)[0];
-      toast.error(firstError, {
-        duration: 4000,
-        style: {
-          background: '#dc2626',
-          color: '#fff',
-        },
-      });
-      return;
-    }
-    
-    // try {
-    //   const { error } = await RequestService.createRoomChangeRequest({
-    //     userId: user.id,
-    //     currentRoom: user.oda || '',
-    //     newRoom: roomReq.oda,
-    //     reason: roomReq.reason
-    //   });
-    //   if (error) {
-    //     toast.error(error);
-    //   } else {
-    //     toast.success("Talep gönderildi");
-    //     setRoomReq({ oda: "", reason: "" });
-    //   }
-    // } catch (err: any) {
-    //   toast.error("Hata oluştu");
-    // }
-    toast.success("Oda değişikliği talebi gönderildi! 🏠", {
-      duration: 4000,
-      style: {
-        background: '#16a34a',
-        color: '#fff',
-      },
-    });
-    setRoomReq({ oda: "", reason: "" });
-  };
 
   // Çıkış yap fonksiyonu (şimdilik kullanılmıyor)
   // const handleLogout = async () => {
@@ -300,8 +81,6 @@ export default function SettingsPage() {
     );
   }
 
-  const isPansiyon = !!user?.oda;
-
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${userRole}` },
     { label: 'Ayarlar' }
@@ -317,16 +96,14 @@ export default function SettingsPage() {
           <div className="tabs-container">
             <ul className="tabs-header">
               {TABS.map((tabName: Tab) => (
-                (tabName !== "Pansiyon" || isPansiyon) && (
-                  <li key={tabName} className="tab-item">
-                    <button
-                      onClick={() => setActiveTab(tabName)}
-                      className={`tab-button ${activeTab === tabName ? 'active' : ''}`}
-                    >
-                      {tabName}
-                    </button>
-                  </li>
-                )
+                <li key={tabName} className="tab-item">
+                  <button
+                    onClick={() => setActiveTab(tabName)}
+                    className={`tab-button ${activeTab === tabName ? 'active' : ''}`}
+                  >
+                    {tabName}
+                  </button>
+                </li>
               ))}
             </ul>
 
@@ -336,138 +113,54 @@ export default function SettingsPage() {
               <div className="form-section">
                 <h3 className="form-title">
                   <User className="h-5 w-5" />
-                  Şifre Değiştir
+                  Hesap Bilgileri
                 </h3>
-                <form onSubmit={handlePasswordChange} className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Mevcut Şifre</label>
-                    <input
-                      type="password"
-                      className="form-input"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      required
-                      placeholder="Mevcut şifrenizi girin"
-                    />
+                <div className="info-message" style={{ 
+                  padding: '20px', 
+                  backgroundColor: '#f0f9ff', 
+                  borderRadius: '8px',
+                  border: '1px solid #bae6fd',
+                  marginTop: '20px'
+                }}>
+                  <p style={{ margin: 0, color: '#0369a1', fontSize: '14px' }}>
+                    <strong>Bilgi:</strong> Şifre değiştirme özelliği kaldırılmıştır. 
+                    Sistem artık T.C. Kimlik Numarası (TCKN) ile giriş yapmaktadır.
+                  </p>
+                </div>
+                {user && (
+                  <div className="form-grid" style={{ marginTop: '20px' }}>
+                    <div className="form-group">
+                      <label className="form-label">Kullanıcı ID</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={user.id}
+                        disabled
+                        style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Ad Soyad</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={user.adSoyad}
+                        disabled
+                        style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Rol</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={user.rol}
+                        disabled
+                        style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+                      />
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Yeni Şifre</label>
-                    <input
-                      type="password"
-                      className="form-input"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      placeholder="Yeni şifrenizi girin"
-                    />
-                    <span style={{ color: '#718096', fontSize: 13, marginTop: 4 }}>Şifreniz en az 6 karakter olmalıdır.</span>
-                  </div>
-                  <div className="form-actions">
-                    <button 
-                      type="submit" 
-                      className="submit-button"
-                      disabled={isChangingPassword}
-                      style={{
-                        opacity: isChangingPassword ? 0.7 : 1,
-                        cursor: isChangingPassword ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      {isChangingPassword ? (
-                        <>
-                          <div className="spinner-small"></div>
-                          Şifre Değiştiriliyor...
-                        </>
-                      ) : (
-                        'Şifreyi Değiştir'
-                      )}
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-            </div>
-          )}
-          {/* Okul Tab */}
-          {activeTab === "Okul" && (
-            <div className="tab-content">
-              <div className="form-section">
-                <h3 className="form-title">
-                  <User className="h-5 w-5" />
-                  Sınıf/Şube Değişikliği Talebi
-                </h3>
-                <form onSubmit={handleClassReq} className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Sınıf</label>
-                    <input
-                      className="form-input"
-                      value={classReq.sinif}
-                      onChange={(e) => setClassReq((v) => ({ ...v, sinif: e.target.value }))}
-                      required
-                      placeholder="Sınıf seçin"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Şube</label>
-                    <input
-                      className="form-input"
-                      value={classReq.sube}
-                      onChange={(e) => setClassReq((v) => ({ ...v, sube: e.target.value }))}
-                      required
-                      placeholder="Şube seçin"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Açıklama</label>
-                    <textarea
-                      className="form-textarea"
-                      value={classReq.reason}
-                      onChange={(e) => setClassReq((v) => ({ ...v, reason: e.target.value }))}
-                      placeholder="Değişiklik nedenini açıklayın"
-                    />
-                  </div>
-                  <div className="form-actions">
-                    <button type="submit" className="submit-button">
-                      Talebi Gönder
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-          {/* Pansiyon Tab */}
-          {activeTab === "Pansiyon" && isPansiyon && (
-            <div className="tab-content">
-              <div className="form-section">
-                <h3 className="form-title">
-                  <User className="h-5 w-5" />
-                  Oda Değişikliği Talebi
-                </h3>
-                <form onSubmit={handleRoomReq} className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Yeni Oda</label>
-                    <input
-                      className="form-input"
-                      value={roomReq.oda}
-                      onChange={(e) => setRoomReq((v) => ({ ...v, oda: e.target.value }))}
-                      required
-                      placeholder="Yeni oda numarası"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Açıklama</label>
-                    <textarea
-                      className="form-textarea"
-                      value={roomReq.reason}
-                      onChange={(e) => setRoomReq((v) => ({ ...v, reason: e.target.value }))}
-                      placeholder="Oda değişikliği nedenini açıklayın"
-                    />
-                  </div>
-                  <div className="form-actions">
-                    <button type="submit" className="submit-button">
-                      Talebi Gönder
-                    </button>
-                  </div>
-                </form>
+                )}
               </div>
             </div>
           )}

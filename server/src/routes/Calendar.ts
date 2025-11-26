@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { CalendarService, CalendarFilters, EventCreateData } from '../services/CalendarService';
+import { CalendarService, CalendarFilters } from '../services/CalendarService';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import { validateRequest } from '../middleware/validation';
-import { body, query, param } from 'express-validator';
+import { body, query } from 'express-validator';
 
 const router = Router();
 
@@ -144,45 +144,45 @@ const validateEventCreate = [
 // ===== CALENDAR ROUTES =====
 
 // Get user's calendars
-router.get('/calendars', authenticateJWT, async (req, res) => {
+router.get('/calendars', authenticateJWT, async (req: any, res: any) => {
   try {
-    const calendars = await CalendarService.getUserCalendars(req.user.userId, req.user.role);
-    res.json(calendars);
+    const calendars = await CalendarService.getUserCalendars((req as any).user?.userId, (req as any).user?.role);
+    return res.json(calendars);
   } catch (error) {
     console.error('Calendar fetch error:', error);
-    res.status(500).json({ error: 'Takvimler getirilirken hata oluştu' });
+    return res.status(500).json({ error: 'Takvimler getirilirken hata oluştu' });
   }
 });
 
 // Get specific calendar
-router.get('/calendars/:id', authenticateJWT, async (req, res) => {
+router.get('/calendars/:id', authenticateJWT, async (req: any, res: any) => {
   try {
-    const calendar = await CalendarService.getCalendarById(req.params.id, req.user.userId, req.user.role);
+    const calendar = await CalendarService.getCalendarById(req.params.id, (req as any).user?.userId, (req as any).user?.role);
     
     if (!calendar) {
       return res.status(404).json({ error: 'Takvim bulunamadı' });
     }
 
-    res.json(calendar);
+    return res.json(calendar);
   } catch (error) {
     console.error('Calendar fetch error:', error);
-    res.status(500).json({ error: 'Takvim getirilirken hata oluştu' });
+    return res.status(500).json({ error: 'Takvim getirilirken hata oluştu' });
   }
 });
 
 // Create new calendar
-router.post('/calendars', authenticateJWT, validateCalendarCreate, async (req, res) => {
+router.post('/calendars', authenticateJWT, validateCalendarCreate, async (req: any, res: any) => {
   try {
-    const calendar = await CalendarService.createCalendar(req.user.userId, req.body);
-    res.status(201).json(calendar);
+    const calendar = await CalendarService.createCalendar((req as any).user?.userId, req.body);
+    return res.status(201).json(calendar);
   } catch (error) {
     console.error('Calendar creation error:', error);
-    res.status(500).json({ error: 'Takvim oluşturulurken hata oluştu' });
+    return res.status(500).json({ error: 'Takvim oluşturulurken hata oluştu' });
   }
 });
 
 // Update calendar
-router.put('/calendars/:id', authenticateJWT, validateCalendarCreate, async (req, res) => {
+router.put('/calendars/:id', authenticateJWT, validateCalendarCreate, async (req: any, res: any) => {
   try {
     const calendar = await CalendarService.updateCalendar(req.params.id, req.user.userId, req.body);
     
@@ -190,26 +190,26 @@ router.put('/calendars/:id', authenticateJWT, validateCalendarCreate, async (req
       return res.status(404).json({ error: 'Takvim bulunamadı veya güncelleme izniniz yok' });
     }
 
-    res.json(calendar);
+    return res.json(calendar);
   } catch (error) {
     console.error('Calendar update error:', error);
-    res.status(500).json({ error: 'Takvim güncellenirken hata oluştu' });
+    return res.status(500).json({ error: 'Takvim güncellenirken hata oluştu' });
   }
 });
 
 // Delete calendar
-router.delete('/calendars/:id', authenticateJWT, async (req, res) => {
+router.delete('/calendars/:id', authenticateJWT, async (req: any, res: any) => {
   try {
-    const success = await CalendarService.deleteCalendar(req.params.id, req.user.userId);
+    const success = await CalendarService.deleteCalendar(req.params.id, (req as any).user?.userId);
     
     if (!success) {
       return res.status(404).json({ error: 'Takvim bulunamadı veya silme izniniz yok' });
     }
 
-    res.status(204).end();
+    return res.status(204).end();
   } catch (error) {
     console.error('Calendar deletion error:', error);
-    res.status(500).json({ error: 'Takvim silinirken hata oluştu' });
+    return res.status(500).json({ error: 'Takvim silinirken hata oluştu' });
   }
 });
 
@@ -259,9 +259,9 @@ router.get('/events', authenticateJWT, [
       status: req.query.status as string,
       calendarId: req.query.calendarId as string,
       search: req.query.search as string
-    };
+    } as CalendarFilters;
 
-    const events = await CalendarService.getEvents(req.user.userId, req.user.role, filters);
+    const events = await CalendarService.getEvents((req as any).user?.userId, (req as any).user?.role, filters);
     res.json(events);
   } catch (error) {
     console.error('Events fetch error:', error);
@@ -270,40 +270,40 @@ router.get('/events', authenticateJWT, [
 });
 
 // Get specific event
-router.get('/events/:id', authenticateJWT, async (req, res) => {
+router.get('/events/:id', authenticateJWT, async (req: any, res: any) => {
   try {
-    const event = await CalendarService.getEventById(req.params.id, req.user.userId, req.user.role);
+    const event = await CalendarService.getEventById(req.params.id, (req as any).user?.userId, (req as any).user?.role);
     
     if (!event) {
       return res.status(404).json({ error: 'Etkinlik bulunamadı' });
     }
 
-    res.json(event);
+    return res.json(event);
   } catch (error) {
     console.error('Event fetch error:', error);
-    res.status(500).json({ error: 'Etkinlik getirilirken hata oluştu' });
+    return res.status(500).json({ error: 'Etkinlik getirilirken hata oluştu' });
   }
 });
 
 // Create new event
-router.post('/events', authenticateJWT, validateEventCreate, async (req, res) => {
+router.post('/events', authenticateJWT, validateEventCreate, async (req: any, res: any) => {
   try {
-    const event = await CalendarService.createEvent(req.user.userId, req.body);
-    res.status(201).json(event);
-  } catch (error) {
+    const event = await CalendarService.createEvent((req as any).user?.userId, req.body);
+    return res.status(201).json(event);
+  } catch (error: any) {
     console.error('Event creation error:', error);
     if (error.message.includes('Calendar access denied')) {
-      res.status(403).json({ error: 'Takvim erişim izniniz yok' });
+      return res.status(403).json({ error: 'Takvim erişim izniniz yok' });
     } else if (error.message.includes('Event overlaps')) {
-      res.status(400).json({ error: 'Etkinlik mevcut etkinliklerle çakışıyor' });
+      return res.status(400).json({ error: 'Etkinlik mevcut etkinliklerle çakışıyor' });
     } else {
-      res.status(500).json({ error: 'Etkinlik oluşturulurken hata oluştu' });
+      return res.status(500).json({ error: 'Etkinlik oluşturulurken hata oluştu' });
     }
   }
 });
 
 // Update event
-router.put('/events/:id', authenticateJWT, validateEventCreate, async (req, res) => {
+router.put('/events/:id', authenticateJWT, validateEventCreate, async (req: any, res: any) => {
   try {
     const event = await CalendarService.updateEvent(req.params.id, req.user.userId, req.body);
     
@@ -311,26 +311,26 @@ router.put('/events/:id', authenticateJWT, validateEventCreate, async (req, res)
       return res.status(404).json({ error: 'Etkinlik bulunamadı veya güncelleme izniniz yok' });
     }
 
-    res.json(event);
+    return res.json(event);
   } catch (error) {
     console.error('Event update error:', error);
-    res.status(500).json({ error: 'Etkinlik güncellenirken hata oluştu' });
+    return res.status(500).json({ error: 'Etkinlik güncellenirken hata oluştu' });
   }
 });
 
 // Delete event
-router.delete('/events/:id', authenticateJWT, async (req, res) => {
+router.delete('/events/:id', authenticateJWT, async (req: any, res: any) => {
   try {
-    const success = await CalendarService.deleteEvent(req.params.id, req.user.userId);
+    const success = await CalendarService.deleteEvent(req.params.id, (req as any).user?.userId);
     
     if (!success) {
       return res.status(404).json({ error: 'Etkinlik bulunamadı veya silme izniniz yok' });
     }
 
-    res.status(204).end();
+    return res.status(204).end();
   } catch (error) {
     console.error('Event deletion error:', error);
-    res.status(500).json({ error: 'Etkinlik silinirken hata oluştu' });
+    return res.status(500).json({ error: 'Etkinlik silinirken hata oluştu' });
   }
 });
 
@@ -360,26 +360,26 @@ router.post('/events/:id/respond', authenticateJWT, [
 // ===== ANALYTICS ROUTES =====
 
 // Get calendar statistics
-router.get('/stats', authenticateJWT, async (req, res) => {
+router.get('/stats', authenticateJWT, async (req: any, res: any) => {
   try {
-    const stats = await CalendarService.getCalendarStats(req.user.userId, req.user.role);
-    res.json(stats);
+    const stats = await CalendarService.getCalendarStats((req as any).user?.userId, (req as any).user?.role);
+    return res.json(stats);
   } catch (error) {
     console.error('Calendar stats error:', error);
-    res.status(500).json({ error: 'İstatistikler getirilirken hata oluştu' });
+    return res.status(500).json({ error: 'İstatistikler getirilirken hata oluştu' });
   }
 });
 
 // ===== REMINDER ROUTES =====
 
 // Process reminders (admin only)
-router.post('/reminders/process', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
+router.post('/reminders/process', authenticateJWT, authorizeRoles(['admin']), async (req: any, res: any) => {
   try {
     await CalendarService.processReminders();
-    res.json({ message: 'Hatırlatmalar işlendi' });
+    return res.json({ message: 'Hatırlatmalar işlendi' });
   } catch (error) {
     console.error('Reminder processing error:', error);
-    res.status(500).json({ error: 'Hatırlatmalar işlenirken hata oluştu' });
+    return res.status(500).json({ error: 'Hatırlatmalar işlenirken hata oluştu' });
   }
 });
 
@@ -393,7 +393,7 @@ router.get('/export/:calendarId', authenticateJWT, [
   validateRequest
 ], async (req, res) => {
   try {
-    const calendar = await CalendarService.getCalendarById(req.params.calendarId, req.user.userId, req.user.role);
+    const calendar = await CalendarService.getCalendarById(req.params.calendarId, (req as any).user?.userId, (req as any).user?.role);
     
     if (!calendar) {
       return res.status(404).json({ error: 'Takvim bulunamadı' });
@@ -403,9 +403,9 @@ router.get('/export/:calendarId', authenticateJWT, [
       calendarId: req.params.calendarId,
       startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
       endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined
-    };
+    } as CalendarFilters;
 
-    const events = await CalendarService.getEvents(req.user.userId, req.user.role, filters);
+    const events = await CalendarService.getEvents((req as any).user?.userId, (req as any).user?.role, filters);
     const format = req.query.format as string;
 
     // For now, return JSON format

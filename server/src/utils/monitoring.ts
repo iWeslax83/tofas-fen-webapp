@@ -182,7 +182,7 @@ class MonitoringService {
 
   // Memory leak kontrolü
   checkMemoryLeak(): boolean {
-    const metrics = this.getSystemMetrics();
+    // const _metrics = this.getSystemMetrics();
     const memoryUsage = process.memoryUsage();
     
     // Heap kullanımı %80'i geçerse uyarı
@@ -252,7 +252,7 @@ export const endRequestTimer = (startTime: number) => {
   return duration;
 };
 
-export const logRequestMetrics = (req: any, res: any, duration: number) => {
+export const logRequestMetrics = (_req: any, res: any, _duration: number) => {
   monitoringService.incrementRequestCount();
   
   if (res.statusCode >= 400) {

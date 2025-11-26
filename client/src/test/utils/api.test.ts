@@ -191,7 +191,7 @@ describe('SecureAPI', () => {
 
       const result = await SecureAPI.get('/test');
 
-      expect(mockAxios.post).toHaveBeenCalledWith('/api/auth/refresh', {
+      expect(mockAxios.post).toHaveBeenCalledWith('/api/auth/refresh-token', {
         refreshToken: mockRefreshToken,
       });
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith('token', mockNewToken);

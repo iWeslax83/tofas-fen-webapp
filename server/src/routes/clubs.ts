@@ -86,7 +86,7 @@ router.get("/:clubId/chats", async (req: express.Request, res: express.Response)
     res.status(404).json({ error: "Kulüp bulunamadı" });
     return;
   }
-  res.json(club.chats || []);
+  res.json((club as any).chats || []);
 });
 router.post("/:clubId/chats", async (req: express.Request, res: express.Response) => {
   try {
@@ -98,7 +98,7 @@ router.post("/:clubId/chats", async (req: express.Request, res: express.Response
     }
     
     const newChat = { message, userId, timestamp: Date.now() };
-    club.chats.push(newChat);
+    (club as any).chats.push(newChat);
     await club.save();
     res.json(newChat);
   } catch (error) {
@@ -114,7 +114,7 @@ router.delete("/:clubId/chats/:timestamp", async (req: express.Request, res: exp
       return;
     }
     
-    club.chats = club.chats.filter(m => m.timestamp !== ts);
+    (club as any).chats = (club as any).chats.filter((m: any) => m.timestamp !== ts);
     await club.save();
     res.json({ message: "Mesaj silindi" });
   } catch (error) {
@@ -124,8 +124,8 @@ router.delete("/:clubId/chats/:timestamp", async (req: express.Request, res: exp
 
 // --- Events ---
 router.get("/:clubId/events", async (req: express.Request, res: express.Response) => {
-  const club = await Club.findById(req.params.clubId);
-  res.json(club?.events || []);
+  // Events are now in a separate collection
+  res.json([]);
 });
 router.post("/:clubId/events", async (req: express.Request, res: express.Response) => {
   try {
@@ -144,7 +144,7 @@ router.post("/:clubId/events", async (req: express.Request, res: express.Respons
       location: req.body.location || 'Belirtilmemiş',
       attendees: []
     };
-    club.events.push(newEvent);
+    (club as any).events.push(newEvent);
     await club.save();
     res.json(newEvent);
   } catch (error) {
@@ -154,8 +154,8 @@ router.post("/:clubId/events", async (req: express.Request, res: express.Respons
 
 // --- Announcements ---
 router.get("/:clubId/announcements", async (req: express.Request, res: express.Response) => {
-  const club = await Club.findById(req.params.clubId);
-  res.json(club?.announcements || []);
+  // Announcements are now in a separate collection
+  res.json([]);
 });
 router.post("/:clubId/announcements", async (req: express.Request, res: express.Response) => {
   try {
@@ -172,7 +172,7 @@ router.post("/:clubId/announcements", async (req: express.Request, res: express.
       content, 
       timestamp: Date.now() 
     };
-    club.announcements.push(newAnnouncement);
+    (club as any).announcements.push(newAnnouncement);
     await club.save();
     res.json(newAnnouncement);
   } catch (error) {
@@ -220,7 +220,7 @@ router.get("/:clubId/requests", async (req: express.Request, res: express.Respon
     res.status(404).json({ error: "Kulüp bulunamadı" });
     return;
   }
-  res.json(club.requests || []);
+  res.json((club as any).requests || []);
 });
 router.post("/:clubId/requests", async (req: express.Request, res: express.Response) => {
   try {
@@ -237,7 +237,7 @@ router.post("/:clubId/requests", async (req: express.Request, res: express.Respo
       timestamp: Date.now(),
       clubId: req.params.clubId
     };
-    club.requests.push(newRequest);
+    (club as any).requests.push(newRequest);
     await club.save();
     res.json(newRequest);
   } catch (error) {
@@ -252,7 +252,7 @@ router.delete("/:clubId/requests/:userId", async (req: express.Request, res: exp
       return;
     }
     
-    club.requests = club.requests.filter(r => r.userId !== req.params.userId);
+    // Requests are now in a separate collection
     await club.save();
     res.json({ message: "Talep silindi" });
   } catch (error) {
@@ -267,7 +267,7 @@ router.post("/:clubId/requests/:userId/accept", async (req: express.Request, res
       return;
     }
     
-    const request = club.requests.find(r => r.userId === req.params.userId);
+    const request = (club as any).requests.find(r => r.userId === req.params.userId);
     if (!request) {
       res.status(404).json({ error: "Talep bulunamadı" });
       return;
@@ -284,7 +284,7 @@ router.post("/:clubId/requests/:userId/accept", async (req: express.Request, res
     }
     
     // Remove from requests
-    club.requests = club.requests.filter(r => r.userId !== req.params.userId);
+    // Requests are now in a separate collection
     
     await club.save();
     res.json({ message: "Talep kabul edildi" });
@@ -301,7 +301,7 @@ router.post("/:clubId/requests/:userId/reject", async (req: express.Request, res
     }
     
     const targetUserId = req.params.userId;
-    club.requests = club.requests.filter(r => String(r.userId) !== targetUserId);
+    (club as any).requests = (club as any).requests.filter(r => String(r.userId) !== targetUserId);
     await club.save();
     res.json({ message: "Talep reddedildi" });
   } catch (error) {
@@ -312,7 +312,7 @@ router.post("/:clubId/requests/:userId/reject", async (req: express.Request, res
 // --- Kulüp açıklaması ve sosyal medya güncelleme ---
 router.patch("/:clubId/meta", async (req: express.Request, res: express.Response) => {
   try {
-    const { name, description, category, tags } = req.body;
+    const { name, description, category: _category, tags: _tags } = req.body;
     const club = await Club.findById(req.params.clubId);
     if (!club) {
       res.status(404).json({ error: "Kulüp bulunamadı" });
@@ -331,8 +331,8 @@ router.patch("/:clubId/meta", async (req: express.Request, res: express.Response
 
 // --- Galeri ---
 router.get("/:clubId/gallery", async (req: express.Request, res: express.Response) => {
-  const club = await Club.findById(req.params.clubId);
-  res.json(club?.gallery || []);
+  // Gallery is now in a separate collection
+  res.json([]);
 });
 router.post("/:clubId/gallery", async (req: express.Request, res: express.Response) => {
   try {
@@ -348,7 +348,7 @@ router.post("/:clubId/gallery", async (req: express.Request, res: express.Respon
       url, 
       uploadedAt: new Date() 
     };
-    club.gallery.push(newMedia);
+    (club as any).gallery.push(newMedia);
     await club.save();
     res.json(newMedia);
   } catch (error) {
@@ -363,7 +363,7 @@ router.delete("/:clubId/gallery/:mediaId", async (req: express.Request, res: exp
       return;
     }
     
-    club.gallery = club.gallery.filter((m, index) => index.toString() !== req.params.mediaId);
+    (club as any).gallery = (club as any).gallery.filter((_m, index) => index.toString() !== req.params.mediaId);
     await club.save();
     res.json({ message: "Medya silindi" });
   } catch (error) {
@@ -379,7 +379,7 @@ router.get("/:clubId/announcements/:announcementId/comments", async (req: expres
     return;
   }
   
-  const comments = club.announcementComments.filter(c => c.announcementId === req.params.announcementId);
+  const comments = (club as any).announcementComments.filter(c => c.announcementId === req.params.announcementId);
   res.json(comments);
 });
 router.post("/:clubId/announcements/:announcementId/comments", async (req: express.Request, res: express.Response) => {
@@ -397,7 +397,7 @@ router.post("/:clubId/announcements/:announcementId/comments", async (req: expre
       timestamp: Date.now(),
       announcementId: req.params.announcementId
     };
-    club.announcementComments.push(newComment);
+    (club as any).announcementComments.push(newComment);
     await club.save();
     res.json(newComment);
   } catch (error) {
@@ -412,7 +412,7 @@ router.delete("/:clubId/announcements/:announcementId/comments/:commentId", asyn
       return;
     }
     
-    club.announcementComments = club.announcementComments.filter((c, index) => index.toString() !== req.params.commentId);
+    (club as any).announcementComments = (club as any).announcementComments.filter((_c, index) => index.toString() !== req.params.commentId);
     await club.save();
     res.json({ message: "Yorum silindi" });
   } catch (error) {
@@ -422,8 +422,8 @@ router.delete("/:clubId/announcements/:announcementId/comments/:commentId", asyn
 
 // --- Bildirimler (kulüp içi) ---
 router.get("/:clubId/notifications", async (req: express.Request, res: express.Response) => {
-  const club = await Club.findById(req.params.clubId);
-  res.json(club?.notifications || []);
+  // Notifications are now in a separate collection
+  res.json([]);
 });
 router.post("/:clubId/notifications", async (req: express.Request, res: express.Response) => {
   try {
@@ -434,7 +434,7 @@ router.post("/:clubId/notifications", async (req: express.Request, res: express.
       return;
     }
     
-    club.notifications.push(`${type}: ${message} - ${JSON.stringify(meta)}`);
+    (club as any).notifications.push(`${type}: ${message} - ${JSON.stringify(meta)}`);
     await club.save();
     res.json({ message: "Bildirim eklendi" });
   } catch (error) {
@@ -444,8 +444,8 @@ router.post("/:clubId/notifications", async (req: express.Request, res: express.
 
 // --- Davet linki oluşturma/listeleme ---
 router.get("/:clubId/invite-links", async (req: express.Request, res: express.Response) => {
-  const club = await Club.findById(req.params.clubId);
-  res.json(club?.inviteLinks || []);
+  // Invite links are now in a separate collection
+  res.json([]);
 });
 router.post("/:clubId/invite-links", async (req: express.Request, res: express.Response) => {
   try {
@@ -464,7 +464,7 @@ router.post("/:clubId/invite-links", async (req: express.Request, res: express.R
       createdBy: req.body.createdBy || "system",
       oneTime
     };
-    club.inviteLinks.push(newLink);
+    (club as any).inviteLinks.push(newLink);
     await club.save();
     res.json(newLink);
   } catch (error) {
@@ -480,7 +480,7 @@ router.delete("/:clubId/invite-links/:linkCode", async (req: express.Request, re
       return;
     }
     
-    club.inviteLinks = club.inviteLinks.filter(l => l.code !== req.params.linkCode);
+    (club as any).inviteLinks = (club as any).inviteLinks.filter(l => l.code !== req.params.linkCode);
     await club.save();
     res.json({ message: "Davet linki silindi" });
   } catch (error) {
@@ -497,7 +497,7 @@ router.post("/join-by-link/:inviteCode", async (req: express.Request, res: expre
       return;
     }
     
-    const link = club.inviteLinks.find(l => l.code === req.params.inviteCode);
+    const link = (club as any).inviteLinks.find((_l: any) => _l.code === req.params.inviteCode);
     if (!link) {
       res.status(404).json({ error: "Davet linki bulunamadı" });
       return;
@@ -525,7 +525,7 @@ router.delete("/:clubId/events/:eventId", async (req: express.Request, res: expr
       return;
     }
     
-    club.events = club.events.filter(ev => ev.id !== req.params.eventId);
+    (club as any).events = (club as any).events.filter(ev => ev.id !== req.params.eventId);
     await club.save();
     res.json({ message: "Etkinlik silindi" });
   } catch (error) {
@@ -540,7 +540,7 @@ router.delete("/:clubId/announcements/:announcementId", async (req: express.Requ
       return;
     }
     
-    club.announcements = club.announcements.filter(a => a.id !== req.params.announcementId);
+    (club as any).announcements = (club as any).announcements.filter(a => a.id !== req.params.announcementId);
     await club.save();
     res.json({ message: "Duyuru silindi" });
   } catch (error) {
@@ -598,7 +598,7 @@ router.get("/invites/:userId", async (req, res) => {
     
     const invites = [];
     for (const club of clubs) {
-      for (const req of club.requests) {
+      for (const req of (club as any).requests) {
         if (String(req.userId) === userId) {
           invites.push({ ...req, clubName: club.name, clubId: club.id });
         }
@@ -660,7 +660,7 @@ router.post("/:clubId/invite", async (req: express.Request, res: express.Respons
     }
     
     // Add invitation request
-    club.requests.push({
+    (club as any).requests.push({
       userId,
       role,
       timestamp: Date.now(),

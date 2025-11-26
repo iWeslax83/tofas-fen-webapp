@@ -2,10 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import Redis from 'ioredis';
 
 // Enhanced Redis client configuration for production performance
-const redisConfig = {
+const redisConfig: any = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD,
+  password: process.env.REDIS_PASSWORD || undefined,
   db: parseInt(process.env.REDIS_DB || '0'),
   retryStrategy: (times: number) => {
     const delay = Math.min(times * 50, 2000);
@@ -64,13 +64,13 @@ if (!isRedisConfigured) {
 
 // Enhanced Redis event handling
 if (isRedisConfigured) {
-  redis.on('error', (err: any) => {
+  redis.on('error', (err: Error) => {
     console.error('❌ Redis connection error:', err);
     console.error('🔍 Error details:', {
-      code: err.code,
-      syscall: err.syscall,
-      address: err.address,
-      port: err.port
+      code: (err as any).code,
+      syscall: (err as any).syscall,
+      address: (err as any).address,
+      port: (err as any).port
     });
   });
 
@@ -140,14 +140,14 @@ export const cache = (duration: number = 300) => {
       res.json = function(data: any) {
         // Cache the response data
         redis.setex(cacheKey, duration, JSON.stringify(data))
-          .catch(err => console.error('Cache set error:', err));
+          .catch((err: unknown) => console.error('Cache set error:', err));
         
         // Call original method
         return originalJson.call(this, data);
       };
 
       next();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Cache middleware error:', error);
       next(); // Continue without caching on error
     }
@@ -161,26 +161,27 @@ export const invalidateCache = async (pattern: string) => {
     if (keys.length > 0) {
       // Use pipeline for better performance
       const pipeline = redis.pipeline();
-      keys.forEach(key => pipeline.del(key));
+      keys.forEach((key: string) => pipeline.del(key));
       await pipeline.exec();
       
       console.log(`🗑️ Cache invalidated for pattern: ${pattern} (${keys.length} keys)`);
       return keys.length;
     }
     return 0;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Cache invalidation error:', error);
     return 0;
   }
 };
 
 // Enhanced session cache with TTL
-export const sessionCache = async (req: Request, res: Response, next: NextFunction) => {
+export const sessionCache = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
   try {
     const sessionId = req.sessionID;
     
     if (!sessionId) {
-      return next();
+      next();
+      return;
     }
 
     const cacheKey = `session:${sessionId}`;
@@ -192,7 +193,7 @@ export const sessionCache = async (req: Request, res: Response, next: NextFuncti
     }
     
     next();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Session cache error:', error);
     next();
   }
@@ -204,7 +205,7 @@ export const cacheHelpers = {
   async mget(keys: string[]) {
     try {
       return await redis.mget(keys);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Cache mget error:', error);
       return keys.map(() => null);
     }
@@ -223,7 +224,7 @@ export const cacheHelpers = {
         await redis.mset(keyValues);
       }
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Cache mset error:', error);
       return false;
     }
@@ -253,7 +254,7 @@ export const cacheHelpers = {
       
       console.log(`💾 Club ${clubId} cached for ${duration}s`);
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Set club cache error:', error);
       return false;
     }
@@ -276,7 +277,7 @@ export const cacheHelpers = {
       
       console.log(`🗑️ Club ${clubId} cache invalidated (${totalInvalidated} keys)`);
       return totalInvalidated;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Invalidate club cache error:', error);
       return 0;
     }
@@ -301,7 +302,7 @@ export const cacheHelpers = {
       
       console.log(`💾 User ${userId} cached for ${duration}s`);
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Set user cache error:', error);
       return false;
     }
@@ -323,7 +324,7 @@ export const cacheHelpers = {
       
       console.log(`🗑️ User ${userId} cache invalidated (${totalInvalidated} keys)`);
       return totalInvalidated;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Invalidate user cache error:', error);
       return 0;
     }
@@ -342,7 +343,7 @@ export const cacheHelpers = {
       
       console.log(`💾 Bulk cached ${operations.length} items`);
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Bulk cache set error:', error);
       return false;
     }
@@ -364,7 +365,7 @@ export const cacheHelpers = {
           return acc;
         }, {})
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Get cache stats error:', error);
       return null;
     }
@@ -380,7 +381,7 @@ export const cleanupCache = async () => {
     if (keys.length > 0) {
       // Delete expired cache keys
       const pipeline = redis.pipeline();
-      keys.forEach(key => pipeline.del(key));
+      keys.forEach((key: string) => pipeline.del(key));
       await pipeline.exec();
       
       console.log(`🧹 Cleaned up ${keys.length} cache keys`);
@@ -388,7 +389,7 @@ export const cleanupCache = async () => {
     }
     
     return 0;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Cache cleanup error:', error);
     return 0;
   }
@@ -410,10 +411,10 @@ export const checkCacheHealth = async () => {
       dbsize: await redis.dbsize(),
       info: await redis.info('memory')
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       status: 'unhealthy',
-      error: error.message
+      error: (error as Error).message
     };
   }
 };

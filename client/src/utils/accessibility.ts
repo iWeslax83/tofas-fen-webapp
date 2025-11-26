@@ -193,7 +193,7 @@ export class AccessibilityManager {
   }
 
   // Handle tab key
-  private handleTab(event: KeyboardEvent): void {
+  private handleTab(_event: KeyboardEvent): void {
     // Ensure focus indicators are visible
     document.documentElement.classList.add('keyboard-navigation');
   }
@@ -462,7 +462,7 @@ export const generateAriaId = (prefix: string = 'aria'): string => {
   return `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
 };
 
-export const getContrastRatio = (color1: string, color2: string): number => {
+export const getContrastRatio = (_color1: string, _color2: string): number => {
   // Simplified contrast ratio calculation
   // In a real implementation, you'd want to use a proper color library
   return 4.5; // Placeholder

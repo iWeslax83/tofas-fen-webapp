@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { 
   ChevronRight
 } from 'lucide-react';
@@ -10,14 +11,47 @@ import { dashboardButtons } from './dashboardButtonConfig';
 import React from 'react';
 import './AdminPanel.css';
 
-// Filter for admin role, but admin sees all
-const pageButtons = dashboardButtons.filter(btn => btn.roles.includes('admin'));
-
 const AdminPanel: React.FC = () => {
-  const { user } = useAuthContext();
+  const { user, isLoading: authLoading } = useAuthContext();
+  const navigate = useNavigate();
+  const [pageButtons, setPageButtons] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
+  useEffect(() => {
+    if (!authLoading && user) {
+      console.log('[AdminPanel] Setting up admin panel with user:', user);
+      
+      // Check if user has admin role
+      if (user.rol !== 'admin') {
+        console.warn(`[AdminPanel] User role ${user.rol || 'undefined'} not allowed for admin panel`);
+        navigate(`/${user.rol || 'login'}`);
+        return;
+      }
+
+      // Filter buttons for admin role
+      const buttons = dashboardButtons
+        .filter(btn => {
+          const hasRole = btn.roles.includes('admin');
+          console.log(`[AdminPanel] Button ${btn.key}: hasRole=${hasRole}`);
+          return hasRole;
+        })
+        .map(btn => ({
+          key: btn.key,
+          title: btn.title,
+          description: btn.description,
+          icon: btn.icon,
+          color: btn.color || 'blue',
+          route: btn.route
+        }));
+      
+      console.log('[AdminPanel] Admin buttons:', buttons);
+      setPageButtons(buttons);
+      setIsLoading(false);
+    }
+  }, [authLoading, user, navigate]);
+
   // Role-based access control
-  if (!user) {
+  if (isLoading || authLoading) {
     return (
       <div className="centered-spinner">
         <div className="spinner"></div>
@@ -25,10 +59,14 @@ const AdminPanel: React.FC = () => {
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   // Check if user has admin role
   if (user.rol !== 'admin') {
-    console.warn(`User role ${user.rol} not allowed for admin panel`);
-    window.location.href = `/${user.rol || 'login'}`;
+    console.warn(`[AdminPanel] User role ${user.rol || 'undefined'} not allowed for admin panel`);
+    navigate(`/${user.rol || 'login'}`);
     return null;
   }
 
@@ -68,7 +106,7 @@ const AdminPanel: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
-              <Link to={button.route} className="action-card">
+              <Link to={button.route} className="action-card" data-color={button.color || 'blue'}>
                 <div className="action-icon">
                   {button.icon && <button.icon size={24} />}
                 </div>

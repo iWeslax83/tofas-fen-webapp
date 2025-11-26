@@ -1,29 +1,30 @@
-import { IUser, UserRole, ApiResponse, AppError, Notification, Theme } from '../@types';
+import { IUser, UserRole, ApiResponse, AppError, Theme } from '../@types';
 
 // User Type Guards
-export const isUser = (obj: any): obj is IUser => {
+export const isUser = (obj: unknown): obj is IUser => {
+  if (!obj || typeof obj !== 'object' || obj === null) return false;
+  
+  const o = obj as any;
   return (
-    obj &&
-    typeof obj === 'object' &&
-    typeof obj._id === 'string' &&
-    typeof obj.id === 'string' &&
-    typeof obj.name === 'string' &&
-    typeof obj.surname === 'string' &&
-    isUserRole(obj.rol) &&
-    typeof obj.email === 'string' &&
-    typeof obj.emailVerified === 'boolean' &&
-    typeof obj.pansiyon === 'boolean' &&
-    typeof obj.tokenVersion === 'number' &&
-    obj.createdAt instanceof Date &&
-    obj.updatedAt instanceof Date
+    typeof o._id === 'string' &&
+    typeof o.id === 'string' &&
+    typeof o.name === 'string' &&
+    typeof o.surname === 'string' &&
+    isUserRole(o.rol) &&
+    typeof o.email === 'string' &&
+    typeof o.emailVerified === 'boolean' &&
+    typeof o.pansiyon === 'boolean' &&
+    typeof o.tokenVersion === 'number' &&
+    o.createdAt instanceof Date &&
+    o.updatedAt instanceof Date
   );
 };
 
-export const isUserRole = (value: any): value is UserRole => {
-  return ['student', 'teacher', 'parent', 'admin', 'hizmetli'].includes(value);
+export const isUserRole = (value: unknown): value is UserRole => {
+  return typeof value === 'string' && ['student', 'teacher', 'parent', 'admin', 'hizmetli'].includes(value);
 };
 
-export const isPartialUser = (obj: any): obj is Partial<IUser> => {
+export const isPartialUser = (obj: unknown): obj is Partial<IUser> => {
   if (!obj || typeof obj !== 'object') return false;
   
   const validKeys = ['_id', 'id', 'name', 'surname', 'rol', 'email', 'emailVerified', 'pansiyon', 'tokenVersion', 'createdAt', 'updatedAt'];
@@ -33,124 +34,112 @@ export const isPartialUser = (obj: any): obj is Partial<IUser> => {
 };
 
 // API Response Type Guards
-export const isApiResponse = <T>(obj: any): obj is ApiResponse<T> => {
+export const isApiResponse = <T>(obj: unknown): obj is ApiResponse<T> => {
+  if (!obj || typeof obj !== 'object' || obj === null) return false;
+  
+  const o = obj as any;
   return (
-    obj &&
-    typeof obj === 'object' &&
-    typeof obj.success === 'boolean' &&
-    typeof obj.statusCode === 'number'
+    typeof o.success === 'boolean' &&
+    typeof o.statusCode === 'number'
   );
 };
 
-export const isPaginatedResponse = <T>(obj: any): obj is ApiResponse<T[]> & { pagination: any } => {
+export const isPaginatedResponse = <T>(obj: unknown): obj is ApiResponse<T[]> & { pagination: { page: number; limit: number; total: number; totalPages: number } } => {
+  if (!isApiResponse<T[]>(obj) || !('pagination' in obj)) return false;
+  
   return (
-    isApiResponse<T[]>(obj) &&
-    'pagination' in obj &&
     obj.pagination &&
     typeof obj.pagination === 'object' &&
-    typeof (obj.pagination as any).page === 'number' &&
-    typeof (obj.pagination as any).limit === 'number' &&
-    typeof (obj.pagination as any).total === 'number' &&
-    typeof (obj.pagination as any).totalPages === 'number'
+    typeof (obj.pagination as { page: number; limit: number; total: number }).page === 'number' &&
+    typeof (obj.pagination as { page: number; limit: number; total: number }).limit === 'number' &&
+    typeof (obj.pagination as { page: number; limit: number; total: number }).total === 'number' &&
+    typeof (obj.pagination as { totalPages: number }).totalPages === 'number'
   );
 };
 
 // Error Type Guards
-export const isAppError = (obj: any): obj is AppError => {
+export const isAppError = (obj: unknown): obj is AppError => {
+  if (!obj || typeof obj !== 'object' || obj === null) return false;
+  
+  const o = obj as any;
   return (
-    obj &&
-    typeof obj === 'object' &&
-    typeof obj.id === 'string' &&
-    typeof obj.message === 'string' &&
-    typeof obj.timestamp === 'object' &&
-    obj.timestamp instanceof Date
+    typeof o.id === 'string' &&
+    typeof o.message === 'string' &&
+    typeof o.timestamp === 'object' &&
+    o.timestamp instanceof Date
   );
 };
 
-export const isError = (obj: any): obj is Error => {
+export const isError = (obj: unknown): obj is Error => {
+  if (!obj || typeof obj !== 'object' || obj === null) return false;
+  
+  const o = obj as any;
   return (
-    obj &&
-    typeof obj === 'object' &&
-    typeof obj.message === 'string' &&
-    typeof obj.name === 'string'
+    typeof o.message === 'string' &&
+    typeof (obj as any).name === 'string'
   );
 };
 
-// Notification Type Guards
-export const isNotification = (obj: any): obj is Notification => {
-  return (
-    obj &&
-    typeof obj === 'object' &&
-    typeof obj.id === 'string' &&
-    ['info', 'success', 'warning', 'error'].includes(obj.type) &&
-    typeof obj.title === 'string' &&
-    typeof obj.message === 'string' &&
-    obj.timestamp instanceof Date &&
-    typeof obj.read === 'boolean'
-  );
-};
 
 // Theme Type Guards
-export const isTheme = (obj: any): obj is Theme => {
+export const isTheme = (obj: unknown): obj is Theme => {
+  if (!obj || typeof obj !== 'object' || obj === null) return false;
+  
+  const o = obj as any;
   return (
-    obj &&
-    typeof obj === 'object' &&
-    ['light', 'dark', 'system'].includes(obj.mode) &&
-    typeof obj.primaryColor === 'string' &&
-    typeof obj.secondaryColor === 'string' &&
-    typeof obj.backgroundColor === 'string' &&
-    typeof obj.textColor === 'string'
+    ['light', 'dark', 'system'].includes(o.mode) &&
+    typeof o.primaryColor === 'string' &&
+    typeof o.secondaryColor === 'string' &&
+    typeof o.backgroundColor === 'string' &&
+    typeof o.textColor === 'string'
   );
 };
 
 // Array Type Guards
-export const isArrayOfUsers = (arr: any): arr is IUser[] => {
+export const isArrayOfUsers = (arr: unknown): arr is IUser[] => {
   return Array.isArray(arr) && arr.every(isUser);
 };
 
-export const isArrayOfNotifications = (arr: any): arr is Notification[] => {
-  return Array.isArray(arr) && arr.every(isNotification);
-};
 
 // Primitive Type Guards
-export const isString = (value: any): value is string => {
+export const isString = (value: unknown): value is string => {
   return typeof value === 'string';
 };
 
-export const isNumber = (value: any): value is number => {
+export const isNumber = (value: unknown): value is number => {
   return typeof value === 'number' && !isNaN(value);
 };
 
-export const isBoolean = (value: any): value is boolean => {
+export const isBoolean = (value: unknown): value is boolean => {
   return typeof value === 'boolean';
 };
 
-export const isDate = (value: any): value is Date => {
+export const isDate = (value: unknown): value is Date => {
   return value instanceof Date;
 };
 
-export const isFunction = (value: any): value is Function => {
+export const isFunction = (value: unknown): value is Function => {
   return typeof value === 'function';
 };
 
-export const isObject = (value: any): value is object => {
+export const isObject = (value: unknown): value is object => {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 };
 
-export const isArray = (value: any): value is any[] => {
+export const isArray = (value: unknown): value is unknown[] => {
   return Array.isArray(value);
 };
 
 // Null/Undefined Type Guards
-export const isNull = (value: any): value is null => {
+export const isNull = (value: unknown): value is null => {
   return value === null;
 };
 
-export const isUndefined = (value: any): value is undefined => {
+export const isUndefined = (value: unknown): value is undefined => {
   return value === undefined;
 };
 
-export const isNullOrUndefined = (value: any): value is null | undefined => {
+export const isNullOrUndefined = (value: unknown): value is null | undefined => {
   return value === null || value === undefined;
 };
 
@@ -185,34 +174,34 @@ export const hasProperties = <T extends object, K extends keyof T>(
 };
 
 // Type Assertion Helpers
-export const assertIsUser = (obj: any): asserts obj is IUser => {
+export const assertIsUser = (obj: unknown): asserts obj is IUser => {
   if (!isUser(obj)) {
     throw new Error('Object is not a valid User');
   }
 };
 
-export const assertIsApiResponse = <T>(obj: any): asserts obj is ApiResponse<T> => {
+export const assertIsApiResponse = <T>(obj: unknown): asserts obj is ApiResponse<T> => {
   if (!isApiResponse<T>(obj)) {
     throw new Error('Object is not a valid ApiResponse');
   }
 };
 
 // Safe Type Conversion
-export const asUser = (obj: any): IUser | null => {
+export const asUser = (obj: unknown): IUser | null => {
   return isUser(obj) ? obj : null;
 };
 
-export const asApiResponse = <T>(obj: any): ApiResponse<T> | null => {
+export const asApiResponse = <T>(obj: unknown): ApiResponse<T> | null => {
   return isApiResponse<T>(obj) ? obj : null;
 };
 
 // Type Narrowing Helpers
-export const narrowToUser = (value: any): IUser | null => {
+export const narrowToUser = (value: unknown): IUser | null => {
   if (isUser(value)) return value;
   return null;
 };
 
-export const narrowToArray = <T>(value: any, guard: (item: any) => item is T): T[] | null => {
+export const narrowToArray = <T>(value: unknown, guard: (item: unknown) => item is T): T[] | null => {
   if (Array.isArray(value) && value.every(guard)) return value;
   return null;
 };

@@ -69,7 +69,7 @@ export class NotificationService {
 
       return savedNotification;
     } catch (error) {
-      logger.error('Error creating notification', { error: error.message, data });
+      logger.error('Error creating notification', { error: (error as Error).message, data });
       throw error;
     }
   }
@@ -111,9 +111,9 @@ export class NotificationService {
         priority: data.priority
       });
 
-      return savedNotifications;
+      return savedNotifications as any;
     } catch (error) {
-      logger.error('Error creating bulk notifications', { error: error.message, data });
+      logger.error('Error creating bulk notifications', { error: (error as Error).message, data });
       throw error;
     }
   }
@@ -132,7 +132,7 @@ export class NotificationService {
         userIds
       });
     } catch (error) {
-      logger.error('Error creating role-based notifications', { error: error.message, data });
+      logger.error('Error creating role-based notifications', { error: (error as Error).message, data });
       throw error;
     }
   }
@@ -159,7 +159,7 @@ export class NotificationService {
         subject: emailSubject
       });
     } catch (error) {
-      logger.error('Error sending email notification', { error: error.message, userId });
+      logger.error('Error sending email notification', { error: (error as Error).message, userId });
       // Don't throw error to avoid breaking notification creation
     }
   }
@@ -252,7 +252,7 @@ export class NotificationService {
 
       logger.info('Multiple notifications marked as read', { count: notificationIds.length });
     } catch (error) {
-      logger.error('Error marking multiple notifications as read', { error: error.message, notificationIds });
+      logger.error('Error marking multiple notifications as read', { error: (error as Error).message, notificationIds });
       throw error;
     }
   }
@@ -346,7 +346,7 @@ export class NotificationService {
       logger.info('Expired notifications deleted', { count: result.deletedCount });
       return result.deletedCount || 0;
     } catch (error) {
-      logger.error('Error deleting expired notifications', { error: error.message });
+      logger.error('Error deleting expired notifications', { error: (error as Error).message });
       throw error;
     }
   }

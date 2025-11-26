@@ -22,7 +22,7 @@ export const validateRequest = (req: Request, res: Response, next: NextFunction)
       message: 'Please check your input and try again'
     });
   }
-  next();
+  return next();
 };
 
 // Enhanced input sanitization

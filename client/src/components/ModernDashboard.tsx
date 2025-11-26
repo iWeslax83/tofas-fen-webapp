@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Users, 
@@ -7,13 +7,13 @@ import {
   GraduationCap,
   Home
 } from 'lucide-react';
-import NotificationBell from './NotificationBell';
-import { useAuthContext } from '../contexts/AuthContext';
+import { useUser, useIsLoading, useLogout } from '../stores/authStore';
 import { SecureAPI } from '../utils/api';
 import { dashboardButtons } from '../pages/Dashboard/dashboardButtonConfig';
 import { User } from '../types/user';
 import { UserRole } from '../@types';
-import { useErrorHandler } from '../utils/errorHandling';
+import { useErrorHandler } from '../hooks/useErrorHandler';
+import { safeConsoleError } from '../utils/safeLogger';
 import './ModernDashboard.css';
 
 interface UserData {
@@ -21,12 +21,12 @@ interface UserData {
   adSoyad: string;
   email: string;
   rol: string;
-  sinif?: string;
-  sube?: string;
-  pansiyon?: boolean;
-  oda?: string;
-  avatar?: string;
-  sonGiris?: string;
+  sinif?: string | undefined;
+  sube?: string | undefined;
+  pansiyon?: boolean | undefined;
+  oda?: string | undefined;
+  avatar?: string | undefined;
+  sonGiris?: string | undefined;
 }
 
 interface DashboardStats {
@@ -35,77 +35,82 @@ interface DashboardStats {
   totalParents?: number;
   activeClubs?: number;
   upcomingEvents?: number;
-  unreadNotifications?: number;
   recentActivities?: number;
 }
 
 const ModernDashboard: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [, setStats] = useState<DashboardStats>({});
+  const lastFetchTime = useRef<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [sidebarOpen] = useState(true);
 
-  const { user: authUser, isLoading: authLoading, logout } = useAuthContext();
+  const authUser = useUser();
+  const authLoading = useIsLoading();
+  const logout = useLogout();
   const navigate = useNavigate();
   const location = useLocation();
-  const { handleError } = useErrorHandler();
+  const { handleApiError } = useErrorHandler();
 
   // Fetch user data and stats
   const fetchUserData = useCallback(async () => {
     try {
-      const response = await SecureAPI.get('/api/auth/me');
-      const userData = (response as { data: User }).data;
-      if (userData) {
+      // Use authUser data directly instead of API call
+      if (authUser) {
         const finalUserData: UserData = {
-          id: userData.id,
-          adSoyad: userData.adSoyad,
-          email: userData.email || '',
-          rol: userData.rol,
-          sinif: userData.sinif,
-          sube: userData.sube,
-          pansiyon: userData.pansiyon,
-          oda: userData.oda,
+          id: authUser.id,
+          adSoyad: authUser.adSoyad,
+          email: authUser.email || '',
+          rol: authUser.rol,
+          sinif: authUser.sinif ? String(authUser.sinif) : undefined,
+          sube: authUser.sube ? String(authUser.sube) : undefined,
+          pansiyon: authUser.pansiyon ?? undefined,
+          oda: authUser.oda ? String(authUser.oda) : undefined,
           avatar: undefined, // Not in User type
           sonGiris: undefined // Not in User type
         };
         setUserData(finalUserData);
+        console.log('[ModernDashboard] User data set:', finalUserData);
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
-      handleError(error as Error, {
-        component: 'ModernDashboard',
-        action: 'fetchUserData',
-        userId: authUser?.id
-      });
+      safeConsoleError('Error setting user data:', error);
+      // Fallback to authUser data
       if (authUser) {
         setUserData({
           id: authUser.id,
           adSoyad: authUser.adSoyad,
           email: authUser.email || '',
           rol: authUser.rol || 'student',
-          sinif: authUser.sinif,
-          sube: authUser.sube,
-          pansiyon: authUser.pansiyon,
-          oda: authUser.oda,
+          sinif: authUser.sinif ? String(authUser.sinif) : undefined,
+          sube: authUser.sube ? String(authUser.sube) : undefined,
+          pansiyon: authUser.pansiyon ?? undefined,
+          oda: authUser.oda ? String(authUser.oda) : undefined,
           avatar: undefined,
           sonGiris: undefined
         });
       }
     }
-  }, [authUser, handleError]);
+  }, [authUser]);
 
-  // Fetch dashboard stats
+  // Fetch dashboard stats with rate limiting
   const fetchStats = useCallback(async () => {
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTime.current;
+    
+    // Rate limit: don't fetch more than once every 5 seconds
+    if (timeSinceLastFetch < 5000) {
+      console.log('Rate limiting: Skipping stats fetch, too soon since last fetch');
+      return;
+    }
+    
+    lastFetchTime.current = now;
+    
     try {
       const response = await SecureAPI.get('/api/dashboard/stats');
-      setStats((response as { data: DashboardStats }).data);
+      setStats((response as { data: { data: DashboardStats } }).data.data);
     } catch (error) {
-      console.error('Error fetching stats:', error);
-      handleError(error as Error, {
-        component: 'ModernDashboard',
-        action: 'fetchStats',
-        userId: authUser?.id
-      });
+      safeConsoleError('Error fetching stats:', error);
+      handleApiError(error, 'İstatistikler alınırken hata oluştu');
       // Set default stats
       setStats({
         totalStudents: 1250,
@@ -113,11 +118,10 @@ const ModernDashboard: React.FC = () => {
         totalParents: 2400,
         activeClubs: 12,
         upcomingEvents: 8,
-        unreadNotifications: 3,
         recentActivities: 15
       });
     }
-  }, [handleError, authUser]);
+  }, [authUser]); // Remove handleError dependency to prevent infinite loop
 
   // Check if a route is active
   const isActiveRoute = (route: string) => {
@@ -141,10 +145,18 @@ const ModernDashboard: React.FC = () => {
 
   // Get role-specific buttons
   const getRoleButtons = () => {
+    const currentRole = userData?.rol || authUser?.rol;
+    console.log('[ModernDashboard] Current role:', currentRole);
+    console.log('[ModernDashboard] UserData:', userData);
+    console.log('[ModernDashboard] AuthUser:', authUser);
+    
     return dashboardButtons.filter(btn => {
-      if (!btn.roles.includes(userData?.rol as UserRole || '' as UserRole)) return false;
-      if (btn.showForDormitory && !userData?.pansiyon) return false;
-      return true;
+      const hasRole = btn.roles.includes(currentRole as UserRole);
+      const dormitoryCheck = !btn.showForDormitory || userData?.pansiyon;
+      
+      console.log(`[ModernDashboard] Button ${btn.key}: hasRole=${hasRole}, dormitoryCheck=${dormitoryCheck}`);
+      
+      return hasRole && dormitoryCheck;
     });
   };
 
@@ -359,7 +371,6 @@ const ModernDashboard: React.FC = () => {
           </div>
 
           <div className="header-right">
-            <NotificationBell userId={userData.id} />
           </div>
         </header>
 
@@ -395,10 +406,10 @@ const ModernDashboard: React.FC = () => {
                         {userData.sinif}/{userData.sube}
                       </span>
                     )}
-                    {userData.pansiyon === true && userData.oda !== null && (
+                    {userData.rol === 'student' && (
                       <span className="badge class-badge">
                         <Users className="badge-icon" />
-                        {userData.oda}
+                        {userData.pansiyon === true ? 'Yatılı' : 'Gündüzlü'}
                       </span>
                     )}
                   </div>

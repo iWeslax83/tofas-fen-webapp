@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  GraduationCap, 
-  ChevronRight, 
-  Home, 
-  UserCheck, 
-  Settings, 
-  LogOut,
-  Star,
-  TrendingUp
+  ChevronRight
 } from 'lucide-react';
-import NotificationBell from '../../components/NotificationBell';
+// import NotificationBell from '../../components/NotificationBell'; // Removed unused import
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { SecureAPI } from '../../utils/api';
@@ -39,7 +32,7 @@ interface PageButton {
 }
 
 const StudentPanel: React.FC = () => {
-  const { user, logout, isLoading: authLoading } = useAuthContext();
+  const { user, isLoading: authLoading } = useAuthContext();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [studentButtons, setStudentButtons] = useState<PageButton[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,8 +41,17 @@ const StudentPanel: React.FC = () => {
     const fetchUserData = async () => {
       if (!authLoading && user) {
         try {
-          const response = await SecureAPI.get('/api/auth/me') as { data: UserData };
-          const userInfo = response.data;
+          // Use user data from AuthContext instead of API call
+          const userInfo: UserData = {
+            id: user.id,
+            adSoyad: user.adSoyad,
+            email: user.email || '',
+            rol: user.rol,
+            sinif: user.sinif,
+            sube: user.sube,
+            pansiyon: user.pansiyon,
+            oda: user.oda
+          };
           setUserData(userInfo);
           
           // Filter buttons for student role
@@ -118,6 +120,13 @@ const StudentPanel: React.FC = () => {
             <div className="welcome-text">
               <h2>Hoş Geldiniz, {userData.adSoyad}!</h2>
               <p>Öğrenci paneline hoş geldiniz. Tüm eğitim araçlarına buradan erişebilirsiniz.</p>
+              <div className="hero-cta">
+                <p className="hero-cta-sub">Hemen başlayın — en önemli araçlara tek tıkla erişin.</p>
+                <div className="hero-cta-buttons">
+                  <Link to="/student/odevler" className="btn btn-primary">Ödevlerimi Gör</Link>
+                  <Link to="/student/duyurular" className="btn btn-secondary">Duyurular</Link>
+                </div>
+              </div>
               {userData.sinif && (
                 <p className="class-info">
                   <strong>Sınıf:</strong> {userData.sinif}
@@ -144,7 +153,7 @@ const StudentPanel: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
-              <Link to={button.path} className="action-card">
+              <Link to={button.path} className="action-card" data-color={button.color || 'blue'}>
                 <div className="action-icon">
                   <button.icon className="w-6 h-6" />
                 </div>

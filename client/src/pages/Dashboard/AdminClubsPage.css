@@ -1,4 +1,7 @@
 /* AdminClubsPage Styles */
+
+/* Import theme variables */
+@import url('../../styles/theme.css');
 .icon {
   width: 16px;
   height: 16px;

@@ -8,7 +8,7 @@ interface PWAInstallPromptEvent extends Event {
 let deferredPrompt: PWAInstallPromptEvent | null = null;
 
 // Register service worker
-export const registerServiceWorker = async () => {
+export const registerServiceWorker = async (): Promise<void> => {
   if ('serviceWorker' in navigator) {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js');
@@ -100,36 +100,6 @@ export const isAppInstalled = (): boolean => {
          (window.navigator as any).standalone === true;
 };
 
-// Request notification permission
-export const requestNotificationPermission = async (): Promise<boolean> => {
-  if (!('Notification' in window)) {
-    console.log('This browser does not support notifications');
-    return false;
-  }
-  
-  if (Notification.permission === 'granted') {
-    return true;
-  }
-  
-  if (Notification.permission === 'denied') {
-    console.log('Notification permission denied');
-    return false;
-  }
-  
-  const permission = await Notification.requestPermission();
-  return permission === 'granted';
-};
-
-// Send notification
-export const sendNotification = (title: string, options?: NotificationOptions) => {
-  if (Notification.permission === 'granted') {
-    new Notification(title, {
-      icon: '/tofaslogo.png',
-      badge: '/tofaslogo.png',
-      ...options
-    });
-  }
-};
 
 // Background sync
 export const registerBackgroundSync = async (tag: string) => {

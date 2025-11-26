@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bug, Wifi, Shield, Server, AlertTriangle, RefreshCw, Zap } from 'lucide-react';
-import { useErrorHandler, ErrorType, ErrorSeverity, AppError } from '../../utils/errorHandling';
+import { useErrorHandler, ErrorType, AppError } from '../../utils/errorHandling';
 import './ErrorHandlingDemoPage.css';
 
 const ErrorHandlingDemoPage: React.FC = () => {
@@ -73,7 +73,8 @@ const ErrorHandlingDemoPage: React.FC = () => {
     const customError = new AppError(
       'Bu özel bir hata mesajıdır',
       ErrorType.UNKNOWN,
-      ErrorSeverity.HIGH,
+      undefined,
+      true,
       { component: 'ErrorDemo', action: 'customTest' }
     );
     handleError(customError, { component: 'ErrorDemo', action: 'customTest' });

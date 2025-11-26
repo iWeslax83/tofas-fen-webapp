@@ -1,13 +1,17 @@
 /* Accessibility Demo Page CSS */
 /* WCAG 2.1 AA Compliant Demo Page */
 
+/* Import theme variables */
+@import url('../../styles/theme.css');
+
+/* Demo-specific CSS Variables */
 :root {
   /* Demo Page Colors */
-  --demo-primary: #502129;
-  --demo-secondary: #6b2737;
-  --demo-accent: #8A1538;
-  --demo-success: #28a745;
-  --demo-warning: #ffc107;
+  --demo-primary: var(--primary-red-dark);
+  --demo-secondary: var(--primary-red);
+  --demo-accent: var(--primary-red);
+  --demo-success: var(--secondary-green);
+  --demo-warning: var(--secondary-orange);
   --demo-danger: #dc3545;
   --demo-info: #17a2b8;
   

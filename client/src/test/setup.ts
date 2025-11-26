@@ -1,5 +1,5 @@
 // Setup file for Vitest
-import { expect, vi } from 'vitest';
+import { expect, vi, beforeEach } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
 import type { TestingLibraryMatchers } from '@testing-library/jest-dom/matchers';
 

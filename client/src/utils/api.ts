@@ -2,12 +2,24 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { TokenManager, CSRFProtection, RateLimiter, InputSanitizer } from './security';
 
 // API Response Types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   message?: string;
   error?: string;
   statusCode: number;
+}
+
+// Error types
+interface ApiError extends Error {
+  code?: string;
+  response?: {
+    status: number;
+    data?: {
+      error?: string;
+      message?: string;
+    };
+  };
 }
 
 export interface PaginatedResponse<T> extends ApiResponse<T[]> {
@@ -83,7 +95,7 @@ const createSecureApiClient = (): AxiosInstance => {
           // Try to refresh token
           const refreshToken = TokenManager.getRefreshToken();
           if (refreshToken) {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+            const response = await axios.post(`${API_BASE_URL}/api/auth/refresh-token`, {
               refreshToken
             }, { withCredentials: false });
 
@@ -139,7 +151,7 @@ export class SecureAPI {
   private static readonly LOGIN_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
   // Authentication methods
-  static async login(id: string, sifre: string, credentials: { id: string; sifre: string; }) {
+  static async login(_id: string, _sifre: string, credentials: { id: string; sifre: string; }) {
     // Check rate limit
     const rateLimitResult = RateLimiter.checkLimit(this.LOGIN_ATTEMPTS_KEY, this.LOGIN_MAX_ATTEMPTS, this.LOGIN_WINDOW_MS);
     if (!rateLimitResult.allowed) {
@@ -157,13 +169,34 @@ export class SecureAPI {
       
       if (accessToken) {
         TokenManager.setTokens(accessToken, refreshToken, expiresIn || 900); // 15 minutes default
+        
+        // Also store tokens with alternative keys for compatibility
+        localStorage.setItem('accessToken', accessToken);
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
+        
+        console.log('[SecureAPI] Tokens stored successfully');
+        console.log('[SecureAPI] Access token exists:', !!localStorage.getItem('accessToken'));
+        console.log('[SecureAPI] Auth token exists:', !!localStorage.getItem('auth_token'));
       } else {
         throw new Error('Login response does not contain access token');
       }
       
-      // Return the user data - handle both nested and flat structures
-      const userData = user || otherData;
-      return userData;
+      // Debug logging
+      console.log('[SecureAPI] Raw response data:', response.data);
+      console.log('[SecureAPI] Extracted user:', user);
+      console.log('[SecureAPI] Other data:', otherData);
+      
+      // Return the user data - ensure we return the user object, not the entire response
+      if (user) {
+        console.log('[SecureAPI] Returning user from user property');
+        return { user };
+      } else {
+        // Fallback: if user data is at root level, wrap it
+        console.log('[SecureAPI] Returning user from otherData fallback');
+        return { user: otherData };
+      }
     } catch (error: unknown) {
       
       // Use the existing error handling infrastructure
@@ -171,28 +204,29 @@ export class SecureAPI {
       const errorMessage = extractError(error);
       
       // Check if the API response contains a specific error message
-      if ((error as any).response?.data?.error || (error as any).response?.data?.message) {
-        const apiErrorMessage = (error as any).response.data.error || (error as any).response.data.message;
+      const apiError = error as ApiError;
+      if (apiError.response?.data?.error || apiError.response?.data?.message) {
+        const apiErrorMessage = apiError.response.data.error || apiError.response.data.message;
         throw new Error(apiErrorMessage);
       }
       
       // Provide more specific error messages based on error type
-      if ((error as any).response?.status === 401) {
+      if (apiError.response?.status === 401) {
         // Check if it's actually an authentication failure or something else
-        if ((error as any).response?.data?.error === 'Invalid credentials' || 
-            (error as any).response?.data?.message === 'Invalid credentials' ||
-            (error as any).response?.data?.error === 'Invalid username or password' ||
-            (error as any).response?.data?.message === 'Invalid username or password') {
+        if (apiError.response?.data?.error === 'Invalid credentials' || 
+            apiError.response?.data?.message === 'Invalid credentials' ||
+            apiError.response?.data?.error === 'Invalid username or password' ||
+            apiError.response?.data?.message === 'Invalid username or password') {
           throw new Error('Kullanıcı adı veya şifre hatalı');
         } else {
           // Generic 401 error - could be token issues, etc.
           throw new Error(errorMessage || 'Yetkilendirme hatası. Lütfen tekrar deneyin.');
         }
-      } else if ((error as any).response?.status === 429) {
+      } else if (apiError.response?.status === 429) {
         throw new Error('Çok fazla giriş denemesi. Lütfen daha sonra tekrar deneyin.');
-      } else if ((error as any).response?.status >= 500) {
+      } else if (apiError.response?.status && apiError.response.status >= 500) {
         throw new Error('Sunucu hatası. Lütfen daha sonra tekrar deneyin.');
-      } else if ((error as any).code === 'NETWORK_ERROR' || (error as any).message?.includes('Network Error')) {
+      } else if (apiError.code === 'NETWORK_ERROR' || apiError.message?.includes('Network Error')) {
         throw new Error('Bağlantı hatası. İnternet bağlantınızı kontrol edin.');
       } else if (errorMessage && errorMessage !== 'Bilinmeyen hata') {
         throw new Error(errorMessage);
@@ -226,17 +260,7 @@ export class SecureAPI {
     return apiClient.post('/api/profile/update', data);
   }
 
-  static async changePassword(data: { currentPassword: string; newPassword: string }) {
-    // Şifre gereksinimleri geçici olarak devre dışı
-    // const { PasswordPolicy } = await import('./security');
-    // const validation = PasswordPolicy.validate(data.newPassword);
-    
-    // if (!validation.isValid) {
-    //   throw new Error(`Şifre gereksinimleri karşılanmıyor: ${validation.errors.join(', ')}`);
-    // }
-
-    return apiClient.post('/api/user/change-password', data);
-  }
+  // Şifre değiştirme fonksiyonu kaldırıldı - artık TCKN kullanılıyor
 
   // Generic API methods with security
   static async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {

@@ -4,40 +4,43 @@ const MONGO_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/tofas-fe
 
 // Enhanced database connection configuration for production performance
 const dbConfig: mongoose.ConnectOptions = {
-  maxPoolSize: 20, // Increased for better performance
-  minPoolSize: 5, // Increased for better performance
-  serverSelectionTimeoutMS: 30000, // Increased timeout for development
-  socketTimeoutMS: 60000, // Increased timeout for development
-  bufferCommands: true, // Enable mongoose buffering for development
-  maxIdleTimeMS: 60000, // Increased idle time for development
-  connectTimeoutMS: 30000, // Increased connection timeout for development
-  heartbeatFrequencyMS: 15000, // Increased heartbeat frequency for development
-  retryWrites: true, // Enable retryable writes
-  retryReads: true, // Enable retryable reads
-  w: 1, // Simple write concern for development
-  journal: false, // Disable journal for development
-  readPreference: 'primary', // Simple read preference for development
-  // Use valid ReadConcernLike type
+  maxPoolSize: process.env.NODE_ENV === 'production' ? 50 : 20, // Higher for production
+  minPoolSize: process.env.NODE_ENV === 'production' ? 10 : 5, // Higher for production
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 60000,
+  bufferCommands: true,
+  maxIdleTimeMS: 60000,
+  connectTimeoutMS: 30000,
+  heartbeatFrequencyMS: 15000,
+  retryWrites: true,
+  retryReads: true,
+  w: process.env.NODE_ENV === 'production' ? 'majority' : 1, // Majority for production
+  journal: process.env.NODE_ENV === 'production', // Enable journal for production
+  readPreference: 'primary',
   readConcern: { level: 'local' } as any,
-  // Connection pool monitoring
   monitorCommands: process.env.NODE_ENV === 'development',
-  // TLS configuration for production (updated from deprecated 'ssl')
   tls: process.env.NODE_ENV === 'production',
-  tlsAllowInvalidCertificates: process.env.NODE_ENV !== 'production', // Updated from deprecated 'sslValidate'
-  // Authentication - disabled for development
-  authSource: process.env.NODE_ENV === 'production' ? (process.env.MONGODB_AUTH_SOURCE || 'admin') : undefined,
-  // Replica set configuration
-  replicaSet: process.env.MONGODB_REPLICA_SET,
-  // Write concern
+  tlsAllowInvalidCertificates: process.env.NODE_ENV !== 'production',
+  ...(process.env.NODE_ENV === 'production' && { authSource: process.env.MONGODB_AUTH_SOURCE || 'admin' }),
+  ...(process.env.MONGODB_REPLICA_SET && { replicaSet: process.env.MONGODB_REPLICA_SET }),
   writeConcern: {
-    w: 1, // Simple write concern for development
-    journal: false, // Disable journal for development
+    w: process.env.NODE_ENV === 'production' ? 'majority' : 1,
+    journal: process.env.NODE_ENV === 'production',
     wtimeout: 15000
-  }
+  },
+  // Index creation options
+  autoIndex: process.env.NODE_ENV !== 'production', // Disable in production for performance
+  autoCreate: true // Automatically create collections
 };
 
-export function connectDB() {
-  return mongoose.connect(MONGO_URI, dbConfig);
+export async function connectDB() {
+  try {
+    await mongoose.connect(MONGO_URI, dbConfig);
+    console.log('✅ MongoDB connection established');
+  } catch (error) {
+    console.error('❌ MongoDB connection failed:', error);
+    throw error;
+  }
 }
 
 // Enhanced database connection event handlers
@@ -135,7 +138,7 @@ mongoose.connection.on('poolCleared', (event) => {
 let lastQueryTime = Date.now();
 let queryCount = 0;
 
-mongoose.connection.on('query', (event) => {
+mongoose.connection.on('query', () => {
   queryCount++;
   const now = Date.now();
   const timeSinceLastQuery = now - lastQueryTime;
@@ -236,7 +239,7 @@ export async function checkDBHealth() {
   } catch (error) {
     return {
       status: 'unhealthy',
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       connectionState: mongoose.connection.readyState,
       database: mongoose.connection.name,
       host: mongoose.connection.host,

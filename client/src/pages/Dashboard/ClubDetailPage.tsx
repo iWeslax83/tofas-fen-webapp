@@ -103,7 +103,7 @@ type ClubMessage = NonNullable<ClubResponse['messages']>[number];
 
 // API functions
 const fetchClub = async (clubId: string): Promise<ClubResponse> => {
-  const { data, error } = await ClubService.getClubById(clubId);
+  const { data, error } = await ClubService.getClubById(clubId!);
   if (error) {
     throw new Error(error);
   }
@@ -111,7 +111,7 @@ const fetchClub = async (clubId: string): Promise<ClubResponse> => {
 };
 
 const updateClub = async (clubId: string, data: { description: string; socialLinks: SocialLinks }) => {
-  const { data: responseData, error } = await ClubService.updateClub(clubId, data);
+  const { data: responseData, error } = await ClubService.updateClub(clubId!, data);
   if (error) {
     throw new Error(error);
   }
@@ -119,7 +119,7 @@ const updateClub = async (clubId: string, data: { description: string; socialLin
 };
 
 const joinClub = async (clubId: string) => {
-  const { data, error } = await ClubService.joinClub(clubId);
+  const { data, error } = await ClubService.joinClub(clubId!);
   if (error) {
     throw new Error(error);
   }
@@ -127,7 +127,7 @@ const joinClub = async (clubId: string) => {
 };
 
 const leaveClub = async (clubId: string) => {
-  const { data, error } = await ClubService.leaveClub(clubId);
+  const { data, error } = await ClubService.leaveClub(clubId!);
   if (error) {
     throw new Error(error);
   }
@@ -400,7 +400,7 @@ const ClubDetailPage = () => {
     >
       <LoadingState
         isLoading={isLoading}
-        error={error?.message}
+        error={error?.message || null}
         onRetry={() => refetch()}
         skeleton={<ClubDetailSkeleton />}
       >
@@ -781,7 +781,7 @@ const ClubDetailPage = () => {
                             type: 'activity'
                           };
                           
-                          const { error } = await ClubService.createEvent(clubId, eventData);
+                          const { error } = await ClubService.createEvent(clubId!, eventData);
                           if (error) {
                             toast.error('Etkinlik eklenirken hata oluştu');
                           } else {
@@ -965,7 +965,7 @@ const ClubDetailPage = () => {
                             content: anContent
                           };
                           
-                          const { error } = await ClubService.createAnnouncement(clubId, announcementData);
+                          const { error } = await ClubService.createAnnouncement(clubId!, announcementData);
                           if (error) {
                             toast.error('Duyuru eklenirken hata oluştu');
                           } else {
@@ -1229,7 +1229,7 @@ const ClubDetailPage = () => {
                                 <button
                                   onClick={async () => {
                                     try {
-                                      const { error } = await ClubService.changeMemberRole(clubId, member.userId, 'admin');
+                                      const { error } = await ClubService.changeMemberRole(clubId!, member.userId, 'admin');
                                       if (error) {
                                         toast.error('Rol değiştirilemedi');
                                       } else {
@@ -1278,7 +1278,7 @@ const ClubDetailPage = () => {
                           onClick={async () => {
                             if (inviteId.trim()) {
                               try {
-                                const { error } = await ClubService.inviteMember(clubId, inviteId, 'member');
+                                const { error } = await ClubService.inviteMember(clubId!, inviteId, 'member');
                                 if (error) {
                                   toast.error('Davet gönderilemedi');
                                 } else {

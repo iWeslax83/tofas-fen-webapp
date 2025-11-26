@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import scheduleData from './DersProgramlari.json';
 import { toast } from 'sonner';
+import { LoadingState, Skeleton } from '../../components/SkeletonComponents';
 
 // Type definitions for the schedule data
 interface DaySchedule {
@@ -40,8 +41,12 @@ interface Schedule {
   [key: string]: ClassSchedule;  
 }
 
-// Type assertion for the imported JSON data
-const schedules = scheduleData as unknown as Schedule;
+// Type guard for the imported JSON data
+const isSchedule = (data: any): data is Schedule => {
+  return data && typeof data === 'object';
+};
+
+const schedules = isSchedule(scheduleData) ? scheduleData : {};
 
 export default function DersProgramiPage() {
   const { user: authUser } = useAuth(["admin", "teacher", "student", "parent"]);
@@ -53,7 +58,7 @@ export default function DersProgramiPage() {
   
   // Safely access the schedule data with type checking
   const getClassSchedule = (sinif: string, sube: string): DaySchedule | null => {
-    const classData = schedules[sinif];
+    const classData = (schedules as any)[sinif];
     if (!classData) return null;
     return classData[sube] || null;
   };
@@ -71,7 +76,7 @@ export default function DersProgramiPage() {
       const res = await SecureAPI.get('/api/auth/me');
       console.log('📡 API Response:', res);
       
-      const userData = (res as { data: User }).data;
+      const userData = res as User;
       if (!userData || !["admin", "teacher", "student", "parent"].includes(userData.rol)) {
         setError("Bu sayfaya erişim yetkiniz bulunmuyor.");
         return;
@@ -85,7 +90,7 @@ export default function DersProgramiPage() {
         allClasses.push({ 
           sinif: userData.sinif, 
           sube: userData.sube, 
-          label: `${userData.sinif}/${userData.sube} - ${userData.adSoyad}` 
+          label: `${String(userData.sinif)}/${String(userData.sube)} - ${userData.adSoyad}` 
         });
       }
       
@@ -95,7 +100,7 @@ export default function DersProgramiPage() {
           allClasses.push({
             sinif: child.sinif,
             sube: child.sube,
-            label: `${child.sinif}/${child.sube} - ${(child as any).adSoyad || 'Çocuk'}`
+            label: `${String(child.sinif)}/${String(child.sube)} - ${(child as any).adSoyad || 'Çocuk'}`
           });
         });
       }
@@ -145,169 +150,161 @@ export default function DersProgramiPage() {
   // };
   
 
-  if (loading) {
-    return (
-      <div className="admin-panel">
-        <header className="panel-header">
-          <div className="header-left">
-            <div className="panel-logo">
-              <div className="panel-logo-icon">
-                <BookOpen className="icon" />
-              </div>
-              <div className="panel-logo-text">
-                <div className="school-info">
-                  <h1 className="school-name">Tofaş Fen Lisesi</h1>
-                  <p className="page-title">Ders Programı</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="header-right">
-            {/* User menu removed - handled by ModernDashboardLayout */}
-          </div>
-        </header>
-
-        <main className="panel-main">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Ders programı yükleniyor...</p>
-          </div>
-        </main>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className="admin-panel">
-        <header className="panel-header">
-          <div className="header-left">
-            <div className="panel-logo">
-              <div className="panel-logo-icon">
-                <BookOpen className="icon" />
-              </div>
-              <div className="panel-logo-text">
-                <div className="school-info">
-                  <h1 className="school-name">Tofaş Fen Lisesi</h1>
-                  <p className="page-title">Ders Programı</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="header-right">
-            {/* User menu removed - handled by ModernDashboardLayout */}
-          </div>
-        </header>
-
-        <main className="panel-main">
-          <div className="error-container">
-            <div className="error-message">
-              <h2>Hata Oluştu</h2>
-              <p>{error}</p>
-              <button onClick={fetchUserData} className="btn btn-primary mt-4">
-                Tekrar Dene
-              </button>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${user?.rol || 'student'}` },
     { label: 'Ders Programı' }
   ];
+
+  // Skeleton for schedule loading
+  const ScheduleSkeleton = () => (
+    <div className="ders-programi-page">
+      <BackButton />
+      <main className="panel-main">
+        <div className="page-content">
+          <div className="page-header">
+            <div className="page-header-content">
+              <div className="page-title-section">
+                <BookOpen className="page-icon" />
+                <Skeleton style={{ width: '200px', height: '32px' }} />
+              </div>
+            </div>
+          </div>
+
+          <div className="ders-programi-container">
+            <div className="timetable-grid">
+              <div className="class-schedule-card">
+                <div className="class-header">
+                  <div className="class-info">
+                    <Skeleton style={{ width: '60px', height: '60px', borderRadius: '12px' }} />
+                    <div className="class-details">
+                      <Skeleton style={{ width: '200px', height: '28px', marginBottom: '8px' }} />
+                      <Skeleton style={{ width: '150px', height: '20px' }} />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="schedule-grid">
+                  {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'].map((day) => (
+                    <div key={day} className="day-column">
+                      <div className="day-header">
+                        <Skeleton style={{ width: '100px', height: '24px', margin: '0 auto 8px' }} />
+                        <Skeleton style={{ width: '60px', height: '16px', margin: '0 auto' }} />
+                      </div>
+                      <div className="lessons-list">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <div key={i} className="lesson-item">
+                            <Skeleton style={{ width: '50px', height: '50px', borderRadius: '8px' }} />
+                            <Skeleton style={{ flex: 1, height: '20px', borderRadius: '4px' }} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 
   return (
     <ModernDashboardLayout
       pageTitle="Ders Programı"
       breadcrumb={breadcrumb}
     >
-      <div className="ders-programi-page">
-        <BackButton />
-        <main className="panel-main">
-        <div className="page-content">
-          
-          <div className="page-header">
-            <div className="page-header-content">
-              <div className="page-title-section">
-                <BookOpen className="page-icon" />
-                <h2 className="page-title-main">Ders Programı</h2>
+      <LoadingState
+        isLoading={loading}
+        error={error}
+        onRetry={fetchUserData}
+        skeleton={<ScheduleSkeleton />}
+      >
+        <div className="ders-programi-page">
+          <BackButton />
+          <main className="panel-main">
+            <div className="page-content">
+              
+              <div className="page-header">
+                <div className="page-header-content">
+                  <div className="page-title-section">
+                    <BookOpen className="page-icon" />
+                    <h2 className="page-title-main">Ders Programı</h2>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-        <div className="ders-programi-container">
-          {classes.length === 0 ? (
-            <div className="empty-state">
-              <BookOpen className="empty-icon" />
-              <h3>Ders programı bulunamadı</h3>
-              <p>Sistemde kayıtlı ders programı bulunmuyor.</p>
-            </div>
-          ) : (
-            <div className="timetable-grid">
-              {classes.map(({ sinif, sube, label }) => {
-                const schedule = getClassSchedule(sinif, sube);
-                if (!schedule) return null;
-                
-                return (
-                  <div key={`${sinif}-${sube}`} className="class-schedule-card">
-                    <div className="class-header">
-                      <div className="class-info">
-                        <div className="class-icon">
-                          <BookOpen size={24} />
-                        </div>
-                        <div className="class-details">
-                          <h3 className="class-title">{label}</h3>
-                          <p className="class-subtitle">{sinif}. Sınıf - {sube} Şubesi</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="schedule-grid">
-                      {getDayNames().map(day => {
-                        if (!schedule[day]) return null;
-                        const lessons = schedule[day] || [];
-                        return (
-                          <div key={day} className="day-column">
-                            <div className="day-header">
-                              <h4 className="day-name">{day}</h4>
-                              <span className="lesson-count">{lessons.length} ders</span>
-                            </div>
-                            <div className="lessons-list">
-                              {lessons.map((lesson: string, i: number) => (
-                                <div key={i} className="lesson-item">
-                                  <div className="lesson-time">
-                                    <span className="time-number">{i + 1}</span>
-                                    <span className="time-text">Ders</span>
-                                  </div>
-                                  <div className="lesson-content">
-                                    <span className="lesson-name">{lesson}</span>
-                                  </div>
-                                </div>
-                              ))}
+              <div className="ders-programi-container">
+                {classes.length === 0 ? (
+                  <div className="empty-state">
+                    <BookOpen className="empty-icon" />
+                    <h3>Ders programı bulunamadı</h3>
+                    <p>Sistemde kayıtlı ders programı bulunmuyor.</p>
+                  </div>
+                ) : (
+                  <div className="timetable-grid">
+                    {classes.map(({ sinif, sube, label }) => {
+                      const schedule = getClassSchedule(sinif, sube);
+                      if (!schedule) return null;
+                      
+                      return (
+                        <div key={`${sinif}-${sube}`} className="class-schedule-card">
+                          <div className="class-header">
+                            <div className="class-info">
+                              <div className="class-icon">
+                                <BookOpen size={24} />
+                              </div>
+                              <div className="class-details">
+                                <h3 className="class-title">{label}</h3>
+                                <p className="class-subtitle">{sinif}. Sınıf - {sube} Şubesi</p>
+                              </div>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                    
-                    <div className="schedule-footer">
-                      <div className="update-info">
-                        <Clock size={14} />
-                        <span>Son Güncelleme: {new Date().toLocaleDateString('tr-TR')}</span>
-                      </div>
-                    </div>
+                          
+                          <div className="schedule-grid">
+                            {getDayNames().map(day => {
+                              if (!schedule[day]) return null;
+                              const lessons = schedule[day] || [];
+                              return (
+                                <div key={day} className="day-column">
+                                  <div className="day-header">
+                                    <h4 className="day-name">{day}</h4>
+                                    <span className="lesson-count">{lessons.length} ders</span>
+                                  </div>
+                                  <div className="lessons-list">
+                                    {lessons.map((lesson: string, i: number) => (
+                                      <div key={i} className="lesson-item">
+                                        <div className="lesson-time">
+                                          <span className="time-number">{i + 1}</span>
+                                          <span className="time-text">Ders</span>
+                                        </div>
+                                        <div className="lesson-content">
+                                          <span className="lesson-name">{lesson}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          
+                          <div className="schedule-footer">
+                            <div className="update-info">
+                              <Clock size={14} />
+                              <span>Son Güncelleme: {new Date().toLocaleDateString('tr-TR')}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                )}
+              </div>
             </div>
-          )}
+          </main>
         </div>
-        </div>
-      </main>
-      </div>
+      </LoadingState>
     </ModernDashboardLayout>
   );
 }

@@ -10,7 +10,7 @@ const LoadingSpinner = () => (
 );
 
 // Auth pages
-const LoginPage = lazy(() => import('../pages/LoginPage').then(module => ({ default: module.LoginPage })));
+const LoginPage = lazy(() => import('../pages/LoginPage'));
 const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 
 export const AuthRoutes = () => (

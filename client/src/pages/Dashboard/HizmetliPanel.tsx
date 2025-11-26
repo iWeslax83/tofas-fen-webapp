@@ -35,9 +35,15 @@ const HizmetliPanel: React.FC = () => {
 
   useEffect(() => {
     if (!authLoading && user) {
+      console.log('[HizmetliPanel] Setting up hizmetli panel with user:', user);
+      
       // Filter buttons for hizmetli role
       const buttons = dashboardButtons
-        .filter(btn => btn.roles.includes('hizmetli'))
+        .filter(btn => {
+          const hasRole = btn.roles.includes('hizmetli');
+          console.log(`[HizmetliPanel] Button ${btn.key}: hasRole=${hasRole}`);
+          return hasRole;
+        })
         .map(btn => ({
           id: btn.key,
           title: btn.title,
@@ -47,6 +53,7 @@ const HizmetliPanel: React.FC = () => {
           path: btn.route
         }));
       
+      console.log('[HizmetliPanel] Hizmetli buttons:', buttons);
       setPageButtons(buttons as PageButton[]);
       setIsLoading(false);
     }
@@ -100,7 +107,7 @@ const HizmetliPanel: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
-              <Link to={button.path} className="action-card">
+              <Link to={button.path} className="action-card" data-color={button.color || 'blue'}>
                 <div className="action-icon">
                   <button.icon size={24} />
                 </div>

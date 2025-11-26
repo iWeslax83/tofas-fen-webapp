@@ -1,13 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Users, 
   UserPlus, 
-  UserMinus, 
   Search, 
-  Plus, 
-  Edit,
-  Trash2,
   Link,
   Unlink,
   AlertTriangle,
@@ -36,8 +32,8 @@ interface ParentChildLink {
 }
 
 export default function ParentChildManagement() {
-  const { user } = useAuthContext();
-  const [users, setUsers] = useState<User[]>([]);
+  const { } = useAuthContext();
+  const [, setUsers] = useState<User[]>([]);
   const [parents, setParents] = useState<User[]>([]);
   const [students, setStudents] = useState<User[]>([]);
   const [linkedPairs, setLinkedPairs] = useState<ParentChildLink[]>([]);
@@ -74,7 +70,7 @@ export default function ParentChildManagement() {
       parentsData.forEach((parent: User) => {
         if (parent.childId && parent.childId.length > 0) {
           parent.childId.forEach(childId => {
-            const child = studentsData.find(s => s.id === childId);
+            const child = studentsData.find((s: User) => s.id === childId);
             if (child) {
               pairs.push({
                 parentId: parent.id,

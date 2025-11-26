@@ -3,7 +3,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IUser extends Document {
   id: string;
   adSoyad: string;
-  sifre?: string;
+  tckn?: string; // T.C. Kimlik No - şifre olarak kullanılacak
+  sifre?: string; // Deprecated - artık TCKN kullanılacak, geriye dönük uyumluluk için bırakıldı
   rol: 'student' | 'teacher' | 'parent' | 'admin' | 'hizmetli';
   sinif?: string;
   sube?: string;
@@ -37,10 +38,24 @@ const UserSchema = new Schema<IUser>({
     required: true,
     index: true // For name-based searches
   },
+  tckn: {
+    type: String,
+    unique: true,
+    sparse: true, // Allow multiple null values
+    index: true,
+    validate: {
+      validator: function(v: string) {
+        if (!v) return true; // TCKN optional for now (will be required later)
+        // TCKN validation: 11 digits
+        return /^\d{11}$/.test(v);
+      },
+      message: 'TCKN 11 haneli olmalıdır'
+    }
+  },
   sifre: { 
-    type: String, 
-    required: false
-    // select: false kaldırıldı - login için gerekli
+    type: String,
+    // Deprecated - artık TCKN kullanılacak, geriye dönük uyumluluk için bırakıldı
+    // Şifre validasyonu kaldırıldı
   },
   rol: { 
     type: String, 
@@ -66,7 +81,14 @@ const UserSchema = new Schema<IUser>({
     type: String, 
     unique: true,
     sparse: true, // Allow multiple null values
-    index: true // For email-based lookups
+    index: true, // For email-based lookups
+    validate: {
+      validator: function(v: string) {
+        if (!v) return true; // Email optional
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+      },
+      message: 'Geçerli bir email adresi giriniz'
+    }
   },
   emailVerified: { 
     type: Boolean, 
@@ -121,7 +143,25 @@ const UserSchema = new Schema<IUser>({
 
 // Essential compound indexes for common query patterns
 UserSchema.index({ rol: 1, isActive: 1 }); // Most common query pattern
-UserSchema.index({ rol: 1, sinif: 1, sube: 1 }); // For class management queries
+UserSchema.index({ rol: 1, sinif: 1, sube: 1 }); // Class and section queries
+UserSchema.index({ rol: 1, pansiyon: 1, isActive: 1 }); // Dormitory queries
+UserSchema.index({ parentId: 1, isActive: 1 }); // Parent-child relationship queries
+UserSchema.index({ email: 1, isActive: 1 }); // Email-based lookups
+UserSchema.index({ oda: 1, isActive: 1 }); // Room-based queries
+UserSchema.index({ lastLogin: -1, isActive: 1 }); // Recent activity queries
+UserSchema.index({ createdAt: -1, isActive: 1 }); // New user queries
+UserSchema.index({ tokenVersion: 1, isActive: 1 }); // Token invalidation queries
+UserSchema.index({ resetToken: 1, resetTokenExpiry: 1 }); // Password reset queries
+UserSchema.index({ forgotPasswordToken: 1, forgotPasswordExpires: 1 }); // Forgot password queries
+UserSchema.index({ tckn: 1 }, { sparse: true }); // TCKN-based lookups
+
+// Text search index for name searches
+UserSchema.index({ adSoyad: 'text' });
+
+// Sparse indexes for optional fields
+UserSchema.index({ email: 1 }, { sparse: true });
+UserSchema.index({ parentId: 1 }, { sparse: true });
+UserSchema.index({ oda: 1 }, { sparse: true }); // For class management queries
 UserSchema.index({ parentId: 1, rol: 1 }); // For parent-child queries
 
 // Text index for full-text search

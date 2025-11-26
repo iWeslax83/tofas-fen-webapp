@@ -5,7 +5,6 @@ import { useAuthContext } from "../../contexts/AuthContext";
 // import { ClubService, UserService } from "../../utils/apiService"; // Not used
 import tflLogo from '../../tfllogo.jpg';
 import { toast } from 'sonner';
-import '../../index.css';
 
 interface User {
   id: string;
@@ -31,7 +30,7 @@ export default function JoinClubPage() {
             id: user.id || '',
             adSoyad: user.adSoyad || 'Kullanıcı',
             email: user.email || '',
-            avatar: undefined // avatar not available in User interface
+            avatar: '' // avatar not available in User interface
           });
         }
       } catch (error) {

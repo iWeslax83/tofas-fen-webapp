@@ -1,4 +1,7 @@
 /* MyStudentsPage Styles */
+
+/* Import theme variables */
+@import url('../../styles/theme.css');
 .my-students-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

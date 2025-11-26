@@ -1,5 +1,6 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { ultraSafeErrorLog } from '../utils/safeLogger';
 
 interface Props {
   children: ReactNode;
@@ -31,7 +32,8 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    ultraSafeErrorLog('ErrorBoundary caught an error:', error?.message || 'Unknown error');
+    ultraSafeErrorLog('Component stack:', errorInfo?.componentStack || 'No stack trace');
     this.setState({
       error,
       errorInfo
@@ -40,7 +42,7 @@ class ErrorBoundary extends Component<Props, State> {
     // Log error to monitoring service
     if (process.env.NODE_ENV === 'production') {
       // Error logged to monitoring service
-      console.error('Error logged:', { error: error.message, stack: error.stack });
+      ultraSafeErrorLog('Error logged:', error?.message || 'Unknown error');
     }
   }
 

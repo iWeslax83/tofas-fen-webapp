@@ -7,13 +7,13 @@ import { validateAnnouncement } from "../middleware/validation";
 const router = Router();
 
 // Tüm duyuruları getir
-router.get("/", authenticateJWT, async (req: Request, res: Response) => {
+router.get("/", authenticateJWT, async (_req: Request, res: Response) => {
   try {
     const announcements = await Announcement.find().sort({ date: -1 });
-    res.json(announcements);
+    return res.json(announcements);
   } catch (error) {
     console.error("Duyuru getirme hatası:", error);
-    res.status(500).json({ error: "Sunucu hatası" });
+    return res.status(500).json({ error: "Sunucu hatası" });
   }
 });
 
@@ -33,10 +33,10 @@ router.post("/", authenticateJWT, authorizeRoles(['teacher', 'admin']), validate
     });
 
     await announcement.save();
-    res.status(201).json(announcement);
+    return res.status(201).json(announcement);
   } catch (error) {
     console.error("Duyuru oluşturma hatası:", error);
-    res.status(500).json({ error: "Sunucu hatası" });
+    return res.status(500).json({ error: "Sunucu hatası" });
   }
 });
 
@@ -50,10 +50,10 @@ router.delete("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), asy
       return res.status(404).json({ error: "Duyuru bulunamadı" });
     }
 
-    res.json({ success: true, message: "Duyuru silindi" });
+    return res.json({ success: true, message: "Duyuru silindi" });
   } catch (error) {
     console.error("Duyuru silme hatası:", error);
-    res.status(500).json({ error: "Sunucu hatası" });
+    return res.status(500).json({ error: "Sunucu hatası" });
   }
 });
 

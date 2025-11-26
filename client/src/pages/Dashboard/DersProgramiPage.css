@@ -437,10 +437,7 @@
   margin-bottom: var(--space-4);
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* @keyframes spin moved to theme.css */
 
 /* Error States */
 .error-container {

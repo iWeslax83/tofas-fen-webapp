@@ -1,4 +1,7 @@
 /* Performance Page Styles */
+
+/* Import theme variables */
+@import url('../../styles/theme.css');
 .performance-page {
   padding: 2rem;
   max-width: 1400px;
@@ -106,10 +109,7 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
+/* @keyframes spin moved to theme.css */
 
 /* Dashboard Styles */
 .performance-dashboard {

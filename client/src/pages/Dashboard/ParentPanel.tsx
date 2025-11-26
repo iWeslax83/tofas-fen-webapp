@@ -1,23 +1,13 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { UserService } from '../../utils/apiService';
-import { SecureAPI } from '../../utils/api';
-import NotificationBell from '../../components/NotificationBell';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { dashboardButtons } from './dashboardButtonConfig';
 import { 
   User, 
-  ChevronRight, 
-  GraduationCap, 
-  Home, 
-  UserCheck, 
-  Settings, 
-  LogOut,
-  Star,
-  TrendingUp
+  ChevronRight
 } from 'lucide-react';
 
 // Types
@@ -41,7 +31,7 @@ interface PageButton {
 }
 
 const ParentPanel: React.FC = () => {
-  const { user, logout, isLoading: authLoading } = useAuthContext();
+  const { user, isLoading: authLoading } = useAuthContext();
   const [children, setChildren] = useState<ChildInfo[]>([]);
   const [parentButtons, setParentButtons] = useState<PageButton[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,13 +40,25 @@ const ParentPanel: React.FC = () => {
     const fetchData = async () => {
       if (!authLoading && user) {
         try {
-          // Fetch children data
-          const childrenResponse = await UserService.getChildren(user.id);
-          setChildren((childrenResponse.data as ChildInfo[]) || []);
+          console.log('[ParentPanel] Setting up parent panel with user:', user);
+          
+          // Try to fetch children data, but don't fail if it doesn't work
+          try {
+            const childrenResponse = await UserService.getChildren(user.id);
+            setChildren((childrenResponse.data as ChildInfo[]) || []);
+            console.log('[ParentPanel] Children data loaded:', childrenResponse.data);
+          } catch (childrenError) {
+            console.warn('[ParentPanel] Could not fetch children data:', childrenError);
+            setChildren([]);
+          }
 
           // Filter buttons for parent role
           const buttons = dashboardButtons
-            .filter(btn => btn.roles.includes('parent'))
+            .filter(btn => {
+              const hasRole = btn.roles.includes('parent');
+              console.log(`[ParentPanel] Button ${btn.key}: hasRole=${hasRole}`);
+              return hasRole;
+            })
             .map(btn => ({
               id: btn.key,
               title: btn.title,
@@ -66,10 +68,11 @@ const ParentPanel: React.FC = () => {
               path: btn.route
             }));
           
+          console.log('[ParentPanel] Parent buttons:', buttons);
           setParentButtons(buttons as PageButton[]);
           setIsLoading(false);
         } catch (error) {
-          console.error('Error fetching parent data:', error);
+          console.error('[ParentPanel] Error setting up parent panel:', error);
           setIsLoading(false);
         }
       }
@@ -114,7 +117,7 @@ const ParentPanel: React.FC = () => {
               {children.length > 0 && (
                 <div className="children-info">
                   <h4>Çocuklarınız:</h4>
-                  {children.map((child, index) => (
+                  {children.map((child) => (
                     <div key={child.id} className="child-item">
                       <User className="child-icon" />
                       <div className="child-details">
@@ -136,14 +139,14 @@ const ParentPanel: React.FC = () => {
       <div className="quick-actions">
         <h3>Hızlı İşlemler</h3>
         <div className="action-grid">
-          {parentButtons.map((button, index) => (
+          {parentButtons.map((button) => (
             <motion.div
               key={button.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
+              transition={{ duration: 0.6 }}
             >
-              <Link to={button.path} className="action-card">
+              <Link to={button.path} className="action-card" data-color={button.color || 'blue'}>
                 <div className="action-icon">
                   <button.icon size={24} />
                 </div>
