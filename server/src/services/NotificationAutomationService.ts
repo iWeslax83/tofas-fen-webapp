@@ -258,8 +258,9 @@ export class NotificationAutomationService {
       if (recipients.length > 0) {
         await NotificationService.createBulkNotifications({
           ...notificationData,
-          userIds: recipients
-        });
+          userIds: recipients,
+          actionUrl: notificationData.actionUrl || ''
+        } as any);
 
         logger.info('Automated notification triggered', {
           ruleId: rule.id,

@@ -146,8 +146,8 @@ const CommunicationPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [totalPages, setTotalPages] = useState(1);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [, setTotalPages] = useState(1);
+  const [, setShowCreateModal] = useState(false);
   // const [showContactModal, setShowContactModal] = useState(false); // Not used
   // const [showEmailModal, setShowEmailModal] = useState(false); // Not used
   // const [showChatRoomModal, setShowChatRoomModal] = useState(false); // Not used
@@ -190,7 +190,7 @@ const CommunicationPage: React.FC = () => {
 
         case 'emails': {
           const emailsData = await SecureAPI.get('/api/communication/emails', {
-            params: { type: 'received', page, ...filters }
+            params: { page, ...filters, type: 'received' }
           });
           setEmails((emailsData as { data: Email[] }).data);
           setTotalPages(Math.ceil((emailsData as { total: number }).total / 20));

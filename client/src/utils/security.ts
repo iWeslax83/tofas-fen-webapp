@@ -41,6 +41,9 @@ export class TokenManager {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
+    // Also clear alternative keys for compatibility
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
   }
 
   static shouldRefreshToken(): boolean {

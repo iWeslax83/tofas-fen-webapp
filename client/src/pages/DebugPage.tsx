@@ -3,8 +3,40 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { TokenManager } from '../utils/security';
 
 const DebugPage: React.FC = () => {
-  const { user, isLoading, error } = useAuthContext();
-  const [debugInfo, setDebugInfo] = useState<any>({});
+  const { user, isLoading, error, checkAuth } = useAuthContext();
+  const [debugInfo, setDebugInfo] = useState<{
+    token: {
+      exists: boolean;
+      value: string | null;
+      isExpired: boolean;
+      shouldRefresh: boolean;
+    };
+    refreshToken: {
+      exists: boolean;
+      value: string | null;
+    };
+    user: {
+      context: any;
+      stored: any;
+      storedRaw: string | null;
+    };
+    localStorage: {
+      auth_token: string;
+      refresh_token: string;
+      token_expiry: string | null;
+      user: string;
+    };
+    state: {
+      isLoading: boolean;
+      error: string | null;
+    };
+  }>({
+    token: { exists: false, value: null, isExpired: false, shouldRefresh: false },
+    refreshToken: { exists: false, value: null },
+    user: { context: null, stored: null, storedRaw: null },
+    localStorage: { auth_token: 'NOT_FOUND', refresh_token: 'NOT_FOUND', token_expiry: null, user: 'NOT_FOUND' },
+    state: { isLoading: false, error: null }
+  });
 
   useEffect(() => {
     const updateDebugInfo = () => {
@@ -62,7 +94,6 @@ const DebugPage: React.FC = () => {
   };
 
   const refreshAuth = async () => {
-    const { checkAuth } = useAuthContext();
     await checkAuth();
   };
 

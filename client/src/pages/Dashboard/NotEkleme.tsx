@@ -24,18 +24,18 @@ interface ManualNote {
   studentId: string;
   studentName: string;
   lesson: string;
-  exam1?: number;
-  exam2?: number;
-  exam3?: number;
-  oral?: number;
-  project?: number;
+  exam1?: number | undefined;
+  exam2?: number | undefined;
+  exam3?: number | undefined;
+  oral?: number | undefined;
+  project?: number | undefined;
   average: number;
   semester: string;
   academicYear: string;
-  teacherName?: string;
-  gradeLevel?: string;
-  classSection?: string;
-  notes?: string;
+  teacherName?: string | undefined;
+  gradeLevel?: string | undefined;
+  classSection?: string | undefined;
+  notes?: string | undefined;
 }
 
 const NotEkleme: React.FC = () => {
@@ -188,7 +188,7 @@ const NotEkleme: React.FC = () => {
     setManualNote(prev => ({ ...prev, average }));
   }, [manualNote.exam1, manualNote.exam2, manualNote.exam3, manualNote.oral, manualNote.project]);
 
-  const handleManualNoteChange = (field: keyof ManualNote, value: string | number) => {
+  const handleManualNoteChange = (field: keyof ManualNote, value: string | number | undefined) => {
     setManualNote(prev => ({ ...prev, [field]: value }));
   };
 
@@ -510,7 +510,7 @@ const NotEkleme: React.FC = () => {
                       type="number"
                       min="0"
                       max="100"
-                      value={manualNote.exam1 || ''}
+                      value={manualNote.exam1?.toString() ?? ''}
                       onChange={(e) => handleManualNoteChange('exam1', e.target.value ? Number(e.target.value) : undefined)}
                       className="grade-input-field"
                       placeholder="0-100"
@@ -525,7 +525,7 @@ const NotEkleme: React.FC = () => {
                       type="number"
                       min="0"
                       max="100"
-                      value={manualNote.exam2 || ''}
+                      value={manualNote.exam2?.toString() ?? ''}
                       onChange={(e) => handleManualNoteChange('exam2', e.target.value ? Number(e.target.value) : undefined)}
                       className="grade-input-field"
                       placeholder="0-100"
@@ -540,7 +540,7 @@ const NotEkleme: React.FC = () => {
                       type="number"
                       min="0"
                       max="100"
-                      value={manualNote.exam3 || ''}
+                      value={manualNote.exam3?.toString() ?? ''}
                       onChange={(e) => handleManualNoteChange('exam3', e.target.value ? Number(e.target.value) : undefined)}
                       className="grade-input-field"
                       placeholder="0-100"
@@ -555,7 +555,7 @@ const NotEkleme: React.FC = () => {
                       type="number"
                       min="0"
                       max="100"
-                      value={manualNote.oral || ''}
+                      value={manualNote.oral?.toString() ?? ''}
                       onChange={(e) => handleManualNoteChange('oral', e.target.value ? Number(e.target.value) : undefined)}
                       className="grade-input-field"
                       placeholder="0-100"
@@ -570,7 +570,7 @@ const NotEkleme: React.FC = () => {
                       type="number"
                       min="0"
                       max="100"
-                      value={manualNote.project || ''}
+                      value={manualNote.project?.toString() ?? ''}
                       onChange={(e) => handleManualNoteChange('project', e.target.value ? Number(e.target.value) : undefined)}
                       className="grade-input-field"
                       placeholder="0-100"

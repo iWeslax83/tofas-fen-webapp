@@ -24,6 +24,8 @@ export function useApi<T>(
     // Cancel previous request if it's still running
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
+      // Wait a bit for the abort to complete
+      await new Promise(resolve => setTimeout(resolve, 10));
     }
 
     // Create new abort controller
@@ -66,7 +68,8 @@ export function useApi<T>(
         error: errorMessage,
       });
 
-      throw error;
+      // Return null instead of throwing to prevent unhandled promise rejection
+      return null;
     }
   }, [apiCall]);
 

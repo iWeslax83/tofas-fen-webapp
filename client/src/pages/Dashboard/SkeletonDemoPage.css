@@ -1,5 +1,8 @@
 /* Skeleton Demo Page Styles */
 
+/* Import theme variables */
+@import url('../../styles/theme.css');
+
 .demo-icon {
   font-size: 24px;
   display: flex;
@@ -15,7 +18,7 @@
   margin-bottom: 32px;
   padding: 20px;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(15px);
+  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);
   border: 2px solid rgba(139, 0, 0, 0.1);
@@ -56,7 +59,7 @@
 /* Demo Content */
 .demo-content-wrapper {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(15px);
+  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   padding: 32px;
   box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);

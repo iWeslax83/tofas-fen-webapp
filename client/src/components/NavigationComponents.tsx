@@ -37,7 +37,6 @@ import {
 import { useAuthContext } from '../contexts/AuthContext';
 import { dashboardButtons } from '../pages/Dashboard/dashboardButtonConfig';
 import './NavigationComponents.css';
-import NotificationBell from './NotificationBell';
 
 // Navigation Context
 interface NavigationContextType {
@@ -99,11 +98,11 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
     ];
 
     let currentPath = '';
-    pathSegments.forEach((segment, index) => {
+    pathSegments.forEach((segment) => {
       currentPath += `/${segment}`;
       
       // Map segment to readable label
-      const label = getSegmentLabel(segment, index === 0);
+      const label = getSegmentLabel(segment);
       const icon = getSegmentIcon(segment);
       
       breadcrumbs.push({
@@ -207,7 +206,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
 // Enhanced Sidebar Component
 export const EnhancedSidebar: React.FC = () => {
   const { sidebarOpen, setSidebarOpen, currentPath } = useNavigation();
-  const { user } = useAuthContext();
+  const { user, logout } = useAuthContext();
   const [collapsedSections, setCollapsedSections] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
 
@@ -228,14 +227,18 @@ export const EnhancedSidebar: React.FC = () => {
 
     // Add role-specific items
     const roleItems = dashboardButtons
-      .filter(btn => btn.roles.includes(role))
+      .filter(btn => {
+        if (!btn.roles.includes(role)) return false;
+        if (btn.showForDormitory && !user?.pansiyon) return false;
+        return true;
+      })
       .map(btn => ({
         key: btn.key,
         label: btn.title,
         path: btn.route,
         icon: btn.icon || Home,
         roles: btn.roles,
-        color: btn.color,
+        color: btn.color || '#6b7280',
         description: btn.description
       }));
 
@@ -308,7 +311,7 @@ export const EnhancedSidebar: React.FC = () => {
 
   const isActive = (path: string) => {
     // Debug logging
-    console.log('isActive check:', { path, currentPath, userRole: user?.rol });
+    console.log('isActive check:', `path: ${path}, currentPath: ${currentPath}, userRole: ${user?.rol || 'undefined'}`);
     
     // Exact match
     if (currentPath === path) {
@@ -323,7 +326,7 @@ export const EnhancedSidebar: React.FC = () => {
     }
     
     // Special case for dashboard home routes
-    if (path === `/${user?.rol}` && currentPath === `/${user?.rol}`) {
+    if (path === `/${String(user?.rol || '')}` && currentPath === `/${String(user?.rol || '')}`) {
       console.log('Dashboard home match found:', path);
       return true;
     }
@@ -471,7 +474,7 @@ export const EnhancedSidebar: React.FC = () => {
           <Link to="/yardim" className="footer-action">
             <HelpCircle className="action-icon" />
           </Link>
-          <button className="footer-action logout" onClick={() => window.location.href = '/login'}>
+          <button className="footer-action logout" onClick={logout}>
             <LogOut className="action-icon" />
           </button>
         </div>
@@ -497,12 +500,12 @@ export const EnhancedBreadcrumbs: React.FC = () => {
             <li key={crumb.path} className="breadcrumb-item">
               {isLast ? (
                 <span className="breadcrumb-current">
-                  <Icon className="breadcrumb-icon" />
+                  {Icon && <Icon className="breadcrumb-icon" />}
                   <span className="breadcrumb-label">{crumb.label}</span>
                 </span>
               ) : (
                 <Link to={crumb.path} className="breadcrumb-link">
-                  <Icon className="breadcrumb-icon" />
+                  {Icon && <Icon className="breadcrumb-icon" />}
                   <span className="breadcrumb-label">{crumb.label}</span>
                 </Link>
               )}
@@ -616,7 +619,6 @@ export const EnhancedTopNavigation: React.FC = () => {
         </div>
 
         <div className="nav-user">
-          <NotificationBell userId={user?.id || ''} />
           <div className="user-menu">
             <div className="user-avatar">
               <User className="avatar-icon" />
@@ -636,15 +638,14 @@ export const MobileNavigation: React.FC = () => {
   const [, setActiveTab] = useState('home');
 
   const navigationTabs = [
-    { key: 'home', label: 'Ana Sayfa', icon: Home, path: `/${user?.rol || 'student'}` },
-    { key: 'academic', label: 'Akademik', icon: BookOpen, path: `/${user?.rol || 'student'}/odevler` },
-    { key: 'activities', label: 'Aktiviteler', icon: Award, path: `/${user?.rol || 'student'}/kuluplerim` },
-    { key: 'notifications', label: 'Bildirimler', icon: Bell, path: '/bildirimler' },
+    { key: 'home', label: 'Ana Sayfa', icon: Home, path: `/${String(user?.rol || 'student')}` },
+    { key: 'academic', label: 'Akademik', icon: BookOpen, path: `/${String(user?.rol || 'student')}/odevler` },
+    { key: 'activities', label: 'Aktiviteler', icon: Award, path: `/${String(user?.rol || 'student')}/kuluplerim` },
   ];
 
   const isActive = (path: string) => {
     // Debug logging
-    console.log('isActive check:', { path, currentPath, userRole: user?.rol });
+    console.log('isActive check:', `path: ${path}, currentPath: ${currentPath}, userRole: ${user?.rol || 'undefined'}`);
     
     // Exact match
     if (currentPath === path) {
@@ -659,7 +660,7 @@ export const MobileNavigation: React.FC = () => {
     }
     
     // Special case for dashboard home routes
-    if (path === `/${user?.rol}` && currentPath === `/${user?.rol}`) {
+    if (path === `/${String(user?.rol || '')}` && currentPath === `/${String(user?.rol || '')}`) {
       console.log('Dashboard home match found:', path);
       return true;
     }

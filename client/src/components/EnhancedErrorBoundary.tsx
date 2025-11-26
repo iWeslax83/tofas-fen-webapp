@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, Wifi, Shield, Server, Bug, HelpCircle } from 'lucide-react';
 import { AppError, ErrorType, ErrorSeverity, errorHandler } from '../utils/errorHandling';
+import { ultraSafeErrorLog } from '../utils/safeLogger';
 import './EnhancedErrorBoundary.css';
 
 interface Props {
@@ -41,7 +42,8 @@ class EnhancedErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('EnhancedErrorBoundary caught an error:', error, errorInfo);
+    ultraSafeErrorLog('EnhancedErrorBoundary caught an error:', error?.message || 'Unknown error');
+    ultraSafeErrorLog('Component stack:', errorInfo?.componentStack || 'No stack trace');
     
     // Convert to AppError and handle
     const appError = errorHandler.categorizeError(error, {
@@ -92,7 +94,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
   };
 
   getErrorIcon = (error: AppError) => {
-    switch (error.type) {
+    switch (error.code) {
       case ErrorType.NETWORK:
         return <Wifi size={48} className="error-icon-network" />;
       case ErrorType.AUTHENTICATION:
@@ -107,7 +109,9 @@ class EnhancedErrorBoundary extends Component<Props, State> {
   };
 
   getErrorColor = (error: AppError) => {
-    switch (error.severity) {
+    // Get severity from error context or default to medium
+    const severity = (error.context as any)?.severity || ErrorSeverity.MEDIUM;
+    switch (severity) {
       case ErrorSeverity.LOW:
         return 'var(--error-low)';
       case ErrorSeverity.MEDIUM:
@@ -123,9 +127,10 @@ class EnhancedErrorBoundary extends Component<Props, State> {
 
   getRecoveryActions = (error: AppError) => {
     const actions = [];
+    const severity = (error.context as any)?.severity || ErrorSeverity.MEDIUM;
 
     // Always show retry for non-critical errors
-    if (error.severity !== ErrorSeverity.CRITICAL) {
+    if (severity !== ErrorSeverity.CRITICAL) {
       actions.push({
         label: 'Tekrar Dene',
         icon: <RefreshCw size={16} />,
@@ -135,7 +140,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     }
 
     // Show refresh for client errors
-    if (error.type === ErrorType.CLIENT) {
+    if (error.code === ErrorType.CLIENT) {
       actions.push({
         label: 'Sayfayı Yenile',
         icon: <RefreshCw size={16} />,
@@ -145,7 +150,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     }
 
     // Show home for authentication errors
-    if (error.type === ErrorType.AUTHENTICATION) {
+    if (error.code === ErrorType.AUTHENTICATION) {
       actions.push({
         label: 'Ana Sayfaya Dön',
         icon: <Home size={16} />,
@@ -180,11 +185,11 @@ class EnhancedErrorBoundary extends Component<Props, State> {
               <div className="error-info">
                 <div className="error-type">
                   <span className="error-label">Hata Türü:</span>
-                  <span className="error-value">{error.type}</span>
+                  <span className="error-value">{error.code}</span>
                 </div>
                 <div className="error-severity">
                   <span className="error-label">Önem:</span>
-                  <span className="error-value">{error.severity}</span>
+                  <span className="error-value">{(error.context as any)?.severity || ErrorSeverity.MEDIUM}</span>
                 </div>
                 {recoverySuggestion && (
                   <div className="error-recovery">

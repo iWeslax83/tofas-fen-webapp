@@ -1,12 +1,15 @@
 /* Form UX Demo Page CSS */
 
-/* CSS Variables */
+/* Import theme variables */
+@import url('../../styles/theme.css');
+
+/* Demo-specific CSS Variables */
 :root {
-  --demo-primary: #8A1538;
-  --demo-primary-light: #A61E4A;
-  --demo-primary-dark: #6B1028;
-  --demo-secondary: #F8F9FA;
-  --demo-success: #28A745;
+  --demo-primary: var(--primary-red);
+  --demo-primary-light: var(--primary-red-light);
+  --demo-primary-dark: var(--primary-red-dark);
+  --demo-secondary: var(--gray-50);
+  --demo-success: var(--secondary-green);
   --demo-error: #DC3545;
   --demo-warning: #FFC107;
   --demo-info: #17A2B8;

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import { body, validationResult } from 'express-validator';
+import { validationResult } from 'express-validator';
 import DOMPurify from 'isomorphic-dompurify';
 
 // Enhanced security middleware for comprehensive protection
@@ -21,7 +21,7 @@ export const createRateLimiters = () => {
     },
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    handler: (req: Request, res: Response) => {
+    handler: (_req: Request, res: Response) => {
       res.status(429).json({
         error: 'Rate limit exceeded',
         message: 'Too many requests from this IP, please try again later.',
@@ -43,7 +43,7 @@ export const createRateLimiters = () => {
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: true, // Don't count successful requests
-    handler: (req: Request, res: Response) => {
+    handler: (_req: Request, res: Response) => {
       res.status(429).json({
         error: 'Authentication rate limit exceeded',
         message: 'Too many authentication attempts, please try again later.',
@@ -64,7 +64,7 @@ export const createRateLimiters = () => {
     },
     standardHeaders: true,
     legacyHeaders: false,
-    handler: (req: Request, res: Response) => {
+    handler: (_req: Request, res: Response) => {
       res.status(429).json({
         error: 'Upload rate limit exceeded',
         message: 'Too many file uploads, please try again later.',
@@ -85,7 +85,7 @@ export const createRateLimiters = () => {
     },
     standardHeaders: true,
     legacyHeaders: false,
-    handler: (req: Request, res: Response) => {
+    handler: (_req: Request, res: Response) => {
       res.status(429).json({
         error: 'Admin rate limit exceeded',
         message: 'Too many admin requests, please try again later.',
@@ -149,36 +149,6 @@ export const enhancedHelmet = helmet({
   xssFilter: true
 });
 
-/**
- * Input Sanitization Middleware
- * Prevents XSS and injection attacks
- */
-export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
-  try {
-    // Sanitize body
-    if (req.body) {
-      req.body = sanitizeObject(req.body);
-    }
-
-    // Sanitize query parameters
-    if (req.query) {
-      req.query = sanitizeObject(req.query);
-    }
-
-    // Sanitize URL parameters
-    if (req.params) {
-      req.params = sanitizeObject(req.params);
-    }
-
-    next();
-  } catch (error) {
-    console.error('Input sanitization error:', error);
-    res.status(400).json({
-      error: 'Invalid input detected',
-      message: 'Input contains potentially dangerous content'
-    });
-  }
-};
 
 /**
  * Recursively sanitize objects and arrays
@@ -240,7 +210,7 @@ export const preventSQLInjection = (req: Request, res: Response, next: NextFunct
     });
   }
 
-  next();
+  return next();
 };
 
 /**
@@ -291,22 +261,22 @@ export const preventXSS = (req: Request, res: Response, next: NextFunction) => {
     });
   }
 
-  next();
+  return next();
 };
 
 /**
  * Enhanced Validation Middleware
  * Comprehensive input validation with security checks
  */
-export const enhancedValidation = (req: Request, res: Response, next: NextFunction) => {
-  const errors = validationResult(req);
+export const enhancedValidation = (_req: Request, res: Response, next: NextFunction) => {
+  const errors = validationResult(_req);
   
   if (!errors.isEmpty()) {
     // Log validation errors for security monitoring
     console.warn('Validation failed:', {
-      ip: req.ip,
-      userAgent: req.get('User-Agent'),
-      path: req.path,
+      ip: _req.ip,
+      userAgent: _req.get('User-Agent'),
+      path: _req.path,
       errors: errors.array()
     });
 
@@ -317,14 +287,14 @@ export const enhancedValidation = (req: Request, res: Response, next: NextFuncti
     });
   }
 
-  next();
+  return next();
 };
 
 /**
  * Security Headers Middleware
  * Additional security headers beyond Helmet
  */
-export const securityHeaders = (req: Request, res: Response, next: NextFunction) => {
+export const securityHeaders = (_req: Request, res: Response, next: NextFunction) => {
   // Prevent MIME type sniffing
   res.setHeader('X-Content-Type-Options', 'nosniff');
   
@@ -347,7 +317,7 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
     "default-src 'self'; report-uri /api/security/csp-report"
   );
 
-  next();
+  return next();
 };
 
 /**
@@ -408,7 +378,7 @@ export const requestSizeLimit = (req: Request, res: Response, next: NextFunction
     });
   }
 
-  next();
+  return next();
 };
 
 /**
@@ -417,10 +387,10 @@ export const requestSizeLimit = (req: Request, res: Response, next: NextFunction
  */
 export const ipRestriction = (allowedIPs?: string[], blockedIPs?: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const clientIP = req.ip;
+    const clientIP = req.ip || '';
 
     // Check blacklist first
-    if (blockedIPs && blockedIPs.includes(clientIP)) {
+    if (blockedIPs && clientIP && blockedIPs.includes(clientIP)) {
       console.warn(`🚫 Blocked IP access attempt: ${clientIP}`);
       return res.status(403).json({
         error: 'Access denied',
@@ -429,7 +399,7 @@ export const ipRestriction = (allowedIPs?: string[], blockedIPs?: string[]) => {
     }
 
     // Check whitelist if specified
-    if (allowedIPs && !allowedIPs.includes(clientIP)) {
+    if (allowedIPs && clientIP && !allowedIPs.includes(clientIP)) {
       console.warn(`🚫 Unauthorized IP access attempt: ${clientIP}`);
       return res.status(403).json({
         error: 'Access denied',
@@ -437,7 +407,7 @@ export const ipRestriction = (allowedIPs?: string[], blockedIPs?: string[]) => {
       });
     }
 
-    next();
+    return next();
   };
 };
 
@@ -445,7 +415,7 @@ export const ipRestriction = (allowedIPs?: string[], blockedIPs?: string[]) => {
  * Session Security Middleware
  * Enhanced session protection
  */
-export const sessionSecurity = (req: Request, res: Response, next: NextFunction) => {
+export const sessionSecurity = (req: Request, _res: Response, next: NextFunction) => {
   // Regenerate session ID on successful authentication
   if ((req as any).user && req.session && req.session.regenerate) {
     req.session.regenerate((err: any) => {
@@ -463,7 +433,30 @@ export const sessionSecurity = (req: Request, res: Response, next: NextFunction)
     req.session.cookie.maxAge = 24 * 60 * 60 * 1000; // 24 hours
   }
 
-  next();
+  return next();
+};
+
+/**
+ * Input Sanitization Middleware
+ * Sanitizes all input data to prevent XSS and injection attacks
+ */
+export const sanitizeInput = (req: Request, _res: Response, next: NextFunction) => {
+  // Sanitize request body
+  if (req.body && typeof req.body === 'object') {
+    req.body = sanitizeObject(req.body);
+  }
+  
+  // Sanitize query parameters
+  if (req.query && typeof req.query === 'object') {
+    req.query = sanitizeObject(req.query);
+  }
+  
+  // Sanitize URL parameters
+  if (req.params && typeof req.params === 'object') {
+    req.params = sanitizeObject(req.params);
+  }
+  
+  return next();
 };
 
 // Export all security middleware

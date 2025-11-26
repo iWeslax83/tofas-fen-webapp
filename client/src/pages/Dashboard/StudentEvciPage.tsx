@@ -5,15 +5,18 @@ import { ArrowLeft, Home, Calendar, MapPin, Clock, Edit, Trash2, Plus } from 'lu
 import 'react-toastify/dist/ReactToastify.css';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import BackButton from '../../components/BackButton';
+import { EvciService } from '../../utils/apiService';
+import { toast } from 'sonner';
 import './StudentEvciPage.css';
 
 interface EvciTalep {
+  _id?: string;
   studentId: string;
   studentName: string;
   startDate: string;
   endDate: string;
   destination: string;
-  noShow: boolean;
+  willGo: boolean;
   createdAt: string;
 }
 
@@ -41,7 +44,7 @@ function getFriday(d: Date): Date {
 }
 
 // Cumartesi günü talepleri sıfırlama fonksiyonu
-function resetWeeklyRequests() {
+function _resetWeeklyRequests() {
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = Pazar, 6 = Cumartesi
   
@@ -61,49 +64,48 @@ function resetWeeklyRequests() {
 }
 
 const StudentEvciPage = () => {
-  const { user: authUser, isLoading: authLoading } = useAuth(["student"]);
+  const { user: authUser } = useAuth(["student"]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [, setToastMessage] = useState<string | null>(null);
 
   const [requests, setRequests] = useState<EvciTalep[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<Partial<EvciTalep & { startTime?: string; endTime?: string }>>({ 
-    noShow: false 
+    willGo: true 
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
+  // Kullanıcının mevcut taleplerini API'den yükle
   useEffect(() => {
-    const init = async () => {
+    const fetchRequests = async () => {
+      if (!authUser) return;
+      
       try {
-        await resetWeeklyRequests();
-        setLoading(false);
+        setLoading(true);
+        const { data, error } = await EvciService.getEvciRequestsByStudent(authUser.id);
+        if (error) {
+          setError('Evci talepleri yüklenirken hata oluştu.');
+          console.error('Error fetching evci requests:', error);
+        } else {
+          setRequests(data as EvciTalep[] || []);
+        }
       } catch (err) {
-        setError('Haftalık talepler yüklenirken bir hata oluştu.');
+        setError('Evci talepleri yüklenirken bir hata oluştu.');
+        console.error('Error fetching evci requests:', err);
+      } finally {
         setLoading(false);
       }
     };
     
-    if (authUser) {
-      init();
-    }
-  }, [authUser]);
-
-  // Kullanıcının mevcut taleplerini yükle
-  useEffect(() => {
-    if (authUser) {
-      const all: EvciTalep[] = JSON.parse(
-        localStorage.getItem("evciRequests") || "[]",
-      );
-      setRequests(all.filter((r) => r.studentId === authUser.id));
-    }
+    fetchRequests();
   }, [authUser]);
 
   // Form validasyonu
   const validate = (): FormErrors => {
     const err: FormErrors = {};
-    if (!form.noShow) {
+    if (form.willGo) {
       if (!form.startDate) err.startDate = "Başlangıç tarihi girin.";
       if (!form.endDate) err.endDate = "Bitiş tarihi girin.";
       if (!form.destination) err.destination = "Lütfen yer girin.";
@@ -117,23 +119,18 @@ const StudentEvciPage = () => {
     
     const mon = getMonday(new Date());
     const fri = getFriday(new Date());
-    const all: EvciTalep[] = JSON.parse(
-      localStorage.getItem("evciRequests") || "[]",
-    );
-    const thisWeek = all
-      .filter((r) => r.studentId === authUser.id)
-      .filter((r) => {
-        const d = new Date(r.createdAt);
-        return d >= mon && d <= fri;
-      });
+    const thisWeek = requests.filter((r) => {
+      const d = new Date(r.createdAt);
+      return d >= mon && d <= fri;
+    });
 
     if (thisWeek.length > 0) {
-      setToastMessage("Bu hafta için zaten bir evci talebiniz var.");
+      toast.error("Bu hafta için zaten bir evci talebiniz var.");
       return;
     }
 
     setEditingIndex(null);
-    setForm({ noShow: false });
+    setForm({ willGo: true });
     setErrors({});
     setModalOpen(true);
   };
@@ -147,26 +144,30 @@ const StudentEvciPage = () => {
   };
 
   // Silme
-  const handleDelete = (idx: number) => {
+  const handleDelete = async (idx: number) => {
     if (!authUser) return;
     if (!window.confirm("Talebi iptal etmek istediğinize emin misiniz?"))
       return;
 
-    const all: EvciTalep[] = JSON.parse(
-      localStorage.getItem("evciRequests") || "[]",
-    );
     const target = requests[idx];
-    const updatedAll = all.filter(
-      (r) =>
-        !(r.studentId === target.studentId && r.createdAt === target.createdAt),
-    );
-    localStorage.setItem("evciRequests", JSON.stringify(updatedAll));
-    setRequests(updatedAll.filter((r) => r.studentId === authUser.id));
-    setToastMessage("Talep iptal edildi.");
+    if (!target._id) return;
+
+    try {
+      const { error } = await EvciService.deleteEvciRequest(target._id);
+      if (error) {
+        toast.error('Talep silinirken hata oluştu: ' + error);
+      } else {
+        setRequests(requests.filter((r) => r._id !== target._id));
+        toast.success("Talep iptal edildi.");
+      }
+    } catch (err) {
+      console.error('Error deleting evci request:', err);
+      toast.error('Talep silinirken hata oluştu.');
+    }
   };
 
   // Gönderme / Güncelleme
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!authUser) return;
     
     const vErr = validate();
@@ -184,40 +185,69 @@ const StudentEvciPage = () => {
       form.endDate && form.endTime
         ? `${form.endDate}T${form.endTime}`
         : form.endDate || "";
-    const entry: EvciTalep = {
-      studentId: authUser.id,
-      studentName: authUser.adSoyad,
-      startDate: startDateTime,
-      endDate: endDateTime,
-      destination: form.destination || "",
-      noShow: form.noShow || false,
-      createdAt:
-        editingIndex !== null
-        ? requests[editingIndex].createdAt
-        : new Date().toISOString(),
-    };
 
-    const all: EvciTalep[] = JSON.parse(
-      localStorage.getItem("evciRequests") || "[]",
-    );
-    const updated = [...all];
+    try {
+      if (editingIndex !== null) {
+        // Güncelle
+        const target = requests[editingIndex];
+        if (!target._id) return;
 
-    if (editingIndex !== null) {
-      // Güncelle
-      const old = requests[editingIndex];
-      const idx = updated.findIndex(
-        (r) => r.studentId === old.studentId && r.createdAt === old.createdAt,
-      );
-      if (idx !== -1) updated[idx] = entry;
-    } else {
-      // Yeni ekle
-      updated.push(entry);
+        const { error } = await EvciService.updateEvciRequest(target._id, {
+          startDate: startDateTime,
+          endDate: endDateTime,
+          destination: form.destination || "",
+          willGo: form.willGo || false,
+        });
+
+        if (error) {
+          toast.error('Talep güncellenirken hata oluştu: ' + error);
+        } else {
+          // Local state'i güncelle
+          const updatedRequests = [...requests];
+          updatedRequests[editingIndex] = {
+            ...updatedRequests[editingIndex],
+            startDate: startDateTime,
+            endDate: endDateTime,
+            destination: form.destination || "",
+            willGo: form.willGo || false,
+          };
+          setRequests(updatedRequests);
+          setModalOpen(false);
+          toast.success("Talep güncellendi.");
+        }
+      } else {
+        // Yeni ekle
+        const { data, error } = await EvciService.createEvciRequest({
+          studentId: authUser.id,
+          startDate: startDateTime,
+          endDate: endDateTime,
+          destination: form.destination || "",
+          willGo: form.willGo || false,
+        });
+
+        if (error) {
+          toast.error('Talep oluşturulurken hata oluştu: ' + error);
+        } else {
+          // Local state'e ekle
+          const newRequest: EvciTalep = {
+            _id: (data as any)._id,
+            studentId: authUser.id,
+            studentName: authUser.adSoyad,
+            startDate: startDateTime,
+            endDate: endDateTime,
+            destination: form.destination || "",
+            willGo: form.willGo || false,
+            createdAt: new Date().toISOString(),
+          };
+          setRequests([...requests, newRequest]);
+          setModalOpen(false);
+          toast.success("Talep gönderildi.");
+        }
+      }
+    } catch (err) {
+      console.error('Error submitting evci request:', err);
+      toast.error('Talep işlenirken hata oluştu.');
     }
-
-    localStorage.setItem("evciRequests", JSON.stringify(updated));
-    setRequests(updated.filter((r) => r.studentId === authUser.id));
-    setModalOpen(false);
-    setToastMessage(editingIndex !== null ? "Talep güncellendi." : "Talep gönderildi.");
   };
 
   const breadcrumb = [
@@ -317,8 +347,9 @@ const StudentEvciPage = () => {
             <button
               onClick={handleNew}
               className="btn btn-primary"
+              style={{ fontSize: '1.125rem', padding: '16px 32px', minHeight: '56px' }}
             >
-              <Plus size={18} />
+              <Plus size={24} />
               Yeni Evci Talebi
             </button>
           </div>
@@ -366,17 +397,17 @@ const StudentEvciPage = () => {
                       <div className="info-item">
                         <Clock className="info-icon" />
                         <span className="info-label">Başlangıç:</span>
-                        <span className="info-value">{r.noShow ? "Gitmiyor" : r.startDate}</span>
+                        <span className="info-value">{!r.willGo ? "Gitmiyor" : r.startDate}</span>
                       </div>
                       <div className="info-item">
                         <Clock className="info-icon" />
                         <span className="info-label">Bitiş:</span>
-                        <span className="info-value">{r.noShow ? "-" : r.endDate}</span>
+                        <span className="info-value">{!r.willGo ? "-" : r.endDate}</span>
                       </div>
                       <div className="info-item">
                         <MapPin className="info-icon" />
                         <span className="info-label">Yer:</span>
-                        <span className="info-value">{r.noShow ? "-" : r.destination}</span>
+                        <span className="info-value">{!r.willGo ? "-" : r.destination}</span>
                       </div>
                     </div>
                   </div>
@@ -408,14 +439,14 @@ const StudentEvciPage = () => {
                   <label className="checkbox-label">
                     <input
                       type="checkbox"
-                      checked={form.noShow || false}
-                      onChange={(e) => setForm({ ...form, noShow: e.target.checked })}
+                      checked={!form.willGo}
+                      onChange={(e) => setForm({ ...form, willGo: !e.target.checked })}
                     />
                     <span>Evciye Gitmeyeceğim</span>
                   </label>
                 </div>
                 
-                {!form.noShow && (
+                {form.willGo && (
                   <>
                     <div className="form-row">
                       <div className="form-group">

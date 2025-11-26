@@ -1,187 +1,331 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import { Express } from 'express';
 
 const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Tofaş Fen Webapp API',
+      title: 'Tofas Fen Webapp API',
       version: '1.0.0',
-      description: 'Tofaş Fen Lisesi web uygulaması için REST API dokümantasyonu',
+      description: `
+        # Tofas Fen Webapp API Documentation
+        
+        Bu API, Tofas Fen Lisesi öğrenci yönetim sistemi için geliştirilmiştir.
+        
+        ## Özellikler
+        - Öğrenci, öğretmen, veli ve yönetici rolleri
+        - Evci izin yönetimi
+        - Not ve ödev takibi
+        - Duyuru sistemi
+        - Kulüp yönetimi
+        - Güvenli kimlik doğrulama
+        
+        ## Kimlik Doğrulama
+        API, JWT (JSON Web Token) tabanlı kimlik doğrulama kullanır.
+        İsteklerde \`Authorization: Bearer <token>\` header'ı kullanın.
+        
+        ## Hata Kodları
+        - 200: Başarılı
+        - 400: Geçersiz istek
+        - 401: Kimlik doğrulama gerekli
+        - 403: Yetki yetersiz
+        - 404: Kaynak bulunamadı
+        - 500: Sunucu hatası
+      `,
       contact: {
         name: 'API Support',
-        email: 'support@tofasfen.edu.tr',
+        email: 'support@tofasfen.com',
+        url: 'https://tofasfen.com/support'
       },
+      license: {
+        name: 'MIT',
+        url: 'https://opensource.org/licenses/MIT'
+      },
+      termsOfService: 'https://tofasfen.com/terms'
     },
     servers: [
       {
-        url: process.env.BACKEND_URL || 'http://localhost:5000',
-        description: 'Development server',
+        url: 'http://localhost:3001',
+        description: 'Development server'
       },
+      {
+        url: 'https://api.tofasfen.com',
+        description: 'Production server'
+      }
     ],
     components: {
       securitySchemes: {
-        sessionAuth: {
-          type: 'apiKey',
-          in: 'cookie',
-          name: 'connect.sid',
-          description: 'Session cookie for authentication',
-        },
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'JWT token ile kimlik doğrulama'
+        }
       },
       schemas: {
         User: {
           type: 'object',
+          required: ['id', 'adSoyad', 'rol'],
           properties: {
-            _id: { type: 'string' },
-            name: { type: 'string' },
-            email: { type: 'string', format: 'email' },
-            role: { 
-              type: 'string', 
-              enum: ['student', 'teacher', 'admin', 'parent', 'service'] 
+            id: {
+              type: 'string',
+              description: 'Kullanıcı ID',
+              example: '2024001'
             },
-            studentId: { type: 'string' },
-            grade: { type: 'string' },
-            section: { type: 'string' },
-            createdAt: { type: 'string', format: 'date-time' },
-          },
-        },
-        Club: {
-          type: 'object',
-          properties: {
-            _id: { type: 'string' },
-            name: { type: 'string' },
-            description: { type: 'string' },
-            president: { type: 'string' },
-            anaBaskan: { type: 'string' },
-            members: { 
-              type: 'array', 
-              items: { type: 'string' } 
+            adSoyad: {
+              type: 'string',
+              description: 'Ad ve soyad',
+              example: 'Ahmet Yılmaz'
             },
-            createdAt: { type: 'string', format: 'date-time' },
-          },
+            rol: {
+              type: 'string',
+              enum: ['admin', 'teacher', 'student', 'parent', 'hizmetli'],
+              description: 'Kullanıcı rolü'
+            },
+            email: {
+              type: 'string',
+              format: 'email',
+              description: 'Email adresi',
+              example: 'ahmet.yilmaz@tofasfen.com'
+            },
+            sinif: {
+              type: 'string',
+              enum: ['9', '10', '11', '12'],
+              description: 'Sınıf'
+            },
+            sube: {
+              type: 'string',
+              enum: ['A', 'B', 'C', 'D', 'E', 'F'],
+              description: 'Şube'
+            },
+            oda: {
+              type: 'string',
+              description: 'Oda numarası',
+              example: '101'
+            },
+            pansiyon: {
+              type: 'boolean',
+              description: 'Pansiyonda kalıyor mu?'
+            }
+          }
         },
-        Message: {
+        LoginRequest: {
+          type: 'object',
+          required: ['id', 'sifre'],
+          properties: {
+            id: {
+              type: 'string',
+              description: 'Kullanıcı ID',
+              example: '2024001'
+            },
+            sifre: {
+              type: 'string',
+              description: 'Şifre',
+              example: 'password123'
+            }
+          }
+        },
+        LoginResponse: {
           type: 'object',
           properties: {
-            _id: { type: 'string' },
-            sender: { type: 'string' },
-            content: { type: 'string' },
-            clubId: { type: 'string' },
-            createdAt: { type: 'string', format: 'date-time' },
-          },
-        },
-        Event: {
-          type: 'object',
-          properties: {
-            _id: { type: 'string' },
-            title: { type: 'string' },
-            description: { type: 'string' },
-            date: { type: 'string', format: 'date-time' },
-            clubId: { type: 'string' },
-            createdAt: { type: 'string', format: 'date-time' },
-          },
+            success: {
+              type: 'boolean',
+              example: true
+            },
+            message: {
+              type: 'string',
+              example: 'Giriş başarılı'
+            },
+            user: {
+              $ref: '#/components/schemas/User'
+            },
+            accessToken: {
+              type: 'string',
+              description: 'JWT access token'
+            },
+            refreshToken: {
+              type: 'string',
+              description: 'JWT refresh token'
+            },
+            expiresIn: {
+              type: 'number',
+              description: 'Token süresi (saniye)',
+              example: 900
+            }
+          }
         },
         Error: {
           type: 'object',
           properties: {
-            error: { type: 'string' },
-            message: { type: 'string' },
-            timestamp: { type: 'string', format: 'date-time' },
-          },
+            success: {
+              type: 'boolean',
+              example: false
+            },
+            message: {
+              type: 'string',
+              description: 'Hata mesajı'
+            },
+            errorType: {
+              type: 'string',
+              enum: ['NETWORK', 'AUTHENTICATION', 'AUTHORIZATION', 'VALIDATION', 'SERVER', 'CLIENT', 'UNKNOWN'],
+              description: 'Hata tipi'
+            },
+            statusCode: {
+              type: 'number',
+              description: 'HTTP status kodu'
+            }
+          }
         },
-        Homework: {
+        EvciRequest: {
           type: 'object',
+          required: ['studentId', 'startDate', 'endDate', 'destination'],
           properties: {
-            id: { type: 'string' },
-            title: { type: 'string' },
-            description: { type: 'string' },
-            subject: { type: 'string' },
-            teacherId: { type: 'string' },
-            teacherName: { type: 'string' },
-            classLevel: { type: 'string' },
-            classSection: { type: 'string' },
-            dueDate: { type: 'string', format: 'date-time' },
-            status: { type: 'string', enum: ['active', 'completed', 'expired'] },
-            isPublished: { type: 'boolean' },
-          },
-        },
-        Schedule: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            classLevel: { type: 'string' },
-            classSection: { type: 'string' },
-            academicYear: { type: 'string' },
-            semester: { type: 'string' },
-            schedule: { type: 'array', items: { type: 'object' } },
-            isActive: { type: 'boolean' },
-          },
-        },
-        MealList: {
-          type: 'object',
-          properties: {
-            month: { type: 'string' },
-            year: { type: 'number' },
-            fileUrl: { type: 'string' },
-            uploadedBy: { type: 'string' },
-            isActive: { type: 'boolean' },
-          },
-        },
-        MaintenanceRequest: {
-          type: 'object',
-          properties: {
-            studentId: { type: 'string' },
-            studentName: { type: 'string' },
-            roomNumber: { type: 'string' },
-            issue: { type: 'string' },
-            status: { type: 'string', enum: ['pending', 'in_progress', 'completed'] },
-            adminNote: { type: 'string' },
-            serviceNote: { type: 'string' },
-          },
-        },
+            studentId: {
+              type: 'string',
+              description: 'Öğrenci ID',
+              example: '2024001'
+            },
+            startDate: {
+              type: 'string',
+              format: 'date',
+              description: 'Başlangıç tarihi',
+              example: '2024-01-15'
+            },
+            endDate: {
+              type: 'string',
+              format: 'date',
+              description: 'Bitiş tarihi',
+              example: '2024-01-17'
+            },
+            destination: {
+              type: 'string',
+              description: 'Gidilecek yer',
+              example: 'Ankara'
+            },
+            status: {
+              type: 'string',
+              enum: ['pending', 'approved', 'rejected'],
+              description: 'Durum',
+              example: 'pending'
+            }
+          }
+        }
       },
+      responses: {
+        UnauthorizedError: {
+          description: 'Kimlik doğrulama gerekli',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error'
+              },
+              example: {
+                success: false,
+                message: 'Token gerekli',
+                errorType: 'AUTHENTICATION',
+                statusCode: 401
+              }
+            }
+          }
+        },
+        ForbiddenError: {
+          description: 'Yetki yetersiz',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error'
+              },
+              example: {
+                success: false,
+                message: 'Bu işlem için yetkiniz yok',
+                errorType: 'AUTHORIZATION',
+                statusCode: 403
+              }
+            }
+          }
+        },
+        ValidationError: {
+          description: 'Geçersiz istek',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error'
+              },
+              example: {
+                success: false,
+                message: 'Geçersiz veri',
+                errorType: 'VALIDATION',
+                statusCode: 400
+              }
+            }
+          }
+        },
+        NotFoundError: {
+          description: 'Kaynak bulunamadı',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error'
+              },
+              example: {
+                success: false,
+                message: 'Kaynak bulunamadı',
+                errorType: 'CLIENT',
+                statusCode: 404
+              }
+            }
+          }
+        },
+        ServerError: {
+          description: 'Sunucu hatası',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error'
+              },
+              example: {
+                success: false,
+                message: 'Sunucu hatası',
+                errorType: 'SERVER',
+                statusCode: 500
+              }
+            }
+          }
+        }
+      }
     },
     security: [
       {
-        sessionAuth: [],
-      },
-    ],
+        bearerAuth: []
+      }
+    ]
   },
   apis: [
     './src/routes/*.ts',
-    './src/routes/auth.ts',
-    './src/routes/clubs.ts',
-    './src/routes/messages.ts',
-    './src/routes/events.ts',
-    './src/routes/announcements.ts',
-    './src/routes/upload.ts',
-    './src/routes/monitoring.ts',
-    './src/routes/Homework.ts',
-    './src/routes/Notes.ts',
-    './src/routes/EvciRequest.ts',
-    './src/routes/Schedule.ts',
-    './src/routes/MealList.ts',
-    './src/routes/SupervisorList.ts',
-    './src/routes/MaintenanceRequest.ts',
-    './src/routes/Request.ts',
-    './src/routes/User.ts',
-    './src/routes/Notification.ts',
-  ],
+    './src/modules/*/routes/*.ts',
+    './src/modules/*/controllers/*.ts'
+  ]
 };
 
-const specs = swaggerJsdoc(options);
+export const specs = swaggerJsdoc(options);
 
-const swaggerOptions = {
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Tofaş Fen API Documentation',
-  customfavIcon: '/favicon.ico',
-  swaggerOptions: {
-    docExpansion: 'list',
-    filter: true,
-    showRequestHeaders: true,
-    showCommonExtensions: true,
-  },
+export const swaggerOptions = {
+  customCss: `
+    .swagger-ui .topbar { display: none }
+    .swagger-ui .info .title { color: #1f2937; }
+    .swagger-ui .scheme-container { background: #f9fafb; }
+  `,
+  customSiteTitle: 'Tofas Fen Webapp API',
+  customfavIcon: '/favicon.ico'
 };
 
-export { specs, swaggerOptions }; 
+export const setupSwagger = (app: Express) => {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
+  
+  // JSON endpoint
+  app.get('/api-docs.json', (_req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(specs);
+  });
+};

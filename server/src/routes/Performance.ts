@@ -59,16 +59,16 @@ const handleValidationErrors = (req: express.Request, res: express.Response, nex
 };
 
 // Metrics endpoints
-router.post('/metrics', validateMetricCreate, handleValidationErrors, async (req, res) => {
+router.post('/metrics', validateMetricCreate, handleValidationErrors, async (req: any, res: any) => {
   try {
     await PerformanceService.recordMetric(req.body);
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: 'Metric recorded successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error recording metric:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Error recording metric',
       error: error.message

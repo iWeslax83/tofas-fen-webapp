@@ -189,7 +189,7 @@ export class Analytics {
   trackEvent(event: string, properties?: Record<string, any>): void {
     const userEvent: UserEvent = {
       event,
-      properties,
+      properties: properties || {},
       timestamp: Date.now(),
     };
 
@@ -224,7 +224,7 @@ export class Analytics {
     // Also send to Sentry
     if (process.env.NODE_ENV === 'production') {
       Sentry.captureException(error, {
-        extra: context,
+        extra: context || {},
       });
     }
   }
@@ -267,10 +267,13 @@ export class MemoryMonitor {
     }
   }
 
-  static startMemoryMonitoring(interval: number = 30000): void {
-    setInterval(() => {
+  static startMemoryMonitoring(interval: number = 30000): () => void {
+    const intervalId = setInterval(() => {
       this.checkMemoryUsage();
     }, interval);
+    
+    // Return cleanup function
+    return () => clearInterval(intervalId);
   }
 }
 

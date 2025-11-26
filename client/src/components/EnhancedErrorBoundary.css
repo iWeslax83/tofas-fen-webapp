@@ -24,7 +24,7 @@
   max-width: 600px;
   width: 100%;
   background: var(--error-bg);
-  backdrop-filter: blur(15px);
+  /* backdrop-filter: blur(15px); */
   border-radius: 20px;
   padding: 40px;
   box-shadow: 0 20px 60px var(--error-shadow);
@@ -237,10 +237,7 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
+/* @keyframes spin moved to theme.css */
 
 /* Error Help */
 .error-help {

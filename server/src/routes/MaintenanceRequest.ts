@@ -57,7 +57,7 @@ router.get("/:id", authenticateJWT, async (req, res) => {
 });
 
 // Yeni bakım talebi oluştur (öğrenci ve öğretmen)
-router.post("/", authenticateJWT, authorizeRoles(['student', 'teacher', 'admin']), validateMaintenanceRequest, async (req, res) => {
+router.post("/", authenticateJWT, authorizeRoles(['student', 'teacher', 'admin']), validateMaintenanceRequest, async (req: any, res: any) => {
   try {
     const maintenanceRequest = new MaintenanceRequest({
       ...req.body,

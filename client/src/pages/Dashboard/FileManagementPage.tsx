@@ -144,36 +144,38 @@ const FileManagementPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch data
+  // Fetch data - Optimized with parallel API calls
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch files
-      const filesResponse = await SecureAPI.get(`/api/files?page=${page}&limit=20&sortBy=${sortBy}&sortOrder=${sortOrder}`);
+      // Fetch all data in parallel for better performance
+      const [filesResponse, foldersResponse, treeResponse, statsResponse] = await Promise.all([
+        SecureAPI.get(`/api/files?page=${page}&limit=20&sortBy=${sortBy}&sortOrder=${sortOrder}`),
+        SecureAPI.get(`/api/files/folders?parentFolder=${currentFolder || ''}`),
+        SecureAPI.get('/api/files/folders/tree'),
+        SecureAPI.get('/api/files/stats')
+      ]);
 
+      // Process files response
       if ((filesResponse as { data: { success: boolean; data: { files: IFile[]; totalPages: number } } }).data.success) {
         const responseData = (filesResponse as { data: { success: boolean; data: { files: IFile[]; totalPages: number } } }).data.data;
         setFiles(responseData.files);
         setTotalPages(responseData.totalPages);
       }
 
-      // Fetch folders
-      const foldersResponse = await SecureAPI.get(`/api/files/folders?parentFolder=${currentFolder || ''}`);
-
+      // Process folders response
       if ((foldersResponse as { data: { success: boolean; data: IFolder[] } }).data.success) {
         setFolders((foldersResponse as { data: { success: boolean; data: IFolder[] } }).data.data);
       }
 
-      // Fetch folder tree
-      const treeResponse = await SecureAPI.get('/api/files/folders/tree');
+      // Process folder tree response
       if ((treeResponse as { data: { success: boolean; data: { id: string; name: string; children?: { id: string; name: string }[] }[] } }).data.success) {
         setFolderTree((treeResponse as { data: { success: boolean; data: { id: string; name: string; children?: { id: string; name: string }[] }[] } }).data.data);
       }
 
-      // Fetch stats
-      const statsResponse = await SecureAPI.get('/api/files/stats');
+      // Process stats response
       if ((statsResponse as { data: { success: boolean; data: FileStats } }).data.success) {
         setStats((statsResponse as { data: { success: boolean; data: FileStats } }).data.data);
       }

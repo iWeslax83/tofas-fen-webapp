@@ -1,21 +1,24 @@
 /* MealListPage Styles - Modern Design with Tofaş Burgundy */
+
+/* Import theme variables */
+@import url('../../styles/theme.css');
 .meal-list-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #8B0000 0%, #DC143C 50%, #B22222 100%);
+  background: var(--gradient-primary-animated);
   padding: 0;
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
   animation: gradientShift 5s ease-in-out infinite;
 }
 
 @keyframes gradientShift {
-  0%, 100% { background: linear-gradient(135deg, #8B0000 0%, #DC143C 50%, #B22222 100%); }
+  0%, 100% { background: var(--gradient-primary-animated); }
   50% { background: linear-gradient(135deg, #B22222 0%, #8B0000 50%, #DC143C 100%); }
 }
 
 .meal-list-header {
   background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(15px);
+  /* backdrop-filter: blur(15px); */
   box-shadow: 0 8px 32px rgba(139, 0, 0, 0.2);
   border-bottom: 2px solid rgba(139, 0, 0, 0.3);
   position: fixed !important;
@@ -173,7 +176,7 @@
 /* Upload Section */
 .upload-section {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(15px);
+  /* backdrop-filter: blur(15px); */
   border-radius: 20px;
   box-shadow: 0 12px 40px rgba(139, 0, 0, 0.15);
   border: 2px solid rgba(139, 0, 0, 0.1);
@@ -337,7 +340,7 @@
 /* Filters Section */
 .filters-section {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(15px);
+  /* backdrop-filter: blur(15px); */
   border-radius: 20px;
   box-shadow: 0 12px 40px rgba(139, 0, 0, 0.15);
   border: 2px solid rgba(139, 0, 0, 0.1);
@@ -437,7 +440,7 @@
 
 .meal-list-card {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(15px);
+  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);
   border: 2px solid rgba(139, 0, 0, 0.1);
@@ -607,7 +610,7 @@
   justify-content: center;
   min-height: 400px;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(15px);
+  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);
   border: 2px solid rgba(139, 0, 0, 0.1);
@@ -622,11 +625,7 @@
   border-top-color: #8B0000;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+/* @keyframes spin moved to theme.css */
 
 .error-message {
   text-align: center;
@@ -639,7 +638,7 @@
   text-align: center;
   padding: 60px 20px;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(15px);
+  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);
   border: 2px solid rgba(139, 0, 0, 0.1);

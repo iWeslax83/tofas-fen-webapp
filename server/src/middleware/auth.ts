@@ -11,15 +11,17 @@ export const requireAuth = authenticateJWT;
 
 // Role-based authorization middleware
 export const requireRole = (allowedRoles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const user = (req as any).user;
     
     if (!user) {
-      return res.status(401).json({ error: 'Oturum açmanız gerekiyor' });
+      res.status(401).json({ error: 'Oturum açmanız gerekiyor' });
+      return;
     }
 
-    if (!allowedRoles.includes(user.rol)) {
-      return res.status(403).json({ error: 'Bu işlem için yetkiniz yok' });
+    if (!allowedRoles.includes(user.role)) {
+      res.status(403).json({ error: 'Bu işlem için yetkiniz yok' });
+      return;
     }
 
     next();
@@ -27,13 +29,14 @@ export const requireRole = (allowedRoles: string[]) => {
 };
 
 // Club membership middleware
-export const requireClubMembership = async (req: Request, res: Response, next: NextFunction) => {
+export const requireClubMembership = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const clubId = req.params.clubId;
     const user = (req as any).user;
 
     if (!clubId) {
-      return res.status(400).json({ error: 'Kulüp ID gerekli' });
+      res.status(400).json({ error: 'Kulüp ID gerekli' });
+      return;
     }
 
     // Club'ı veritabanından al
@@ -41,12 +44,14 @@ export const requireClubMembership = async (req: Request, res: Response, next: N
     const club = await Club.findOne({ id: clubId });
 
     if (!club) {
-      return res.status(404).json({ error: 'Kulüp bulunamadı' });
+      res.status(404).json({ error: 'Kulüp bulunamadı' });
+      return;
     }
 
     // Kullanıcının kulüp üyesi olup olmadığını kontrol et
     if (!club.members.includes(user.id)) {
-      return res.status(403).json({ error: 'Bu kulübün üyesi değilsiniz' });
+      res.status(403).json({ error: 'Bu kulübün üyesi değilsiniz' });
+      return;
     }
 
     // Club bilgisini request'e ekle
@@ -59,13 +64,14 @@ export const requireClubMembership = async (req: Request, res: Response, next: N
 };
 
 // Club leadership middleware
-export const requireClubLeadership = async (req: Request, res: Response, next: NextFunction) => {
+export const requireClubLeadership = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const clubId = req.params.clubId;
     const user = (req as any).user;
 
     if (!clubId) {
-      return res.status(400).json({ error: 'Kulüp ID gerekli' });
+      res.status(400).json({ error: 'Kulüp ID gerekli' });
+      return;
     }
 
     // Club'ı veritabanından al
@@ -73,7 +79,8 @@ export const requireClubLeadership = async (req: Request, res: Response, next: N
     const club = await Club.findOne({ id: clubId });
 
     if (!club) {
-      return res.status(404).json({ error: 'Kulüp bulunamadı' });
+      res.status(404).json({ error: 'Kulüp bulunamadı' });
+      return;
     }
 
     // Kullanıcının kulüp lideri olup olmadığını kontrol et
@@ -81,7 +88,8 @@ export const requireClubLeadership = async (req: Request, res: Response, next: N
     const isLeader = userRole === 'Başkan' || userRole === 'Ana Başkan';
 
     if (!isLeader) {
-      return res.status(403).json({ error: 'Bu işlem için kulüp lideri olmanız gerekiyor' });
+      res.status(403).json({ error: 'Bu işlem için kulüp lideri olmanız gerekiyor' });
+      return;
     }
 
     // Club bilgisini request'e ekle
@@ -109,7 +117,7 @@ export const requireParent = requireRole(['parent']);
 export const requireService = requireRole(['hizmetli', 'admin']);
 
 // Optional authentication - kullanıcı giriş yapmışsa bilgilerini ekle
-export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
+export const optionalAuth = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
   try {
     if (req.session && (req.session as any).userId) {
       const user = await User.findOne({ id: (req.session as any).userId });
@@ -129,7 +137,7 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
   // Basit CSRF koruması - production'da daha güçlü bir çözüm kullanın
   if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE' || req.method === 'PATCH') {
     const origin = req.get('Origin');
-    const referer = req.get('Referer');
+    // const referer = req.get('Referer'); // Unused variable removed
     
     // Same-origin kontrolü
     if (origin && !origin.includes(process.env.FRONTEND_URL || 'localhost')) {

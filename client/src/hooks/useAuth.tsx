@@ -38,7 +38,7 @@ export function useAuth(allowedRoles: string[] = []) {
         
         // If specific roles are required, check them
         if (allowedRoles.length > 0 && user.rol && !allowedRoles.includes(user.rol)) {
-          console.warn(`User role ${user.rol} not in allowed roles:`, allowedRoles);
+          console.warn(`User role ${user.rol || 'undefined'} not in allowed roles: ${allowedRoles.join(', ')}`);
           navigate(`/${user.rol || 'login'}`, { replace: true });
           return;
         }

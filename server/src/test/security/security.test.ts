@@ -422,7 +422,7 @@ describe('Security Tests', () => {
         email: 'large@example.com',
         rol: 'student',
         // Add many fields to exceed size limit
-        ...Array.from({ length: 10000 }, (_, i) => ({ [`field${i}`: `value${i}` })).reduce((acc, curr) => ({ ...acc, ...curr }), {})
+        ...Array.from({ length: 10000 }, (_, i) => ({ [`field${i}`: `value${i}`] })).reduce((acc, curr) => ({ ...acc, ...curr }), {})
       };
 
       const response = await request(app)

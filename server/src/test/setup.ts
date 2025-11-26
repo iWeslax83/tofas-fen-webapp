@@ -31,7 +31,7 @@ beforeAll(async () => {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 10000,
       bufferCommands: false,
-      bufferMaxEntries: 0
+      // bufferMaxEntries: 0
     });
     console.log('✅ Test database connected successfully');
   } catch (error) {

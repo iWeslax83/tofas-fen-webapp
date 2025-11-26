@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
+import { tokenBlacklist } from './tokenBlacklist';
 
 // Extend Request interface to include user property
 declare global {
@@ -29,7 +30,7 @@ if (JWT_REFRESH_SECRET.length < 32) {
 export interface JWTPayload {
   userId: string;
   role: string;
-  email?: string;
+  email?: string | undefined;
   iat?: number; // Issued at
   exp?: number; // Expires at
 }
@@ -37,6 +38,8 @@ export interface JWTPayload {
 export interface RefreshTokenPayload {
   userId: string;
   tokenVersion: number;
+  iat?: number; // Issued at
+  exp?: number; // Expires at
 }
 
 // Generate access token (short-lived)
@@ -83,20 +86,30 @@ export const verifyRefreshToken = (token: string): RefreshTokenPayload | null =>
   }
 };
 
-// JWT Authentication Middleware
-export const authenticateJWT = async (req: Request, res: Response, next: NextFunction) => {
+// JWT Authentication Middleware with blacklist check
+export const authenticateJWT = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Access token required' });
+      res.status(401).json({ error: 'Access token required' });
+      return;
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    
+    // Check if token is blacklisted
+    const isBlacklisted = await tokenBlacklist.isBlacklisted(token);
+    if (isBlacklisted) {
+      res.status(401).json({ error: 'Token has been revoked' });
+      return;
+    }
+
     const payload = verifyAccessToken(token);
 
     if (!payload) {
-      return res.status(401).json({ error: 'Invalid or expired access token' });
+      res.status(401).json({ error: 'Invalid or expired access token' });
+      return;
     }
 
     // Add user info to request
@@ -110,20 +123,22 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
 
 // Role-based authorization middleware
 export const authorizeRoles = (allowedRoles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+      res.status(401).json({ error: 'Authentication required' });
+      return;
     }
 
     if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Insufficient permissions' });
+      res.status(403).json({ error: 'Insufficient permissions' });
+      return;
     }
 
     next();
   };
 };
 
-// Generate token pair
+// Generate token pair with enhanced security
 export const generateTokenPair = (userId: string, role: string, email?: string, tokenVersion: number = 0) => {
   const accessToken = generateAccessToken({ userId, role, email });
   const refreshToken = generateRefreshToken({ userId, tokenVersion });
@@ -132,7 +147,8 @@ export const generateTokenPair = (userId: string, role: string, email?: string, 
     accessToken,
     refreshToken,
     expiresIn: 15 * 60, // 15 minutes in seconds
-    refreshExpiresIn: 7 * 24 * 60 * 60 // 7 days in seconds
+    refreshExpiresIn: 7 * 24 * 60 * 60, // 7 days in seconds
+    tokenVersion // Include token version for validation
   };
 };
 
@@ -151,4 +167,37 @@ export const refreshTokens = async (refreshToken: string, tokenVersion: number) 
 
   // Generate new token pair
   return generateTokenPair(payload.userId, '', '', tokenVersion);
+};
+
+// Logout function with token blacklisting
+export const logoutUser = async (accessToken: string, refreshToken: string): Promise<void> => {
+  try {
+    // Decode tokens to get expiration times
+    const accessPayload = verifyAccessToken(accessToken);
+    const refreshPayload = verifyRefreshToken(refreshToken);
+
+    // Add tokens to blacklist
+    if (accessPayload && accessPayload.exp) {
+      await tokenBlacklist.addToBlacklist(accessToken, accessPayload.exp * 1000);
+    }
+
+    if (refreshPayload && refreshPayload.exp) {
+      await tokenBlacklist.addToBlacklist(refreshToken, refreshPayload.exp * 1000);
+    }
+  } catch (error) {
+    console.error('Error during logout token blacklisting:', error);
+    // Don't throw error to prevent logout failure
+  }
+};
+
+// Revoke all user tokens (for security purposes)
+export const revokeAllUserTokens = async (userId: string): Promise<void> => {
+  try {
+    // This would require storing active tokens per user
+    // For now, we'll implement a simple version
+    // In production, you might want to store active tokens in Redis
+    console.log(`Revoking all tokens for user: ${userId}`);
+  } catch (error) {
+    console.error('Error revoking user tokens:', error);
+  }
 };

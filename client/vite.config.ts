@@ -87,16 +87,31 @@ export default defineConfig({
                     return 'security-vendor';
                   }
                   
-                  // Monitoring
+                  // Large libraries - separate chunks
+                  if (id.includes('framer-motion')) {
+                    return 'animation-vendor';
+                  }
+                  
+                  // Monitoring - lazy load
                   if (id.includes('@sentry')) {
                     return 'monitoring-vendor';
+                  }
+                  
+                  // GraphQL - separate chunk
+                  if (id.includes('graphql')) {
+                    return 'graphql-vendor';
                   }
                   
                   return 'vendor';
                 }
                 
-                // Feature-based chunks
+                // Feature-based chunks - smaller chunks for better parallel loading
                 if (id.includes('/pages/Dashboard/')) {
+                  // Split dashboard pages into smaller chunks
+                  const pageName = id.split('/pages/Dashboard/')[1]?.split('.')[0];
+                  if (pageName && ['StudentPanel', 'TeacherPanel', 'AdminPanel', 'ParentPanel', 'HizmetliPanel'].includes(pageName)) {
+                    return 'dashboard-panels';
+                  }
                   return 'dashboard-pages';
                 }
                 if (id.includes('/pages/')) {
@@ -120,9 +135,10 @@ export default defineConfig({
               },
             },
           },
-          chunkSizeWarningLimit: 500, // Reduced from 1000
+          chunkSizeWarningLimit: 300, // Reduced for better performance - smaller chunks load faster
           target: 'esnext',
           cssCodeSplit: true,
+          reportCompressedSize: true,
         },
   optimizeDeps: {
     include: ['react', 'react-dom'],

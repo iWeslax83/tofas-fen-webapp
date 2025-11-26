@@ -43,7 +43,7 @@ export const useErrorHandler = (): UseErrorHandlerReturn => {
     try {
       return await asyncFn();
     } catch (err: unknown) {
-      const message = errorMessage || err.message || 'Bir hata oluştu';
+      const message = errorMessage || (err as any)?.message || 'Bir hata oluştu';
       setError(message);
       return null;
     }
@@ -52,12 +52,12 @@ export const useErrorHandler = (): UseErrorHandlerReturn => {
   const handleApiError = useCallback((error: unknown, fallbackMessage?: string) => {
     let message = fallbackMessage || 'Bir hata oluştu';
     
-    if (error?.response?.data?.error) {
-      message = error.response.data.error;
-    } else if (error?.response?.data?.message) {
-      message = error.response.data.message;
-    } else if (error?.message) {
-      message = error.message;
+    if ((error as any)?.response?.data?.error) {
+      message = (error as any).response.data.error;
+    } else if ((error as any)?.response?.data?.message) {
+      message = (error as any).response.data.message;
+    } else if ((error as any)?.message) {
+      message = (error as any).message;
     }
     
     setError(message);

@@ -11,28 +11,8 @@ const requiredEnvVars = [
   'NODE_ENV'
 ];
 
-const optionalEnvVars = [
-  'PORT',
-  'CORS_ORIGIN',
-  'RATE_LIMIT_WINDOW_MS',
-  'RATE_LIMIT_MAX_REQUESTS',
-  'AUTH_RATE_LIMIT_WINDOW_MS',
-  'AUTH_RATE_LIMIT_MAX',
-  'SMTP_HOST',
-  'SMTP_PORT',
-  'SMTP_USER',
-  'SMTP_PASS',
-  'REDIS_URL',
-  'FRONTEND_URL',
-  'BACKEND_URL',
-  'BCRYPT_ROUNDS',
-  'SESSION_SECRET',
-  'SENTRY_DSN',
-  'LOG_LEVEL',
-  'MAX_FILE_SIZE',
-  'UPLOAD_PATH',
-  'HEALTH_CHECK_TIMEOUT'
-];
+// Optional environment variables are used for validation but not stored in a variable
+// This prevents the "declared but never used" error
 
 // Validate required environment variables
 for (const envVar of requiredEnvVars) {

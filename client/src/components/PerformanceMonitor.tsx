@@ -63,13 +63,18 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
     setMetrics(prev => ({
       ...prev,
       renderTime: endTime - startTime,
-      loadTime: performance.timing.loadEventEnd - performance.timing.navigationStart
+      loadTime: performance.timing && performance.timing.loadEventEnd && performance.timing.navigationStart 
+        ? performance.timing.loadEventEnd - performance.timing.navigationStart 
+        : 0
     }));
 
     updateMemoryUsage();
     updateBundleSize();
 
-    const interval = setInterval(updateMemoryUsage, 1000);
+    const interval = setInterval(() => {
+      updateMemoryUsage();
+      updateBundleSize();
+    }, 1000);
     return () => clearInterval(interval);
   }, [enabled]);
 

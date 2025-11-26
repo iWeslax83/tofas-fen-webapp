@@ -4,7 +4,7 @@ import { useAuth } from "../../hooks/useAuth";
 // import { UserService } from "../../utils/apiService"; // Not used
 // import { useAuthContext } from "../../contexts/AuthContext"; // Not used
 
-export function LoginLogsPage() {
+export default function LoginLogsPage() {
   useAuth(["admin"]);
   // const { user } = useAuthContext(); // Not used
   const [returnPath, setReturnPath] = useState("/dashboard");

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Activity, 
@@ -98,6 +98,8 @@ export default function MonitoringDashboard() {
       const interval = setInterval(fetchMonitoringData, 30000); // 30 seconds
       return () => clearInterval(interval);
     }
+    
+    return undefined;
   }, [autoRefresh]);
 
   const formatUptime = (seconds: number) => {

@@ -256,7 +256,7 @@ export const AccessibleModal: React.FC<AccessibleModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const focusTrapRef = useFocusTrap({ 
     active: isOpen, 
-    onEscape: closeOnEscape ? onClose : undefined 
+    onEscape: closeOnEscape ? onClose : () => {} 
   });
   const announce = useAnnouncement();
 

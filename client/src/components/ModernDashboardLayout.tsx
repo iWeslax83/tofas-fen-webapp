@@ -8,7 +8,6 @@ import {
   X
 } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
-import NotificationBell from './NotificationBell';
 import { dashboardButtons } from '../pages/Dashboard/dashboardButtonConfig';
 import './ModernDashboardLayout.css';
 
@@ -42,7 +41,11 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
 
   const getRoleBasedButtons = () => {
     const role = user?.rol || 'student';
-    return dashboardButtons.filter(btn => btn.roles.includes(role));
+    return dashboardButtons.filter(btn => {
+      if (!btn.roles.includes(role)) return false;
+      if (btn.showForDormitory && !user?.pansiyon) return false;
+      return true;
+    });
   };
 
   const roleButtons = getRoleBasedButtons();
@@ -85,7 +88,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
               <h3>Hızlı Erişim</h3>
               {roleButtons.map((button) => (
                 <Link key={button.key} to={button.route} className="nav-item">
-                  <button.icon className="nav-icon" />
+                  {button.icon && <button.icon className="nav-icon" />}
                   <span>{button.title}</span>
                 </Link>
               ))}
@@ -138,7 +141,6 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
           </div>
           <div className="header-right">
             {customHeaderActions}
-            <NotificationBell userId={user.id} />
           </div>
         </header>
 

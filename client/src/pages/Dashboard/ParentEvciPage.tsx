@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Home, ArrowLeft, Calendar, MapPin, User, RefreshCw, AlertCircle } from 'lucide-react';
+// import { useNavigate } from 'react-router-dom'; // Not used
+import { Home, Calendar, MapPin, User, RefreshCw, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import BackButton from '../../components/BackButton';
@@ -27,8 +27,8 @@ interface Student {
 }
 
 export default function ParentEvciPage() {
-  const { user: authUser, isLoading: authLoading } = useAuth(["parent"]);
-  const navigate = useNavigate();
+  const { user: authUser } = useAuth(["parent"]);
+  // const navigate = useNavigate(); // Removed unused variable
   
   const [children, setChildren] = useState<Student[]>([]);
   const [requests, setRequests] = useState<EvciTalep[]>([]);
@@ -98,7 +98,7 @@ export default function ParentEvciPage() {
     };
 
     fetchData();
-  }, [authUser]);
+  }, [authUser, mockChildren, mockRequests]);
   
   const handleRefresh = async () => {
     setIsLoading(true);
@@ -236,7 +236,7 @@ export default function ParentEvciPage() {
               >
                 {children.map((child) => (
                   <option key={child.id} value={child.id}>
-                    {child.adSoyad} {child.sinif ? `(${child.sinif})` : ''}
+                    {child.adSoyad} {child.sinif ? `(${String(child.sinif)})` : ''}
                   </option>
                 ))}
               </select>

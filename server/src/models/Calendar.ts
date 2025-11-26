@@ -204,7 +204,7 @@ calendarEventSchema.methods.isOverlapping = function(otherEvent: ICalendarEvent)
 calendarEventSchema.methods.getNextOccurrence = function(): Date | null {
   if (!this.isRecurring || !this.recurringPattern) return null;
   
-  const now = new Date();
+  // const now = new Date();
   const lastOccurrence = this.endDate;
   
   switch (this.recurringPattern.frequency) {

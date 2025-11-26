@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 // import { Link } from 'react-router-dom'; // Not used
 import { User, Calendar, FileText, CheckCircle } from 'lucide-react'; // ArrowLeft, Mail, Lock, Phone, MapPin removed
 import { toast } from 'react-hot-toast';

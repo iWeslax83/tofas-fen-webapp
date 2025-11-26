@@ -37,7 +37,7 @@ const faqData: FAQItem[] = [
   {
     id: '2',
     question: 'Şifremi nasıl değiştirebilirim?',
-    answer: 'Profil sayfasından "Şifre Değiştir" seçeneğini kullanarak şifrenizi güncelleyebilirsiniz. Güvenlik için güçlü bir şifre seçmeyi unutmayın.',
+    answer: 'Şifre değiştirme özelliği kaldırılmıştır. Sistem artık T.C. Kimlik Numarası (TCKN) ile giriş yapmaktadır.',
     category: 'hesap'
   },
   {

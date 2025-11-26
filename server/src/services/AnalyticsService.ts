@@ -1,726 +1,292 @@
+/**
+ * Analytics Service
+ * User behavior tracking and analytics
+ */
+
+import logger from '../utils/logger';
 import { User } from '../models/User';
-import Note from '../models/Note';
-import { Club } from '../models/Club';
-import { Schedule } from '../models/Schedule';
+import { Announcement } from '../models/Announcement';
 import { Homework } from '../models/Homework';
-import { Notification } from '../models/Notification';
-import { Analytics } from '../models/Analytics';
-import { Report } from '../models/Report';
+import { EvciRequest } from '../models/EvciRequest';
 
-export interface AnalyticsFilters {
-  startDate?: Date;
-  endDate?: Date;
-  classLevel?: string;
-  classSection?: string;
-  subject?: string;
-  teacherId?: string;
-  studentId?: string;
-  role?: string;
-  clubId?: string;
-  academicYear?: string;
-  semester?: string;
-}
-
-export interface MetricResult {
-  value: number | string | object;
-  unit?: string;
+export interface AnalyticsEvent {
+  eventType: string;
+  userId?: string;
+  userRole?: string;
   metadata?: Record<string, any>;
+  timestamp: Date;
+  sessionId?: string;
+  ipAddress?: string;
+  userAgent?: string;
 }
 
-export class AnalyticsService {
-  
-  // Academic Analytics
-  static async getAcademicMetrics(filters: AnalyticsFilters = {}): Promise<Record<string, MetricResult>> {
-    const results: Record<string, MetricResult> = {};
-    
+export interface UserBehaviorMetrics {
+  pageViews: number;
+  uniqueVisits: number;
+  averageSessionDuration: number;
+  bounceRate: number;
+  topPages: Array<{ path: string; views: number }>;
+  userActions: Array<{ action: string; count: number }>;
+}
+
+export interface FeedbackData {
+  userId: string;
+  type: 'bug' | 'feature' | 'improvement' | 'other';
+  category: string;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'open' | 'in-progress' | 'resolved' | 'closed';
+  metadata?: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+class AnalyticsService {
+  private events: AnalyticsEvent[] = [];
+  private feedbackData: FeedbackData[] = [];
+
+  /**
+   * Track user event
+   */
+  async trackEvent(event: Omit<AnalyticsEvent, 'timestamp'>): Promise<void> {
     try {
-      // Average grades by subject
-      const subjectAverages = await Note.aggregate([
-        { $match: this.buildNoteFilters(filters) },
-        {
-          $group: {
-            _id: '$lesson',
-            average: { $avg: '$average' },
-            count: { $sum: 1 },
-            min: { $min: '$average' },
-            max: { $max: '$average' }
-          }
-        },
-        { $sort: { average: -1 } }
-      ]);
-      
-      results.subjectAverages = {
-        value: subjectAverages,
-        unit: 'grade',
-        metadata: { totalSubjects: subjectAverages.length }
+      const analyticsEvent: AnalyticsEvent = {
+        ...event,
+        timestamp: new Date(),
       };
 
-      // Class performance comparison
-      const classPerformance = await Note.aggregate([
-        { $match: this.buildNoteFilters(filters) },
-        {
-          $group: {
-            _id: { sinif: '$gradeLevel', sube: '$classSection' },
-            average: { $avg: '$average' },
-            count: { $sum: 1 },
-            subjects: { $addToSet: '$lesson' }
-          }
-        },
-        { $sort: { average: -1 } }
-      ]);
-      
-      results.classPerformance = {
-        value: classPerformance,
-        unit: 'grade',
-        metadata: { totalClasses: classPerformance.length }
-      };
+      // Store in memory (in production, use database or analytics service)
+      this.events.push(analyticsEvent);
 
-      // Grade distribution
-      const gradeDistribution = await Note.aggregate([
-        { $match: this.buildNoteFilters(filters) },
-        {
-          $bucket: {
-            groupBy: '$average',
-            boundaries: [0, 50, 60, 70, 80, 90, 100],
-            default: 'other',
-            output: {
-              count: { $sum: 1 },
-              students: { $addToSet: '$studentId' }
-            }
-          }
-        }
-      ]);
-      
-      results.gradeDistribution = {
-        value: gradeDistribution,
-        unit: 'count',
-        metadata: { totalGrades: gradeDistribution.reduce((sum, bucket) => sum + bucket.count, 0) }
-      };
+      // Log event
+      logger.info('Analytics event tracked', {
+        eventType: event.eventType,
+        userId: event.userId,
+        userRole: event.userRole,
+      });
 
-      // Top performing students
-      const topStudents = await Note.aggregate([
-        { $match: this.buildNoteFilters(filters) },
-        {
-          $group: {
-            _id: '$studentId',
-            studentName: { $first: '$studentName' },
-            average: { $avg: '$average' },
-            subjectCount: { $sum: 1 }
-          }
-        },
-        { $sort: { average: -1 } },
-        { $limit: 10 }
-      ]);
-      
-      results.topStudents = {
-        value: topStudents,
-        unit: 'grade',
-        metadata: { limit: 10 }
-      };
-
-      // Teacher performance analysis
-      const teacherPerformance = await Note.aggregate([
-        { $match: this.buildNoteFilters(filters) },
-        {
-          $group: {
-            _id: '$teacherName',
-            average: { $avg: '$average' },
-            subjectCount: { $sum: 1 },
-            studentCount: { $addToSet: '$studentId' }
-          }
-        },
-        {
-          $project: {
-            teacherName: '$_id',
-            average: 1,
-            subjectCount: 1,
-            studentCount: { $size: '$studentCount' }
-          }
-        },
-        { $sort: { average: -1 } }
-      ]);
-      
-      results.teacherPerformance = {
-        value: teacherPerformance,
-        unit: 'grade',
-        metadata: { totalTeachers: teacherPerformance.length }
-      };
-
+      // In production, send to analytics service (e.g., Google Analytics, Mixpanel)
+      if (process.env.ANALYTICS_ENABLED === 'true') {
+        await this.sendToAnalyticsService(analyticsEvent);
+      }
     } catch (error) {
-      console.error('Error calculating academic metrics:', error);
-      throw error;
+      logger.error('Error tracking analytics event:', error);
     }
-
-    return results;
   }
 
-  // User Analytics
-  static async getUserMetrics(filters: AnalyticsFilters = {}): Promise<Record<string, MetricResult>> {
-    const results: Record<string, MetricResult> = {};
-    
-    try {
-      // User registration trends
-      const registrationTrends = await User.aggregate([
-        { $match: this.buildUserFilters(filters) },
-        {
-          $group: {
-            _id: {
-              year: { $year: '$createdAt' },
-              month: { $month: '$createdAt' },
-              role: '$rol'
-            },
-            count: { $sum: 1 }
-          }
-        },
-        { $sort: { '_id.year': 1, '_id.month': 1 } }
-      ]);
-      
-      results.registrationTrends = {
-        value: registrationTrends,
-        unit: 'count',
-        metadata: { totalRegistrations: registrationTrends.reduce((sum, item) => sum + item.count, 0) }
-      };
-
-      // User activity by role
-      const userActivity = await User.aggregate([
-        { $match: this.buildUserFilters(filters) },
-        {
-          $group: {
-            _id: '$rol',
-            count: { $sum: 1 },
-            activeCount: { $sum: { $cond: ['$isActive', 1, 0] } },
-            avgLoginCount: { $avg: '$loginCount' },
-            lastLoginAvg: { $avg: { $ifNull: ['$lastLogin', new Date(0)] } }
-          }
-        },
-        { $sort: { count: -1 } }
-      ]);
-      
-      results.userActivity = {
-        value: userActivity,
-        unit: 'count',
-        metadata: { totalUsers: userActivity.reduce((sum, item) => sum + item.count, 0) }
-      };
-
-      // Class distribution
-      const classDistribution = await User.aggregate([
-        { $match: { rol: 'student', ...this.buildUserFilters(filters) } },
-        {
-          $group: {
-            _id: { sinif: '$sinif', sube: '$sube' },
-            count: { $sum: 1 },
-            dormitoryCount: { $sum: { $cond: ['$pansiyon', 1, 0] } }
-          }
-        },
-        { $sort: { '_id.sinif': 1, '_id.sube': 1 } }
-      ]);
-      
-      results.classDistribution = {
-        value: classDistribution,
-        unit: 'count',
-        metadata: { totalStudents: classDistribution.reduce((sum, item) => sum + item.count, 0) }
-      };
-
-      // Login activity
-      const loginActivity = await User.aggregate([
-        { $match: { lastLogin: { $exists: true }, ...this.buildUserFilters(filters) } },
-        {
-          $group: {
-            _id: {
-              year: { $year: '$lastLogin' },
-              month: { $month: '$lastLogin' },
-              day: { $dayOfMonth: '$lastLogin' }
-            },
-            count: { $sum: 1 },
-            avgLoginCount: { $avg: '$loginCount' }
-          }
-        },
-        { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } },
-        { $limit: 30 } // Last 30 days
-      ]);
-      
-      results.loginActivity = {
-        value: loginActivity,
-        unit: 'count',
-        metadata: { days: 30 }
-      };
-
-    } catch (error) {
-      console.error('Error calculating user metrics:', error);
-      throw error;
-    }
-
-    return results;
-  }
-
-  // Club Analytics
-  static async getClubMetrics(filters: AnalyticsFilters = {}): Promise<Record<string, MetricResult>> {
-    const results: Record<string, MetricResult> = {};
-    
-    try {
-      // Club membership statistics
-      const clubMembership = await Club.aggregate([
-        { $match: this.buildClubFilters(filters) },
-        {
-          $project: {
-            name: 1,
-            memberCount: { $size: '$members' },
-            eventCount: { $size: '$events' },
-            announcementCount: { $size: '$announcements' }
-          }
-        },
-        { $sort: { memberCount: -1 } }
-      ]);
-      
-      results.clubMembership = {
-        value: clubMembership,
-        unit: 'count',
-        metadata: { totalClubs: clubMembership.length }
-      };
-
-      // Club activity trends
-      const clubActivity = await Club.aggregate([
-        { $match: this.buildClubFilters(filters) },
-        {
-          $project: {
-            name: 1,
-            events: {
-              $map: {
-                input: '$events',
-                as: 'event',
-                in: {
-                  title: '$$event.title',
-                  date: '$$event.date',
-                  attendeeCount: { $size: '$$event.attendees' }
-                }
-              }
-            },
-            announcements: {
-              $map: {
-                input: '$announcements',
-                as: 'announcement',
-                in: {
-                  title: '$$announcement.title',
-                  timestamp: '$$announcement.timestamp'
-                }
-              }
-            }
-          }
-        }
-      ]);
-      
-      results.clubActivity = {
-        value: clubActivity,
-        unit: 'count',
-        metadata: { totalClubs: clubActivity.length }
-      };
-
-      // Most active clubs
-      const mostActiveClubs = await Club.aggregate([
-        { $match: this.buildClubFilters(filters) },
-        {
-          $project: {
-            name: 1,
-            memberCount: { $size: '$members' },
-            eventCount: { $size: '$events' },
-            announcementCount: { $size: '$announcements' },
-            chatCount: { $size: '$chats' },
-            activityScore: {
-              $add: [
-                { $multiply: [{ $size: '$members' }, 1] },
-                { $multiply: [{ $size: '$events' }, 2] },
-                { $multiply: [{ $size: '$announcements' }, 1] },
-                { $multiply: [{ $size: '$chats' }, 0.5] }
-              ]
-            }
-          }
-        },
-        { $sort: { activityScore: -1 } },
-        { $limit: 10 }
-      ]);
-      
-      results.mostActiveClubs = {
-        value: mostActiveClubs,
-        unit: 'score',
-        metadata: { limit: 10 }
-      };
-
-    } catch (error) {
-      console.error('Error calculating club metrics:', error);
-      throw error;
-    }
-
-    return results;
-  }
-
-  // System Analytics
-  static async getSystemMetrics(filters: AnalyticsFilters = {}): Promise<Record<string, MetricResult>> {
-    const results: Record<string, MetricResult> = {};
-    
-    try {
-      // Notification statistics
-      const notificationStats = await Notification.aggregate([
-        { $match: this.buildNotificationFilters(filters) },
-        {
-          $group: {
-            _id: {
-              type: '$type',
-              priority: '$priority',
-              category: '$category'
-            },
-            count: { $sum: 1 },
-            readCount: { $sum: { $cond: ['$read', 1, 0] } },
-            unreadCount: { $sum: { $cond: ['$read', 0, 1] } }
-          }
-        }
-      ]);
-      
-      results.notificationStats = {
-        value: notificationStats,
-        unit: 'count',
-        metadata: { totalNotifications: notificationStats.reduce((sum, item) => sum + item.count, 0) }
-      };
-
-      // Homework statistics
-      const homeworkStats = await Homework.aggregate([
-        { $match: this.buildHomeworkFilters(filters) },
-        {
-          $group: {
-            _id: {
-              subject: '$subject',
-              status: '$status',
-              classLevel: '$classLevel'
-            },
-            count: { $sum: 1 },
-            avgDaysToDue: {
-              $avg: {
-                $divide: [
-                  { $subtract: ['$dueDate', '$assignedDate'] },
-                  1000 * 60 * 60 * 24 // Convert to days
-                ]
-              }
-            }
-          }
-        }
-      ]);
-      
-      results.homeworkStats = {
-        value: homeworkStats,
-        unit: 'count',
-        metadata: { totalHomework: homeworkStats.reduce((sum, item) => sum + item.count, 0) }
-      };
-
-      // Schedule utilization
-      const scheduleStats = await Schedule.aggregate([
-        { $match: this.buildScheduleFilters(filters) },
-        {
-          $project: {
-            classLevel: 1,
-            classSection: 1,
-            totalPeriods: {
-              $reduce: {
-                input: '$schedule',
-                initialValue: 0,
-                in: { $add: ['$$value', { $size: '$$this.periods' }] }
-              }
-            },
-            uniqueSubjects: {
-              $size: {
-                $setUnion: {
-                  $reduce: {
-                    input: '$schedule',
-                    initialValue: [],
-                    in: { $concatArrays: ['$$value', '$$this.periods.subject'] }
-                  }
-                }
-              }
-            }
-          }
-        }
-      ]);
-      
-      results.scheduleStats = {
-        value: scheduleStats,
-        unit: 'count',
-        metadata: { totalSchedules: scheduleStats.length }
-      };
-
-    } catch (error) {
-      console.error('Error calculating system metrics:', error);
-      throw error;
-    }
-
-    return results;
-  }
-
-  // Helper methods for building filters
-  private static buildNoteFilters(filters: AnalyticsFilters): any {
-    const match: any = {};
-    
-    if (filters.startDate || filters.endDate) {
-      match.createdAt = {};
-      if (filters.startDate) match.createdAt.$gte = filters.startDate;
-      if (filters.endDate) match.createdAt.$lte = filters.endDate;
-    }
-    
-    if (filters.classLevel) match.gradeLevel = filters.classLevel;
-    if (filters.classSection) match.classSection = filters.classSection;
-    if (filters.subject) match.lesson = filters.subject;
-    if (filters.teacherId) match.teacherName = filters.teacherId;
-    if (filters.studentId) match.studentId = filters.studentId;
-    if (filters.academicYear) match.academicYear = filters.academicYear;
-    if (filters.semester) match.semester = filters.semester;
-    
-    return match;
-  }
-
-  private static buildUserFilters(filters: AnalyticsFilters): any {
-    const match: any = {};
-    
-    if (filters.startDate || filters.endDate) {
-      match.createdAt = {};
-      if (filters.startDate) match.createdAt.$gte = filters.startDate;
-      if (filters.endDate) match.createdAt.$lte = filters.endDate;
-    }
-    
-    if (filters.classLevel) match.sinif = filters.classLevel;
-    if (filters.classSection) match.sube = filters.classSection;
-    if (filters.role) match.rol = filters.role;
-    
-    return match;
-  }
-
-  private static buildClubFilters(filters: AnalyticsFilters): any {
-    const match: any = { isActive: true };
-    
-    if (filters.startDate || filters.endDate) {
-      match.createdAt = {};
-      if (filters.startDate) match.createdAt.$gte = filters.startDate;
-      if (filters.endDate) match.createdAt.$lte = filters.endDate;
-    }
-    
-    if (filters.clubId) match.id = filters.clubId;
-    
-    return match;
-  }
-
-  private static buildNotificationFilters(filters: AnalyticsFilters): any {
-    const match: any = {};
-    
-    if (filters.startDate || filters.endDate) {
-      match.createdAt = {};
-      if (filters.startDate) match.createdAt.$gte = filters.startDate;
-      if (filters.endDate) match.createdAt.$lte = filters.endDate;
-    }
-    
-    return match;
-  }
-
-  private static buildHomeworkFilters(filters: AnalyticsFilters): any {
-    const match: any = {};
-    
-    if (filters.startDate || filters.endDate) {
-      match.assignedDate = {};
-      if (filters.startDate) match.assignedDate.$gte = filters.startDate;
-      if (filters.endDate) match.assignedDate.$lte = filters.endDate;
-    }
-    
-    if (filters.subject) match.subject = filters.subject;
-    if (filters.classLevel) match.classLevel = filters.classLevel;
-    if (filters.classSection) match.classSection = filters.classSection;
-    if (filters.teacherId) match.teacherId = filters.teacherId;
-    
-    return match;
-  }
-
-  private static buildScheduleFilters(filters: AnalyticsFilters): any {
-    const match: any = { isActive: true };
-    
-    if (filters.classLevel) match.classLevel = filters.classLevel;
-    if (filters.classSection) match.classSection = filters.classSection;
-    if (filters.academicYear) match.academicYear = filters.academicYear;
-    if (filters.semester) match.semester = filters.semester;
-    
-    return match;
-  }
-
-  // Save analytics data
-  static async saveAnalytics(
-    type: string,
-    category: string,
-    metric: string,
-    value: any,
-    period: string = 'all-time',
-    filters: Record<string, any> = {},
-    metadata: Record<string, any> = {}
+  /**
+   * Track page view
+   */
+  async trackPageView(
+    userId: string | undefined,
+    path: string,
+    metadata?: Record<string, any>
   ): Promise<void> {
-    try {
-      const analyticsId = `${type}_${category}_${metric}_${Date.now()}`;
-      
-      await Analytics.create({
-        id: analyticsId,
-        type,
-        category,
-        metric,
-        value,
-        period,
-        date: new Date(),
-        filters,
-        metadata,
-        isActive: true
-      });
-    } catch (error) {
-      console.error('Error saving analytics:', error);
-      throw error;
-    }
+    await this.trackEvent({
+      eventType: 'page_view',
+      userId,
+      metadata: {
+        path,
+        ...metadata,
+      },
+    });
   }
 
-  // Generate comprehensive report
-  static async generateReport(
-    title: string,
-    type: string,
-    category: string,
-    template: string,
-    filters: AnalyticsFilters = {},
-    generatedBy: string
-  ): Promise<any> {
-    try {
-      let metrics: Record<string, MetricResult> = {};
-      
-      // Collect metrics based on type
-      switch (type) {
-        case 'academic':
-          metrics = await this.getAcademicMetrics(filters);
-          break;
-        case 'user':
-          metrics = await this.getUserMetrics(filters);
-          break;
-        case 'club':
-          metrics = await this.getClubMetrics(filters);
-          break;
-        case 'system':
-          metrics = await this.getSystemMetrics(filters);
-          break;
-        default:
-          throw new Error(`Unknown report type: ${type}`);
-      }
+  /**
+   * Track user action
+   */
+  async trackUserAction(
+    userId: string,
+    action: string,
+    metadata?: Record<string, any>
+  ): Promise<void> {
+    const user = await User.findById(userId);
+    await this.trackEvent({
+      eventType: 'user_action',
+      userId,
+      userRole: user?.rol,
+      metadata: {
+        action,
+        ...metadata,
+      },
+    });
+  }
 
-      // Generate charts and tables
-      const charts = this.generateCharts(metrics, template);
-      const tables = this.generateTables(metrics, template);
+  /**
+   * Get user behavior metrics
+   */
+  async getUserBehaviorMetrics(
+    userId?: string,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<UserBehaviorMetrics> {
+    const filteredEvents = this.events.filter((event) => {
+      if (userId && event.userId !== userId) return false;
+      if (startDate && event.timestamp < startDate) return false;
+      if (endDate && event.timestamp > endDate) return false;
+      return event.eventType === 'page_view' || event.eventType === 'user_action';
+    });
 
-      // Create report
-      const reportId = `report_${type}_${category}_${Date.now()}`;
-      const report = await Report.create({
-        id: reportId,
-        title,
-        type,
-        category,
-        template,
-        parameters: filters,
-        filters,
-        data: {
-          raw: Object.values(metrics),
-          aggregated: metrics,
-          charts,
-          tables
-        },
-        status: 'generated',
-        generatedBy,
-        generatedAt: new Date(),
-        isPublic: false,
-        allowedRoles: ['admin'],
-        isActive: true
+    const pageViews = filteredEvents.filter((e) => e.eventType === 'page_view');
+    const uniqueVisits = new Set(pageViews.map((e) => e.sessionId || e.userId)).size;
+
+    // Calculate top pages
+    const pageCounts = new Map<string, number>();
+    pageViews.forEach((event) => {
+      const path = event.metadata?.path || 'unknown';
+      pageCounts.set(path, (pageCounts.get(path) || 0) + 1);
+    });
+
+    const topPages = Array.from(pageCounts.entries())
+      .map(([path, views]) => ({ path, views }))
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 10);
+
+    // Calculate user actions
+    const actionCounts = new Map<string, number>();
+    filteredEvents
+      .filter((e) => e.eventType === 'user_action')
+      .forEach((event) => {
+        const action = event.metadata?.action || 'unknown';
+        actionCounts.set(action, (actionCounts.get(action) || 0) + 1);
       });
 
-      return report;
-    } catch (error) {
-      console.error('Error generating report:', error);
-      throw error;
-    }
+    const userActions = Array.from(actionCounts.entries())
+      .map(([action, count]) => ({ action, count }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      pageViews: pageViews.length,
+      uniqueVisits,
+      averageSessionDuration: 0, // Calculate from session data
+      bounceRate: 0, // Calculate from session data
+      topPages,
+      userActions,
+    };
   }
 
-  // Generate charts from metrics
-  private static generateCharts(metrics: Record<string, MetricResult>, template: string): any[] {
-    const charts: any[] = [];
-    
-    // Implementation depends on the template and metrics
-    // This is a simplified version - in practice, you'd have more sophisticated chart generation
-    Object.entries(metrics).forEach(([key, metric]) => {
-      if (Array.isArray(metric.value)) {
-        const chart = this.createChartFromData(key, metric.value, template);
-        if (chart) charts.push(chart);
-      }
+  /**
+   * Submit feedback
+   */
+  async submitFeedback(feedback: Omit<FeedbackData, 'createdAt' | 'updatedAt'>): Promise<FeedbackData> {
+    const feedbackData: FeedbackData = {
+      ...feedback,
+      status: 'open',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    this.feedbackData.push(feedbackData);
+
+    logger.info('Feedback submitted', {
+      userId: feedback.userId,
+      type: feedback.type,
+      category: feedback.category,
     });
-    
-    return charts;
+
+    // In production, store in database
+    // await FeedbackModel.create(feedbackData);
+
+    return feedbackData;
   }
 
-  // Generate tables from metrics
-  private static generateTables(metrics: Record<string, MetricResult>, template: string): any[] {
-    const tables: any[] = [];
-    
-    Object.entries(metrics).forEach(([key, metric]) => {
-      if (Array.isArray(metric.value)) {
-        const table = this.createTableFromData(key, metric.value, template);
-        if (table) tables.push(table);
-      }
+  /**
+   * Get feedback list
+   */
+  async getFeedback(
+    filters?: {
+      userId?: string;
+      type?: string;
+      status?: string;
+      priority?: string;
+    }
+  ): Promise<FeedbackData[]> {
+    let filtered = [...this.feedbackData];
+
+    if (filters?.userId) {
+      filtered = filtered.filter((f) => f.userId === filters.userId);
+    }
+    if (filters?.type) {
+      filtered = filtered.filter((f) => f.type === filters.type);
+    }
+    if (filters?.status) {
+      filtered = filtered.filter((f) => f.status === filters.status);
+    }
+    if (filters?.priority) {
+      filtered = filtered.filter((f) => f.priority === filters.priority);
+    }
+
+    return filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  /**
+   * Get system analytics
+   */
+  async getSystemAnalytics(): Promise<{
+    totalUsers: number;
+    activeUsers: number;
+    totalAnnouncements: number;
+    totalHomeworks: number;
+    pendingEvciRequests: number;
+    feedbackCount: number;
+  }> {
+    const [totalUsers, totalAnnouncements, totalHomeworks, pendingEvciRequests] = await Promise.all([
+      User.countDocuments(),
+      Announcement.countDocuments(),
+      Homework.countDocuments(),
+      EvciRequest.countDocuments({ status: 'pending' }),
+    ]);
+
+    // Active users (logged in last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const activeUsers = await User.countDocuments({
+      updatedAt: { $gte: thirtyDaysAgo },
     });
-    
-    return tables;
+
+    return {
+      totalUsers,
+      activeUsers,
+      totalAnnouncements,
+      totalHomeworks,
+      pendingEvciRequests,
+      feedbackCount: this.feedbackData.length,
+    };
   }
 
-  // Create chart from data
-  private static createChartFromData(key: string, data: any[], template: string): any {
-    // Simplified chart creation - in practice, you'd use a charting library
-    if (data.length === 0) return null;
-    
-    const firstItem = data[0];
-    if (typeof firstItem === 'object' && firstItem !== null) {
-      const keys = Object.keys(firstItem).filter(k => k !== '_id');
-      
-      return {
-        type: 'bar',
-        data: {
-          labels: data.map(item => item._id || item.name || item.title || 'Unknown'),
-          datasets: keys.map(key => ({
-            label: key,
-            data: data.map(item => item[key] || 0)
-          }))
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: key
-            }
-          }
-        }
-      };
+  /**
+   * Send to external analytics service
+   */
+  private async sendToAnalyticsService(event: AnalyticsEvent): Promise<void> {
+    // Integration with Google Analytics, Mixpanel, etc.
+    // This is a placeholder
+    if (process.env.GOOGLE_ANALYTICS_ID) {
+      // Send to Google Analytics
+      logger.debug('Sending event to Google Analytics', { eventType: event.eventType });
     }
-    
-    return null;
   }
 
-  // Create table from data
-  private static createTableFromData(key: string, data: any[], template: string): any {
-    if (data.length === 0) return null;
-    
-    const firstItem = data[0];
-    if (typeof firstItem === 'object' && firstItem !== null) {
-      const headers = Object.keys(firstItem).filter(k => k !== '_id');
-      
-      return {
-        headers,
-        rows: data.map(item => headers.map(header => item[header] || '')),
-        summary: {
-          total: data.length,
-          key
-        }
-      };
-    }
-    
-    return null;
+  /**
+   * Clear old events (cleanup)
+   */
+  clearOldEvents(daysToKeep: number = 30): void {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+
+    this.events = this.events.filter((event) => event.timestamp >= cutoffDate);
+    logger.info(`Cleared events older than ${daysToKeep} days`);
   }
 }
+
+// Singleton instance
+let analyticsService: AnalyticsService | null = null;
+
+export const getAnalyticsService = (): AnalyticsService => {
+  if (!analyticsService) {
+    analyticsService = new AnalyticsService();
+  }
+  return analyticsService;
+};
+
+export default AnalyticsService;

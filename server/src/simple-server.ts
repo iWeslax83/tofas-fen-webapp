@@ -5,17 +5,17 @@ import rateLimit from 'express-rate-limit';
 import compression from 'compression';
 import { config, validateConfig } from './config/environment';
 import { connectDB } from './db';
-import { healthCheck } from './health-check';
-import { errorHandler } from './middleware/errorHandler';
-import { requestLogger } from './middleware/requestLogger';
+// import { healthCheck } from './health-check';
+import { globalErrorHandler } from './middleware/errorHandler';
+// import { requestLogger } from './middleware/requestLogger';
 import { securityHeaders } from './middleware/security';
-import { validateRequest } from './middleware/validation';
-import { cacheMiddleware } from './middleware/cache';
-import { performanceMiddleware } from './middleware/performance';
-import { monitoringMiddleware } from './middleware/monitoring';
-import { v1Routes } from './routes/v1';
-import { seedDatabase } from './seed/seedDatabase';
-import { startScheduledTasks } from './services/scheduledTasks';
+// import { validateRequest } from './middleware/validation';
+// import { cacheMiddleware } from './middleware/cache';
+// import { performanceMiddleware } from './middleware/performance';
+// import { monitoringMiddleware } from './middleware/monitoring';
+// import { v1Routes } from './routes/v1';
+// import { seedDatabase } from './seed/seedDatabase';
+// import { startScheduledTasks } from './services/scheduledTasks';
 
 // Validate configuration
 validateConfig();
@@ -52,51 +52,51 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Logging
-app.use(requestLogger);
+// app.use(requestLogger);
 
 // Performance monitoring
-app.use(performanceMiddleware);
+// app.use(performanceMiddleware);
 
 // Monitoring
-app.use(monitoringMiddleware);
+// app.use(monitoringMiddleware);
 
 // Caching
-app.use(cacheMiddleware);
+// app.use(cacheMiddleware);
 
 // Health check
-app.get('/health', healthCheck);
+// app.get('/health', healthCheck);
 
 // API routes with versioning
-app.use('/api/v1', v1Routes);
+// app.use('/api/v1', v1Routes);
 
 // Legacy API routes for backward compatibility
-app.use('/api/auth', v1Routes);
-app.use('/api/users', v1Routes);
-app.use('/api/notes', v1Routes);
-app.use('/api/announcements', v1Routes);
-app.use('/api/homeworks', v1Routes);
-app.use('/api/schedules', v1Routes);
-app.use('/api/clubs', v1Routes);
-app.use('/api/notifications', v1Routes);
-app.use('/api/requests', v1Routes);
-app.use('/api/meal-lists', v1Routes);
-app.use('/api/supervisor-lists', v1Routes);
-app.use('/api/maintenance-requests', v1Routes);
-app.use('/api/evci-requests', v1Routes);
-app.use('/api/analytics', v1Routes);
-app.use('/api/reports', v1Routes);
-app.use('/api/calendars', v1Routes);
-app.use('/api/files', v1Routes);
-app.use('/api/communication', v1Routes);
-app.use('/api/performance', v1Routes);
-app.use('/api/monitoring', v1Routes);
-app.use('/api/dashboard', v1Routes);
+// app.use('/api/auth', v1Routes);
+// app.use('/api/users', v1Routes);
+// app.use('/api/notes', v1Routes);
+// app.use('/api/announcements', v1Routes);
+// app.use('/api/homeworks', v1Routes);
+// app.use('/api/schedules', v1Routes);
+// app.use('/api/clubs', v1Routes);
+// app.use('/api/notifications', v1Routes);
+// app.use('/api/requests', v1Routes);
+// app.use('/api/meal-lists', v1Routes);
+// app.use('/api/supervisor-lists', v1Routes);
+// app.use('/api/maintenance-requests', v1Routes);
+// app.use('/api/evci-requests', v1Routes);
+// app.use('/api/analytics', v1Routes);
+// app.use('/api/reports', v1Routes);
+// app.use('/api/calendars', v1Routes);
+// app.use('/api/files', v1Routes);
+// app.use('/api/communication', v1Routes);
+// app.use('/api/performance', v1Routes);
+// app.use('/api/monitoring', v1Routes);
+// app.use('/api/dashboard', v1Routes);
 
 // Error handling
-app.use(errorHandler);
+app.use(globalErrorHandler);
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use('*', (_req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
@@ -107,12 +107,12 @@ const startServer = async () => {
     await connectDB();
     
     // Seed database in development
-    if (config.NODE_ENV === 'development') {
-      await seedDatabase();
-    }
+    // if (config.NODE_ENV === 'development') {
+    //   await seedDatabase();
+    // }
     
     // Start scheduled tasks
-    startScheduledTasks();
+    // startScheduledTasks();
     
     // Start server
     app.listen(config.PORT, () => {

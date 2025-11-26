@@ -1,71 +1,7 @@
 /* Modern Dashboard Layout - Shared Styles */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
-/* CSS Variables - Tofaş Fen Lisesi Brand Colors */
-:root {
-  /* Primary Colors - Tofaş Brand */
-  --primary-red: #8B4A5A;
-  --primary-red-dark: #6B3A4A;
-  --primary-red-light: #A56A7A;
-  --primary-red-lighter: #F8F4F5;
-  
-  /* Secondary Colors */
-  --secondary-blue: #1E40AF;
-  --secondary-green: #059669;
-  --secondary-purple: #7C3AED;
-  --secondary-orange: #EA580C;
-  --secondary-yellow: #D97706;
-  --secondary-indigo: #4338CA;
-  --secondary-teal: #0D9488;
-  
-  /* Neutral Colors */
-  --white: #FFFFFF;
-  --gray-50: #F9FAFB;
-  --gray-100: #F3F4F6;
-  --gray-200: #E5E7EB;
-  --gray-300: #D1D5DB;
-  --gray-400: #9CA3AF;
-  --gray-500: #6B7280;
-  --gray-600: #4B5563;
-  --gray-700: #374151;
-  --gray-800: #1F2937;
-  --gray-900: #111827;
-  
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, var(--primary-red-dark) 0%, var(--primary-red) 100%);
-  --gradient-secondary: linear-gradient(135deg, var(--secondary-blue) 0%, var(--secondary-purple) 100%);
-  --gradient-success: linear-gradient(135deg, var(--secondary-green) 0%, #10B981 100%);
-  --gradient-warning: linear-gradient(135deg, var(--secondary-orange) 0%, var(--secondary-yellow) 100%);
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  
-  /* Border Radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
-  
-  /* Spacing */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
-  --space-20: 5rem;
-  --space-24: 6rem;
-  --space-32: 8rem;
-}
+/* Import theme variables */
+@import url('../styles/theme.css');
 
 /* Modern Dashboard Layout */
 .modern-dashboard {
@@ -239,15 +175,15 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-top: 90px;
+  padding-top: var(--header-height, 90px);
 }
 
 /* Header Styles */
 .modern-header {
   background: rgba(255, 255, 255, 0.98) !important;
-  backdrop-filter: blur(15px) !important;
+  /* backdrop-filter: blur(15px) !important; */
   padding: var(--space-4) var(--space-6) !important;
-  min-height: 60px !important;
+  min-height: var(--header-height, 60px) !important;
   border-bottom: 1px solid var(--gray-200) !important;
   display: flex !important;
   align-items: center !important;
@@ -326,10 +262,7 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* @keyframes spin moved to theme.css */
 
 /* Responsive Design */
 @media (max-width: 1024px) {
@@ -368,6 +301,227 @@
   }
 }
 
+/* Quick Actions Styles */
+.quick-actions {
+  margin-top: var(--space-8);
+}
+
+.quick-actions h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0 0 var(--space-6) 0;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--gray-200);
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  transition: width var(--transition-normal);
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--gray-300);
+}
+
+.action-card:hover::before {
+  width: 100%;
+  opacity: 0.1;
+}
+
+/* Action Icon Styles */
+.action-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-normal);
+}
+
+/* Color Variations for Action Cards */
+.action-card[data-color="blue"] .action-icon {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: var(--white);
+}
+
+.action-card[data-color="blue"]::before {
+  background: #3B82F6;
+}
+
+.action-card[data-color="blue"]:hover {
+  border-color: #3B82F6;
+}
+
+.action-card[data-color="green"] .action-icon {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: var(--white);
+}
+
+.action-card[data-color="green"]::before {
+  background: #10B981;
+}
+
+.action-card[data-color="green"]:hover {
+  border-color: #10B981;
+}
+
+.action-card[data-color="purple"] .action-icon {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  color: var(--white);
+}
+
+.action-card[data-color="purple"]::before {
+  background: #8B5CF6;
+}
+
+.action-card[data-color="purple"]:hover {
+  border-color: #8B5CF6;
+}
+
+.action-card[data-color="orange"] .action-icon {
+  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+  color: var(--white);
+}
+
+.action-card[data-color="orange"]::before {
+  background: #F97316;
+}
+
+.action-card[data-color="orange"]:hover {
+  border-color: #F97316;
+}
+
+.action-card[data-color="indigo"] .action-icon {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: var(--white);
+}
+
+.action-card[data-color="indigo"]::before {
+  background: #6366F1;
+}
+
+.action-card[data-color="indigo"]:hover {
+  border-color: #6366F1;
+}
+
+.action-card[data-color="teal"] .action-icon {
+  background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+  color: var(--white);
+}
+
+.action-card[data-color="teal"]::before {
+  background: #14B8A6;
+}
+
+.action-card[data-color="teal"]:hover {
+  border-color: #14B8A6;
+}
+
+.action-card[data-color="yellow"] .action-icon {
+  background: linear-gradient(135deg, #EAB308 0%, #D97706 100%);
+  color: var(--white);
+}
+
+.action-card[data-color="yellow"]::before {
+  background: #EAB308;
+}
+
+.action-card[data-color="yellow"]:hover {
+  border-color: #EAB308;
+}
+
+.action-card[data-color="rose"] .action-icon {
+  background: var(--gradient-primary);
+  color: var(--white);
+}
+
+.action-card[data-color="rose"]::before {
+  background: var(--primary-red);
+}
+
+.action-card[data-color="rose"]:hover {
+  border-color: var(--primary-red);
+}
+
+/* Action Content */
+.action-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.action-content h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.action-content p {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.action-arrow {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--gray-400);
+  transition: all var(--transition-normal);
+}
+
+.action-card:hover .action-arrow {
+  color: var(--gray-700);
+  transform: translateX(4px);
+}
+
+/* Responsive Design for Quick Actions */
+@media (max-width: 768px) {
+  .action-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-card {
+    padding: var(--space-4);
+  }
+  
+  .action-icon {
+    width: 40px;
+    height: 40px;
+  }
+}
+
 /* Print Styles */
 @media print {
   .modern-sidebar,
@@ -382,5 +536,9 @@
   
   .dashboard-content {
     padding: 0 !important;
+  }
+  
+  .quick-actions {
+    display: none !important;
   }
 }
