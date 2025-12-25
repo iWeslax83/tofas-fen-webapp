@@ -46,7 +46,19 @@ jspm_packages/
 
 # Optional eslint cache
 .eslintcache
-
+node_modules/
+dist/
+coverage/
+logs/
+uploads/
+thumbnails/
+.env
+.env.*
+env.production*
+.new_secrets.env
+mail.env
+2025-2026 öğrenci listesi.XLS
+kubectl.exe
 # Microbundle cache
 .rpt2_cache/
 .rts2_cache_cjs/
