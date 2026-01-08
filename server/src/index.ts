@@ -13,13 +13,14 @@ import fs from "fs";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import compression from "compression";
+import cookieParser from "cookie-parser";
 
 // Middleware imports
-import { 
+import {
   csrfProtection,
   sessionCache
 } from './middleware';
-import { 
+import {
   preventSQLInjection,
   preventXSS,
   sanitizeInput
@@ -46,16 +47,17 @@ import scheduleRoutes from './routes/Schedule';
 import mealListRoutes from './routes/MealList';
 import supervisorListRoutes from './routes/SupervisorList';
 import maintenanceRequestRoutes from './routes/MaintenanceRequest';
-import analyticsRoutes from './routes/Analytics';
+// import analyticsRoutes from './routes/Analytics';
 import calendarRoutes from './routes/Calendar';
-import fileRoutes from './routes/files';
+// import fileRoutes from './routes/files';
 import communicationRoutes from './routes/Communication';
 import performanceRoutes from './routes/Performance';
 import auditLogRoutes from './routes/AuditLog';
-import attendanceRoutes from './routes/Attendance';
+// import attendanceRoutes from './routes/Attendance';
 import carziRequestRoutes from './routes/CarziRequest';
 import dilekceRoutes from './routes/Dilekce';
 import { connectDB } from "./db";
+import dashboardRoutes from './routes/Dashboard';
 import { sendMail } from "./mailService";
 import { setupSwagger } from './utils/swagger';
 import { initializeWebSocket } from './utils/websocket';
@@ -89,7 +91,7 @@ const generalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (_req: any, res: any) => {
+  handler: (_req: express.Request, res: express.Response) => {
     res.status(429).json({
       error: 'Rate limit exceeded',
       message: 'Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.',
@@ -110,7 +112,7 @@ const readOnlyLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (_req: any, res: any) => {
+  handler: (_req: express.Request, res: express.Response) => {
     res.status(429).json({
       error: 'Read rate limit exceeded',
       message: 'Çok fazla okuma isteği gönderildi. Lütfen biraz bekleyin.',
@@ -131,7 +133,7 @@ const mealsLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (_req: any, res: any) => {
+  handler: (_req: express.Request, res: express.Response) => {
     res.status(429).json({
       error: 'Meals rate limit exceeded',
       message: 'Çok fazla yemek listesi isteği gönderildi. Lütfen biraz bekleyin.',
@@ -182,7 +184,7 @@ if (!fs.existsSync(logsDir)) {
 }
 
 // Status monitor middleware - Basit monitoring dashboard
-app.get('/status', (_req: any, res: any) => {
+app.get('/status', (_req: express.Request, res: express.Response) => {
   const metrics = monitoringService.generateReport();
   res.json({
     title: 'Tofaş Fen Webapp Status',
@@ -210,7 +212,7 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
@@ -226,14 +228,46 @@ const upload = multer({
 });
 
 // CORS middleware, frontend port ve cookie desteği ile
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:5173", // Environment variable'dan al
-  credentials: false, // JWT token'ları localStorage'da saklandığı için false
+// ⚠️ GÜVENLİK: credentials: true - httpOnly cookies için gerekli
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Tüm environment'larda whitelist kullan (güvenlik için)
+    const allowedOrigins = [
+      process.env.CORS_ORIGIN || "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:5173",
+    ];
+
+    // Development'ta localhost origin'lerine izin ver, production'da sadece whitelist
+    if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+      // Development: localhost origin'leri veya whitelist'teki origin'ler
+      if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS policy: Origin not allowed in development'));
+      }
+    } else {
+      // Production: Sadece whitelist'teki origin'ler
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS policy: Origin not allowed'));
+      }
+    }
+  },
+  credentials: true, // httpOnly cookies için gerekli
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
   exposedHeaders: ['X-CSRF-Token'],
   optionsSuccessStatus: 200, // Preflight istekleri için
-}));
+};
+
+app.use(cors(corsOptions));
+
+// Cookie parser - httpOnly cookies için gerekli
+app.use(cookieParser());
 
 // JSON ve URL-encoded body parser
 app.use(express.json({ limit: '10mb' }));
@@ -265,30 +299,50 @@ app.use(preventXSS);
 app.use(sanitizeInput);
 
 // Rate limiting uygula - specific limiters for different endpoint types
-// Always apply rate limiting, but with different limits for development
+// ✅ GÜVENLİK: Tüm environment'larda rate limiting aktif (development'ta daha yüksek limitlerle)
+// Development'ta da rate limiting aktif olmalı (güvenlik ve test için)
+const devLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 500, // 500 requests per minute in development (yeterince yüksek ama koruma sağlıyor)
+  message: {
+    error: 'Development rate limit exceeded',
+    message: 'Çok fazla istek gönderildi. Lütfen biraz bekleyin.',
+    retryAfter: 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 if (process.env.NODE_ENV === 'production') {
+  // Production: Daha sıkı limitler
   app.use('/api', generalLimiter);
-  
+
   // More lenient rate limiting for read-only endpoints
   app.use('/api/dormitory/meals', mealsLimiter);
   app.use('/api/announcements', readOnlyLimiter);
   app.use('/api/notes', readOnlyLimiter);
   app.use('/api/schedule', readOnlyLimiter);
 } else {
-  // Development ortamında daha yüksek limitler ama yine de koruma
-  const devLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    max: 500, // 500 requests per minute in development (reduced from 1000)
+  // Development: Daha yüksek limitler ama yine de koruma
+  app.use('/api', devLimiter);
+
+  // Development'ta da read-only endpoint'ler için özel limitler (daha yüksek)
+  const devReadOnlyLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 500, // 500 requests per 5 minutes in development
     message: {
-      error: 'Development rate limit exceeded',
-      message: 'Çok fazla istek gönderildi. Lütfen biraz bekleyin.',
-      retryAfter: 60
+      error: 'Development read rate limit exceeded',
+      message: 'Çok fazla okuma isteği gönderildi. Lütfen biraz bekleyin.',
+      retryAfter: 300
     },
     standardHeaders: true,
     legacyHeaders: false,
   });
-  
-  app.use('/api', devLimiter);
+
+  app.use('/api/dormitory/meals', devReadOnlyLimiter);
+  app.use('/api/announcements', devReadOnlyLimiter);
+  app.use('/api/notes', devReadOnlyLimiter);
+  app.use('/api/schedule', devReadOnlyLimiter);
 }
 // Always apply auth rate limiting for security
 app.use('/api/auth', authLimiter);
@@ -300,7 +354,7 @@ app.use(sessionCache);
 // Swagger API Documentation is handled by setupSwagger function
 
 // API Documentation endpoint
-app.get('/api-docs-info', (_req: any, res: any) => {
+app.get('/api-docs-info', (_req: express.Request, res: express.Response) => {
   res.json({
     message: 'API Documentation',
     endpoints: {
@@ -331,45 +385,46 @@ app.get('/api-docs-info', (_req: any, res: any) => {
   });
 });
 
-// Router'lar
-app.use('/api/auth', authRoutes as any);
-app.use("/api/clubs", clubsRouter as any);
-app.use('/api/notifications', notificationRoutes as any);
-app.use('/api/requests', requestRoutes as any);
-app.use('/api/user', userRoutes as any);
-app.use('/api/homeworks', homeworkRoutes as any);
-app.use('/api/announcements', announcementRoutes as any);
-app.use('/api/notes', notesRoutes as any);
-app.use('/api/evci-requests', evciRequestRoutes as any);
-app.use('/api/dormitory', dormitoryRoutes as any);
-app.use('/api/schedule', scheduleRoutes as any);
-app.use('/api/meals', mealListRoutes as any);
-app.use('/api/supervisors', supervisorListRoutes as any);
-app.use('/api/maintenance', maintenanceRequestRoutes as any);
-app.use('/api/monitoring', monitoringRoutes as any);
-app.use('/api/analytics', analyticsRoutes as any);
-app.use('/api/calendar', calendarRoutes as any);
-app.use('/api/files', fileRoutes as any);
-app.use('/api/communication', communicationRoutes as any);
-app.use('/api/performance', performanceRoutes as any);
-app.use('/api/audit-logs', auditLogRoutes as any);
-app.use('/api/attendance', attendanceRoutes as any);
-app.use('/api/carzi-requests', carziRequestRoutes as any);
-app.use('/api/dilekce', dilekceRoutes as any);
+// Router'lar - Type safety: Express Router tipi zaten doğru, 'as any' gerekmez
+app.use('/api/auth', authRoutes);
+app.use("/api/clubs", clubsRouter);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/requests', requestRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/homeworks', homeworkRoutes);
+app.use('/api/announcements', announcementRoutes);
+app.use('/api/notes', notesRoutes);
+app.use('/api/evci-requests', evciRequestRoutes);
+app.use('/api/dormitory', dormitoryRoutes);
+app.use('/api/schedule', scheduleRoutes);
+app.use('/api/meals', mealListRoutes);
+app.use('/api/supervisors', supervisorListRoutes);
+app.use('/api/maintenance', maintenanceRequestRoutes);
+app.use('/api/monitoring', monitoringRoutes);
+// app.use('/api/analytics', analyticsRoutes);
+app.use('/api/calendar', calendarRoutes);
+// app.use('/api/files', fileRoutes);
+app.use('/api/communication', communicationRoutes);
+app.use('/api/performance', performanceRoutes);
+app.use('/api/audit-logs', auditLogRoutes);
+// app.use('/api/attendance', attendanceRoutes);
+app.use('/api/carzi-requests', carziRequestRoutes);
+app.use('/api/dilekce', dilekceRoutes);
 
-// Dashboard stats endpoint
-app.use('/api/dashboard', analyticsRoutes as any);
+// Dashboard stats endpoint - now active
+app.use('/api/dashboard', dashboardRoutes);
 
 // Dosya yükleme endpoint'i
-app.post('/api/upload', upload.single('file'), (req: any, res: any) => {
+app.post('/api/upload', upload.single('file'), (req: express.Request, res: express.Response) => {
   try {
-    if (!req.file) {
+    const file = (req as express.Request & { file?: Express.Multer.File }).file;
+    if (!file) {
       return res.status(400).json({ error: 'Dosya yüklenmedi' });
     }
-    
+
     // Dosya URL'ini döndür
-    const fileUrl = `${process.env.BACKEND_URL || 'http://localhost:3001'}/uploads/${req.file.filename}`;
-    res.json({ url: fileUrl, filename: req.file.filename });
+    const fileUrl = `${process.env.BACKEND_URL || 'http://localhost:3001'}/uploads/${file.filename}`;
+    res.json({ url: fileUrl, filename: file.filename });
   } catch (error) {
     console.error('Dosya yükleme hatası:', error);
     res.status(500).json({ error: 'Dosya yüklenemedi' });
@@ -379,7 +434,7 @@ app.post('/api/upload', upload.single('file'), (req: any, res: any) => {
 
 
 // Prometheus metrics endpoint
-app.get("/metrics", async (_req: any, res: any) => {
+app.get("/metrics", async (_req: express.Request, res: express.Response) => {
   try {
     const { register } = await import('./utils/metrics');
     res.set('Content-Type', register.contentType);
@@ -392,7 +447,7 @@ app.get("/metrics", async (_req: any, res: any) => {
 });
 
 // Health check endpoint
-app.get("/health", async (_req: any, res: any) => {
+app.get("/health", async (_req: express.Request, res: express.Response) => {
   try {
     const healthCheck = await monitoringService.performHealthCheck();
     res.json(healthCheck);
@@ -408,11 +463,11 @@ app.get("/health", async (_req: any, res: any) => {
 });
 
 // Basit ana sayfa kontrolü
-app.get("/", (_req: any, res: any) => {
+app.get("/", (_req: express.Request, res: express.Response) => {
   res.send("Backend çalışıyor!");
 });
 
-app.post("/api/test-mail", async (req: any, res: any) => {
+app.post("/api/test-mail", async (req: express.Request, res: express.Response) => {
   const { to, subject, text } = req.body;
   try {
     const info = await sendMail(to, subject, text);
@@ -445,7 +500,7 @@ if (process.env.ENABLE_GRAPHQL === 'true' || process.env.NODE_ENV !== 'productio
 }
 
 // 404 handler
-app.use('*', (_req: any, res: any) => {
+app.use('*', (_req: express.Request, res: express.Response) => {
   res.status(404).json({ error: 'Endpoint bulunamadı' });
 });
 
@@ -456,13 +511,13 @@ app.use(globalErrorHandler);
 const PORT = process.env.PORT || 3001;
 connectDB()
   .then(async () => {
-  const server = app.listen(PORT, async () => {
+    const server = app.listen(PORT, async () => {
       logger.info(`🚀 Server started successfully`, {
         port: PORT,
         environment: process.env.NODE_ENV || 'development',
         timestamp: new Date().toISOString(),
       });
-      
+
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🔒 Security middleware active`);
@@ -472,11 +527,11 @@ connectDB()
       console.log(`📚 Swagger API Docs: http://localhost:${PORT}/api-docs`);
       console.log(`📚 API Info: http://localhost:${PORT}/api-docs-info`);
       console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
-      
+
       // Initialize WebSocket for real-time notifications
       initializeWebSocket(server);
       console.log(`🔔 WebSocket notifications enabled`);
-      
+
       // Initialize event-driven architecture
       const { initializeEventDrivenWebSocket } = await import('./utils/websocket-enhanced');
       initializeEventDrivenWebSocket();

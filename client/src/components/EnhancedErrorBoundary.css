@@ -5,7 +5,7 @@
   --error-medium: #dc2626;
   --error-high: #b91c1c;
   --error-critical: #7f1d1d;
-  --error-bg: rgba(255, 255, 255, 0.95);
+  --error-bg: var(--primary-red-lighter);
   --error-border: rgba(139, 0, 0, 0.1);
   --error-shadow: rgba(139, 0, 0, 0.1);
 }

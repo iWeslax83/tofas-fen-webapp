@@ -87,16 +87,24 @@ export const verifyRefreshToken = (token: string): RefreshTokenPayload | null =>
 };
 
 // JWT Authentication Middleware with blacklist check
+// ⚠️ GÜVENLİK: httpOnly cookie desteği eklendi (localStorage yerine)
 export const authenticateJWT = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
+    // Try to get token from httpOnly cookie first (preferred method)
+    let token = req.cookies?.accessToken;
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Fallback to Authorization header for backward compatibility during migration
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      }
+    }
+    
+    if (!token) {
       res.status(401).json({ error: 'Access token required' });
       return;
     }
-
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
     
     // Check if token is blacklisted
     const isBlacklisted = await tokenBlacklist.isBlacklisted(token);

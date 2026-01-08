@@ -80,7 +80,7 @@
 }
 
 .sidebar-close:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--primary-red-10);
 }
 
 .close-icon {
@@ -695,7 +695,7 @@
 .mobile-user-avatar {
   width: 48px;
   height: 48px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--primary-red-20);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -730,7 +730,7 @@
 }
 
 .mobile-menu-close:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--primary-red-10);
 }
 
 .mobile-menu-content {

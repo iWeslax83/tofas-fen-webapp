@@ -96,6 +96,10 @@ export const config = {
   MEB_EOKUL_PASSWORD: process.env.MEB_EOKUL_PASSWORD || '',
 };
 
+// Debug: log resolved Redis URL at startup so we can confirm which value dotenv provided
+// This helps diagnose whether the running process is reading `server/.env` or falling back to localhost.
+console.log('Resolved REDIS_URL (env):', process.env.REDIS_URL, 'config.REDIS_URL:', config.REDIS_URL);
+
 // Validate configuration
 export const validateConfig = () => {
   const errors: string[] = [];

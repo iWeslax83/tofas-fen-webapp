@@ -96,7 +96,7 @@ export default function DuyurularPage() {
             </div>
             <div className="welcome-actions">
               {user?.rol === 'admin' && (
-                <button 
+                <button
                   onClick={() => setShowModal(true)}
                   className="btn-blue"
                 >
@@ -125,7 +125,7 @@ export default function DuyurularPage() {
                     <Bell className="icon" />
                   </div>
                   {user?.rol === 'admin' && (
-                    <button 
+                    <button
                       onClick={() => handleDeleteAnnouncement(announcement._id!)}
                       className="card-badge delete-button"
                       title="Duyuruyu Sil"
@@ -158,70 +158,70 @@ export default function DuyurularPage() {
 
       {/* Add Announcement Modal */}
       {showModal && (
-            <div className="modal-overlay">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h3 className="modal-title">Yeni Duyuru Ekle</h3>
-                  <button 
-                    onClick={() => setShowModal(false)}
-                    className="modal-close"
-                  >
-                    ×
-                  </button>
-                </div>
-                <form onSubmit={async (e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.target as HTMLFormElement);
-                  const announcementData = {
-                    title: formData.get('title'),
-                    content: formData.get('content'),
-                    date: new Date().toISOString(),
-                    expire: formData.get('expire') || undefined
-                  };
-                  try {
-                    const { error } = await AnnouncementService.createAnnouncement(announcementData);
-                    if (error) {
-                      toast.error(error);
-                    } else {
-                      const { data: fetchData, error: fetchError } = await AnnouncementService.getAnnouncements();
-                      if (fetchError) {
-                        console.error('Error fetching announcements:', fetchError);
-                      } else {
-                        setAnnouncements(Array.isArray(fetchData) ? fetchData as Announcement[] : []);
-                      }
-                      setShowModal(false);
-                      (e.target as HTMLFormElement).reset();
-                      toast.success('Duyuru başarıyla eklendi');
-                    }
-                  } catch (error) {
-                    console.error('Error creating announcement:', error);
-                    toast.error('Duyuru eklenirken hata oluştu');
-                  }
-                }} className="modal-form">
-                  <div className="form-group">
-                    <label className="form-label">Duyuru Başlığı</label>
-                    <input name="title" className="form-input" required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Duyuru İçeriği</label>
-                    <textarea name="content" className="form-textarea" rows={4} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Son Geçerlilik Tarihi (Opsiyonel)</label>
-                    <input name="expire" type="date" className="form-input" />
-                  </div>
-                  <div className="form-actions">
-                    <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">
-                      İptal
-                    </button>
-                    <button type="submit" className="btn-primary">
-                      Kaydet
-                    </button>
-                  </div>
-                </form>
-              </div>
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3 className="modal-title">Yeni Duyuru Ekle</h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="modal-close"
+              >
+                ×
+              </button>
             </div>
-          )}
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target as HTMLFormElement);
+              const announcementData = {
+                title: formData.get('title'),
+                content: formData.get('content'),
+                date: new Date().toISOString(),
+                expire: formData.get('expire') || undefined
+              };
+              try {
+                const { error } = await AnnouncementService.createAnnouncement(announcementData);
+                if (error) {
+                  toast.error(error);
+                } else {
+                  const { data: fetchData, error: fetchError } = await AnnouncementService.getAnnouncements();
+                  if (fetchError) {
+                    console.error('Error fetching announcements:', fetchError);
+                  } else {
+                    setAnnouncements(Array.isArray(fetchData) ? fetchData as Announcement[] : []);
+                  }
+                  setShowModal(false);
+                  (e.target as HTMLFormElement).reset();
+                  toast.success('Duyuru başarıyla eklendi');
+                }
+              } catch (error) {
+                console.error('Error creating announcement:', error);
+                toast.error('Duyuru eklenirken hata oluştu');
+              }
+            }} className="modal-form">
+              <div className="form-group">
+                <label className="form-label">Duyuru Başlığı</label>
+                <input name="title" className="form-input" required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Duyuru İçeriği</label>
+                <textarea name="content" className="form-textarea" rows={4} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Son Geçerlilik Tarihi (Opsiyonel)</label>
+                <input name="expire" type="date" className="form-input" />
+              </div>
+              <div className="form-actions">
+                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">
+                  İptal
+                </button>
+                <button type="submit" className="btn-primary">
+                  Kaydet
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </ModernDashboardLayout>
   );
 }

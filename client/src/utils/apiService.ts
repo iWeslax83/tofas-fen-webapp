@@ -1,5 +1,5 @@
 import { SecureAPI } from './api';
-import { 
+import {
   handleResponse,
   handleResponseArray
 } from './apiResponseHandler';
@@ -146,11 +146,11 @@ export class UserService {
   // Şifre değiştirme fonksiyonu kaldırıldı - artık TCKN kullanılıyor
 
   static async sendEmailVerification(userId: string, email: string) {
-    return ApiService.post(API_ENDPOINTS.USER.EMAIL.SEND_CODE, { userId, email });
+    return ApiService.post(`${API_ENDPOINTS.USER.EMAIL}/send-code`, { userId, email });
   }
 
   static async verifyEmailCode(userId: string, code: string) {
-    return ApiService.post(API_ENDPOINTS.USER.EMAIL.VERIFY_CODE, { userId, code });
+    return ApiService.post(`${API_ENDPOINTS.USER.EMAIL}/verify-code`, { userId, code });
   }
 
 
@@ -183,7 +183,7 @@ export class NotesService {
     return ApiService.delete(API_ENDPOINTS.NOTES.DELETE(id));
   }
 
-  static async bulkUpdateNotes(noteIds: string[], updates: any) {
+  static async bulkUpdateNotes(noteIds: string[], updates: Partial<{ subject: string; note: number; examType: string; date: string | Date }>) {
     return ApiService.put(API_ENDPOINTS.NOTES.BULK_UPDATE, { noteIds, updates });
   }
 
@@ -210,11 +210,11 @@ export class HomeworkService {
     return ApiService.getArray(API_ENDPOINTS.HOMEWORKS.BASE);
   }
 
-  static async createHomework(homeworkData: any) {
+  static async createHomework(homeworkData: { title: string; description: string; dueDate: string | Date; class?: string; section?: string; subject?: string }) {
     return ApiService.post(API_ENDPOINTS.HOMEWORKS.CREATE, homeworkData);
   }
 
-  static async updateHomework(id: string, homeworkData: any) {
+  static async updateHomework(id: string, homeworkData: Partial<{ title: string; description: string; dueDate: string | Date; class?: string; section?: string; subject?: string }>) {
     return ApiService.put(API_ENDPOINTS.HOMEWORKS.UPDATE(id), homeworkData);
   }
 
@@ -237,11 +237,11 @@ export class AnnouncementService {
     return ApiService.getArray(API_ENDPOINTS.ANNOUNCEMENTS.BASE);
   }
 
-  static async createAnnouncement(announcementData: any) {
+  static async createAnnouncement(announcementData: { title: string; content: string; targetRoles?: string[]; targetClasses?: string[]; priority?: 'low' | 'medium' | 'high' }) {
     return ApiService.post(API_ENDPOINTS.ANNOUNCEMENTS.CREATE, announcementData);
   }
 
-  static async updateAnnouncement(id: string, announcementData: any) {
+  static async updateAnnouncement(id: string, announcementData: Partial<{ title: string; content: string; targetRoles?: string[]; targetClasses?: string[]; priority?: 'low' | 'medium' | 'high' }>) {
     return ApiService.put(API_ENDPOINTS.ANNOUNCEMENTS.UPDATE(id), announcementData);
   }
 
@@ -260,11 +260,11 @@ export class ScheduleService {
     return ApiService.getArray(API_ENDPOINTS.SCHEDULE.BASE);
   }
 
-  static async createSchedule(scheduleData: any) {
+  static async createSchedule(scheduleData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.SCHEDULE.CREATE, scheduleData);
   }
 
-  static async updateSchedule(id: string, scheduleData: any) {
+  static async updateSchedule(id: string, scheduleData: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.SCHEDULE.UPDATE(id), scheduleData);
   }
 
@@ -292,11 +292,11 @@ export class CalendarService {
     return ApiService.get(API_ENDPOINTS.CALENDAR.CALENDARS.GET_BY_ID(id));
   }
 
-  static async createCalendar(calendarData: any) {
+  static async createCalendar(calendarData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.CALENDAR.CALENDARS.CREATE, calendarData);
   }
 
-  static async updateCalendar(id: string, calendarData: any) {
+  static async updateCalendar(id: string, calendarData: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.CALENDAR.CALENDARS.UPDATE(id), calendarData);
   }
 
@@ -304,14 +304,14 @@ export class CalendarService {
     return ApiService.delete(API_ENDPOINTS.CALENDAR.CALENDARS.DELETE(id));
   }
 
-  static async shareCalendar(id: string, shareData: any) {
+  static async shareCalendar(id: string, shareData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.CALENDAR.CALENDARS.SHARE(id), shareData);
   }
 
   // Event management
-  static async getEvents(params?: any) {
-    const endpoint = params 
-      ? `${API_ENDPOINTS.CALENDAR.EVENTS.BASE}?${new URLSearchParams(params).toString()}`
+  static async getEvents(params?: Record<string, string | number | boolean>) {
+    const endpoint = params
+      ? `${API_ENDPOINTS.CALENDAR.EVENTS.BASE}?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()}`
       : API_ENDPOINTS.CALENDAR.EVENTS.BASE;
     return ApiService.getArray(endpoint);
   }
@@ -320,11 +320,11 @@ export class CalendarService {
     return ApiService.get(API_ENDPOINTS.CALENDAR.EVENTS.GET_BY_ID(id));
   }
 
-  static async createEvent(eventData: any) {
+  static async createEvent(eventData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.CALENDAR.EVENTS.CREATE, eventData);
   }
 
-  static async updateEvent(id: string, eventData: any) {
+  static async updateEvent(id: string, eventData: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.CALENDAR.EVENTS.UPDATE(id), eventData);
   }
 
@@ -342,9 +342,9 @@ export class CalendarService {
   }
 
   // Export/Import
-  static async exportCalendar(calendarId: string, params?: any) {
-    const endpoint = params 
-      ? `${API_ENDPOINTS.CALENDAR.EXPORT.BASE(calendarId)}?${new URLSearchParams(params).toString()}`
+  static async exportCalendar(calendarId: string, params?: Record<string, string | number | boolean>) {
+    const endpoint = params
+      ? `${API_ENDPOINTS.CALENDAR.EXPORT.BASE(calendarId)}?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()}`
       : API_ENDPOINTS.CALENDAR.EXPORT.BASE(calendarId);
     return ApiService.get(endpoint);
   }
@@ -364,11 +364,11 @@ export class ClubService {
     return ApiService.get(API_ENDPOINTS.CLUBS.GET_BY_ID(id));
   }
 
-  static async createClub(clubData: any) {
+  static async createClub(clubData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.CLUBS.CREATE, clubData);
   }
 
-  static async updateClub(id: string, clubData: any) {
+  static async updateClub(id: string, clubData: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.CLUBS.UPDATE(id), clubData);
   }
 
@@ -388,7 +388,7 @@ export class ClubService {
     return ApiService.getArray(API_ENDPOINTS.CLUBS.MEMBERS.BASE(id));
   }
 
-  static async addClubMember(id: string, memberData: any) {
+  static async addClubMember(id: string, memberData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.CLUBS.MEMBERS.ADD(id), memberData);
   }
 
@@ -404,7 +404,7 @@ export class ClubService {
     return ApiService.post(API_ENDPOINTS.CLUBS.INVITES.INVITE_MEMBER(id), { userId, role });
   }
 
-  static async createEvent(clubId: string, eventData: any) {
+  static async createEvent(clubId: string, eventData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.CALENDAR.EVENTS.CLUB_CREATE(clubId), eventData);
   }
 
@@ -412,7 +412,7 @@ export class ClubService {
     return ApiService.delete(API_ENDPOINTS.CALENDAR.EVENTS.CLUB_DELETE(clubId, eventId));
   }
 
-  static async createAnnouncement(clubId: string, announcementData: any) {
+  static async createAnnouncement(clubId: string, announcementData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.CALENDAR.ANNOUNCEMENTS.CLUB_CREATE(clubId), announcementData);
   }
 
@@ -445,7 +445,7 @@ export class ClubService {
 export class DormitoryService {
   // Meals
   static async getMeals(params?: { month?: string; year?: number }) {
-    const endpoint = params 
+    const endpoint = params
       ? `${API_ENDPOINTS.DORMITORY.MEALS.BASE}?${new URLSearchParams(params as any).toString()}`
       : API_ENDPOINTS.DORMITORY.MEALS.BASE;
     return ApiService.getArray(endpoint);
@@ -455,7 +455,7 @@ export class DormitoryService {
     return ApiService.upload(API_ENDPOINTS.DORMITORY.MEALS.CREATE, mealData);
   }
 
-  static async updateMeal(id: string, mealData: any) {
+  static async updateMeal(id: string, mealData: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.DORMITORY.MEALS.UPDATE(id), mealData);
   }
 
@@ -469,7 +469,7 @@ export class DormitoryService {
 
   // Supervisors
   static async getSupervisors(params?: { month?: string; year?: number }) {
-    const endpoint = params 
+    const endpoint = params
       ? `${API_ENDPOINTS.DORMITORY.SUPERVISORS.BASE}?${new URLSearchParams(params as any).toString()}`
       : API_ENDPOINTS.DORMITORY.SUPERVISORS.BASE;
     return ApiService.getArray(endpoint);
@@ -479,7 +479,7 @@ export class DormitoryService {
     return ApiService.upload(API_ENDPOINTS.DORMITORY.SUPERVISORS.CREATE, supervisorData);
   }
 
-  static async updateSupervisor(id: string, supervisorData: any) {
+  static async updateSupervisor(id: string, supervisorData: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.DORMITORY.SUPERVISORS.UPDATE(id), supervisorData);
   }
 
@@ -496,11 +496,11 @@ export class DormitoryService {
     return ApiService.getArray(API_ENDPOINTS.DORMITORY.MAINTENANCE.BASE);
   }
 
-  static async createMaintenanceRequest(maintenanceData: any) {
+  static async createMaintenanceRequest(maintenanceData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.DORMITORY.MAINTENANCE.CREATE, maintenanceData);
   }
 
-  static async updateMaintenanceRequest(id: string, maintenanceData: any) {
+  static async updateMaintenanceRequest(id: string, maintenanceData: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.DORMITORY.MAINTENANCE.UPDATE(id), maintenanceData);
   }
 
@@ -519,11 +519,11 @@ export class EvciService {
     return ApiService.getArray(API_ENDPOINTS.EVCI.BASE);
   }
 
-  static async createEvciRequest(evciData: any) {
+  static async createEvciRequest(evciData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.EVCI.CREATE, evciData);
   }
 
-  static async updateEvciRequest(id: string, evciData: any) {
+  static async updateEvciRequest(id: string, evciData: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.EVCI.UPDATE(id), evciData);
   }
 
@@ -546,11 +546,11 @@ export class RequestService {
     return ApiService.getArray(API_ENDPOINTS.REQUESTS.BASE);
   }
 
-  static async createRequest(requestData: any) {
+  static async createRequest(requestData: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.REQUESTS.CREATE, requestData);
   }
 
-  static async updateRequest(id: string, requestData: any) {
+  static async updateRequest(id: string, requestData: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.REQUESTS.UPDATE(id), requestData);
   }
 
@@ -605,7 +605,7 @@ export class RequestService {
     });
   }
 
-  static async approveRequest(requestId: string, updates: any) {
+  static async approveRequest(requestId: string, updates: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.REQUESTS.UPDATE(requestId), {
       status: 'approved',
       ...updates
@@ -649,96 +649,21 @@ export class MonitoringService {
 }
 
 // File Management service
-export class FileService {
-  static async getFiles(params?: any) {
-    return ApiService.get(API_ENDPOINTS.FILES.BASE, { params });
-  }
+// File Management service - REMOVED
 
-  static async getFileById(id: string) {
-    return ApiService.get(API_ENDPOINTS.FILES.GET_BY_ID(id));
-  }
-
-  static async uploadFile(formData: FormData) {
-    return ApiService.upload(API_ENDPOINTS.FILES.CREATE, formData);
-  }
-
-  static async updateFile(id: string, data: any) {
-    return ApiService.put(API_ENDPOINTS.FILES.UPDATE(id), data);
-  }
-
-  static async deleteFile(id: string) {
-    return ApiService.delete(API_ENDPOINTS.FILES.DELETE(id));
-  }
-
-  static async downloadFile(id: string) {
-    return SecureAPI.get(API_ENDPOINTS.FILES.DOWNLOAD(id), {
-      responseType: 'blob'
-    });
-  }
-
-  static async shareFile(id: string, shareData: any) {
-    return ApiService.post(API_ENDPOINTS.FILES.SHARE(id), shareData);
-  }
-
-  static async getFolders(params?: any) {
-    return ApiService.get(API_ENDPOINTS.FILES.FOLDERS.BASE, { params });
-  }
-
-  static async getFolderById(id: string) {
-    return ApiService.get(API_ENDPOINTS.FILES.FOLDERS.GET_BY_ID(id));
-  }
-
-  static async createFolder(data: any) {
-    return ApiService.post(API_ENDPOINTS.FILES.FOLDERS.CREATE, data);
-  }
-
-  static async updateFolder(id: string, data: any) {
-    return ApiService.put(API_ENDPOINTS.FILES.FOLDERS.UPDATE(id), data);
-  }
-
-  static async deleteFolder(id: string) {
-    return ApiService.delete(API_ENDPOINTS.FILES.FOLDERS.DELETE(id));
-  }
-
-  static async shareFolder(id: string, shareData: any) {
-    return ApiService.post(API_ENDPOINTS.FILES.FOLDERS.SHARE(id), shareData);
-  }
-
-  static async getFolderTree(params?: any) {
-    return ApiService.get(API_ENDPOINTS.FILES.FOLDERS.TREE, { params });
-  }
-
-  static async searchFiles(query: string, type?: string) {
-    return ApiService.get(API_ENDPOINTS.FILES.SEARCH, {
-      params: { q: query, type }
-    });
-  }
-
-  static async getFileStats() {
-    return ApiService.get(API_ENDPOINTS.FILES.STATS);
-  }
-
-  static async bulkDeleteFiles(fileIds: string[]) {
-    return ApiService.post(API_ENDPOINTS.FILES.BULK.DELETE, { fileIds });
-  }
-
-  static async bulkMoveFiles(fileIds: string[], folderId: string) {
-    return ApiService.post(API_ENDPOINTS.FILES.BULK.MOVE, { fileIds, folderId });
-  }
-}
 
 // Communication service
 export class CommunicationService {
   // Message methods
-  static async getMessages(conversationId: string, params?: any) {
+  static async getMessages(conversationId: string, params?: Record<string, string | number | boolean>) {
     return ApiService.get(API_ENDPOINTS.COMMUNICATION.MESSAGES.GET_BY_CONVERSATION(conversationId), { params });
   }
 
-  static async createMessage(data: any) {
+  static async createMessage(data: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.COMMUNICATION.MESSAGES.CREATE, data);
   }
 
-  static async updateMessage(id: string, data: any) {
+  static async updateMessage(id: string, data: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.COMMUNICATION.MESSAGES.UPDATE(id), data);
   }
 
@@ -751,7 +676,7 @@ export class CommunicationService {
   }
 
   // Conversation methods
-  static async getConversations(params?: any) {
+  static async getConversations(params?: Record<string, string | number | boolean>) {
     return ApiService.get(API_ENDPOINTS.COMMUNICATION.CONVERSATIONS.BASE, { params });
   }
 
@@ -759,7 +684,7 @@ export class CommunicationService {
     return ApiService.get(API_ENDPOINTS.COMMUNICATION.CONVERSATIONS.GET_BY_ID(id));
   }
 
-  static async createConversation(data: any) {
+  static async createConversation(data: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.COMMUNICATION.CONVERSATIONS.CREATE, data);
   }
 
@@ -772,24 +697,24 @@ export class CommunicationService {
   }
 
   // Email methods
-  static async getEmails(params?: any) {
+  static async getEmails(params?: Record<string, string | number | boolean>) {
     return ApiService.get(API_ENDPOINTS.COMMUNICATION.EMAILS.BASE, { params });
   }
 
-  static async createEmail(data: any) {
-    return ApiService.post(API_ENDPOINTS.COMMUNICATION.EMAILS.CREATE, data);
+  static async createEmail(data: Record<string, unknown>) {
+    return ApiService.post(API_ENDPOINTS.COMMUNICATION.EMAILS.BASE, data);
   }
 
   static async sendEmail(id: string) {
-    return ApiService.post(API_ENDPOINTS.COMMUNICATION.EMAILS.SEND(id));
+    return ApiService.post(`${API_ENDPOINTS.COMMUNICATION.EMAILS.SEND}/${id}`, {});
   }
 
   // Chat room methods
-  static async getChatRooms(params?: any) {
+  static async getChatRooms(params?: Record<string, string | number | boolean>) {
     return ApiService.get(API_ENDPOINTS.COMMUNICATION.CHATROOMS.BASE, { params });
   }
 
-  static async createChatRoom(data: any) {
+  static async createChatRoom(data: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.COMMUNICATION.CHATROOMS.CREATE, data);
   }
 
@@ -802,11 +727,11 @@ export class CommunicationService {
   }
 
   // Contact methods
-  static async getContacts(params?: any) {
+  static async getContacts(params?: Record<string, string | number | boolean>) {
     return ApiService.get(API_ENDPOINTS.COMMUNICATION.CONTACTS.BASE, { params });
   }
 
-  static async createContact(data: any) {
+  static async createContact(data: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.COMMUNICATION.CONTACTS.CREATE, data);
   }
 
@@ -823,7 +748,7 @@ export class CommunicationService {
   }
 
   // Search and analytics
-  static async searchMessages(query: string, filters?: any) {
+  static async searchMessages(query: string, filters?: Record<string, string | number | boolean>) {
     return ApiService.get(API_ENDPOINTS.COMMUNICATION.SEARCH, {
       params: { q: query, ...filters }
     });
@@ -842,7 +767,7 @@ export class CommunicationService {
 // Performance Service
 export class PerformanceService {
   // Metrics methods
-  static async getMetrics(params?: any) {
+  static async getMetrics(params?: Record<string, string | number | boolean>) {
     return ApiService.get(API_ENDPOINTS.PERFORMANCE.METRICS.BASE, { params });
   }
 
@@ -856,16 +781,16 @@ export class PerformanceService {
     return ApiService.get(API_ENDPOINTS.PERFORMANCE.METRICS.CRITICAL);
   }
 
-  static async recordMetric(data: any) {
+  static async recordMetric(data: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.PERFORMANCE.METRICS.BASE, data);
   }
 
   // Optimization methods
-  static async getOptimizations(params?: any) {
+  static async getOptimizations(params?: Record<string, string | number | boolean>) {
     return ApiService.get(API_ENDPOINTS.PERFORMANCE.OPTIMIZATIONS.BASE, { params });
   }
 
-  static async createOptimization(data: any) {
+  static async createOptimization(data: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.PERFORMANCE.OPTIMIZATIONS.BASE, data);
   }
 
@@ -880,11 +805,11 @@ export class PerformanceService {
     });
   }
 
-  static async createConfig(data: any) {
+  static async createConfig(data: Record<string, unknown>) {
     return ApiService.post(API_ENDPOINTS.PERFORMANCE.CONFIGS.BASE, data);
   }
 
-  static async updateConfig(id: string, data: any) {
+  static async updateConfig(id: string, data: Record<string, unknown>) {
     return ApiService.patch(API_ENDPOINTS.PERFORMANCE.CONFIGS.UPDATE(id), data);
   }
 

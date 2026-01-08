@@ -1,19 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Users, 
-  Settings, 
-  LogOut,
-  GraduationCap,
-  Home
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  Users,
+  GraduationCap
 } from 'lucide-react';
-import { useUser, useIsLoading, useLogout } from '../stores/authStore';
+import { useUser, useIsLoading } from '../stores/authStore';
 import { SecureAPI } from '../utils/api';
 import { dashboardButtons } from '../pages/Dashboard/dashboardButtonConfig';
-import { User } from '../types/user';
 import { UserRole } from '../@types';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { safeConsoleError } from '../utils/safeLogger';
+import ModernDashboardLayout from './ModernDashboardLayout';
 import './ModernDashboard.css';
 
 interface UserData {
@@ -43,13 +40,10 @@ const ModernDashboard: React.FC = () => {
   const [, setStats] = useState<DashboardStats>({});
   const lastFetchTime = useRef<number>(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [sidebarOpen] = useState(true);
 
   const authUser = useUser();
   const authLoading = useIsLoading();
-  const logout = useLogout();
   const navigate = useNavigate();
-  const location = useLocation();
   const { handleApiError } = useErrorHandler();
 
   // Fetch user data and stats
@@ -96,15 +90,15 @@ const ModernDashboard: React.FC = () => {
   const fetchStats = useCallback(async () => {
     const now = Date.now();
     const timeSinceLastFetch = now - lastFetchTime.current;
-    
+
     // Rate limit: don't fetch more than once every 5 seconds
     if (timeSinceLastFetch < 5000) {
       console.log('Rate limiting: Skipping stats fetch, too soon since last fetch');
       return;
     }
-    
+
     lastFetchTime.current = now;
-    
+
     try {
       const response = await SecureAPI.get('/api/dashboard/stats');
       setStats((response as { data: { data: DashboardStats } }).data.data);
@@ -123,44 +117,17 @@ const ModernDashboard: React.FC = () => {
     }
   }, [authUser]); // Remove handleError dependency to prevent infinite loop
 
-  // Check if a route is active
-  const isActiveRoute = (route: string) => {
-    const currentPath = location.pathname;
-    console.log('Checking route:', route, 'Current pathname:', currentPath);
-    
-    // Exact match for home page
-    if (route === '/' && currentPath === '/') return true;
-    
-    // For other routes, check if current path starts with the route
-    if (route !== '/' && currentPath.startsWith(route)) return true;
-    
-    // Special case for dashboard routes - if we're on dashboard and route is dashboard
-    if (route === '/dashboard' && currentPath === '/') return true;
-    
-    // Special case for exact matches
-    if (currentPath === route) return true;
-    
-    return false;
-  };
-
   // Get role-specific buttons
   const getRoleButtons = () => {
     const currentRole = userData?.rol || authUser?.rol;
-    console.log('[ModernDashboard] Current role:', currentRole);
-    console.log('[ModernDashboard] UserData:', userData);
-    console.log('[ModernDashboard] AuthUser:', authUser);
-    
+
     return dashboardButtons.filter(btn => {
       const hasRole = btn.roles.includes(currentRole as UserRole);
       const dormitoryCheck = !btn.showForDormitory || userData?.pansiyon;
-      
-      console.log(`[ModernDashboard] Button ${btn.key}: hasRole=${hasRole}, dormitoryCheck=${dormitoryCheck}`);
-      
+
       return hasRole && dormitoryCheck;
     });
   };
-
-  // Get quick stats based on role - removed as not used
 
   // Professional color theme functions
   const getCardGradient = (_color: string) => {
@@ -289,206 +256,116 @@ const ModernDashboard: React.FC = () => {
   const roleButtons = getRoleButtons();
 
   return (
-    <div className="modern-dashboard">
-      {/* Sidebar */}
-      <aside 
-        className={`modern-sidebar ${sidebarOpen ? 'open' : ''}`}
-      >
-        <div className="sidebar-header">
-          <div className="sidebar-logo">
-            <img src="/tofaslogo.png" alt="Tofaş Fen Lisesi" className="logo-image" />
-            <div className="logo-text">
-              <h2>Tofaş Fen</h2>
-              <span>Lisesi</span>
+    <ModernDashboardLayout pageTitle="Panel">
+      {/* Welcome Section */}
+      <section className="welcome-section">
+        <div className="welcome-card">
+          <div className="welcome-content">
+            <div className="welcome-text">
+              <h1>Hoş Geldiniz, {userData.adSoyad}</h1>
+              <p className="welcome-subtitle">
+                {userData.rol === 'student'
+                  ? `${userData.sinif && userData.sube ? `${userData.sinif}/${userData.sube} sınıfı öğrencisi` : 'Öğrenci'}`
+                  : `${userData.rol === 'admin' ? 'Yönetici' :
+                    userData.rol === 'teacher' ? 'Öğretmen' :
+                      userData.rol === 'parent' ? 'Veli' :
+                        userData.rol === 'hizmetli' ? 'Hizmetli' : 'Kullanıcı'} paneli`
+                }
+                {userData.pansiyon && userData.oda && ` - Oda: ${userData.oda}`}
+              </p>
+              <div className="welcome-badges">
+                <span className="badge role-badge">
+                  {userData.rol === 'admin' ? 'Yönetici' :
+                    userData.rol === 'teacher' ? 'Öğretmen' :
+                      userData.rol === 'student' ? 'Öğrenci' :
+                        userData.rol === 'parent' ? 'Veli' :
+                          userData.rol === 'hizmetli' ? 'Hizmetli' : 'Kullanıcı'}
+                </span>
+                {userData.rol === 'student' && userData.sinif && userData.sube && (
+                  <span className="badge class-badge">
+                    <GraduationCap className="badge-icon" />
+                    {userData.sinif}/{userData.sube}
+                  </span>
+                )}
+                {userData.rol === 'student' && (
+                  <span className="badge class-badge">
+                    <Users className="badge-icon" />
+                    {userData.pansiyon === true ? 'Yatılı' : 'Gündüzlü'}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="welcome-illustration">
+              <div className="illustration-container">
+                <GraduationCap className="illustration-icon" />
+              </div>
             </div>
           </div>
         </div>
+      </section>
+      {/* Dashboard Grid */}
+      <section className="dashboard-grid-section">
+        <div className="section-header">
+          <h2>Hızlı İşlemler</h2>
+          <p>En sık kullandığınız özelliklere hızlı erişim</p>
+        </div>
 
-        <nav className="sidebar-nav">
-          <div className="nav-section">
-            <h3>Ana Menü</h3>
-            <Link to="/" className={`nav-item ${isActiveRoute('/') ? 'active' : ''}`}>
-              <Home className="nav-icon" />
-              <span>Ana Sayfa</span>
-              {isActiveRoute('/student/') && <span style={{color: 'red', fontSize: '12px'}}>ACTIVE</span>}
-            </Link>
-          </div>
-
-          <div className="nav-section">
-            <h3>Hızlı Erişim</h3>
-            {roleButtons.map((button) => (
-              <Link key={button.key} to={button.route} className={`nav-item ${isActiveRoute(button.route) ? 'active' : ''}`}>
-                {button.icon && <button.icon className="nav-icon" />}
-                <span>{button.title}</span>
-                {button.color && (
-                  <span className={`nav-badge ${button.color}`}></span>
-                )}
-                {isActiveRoute(button.route) && <span style={{color: 'red', fontSize: '12px'}}>ACTIVE</span>}
-              </Link>
-            ))}
-          </div>
-
-          <div className="nav-section">
-            <h3>Sistem</h3>
-            <Link to="/ayarlar" className={`nav-item ${isActiveRoute('/ayarlar') ? 'active' : ''}`}>
-              <Settings className="nav-icon" />
-              <span>Ayarlar</span>
-              {isActiveRoute('/ayarlar') && <span style={{color: 'red', fontSize: '12px'}}>ACTIVE</span>}
-            </Link>
-            <button onClick={logout} className="nav-item logout">
-              <LogOut className="nav-icon" />
-              <span>Çıkış Yap</span>
-            </button>
-          </div>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <div className="main-content">
-        {/* Top Header */}
-        <header className="modern-header modern-header-full-width" style={{
-          position: 'fixed',
-          top: 0,
-          left: '0',
-          right: 0,
-          background: 'rgba(255, 255, 255, 0.98)',
-          backdropFilter: 'blur(15px)',
-          padding: '16px 24px',
-          zIndex: 1000,
-          minHeight: '60px',
-          border: '2px solid rgba(139, 0, 0, 0.1)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <div className="header-left">
-            <div className="breadcrumb">
-              <span>Ana Sayfa</span>
-              <span className="separator">/</span>
-              <span>Dashboard</span>
-            </div>
-          </div>
-
-          <div className="header-right">
-          </div>
-        </header>
-
-        {/* Dashboard Content */}
-        <main className="dashboard-content">
-          {/* Welcome Section */}
-          <section className="welcome-section">
-            <div className="welcome-card">
-              <div className="welcome-content">
-                <div className="welcome-text">
-                  <h1>Hoş Geldiniz, {userData.adSoyad}</h1>
-                  <p className="welcome-subtitle">
-                    {userData.rol === 'student' 
-                      ? `${userData.sinif && userData.sube ? `${userData.sinif}/${userData.sube} sınıfı öğrencisi` : 'Öğrenci' }`
-                      : `${userData.rol === 'admin' ? 'Yönetici' : 
-                          userData.rol === 'teacher' ? 'Öğretmen' : 
-                          userData.rol === 'parent' ? 'Veli' : 
-                          userData.rol === 'hizmetli' ? 'Hizmetli' : 'Kullanıcı'} paneli`
-                    }
-                    {userData.pansiyon && userData.oda && ` - Oda: ${userData.oda}`}
-                  </p>
-                  <div className="welcome-badges">
-                    <span className="badge role-badge">
-                      {userData.rol === 'admin' ? 'Yönetici' : 
-                       userData.rol === 'teacher' ? 'Öğretmen' : 
-                       userData.rol === 'student' ? 'Öğrenci' : 
-                       userData.rol === 'parent' ? 'Veli' : 
-                       userData.rol === 'hizmetli' ? 'Hizmetli' : 'Kullanıcı'}
-                    </span>
-                    {userData.rol === 'student' && userData.sinif && userData.sube && (
-                      <span className="badge class-badge">
-                        <GraduationCap className="badge-icon" />
-                        {userData.sinif}/{userData.sube}
-                      </span>
-                    )}
-                    {userData.rol === 'student' && (
-                      <span className="badge class-badge">
-                        <Users className="badge-icon" />
-                        {userData.pansiyon === true ? 'Yatılı' : 'Gündüzlü'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="welcome-illustration">
-                  <div className="illustration-container">
-                    <GraduationCap className="illustration-icon" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-          {/* Dashboard Grid */}
-          <section className="dashboard-grid-section">
-            <div className="section-header">
-              <h2>Hızlı İşlemler</h2>
-              <p>En sık kullandığınız özelliklere hızlı erişim</p>
-            </div>
-            
-            <div className="dashboard-grid">
-              {roleButtons.map((button) => (
+        <div className="dashboard-grid">
+          {roleButtons.map((button) => (
+            <div
+              key={button.key}
+              className="dashboard-card-container"
+            >
+              <Link to={button.route} className="dashboard-card-link">
                 <div
-                  key={button.key}
-                  className="dashboard-card-container"
+                  className={`dashboard-card ${button.color || 'default'}`}
+                  style={{
+                    background: getCardGradient(button.color || 'default'),
+                    border: `2px solid ${getCardBorderColor(button.color || 'default')}`,
+                    boxShadow: `0 8px 32px ${getCardShadowColor()}`,
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    const target = e.currentTarget;
+                    target.style.transform = 'translateY(-4px)';
+                    target.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.12)';
+                    target.style.borderTop = `4px solid ${getHoverBorderColor(button.color || 'default')}`;
+                  }}
+                  onMouseLeave={(e) => {
+                    const target = e.currentTarget;
+                    target.style.transform = 'translateY(0)';
+                    target.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.08)';
+                    target.style.borderTop = `2px solid ${getCardBorderColor(button.color || 'default')}`;
+                  }}
                 >
-                  <Link to={button.route} className="dashboard-card-link">
-                    <div 
-                      className={`dashboard-card ${button.color || 'default'}`}
+                  <div className="card-header">
+                    <div
+                      className="card-icon"
                       style={{
-                        background: getCardGradient(button.color || 'default'),
-                        border: `2px solid ${getCardBorderColor(button.color || 'default')}`,
-                        boxShadow: `0 8px 32px ${getCardShadowColor()}`,
-                        transition: 'all 0.3s ease',
-                        cursor: 'pointer',
-                      }}
-                      onMouseEnter={(e) => {
-                        const target = e.currentTarget;
-                        target.style.transform = 'translateY(-4px)';
-                        target.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.12)';
-                        target.style.borderTop = `4px solid ${getHoverBorderColor(button.color || 'default')}`;
-                      }}
-                      onMouseLeave={(e) => {
-                        const target = e.currentTarget;
-                        target.style.transform = 'translateY(0)';
-                        target.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.08)';
-                        target.style.borderTop = `2px solid ${getCardBorderColor(button.color || 'default')}`;
+                        background: getIconBackground(button.color || 'default'),
+                        color: getIconColor(),
                       }}
                     >
-                      <div className="card-header">
-                        <div 
-                          className="card-icon"
-                          style={{
-                            background: getIconBackground(button.color || 'default'),
-                            color: getIconColor(),
-                          }}
-                        >
-                          {button.icon && <button.icon className="icon" />}
-                        </div>
-                      </div>
-                      <div className="card-content">
-                        <h3 style={{ color: getTextColor() }}>
-                          {button.title}
-                        </h3>
-                        <p style={{ color: getSubtextColor() }}>
-                          {button.description}
-                        </p>
-                      </div>
+                      {button.icon && <button.icon className="icon" />}
                     </div>
-                  </Link>
+                  </div>
+                  <div className="card-content">
+                    <h3 style={{ color: getTextColor() }}>
+                      {button.title}
+                    </h3>
+                    <p style={{ color: getSubtextColor() }}>
+                      {button.description}
+                    </p>
+                  </div>
                 </div>
-              ))}
+              </Link>
             </div>
+          ))}
+        </div>
 
-          </section>
-
-        </main>
-      </div>
-
-    </div>
+      </section>
+    </ModernDashboardLayout>
   );
 };
 

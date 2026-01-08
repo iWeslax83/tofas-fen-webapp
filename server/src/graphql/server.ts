@@ -5,7 +5,7 @@
 
 import { ApolloServer } from 'apollo-server-express';
 import depthLimit from 'graphql-depth-limit';
-import { createComplexityLimitRule } from 'graphql-query-complexity';
+import { createComplexityRule, fieldExtensionsEstimator, simpleEstimator } from 'graphql-query-complexity';
 import { typeDefs } from './schema';
 import { resolvers } from './resolvers';
 import { GraphQLContext } from './resolvers';
@@ -59,7 +59,9 @@ export function createApolloServer() {
     },
     validationRules: [
       depthLimit(10), // Maximum query depth
-      createComplexityLimitRule(1000, {
+      createComplexityRule({
+        estimators: [fieldExtensionsEstimator(), simpleEstimator()],
+        maximumComplexity: 1000,
         onComplete: (complexity: number) => {
           logger.debug(`Query complexity: ${complexity}`);
         },
@@ -75,11 +77,11 @@ export function createApolloServer() {
     },
     plugins: [
       {
-        requestDidStart() {
+        async requestDidStart() {
           return {
-            didResolveOperation(requestContext: any) {
-              const { request, document } = requestContext;
-              const complexity = requestContext.operationComplexity;
+            async didResolveOperation(requestContext: any) {
+              const { request } = requestContext;
+              const complexity = (requestContext as any).operationComplexity;
               logger.debug(`GraphQL Operation: ${request.operationName}, Complexity: ${complexity}`);
             },
           };

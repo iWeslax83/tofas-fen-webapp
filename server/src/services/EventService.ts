@@ -65,6 +65,7 @@ class EventService {
 
   constructor() {
     // Create Redis clients for pub/sub
+    const redisUrl = process.env.REDIS_URL;
     const redisConfig = {
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379'),
@@ -75,8 +76,15 @@ class EventService {
       },
     };
 
-    this.publisher = new Redis(redisConfig);
-    this.subscriber = new Redis(redisConfig);
+    // Prefer REDIS_URL if provided (supports Upstash rediss:// URLs), otherwise fall back to host/port
+    if (redisUrl) {
+      logger.info('Using REDIS_URL for EventService:', redisUrl.split('@').pop());
+      this.publisher = new Redis(redisUrl);
+      this.subscriber = new Redis(redisUrl);
+    } else {
+      this.publisher = new Redis(redisConfig);
+      this.subscriber = new Redis(redisConfig);
+    }
 
     this.setupEventHandlers();
     this.setupRedisHandlers();

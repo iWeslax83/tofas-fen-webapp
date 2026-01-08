@@ -232,3 +232,6 @@ export const metrics = {
 
 logger.info('Prometheus metrics initialized');
 
+// Export register for metrics endpoint
+export { register };
+

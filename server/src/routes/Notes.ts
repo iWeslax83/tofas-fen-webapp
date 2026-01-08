@@ -2,11 +2,12 @@ import { Router } from "express";
 import Note, { INote } from "../models/Note";
 import { ExcelImportService } from "../services/excelImportService";
 import { Request, Response } from "express";
+import { authenticateJWT, authorizeRoles } from "../utils/jwt";
 
 const router = Router();
 
-// Tüm notları getir (filtreleme ile)
-router.get("/", async (req: Request, res: Response) => {
+// Tüm notları getir (filtreleme ile) - requires authentication
+router.get("/", authenticateJWT, async (req: Request, res: Response) => {
   try {
     const {
       studentId,
@@ -39,8 +40,8 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
-// Belirli bir öğrencinin notlarını getir
-router.get("/student/:studentId", async (req: Request, res: Response) => {
+// Belirli bir öğrencinin notlarını getir - requires authentication
+router.get("/student/:studentId", authenticateJWT, async (req: Request, res: Response) => {
   try {
     const { studentId } = req.params;
     const { semester, academicYear } = req.query;
@@ -64,8 +65,8 @@ router.get("/student/:studentId", async (req: Request, res: Response) => {
   }
 });
 
-// Yeni not ekle
-router.post("/", async (req: Request, res: Response) => {
+// Yeni not ekle - requires teacher/admin authentication
+router.post("/", authenticateJWT, authorizeRoles(['teacher', 'admin']), async (req: Request, res: Response) => {
   try {
     const noteData = req.body;
     noteData.source = 'manual';
@@ -80,8 +81,8 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-// Not güncelle
-router.put("/:id", async (req: Request, res: Response) => {
+// Not güncelle - requires teacher/admin authentication
+router.put("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -104,8 +105,8 @@ router.put("/:id", async (req: Request, res: Response) => {
   }
 });
 
-// Not sil (soft delete)
-router.delete("/:id", async (req: Request, res: Response) => {
+// Not sil (soft delete) - requires teacher/admin authentication
+router.delete("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
@@ -127,8 +128,8 @@ router.delete("/:id", async (req: Request, res: Response) => {
   }
 });
 
-// Excel dosyasından notları içe aktar
-router.post("/import-excel", async (req: Request, res: Response) => {
+// Excel dosyasından notları içe aktar - requires teacher/admin authentication
+router.post("/import-excel", authenticateJWT, authorizeRoles(['teacher', 'admin']), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Dosya yüklenmedi' });
@@ -198,8 +199,8 @@ router.post("/import-excel", async (req: Request, res: Response) => {
   }
 });
 
-// Not istatistikleri
-router.get("/stats", async (req: Request, res: Response) => {
+// Not istatistikleri - requires authentication
+router.get("/stats", authenticateJWT, async (req: Request, res: Response) => {
   try {
     const { semester, academicYear, gradeLevel, classSection } = req.query;
     
@@ -234,8 +235,8 @@ router.get("/stats", async (req: Request, res: Response) => {
   }
 });
 
-// Toplu not güncelleme
-router.put("/bulk-update", async (req: Request, res: Response) => {
+// Toplu not güncelleme - requires teacher/admin authentication
+router.put("/bulk-update", authenticateJWT, authorizeRoles(['teacher', 'admin']), async (req: Request, res: Response) => {
   try {
     const { notes } = req.body;
     
@@ -262,8 +263,8 @@ router.put("/bulk-update", async (req: Request, res: Response) => {
   }
 });
 
-// Not şablonları
-router.get("/templates", async (req: Request, res: Response) => {
+// Not şablonları - requires authentication
+router.get("/templates", authenticateJWT, async (req: Request, res: Response) => {
   try {
     const templates = await Note.distinct('lesson');
     res.json(templates);
@@ -273,8 +274,8 @@ router.get("/templates", async (req: Request, res: Response) => {
   }
 });
 
-// Not arama
-router.get("/search", async (req: Request, res: Response) => {
+// Not arama - requires authentication
+router.get("/search", authenticateJWT, async (req: Request, res: Response) => {
   try {
     const { q, semester, academicYear } = req.query;
     
@@ -307,8 +308,8 @@ router.get("/search", async (req: Request, res: Response) => {
   }
 });
 
-// Not yedekleme
-router.post("/backup", async (req: Request, res: Response) => {
+// Not yedekleme - requires admin authentication
+router.post("/backup", authenticateJWT, authorizeRoles(['admin']), async (req: Request, res: Response) => {
   try {
     const { semester, academicYear } = req.body;
     
