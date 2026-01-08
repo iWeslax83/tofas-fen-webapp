@@ -17,7 +17,7 @@ export const API_ENDPOINTS = {
     BASE: '/api/user',
     CREATE: '/api/user/create',
     UPDATE: (id: string) => `/api/user/${id}/update`,
-    DELETE: (id: string) => `/api/user/${id}/delete`,
+    DELETE: (id: string) => `/api/user/${id}`,
     GET_BY_ID: (id: string) => `/api/user/${id}`,
     GET_BY_ROLE: (role: string) => `/api/user?role=${role}`,
     GET_CHILDREN: (parentId: string) => `/api/user/${parentId}/children`,
@@ -71,7 +71,7 @@ export const API_ENDPOINTS = {
     CREATE: '/api/schedule/create',
     UPDATE: (id: string) => `/api/schedule/${id}`,
     DELETE: (id: string) => `/api/schedule/${id}`,
-    GET_BY_CLASS: (classLevel: string, section: string) => 
+    GET_BY_CLASS: (classLevel: string, section: string) =>
       `/api/schedule/class/${classLevel}/${section}`,
     GET_BY_TEACHER: (teacherId: string) => `/api/schedule/teacher/${teacherId}`,
   },
@@ -203,30 +203,8 @@ export const API_ENDPOINTS = {
   },
 
   // File Management endpoints
-  FILES: {
-    BASE: '/api/files',
-    GET_BY_ID: (id: string) => `/api/files/${id}`,
-    CREATE: '/api/files',
-    UPDATE: (id: string) => `/api/files/${id}`,
-    DELETE: (id: string) => `/api/files/${id}`,
-    DOWNLOAD: (id: string) => `/api/files/${id}/download`,
-    SHARE: (id: string) => `/api/files/${id}/share`,
-    FOLDERS: {
-      BASE: '/api/files/folders',
-      GET_BY_ID: (id: string) => `/api/files/folders/${id}`,
-      CREATE: '/api/files/folders',
-      UPDATE: (id: string) => `/api/files/folders/${id}`,
-      DELETE: (id: string) => `/api/files/folders/${id}`,
-      SHARE: (id: string) => `/api/files/folders/${id}/share`,
-      TREE: '/api/files/folders/tree',
-    },
-    SEARCH: '/api/files/search',
-    STATS: '/api/files/stats',
-    BULK: {
-      DELETE: '/api/files/bulk/delete',
-      MOVE: '/api/files/bulk/move',
-    },
-  },
+  // File Management endpoints - REMOVED
+
 
   // Communication endpoints
   COMMUNICATION: {
@@ -310,11 +288,11 @@ export const buildEndpoint = (
   params: Record<string, string | number> = {}
 ): string => {
   let endpoint = baseEndpoint;
-  
+
   Object.entries(params).forEach(([key, value]) => {
     endpoint = endpoint.replace(`:${key}`, String(value));
   });
-  
+
   return endpoint;
 };
 
@@ -324,14 +302,14 @@ export const addQueryParams = (
   params: Record<string, string | number | boolean> = {}
 ): string => {
   if (Object.keys(params).length === 0) return endpoint;
-  
+
   const queryString = Object.entries(params)
     .filter(([_, value]) => value !== undefined && value !== null && value !== '')
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
     .join('&');
-  
+
   return `${endpoint}?${queryString}`;
 };
 
 // Export individual endpoint groups for easier imports
-export const { AUTH, USER, NOTES, HOMEWORKS, ANNOUNCEMENTS, SCHEDULE, CLUBS, DORMITORY, EVCI, REQUESTS, CALENDAR, MONITORING, FILES, COMMUNICATION, PERFORMANCE } = API_ENDPOINTS;
+export const { AUTH, USER, NOTES, HOMEWORKS, ANNOUNCEMENTS, SCHEDULE, CLUBS, DORMITORY, EVCI, REQUESTS, CALENDAR, MONITORING, COMMUNICATION, PERFORMANCE } = API_ENDPOINTS;

@@ -6,9 +6,9 @@
 import { IResolvers } from '@graphql-tools/utils';
 import DataLoader from 'dataloader';
 import { User } from '../../models/User';
-import { Announcement } from '../../models/Announcement';
+import Announcement from '../../models/Announcement';
 import { Homework } from '../../models/Homework';
-import { Note } from '../../models/Note';
+import Note from '../../models/Note';
 import { EvciRequest } from '../../models/EvciRequest';
 import { Club } from '../../models/Club';
 

@@ -1,20 +1,19 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  GraduationCap, 
-  Home, 
-  Settings, 
-  LogOut, 
-  Bell, 
-  Search, 
-  Menu, 
-  X, 
-  ChevronRight, 
+import {
+  GraduationCap,
+  Home,
+  Settings,
+  LogOut,
+  Bell,
+  Search,
+  Menu,
+  X,
+  ChevronRight,
   ChevronDown,
   User,
   HelpCircle,
-  BarChart3,
   Calendar,
   FileText,
   Users,
@@ -23,7 +22,6 @@ import {
   Award,
   Activity,
   MessageSquare,
-  Folder,
   Wrench,
   Utensils,
   Star,
@@ -100,11 +98,11 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
     let currentPath = '';
     pathSegments.forEach((segment) => {
       currentPath += `/${segment}`;
-      
+
       // Map segment to readable label
       const label = getSegmentLabel(segment);
       const icon = getSegmentIcon(segment);
-      
+
       breadcrumbs.push({
         label,
         path: currentPath,
@@ -131,14 +129,14 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
       'yemek-listesi': 'Yemek Listesi',
       'belletmen-listesi': 'Belletmen Listesi',
       'bakim-talepleri': 'Bakım Talepleri',
-      ogrencilerim: 'Öğrencilerim',
+      // ogrencilerim: 'Öğrencilerim',
       kulupler: 'Kulüpler',
       'evci-listesi': 'Evci Listesi',
-      senkronizasyon: 'Senkronizasyon',
-      analytics: 'Analytics',
-      reports: 'Raporlar',
+      // senkronizasyon: 'Senkronizasyon',
+      // analytics: 'Analytics',
+      // reports: 'Raporlar',
       takvim: 'Takvim',
-      dosyalar: 'Dosyalar',
+      // dosyalar: 'Dosyalar',
       iletisim: 'İletişim',
       performans: 'Performans',
       ayarlar: 'Ayarlar',
@@ -165,14 +163,14 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
       'yemek-listesi': Utensils,
       'belletmen-listesi': Users,
       'bakim-talepleri': Wrench,
-      ogrencilerim: Users,
+      // ogrencilerim: Users,
       kulupler: Award,
       'evci-listesi': ClipboardList,
       senkronizasyon: Zap,
-      analytics: BarChart3,
-      reports: FileText,
+      // analytics: BarChart3,
+      // reports: FileText,
       takvim: Calendar,
-      dosyalar: Folder,
+      // dosyalar: Folder,
       iletisim: MessageSquare,
       performans: Activity,
       ayarlar: Settings,
@@ -213,7 +211,7 @@ export const EnhancedSidebar: React.FC = () => {
   // Get role-specific navigation items
   const getNavigationItems = (): NavigationItem[] => {
     const role = user?.rol || 'student';
-    
+
     const baseItems: NavigationItem[] = [
       {
         key: 'dashboard',
@@ -262,8 +260,8 @@ export const EnhancedSidebar: React.FC = () => {
     if (['odevler', 'notlar', 'ders-programi'].includes(item.key)) return 'academic';
     if (['duyurular', 'kuluplerim', 'kulupler'].includes(item.key)) return 'activities';
     if (['yemek-listesi', 'belletmen-listesi', 'bakim-talepleri'].includes(item.key)) return 'dormitory';
-    if (['analytics', 'reports', 'senkronizasyon'].includes(item.key)) return 'admin';
-    if (['takvim', 'dosyalar', 'iletisim', 'performans'].includes(item.key)) return 'tools';
+    if (['senkronizasyon'].includes(item.key)) return 'admin';
+    if (['takvim', 'iletisim', 'performans'].includes(item.key)) return 'tools';
     return 'other';
   };
 
@@ -294,15 +292,15 @@ export const EnhancedSidebar: React.FC = () => {
   };
 
   const toggleSection = (category: string) => {
-    setCollapsedSections(prev => 
-      prev.includes(category) 
+    setCollapsedSections(prev =>
+      prev.includes(category)
         ? prev.filter(c => c !== category)
         : [...prev, category]
     );
   };
 
   const toggleFavorite = (itemKey: string) => {
-    setFavorites(prev => 
+    setFavorites(prev =>
       prev.includes(itemKey)
         ? prev.filter(key => key !== itemKey)
         : [...prev, itemKey]
@@ -312,37 +310,37 @@ export const EnhancedSidebar: React.FC = () => {
   const isActive = (path: string) => {
     // Debug logging
     console.log('isActive check:', `path: ${path}, currentPath: ${currentPath}, userRole: ${user?.rol || 'undefined'}`);
-    
+
     // Exact match
     if (currentPath === path) {
       console.log('Exact match found:', path);
       return true;
     }
-    
+
     // For role-based routes, check if current path starts with the route
     if (path !== '/' && currentPath.startsWith(path + '/')) {
       console.log('Path starts with match found:', path);
       return true;
     }
-    
+
     // Special case for dashboard home routes
     if (path === `/${String(user?.rol || '')}` && currentPath === `/${String(user?.rol || '')}`) {
       console.log('Dashboard home match found:', path);
       return true;
     }
-    
+
     // Special case for exact matches with trailing slash
     if (currentPath === path + '/') {
       console.log('Trailing slash match found:', path);
       return true;
     }
-    
+
     console.log('No match found for:', path);
     return false;
   };
 
   return (
-    <motion.aside 
+    <motion.aside
       className={`enhanced-sidebar ${sidebarOpen ? 'open' : ''}`}
       initial={{ x: -300 }}
       animate={{ x: sidebarOpen ? 0 : -300 }}
@@ -357,7 +355,7 @@ export const EnhancedSidebar: React.FC = () => {
             <span>Lisesi</span>
           </div>
         </div>
-        <button 
+        <button
           className="sidebar-close"
           onClick={() => setSidebarOpen(false)}
           aria-label="Sidebar'ı kapat"
@@ -377,7 +375,7 @@ export const EnhancedSidebar: React.FC = () => {
             {favorites.map(favKey => {
               const item = navigationItems.find(nav => nav.key === favKey);
               if (!item) return null;
-              
+
               return (
                 <Link
                   key={item.key}
@@ -414,11 +412,11 @@ export const EnhancedSidebar: React.FC = () => {
             >
               {(() => { const CategoryIcon = getCategoryIcon(category); return <CategoryIcon className="section-icon" />; })()}
               <span>{getCategoryLabel(category)}</span>
-              <ChevronDown 
+              <ChevronDown
                 className={`section-chevron ${collapsedSections.includes(category) ? 'collapsed' : ''}`}
               />
             </button>
-            
+
             <AnimatePresence>
               {!collapsedSections.includes(category) && (
                 <motion.div
@@ -466,7 +464,7 @@ export const EnhancedSidebar: React.FC = () => {
             <span className="user-role">{getRoleDisplayName(user?.rol)}</span>
           </div>
         </div>
-        
+
         <div className="footer-actions">
           <Link to="/ayarlar" className="footer-action">
             <Settings className="action-icon" />
@@ -495,7 +493,7 @@ export const EnhancedBreadcrumbs: React.FC = () => {
         {breadcrumbs.map((crumb, index) => {
           const isLast = index === breadcrumbs.length - 1;
           const Icon = crumb.icon;
-          
+
           return (
             <li key={crumb.path} className="breadcrumb-item">
               {isLast ? (
@@ -548,14 +546,14 @@ export const EnhancedTopNavigation: React.FC = () => {
   return (
     <header className="enhanced-top-nav">
       <div className="nav-left">
-        <button 
+        <button
           className="nav-menu-btn"
           onClick={() => setSidebarOpen(true)}
           aria-label="Menüyü aç"
         >
           <Menu className="menu-icon" />
         </button>
-        
+
         <div className="nav-brand">
           <GraduationCap className="brand-icon" />
           <span className="brand-text">Tofaş Fen Lisesi</span>
@@ -600,7 +598,7 @@ export const EnhancedTopNavigation: React.FC = () => {
           >
             <Search className="action-icon" />
           </button>
-          
+
           <button
             className="nav-action-btn"
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
@@ -608,7 +606,7 @@ export const EnhancedTopNavigation: React.FC = () => {
           >
             {viewMode === 'grid' ? <List className="action-icon" /> : <Grid className="action-icon" />}
           </button>
-          
+
           <button
             className="nav-action-btn"
             onClick={() => setShowFilters(!showFilters)}
@@ -646,31 +644,31 @@ export const MobileNavigation: React.FC = () => {
   const isActive = (path: string) => {
     // Debug logging
     console.log('isActive check:', `path: ${path}, currentPath: ${currentPath}, userRole: ${user?.rol || 'undefined'}`);
-    
+
     // Exact match
     if (currentPath === path) {
       console.log('Exact match found:', path);
       return true;
     }
-    
+
     // For role-based routes, check if current path starts with the route
     if (path !== '/' && currentPath.startsWith(path + '/')) {
       console.log('Path starts with match found:', path);
       return true;
     }
-    
+
     // Special case for dashboard home routes
     if (path === `/${String(user?.rol || '')}` && currentPath === `/${String(user?.rol || '')}`) {
       console.log('Dashboard home match found:', path);
       return true;
     }
-    
+
     // Special case for exact matches with trailing slash
     if (currentPath === path + '/') {
       console.log('Trailing slash match found:', path);
       return true;
     }
-    
+
     console.log('No match found for:', path);
     return false;
   };

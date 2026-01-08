@@ -10,11 +10,11 @@
 }
 
 .card {
-  background: white;
+  background: var(--primary-red-lighter);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--primary-red-20);
   transition: all 0.3s ease;
 }
 
@@ -60,7 +60,7 @@
 }
 
 .delete-button:hover {
-  background: #fef2f2;
+  background: var(--primary-red-10);
   color: #dc2626;
 }
 
@@ -129,7 +129,7 @@
 }
 
 .modal-content {
-  background: white;
+  background: var(--primary-red-lighter);
   border-radius: 12px;
   padding: 24px;
   max-width: 500px;
@@ -188,7 +188,7 @@
 .form-input,
 .form-textarea {
   padding: 12px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--primary-red-20);
   border-radius: 8px;
   font-size: 14px;
   transition: border-color 0.3s ease;
@@ -216,7 +216,7 @@
 
 .btn-secondary {
   padding: 12px 20px;
-  background: #f3f4f6;
+  background: var(--primary-red-20);
   color: #374151;
   border: none;
   border-radius: 8px;
@@ -227,7 +227,7 @@
 }
 
 .btn-secondary:hover {
-  background: #e5e7eb;
+  background: var(--primary-red-10);
 }
 
 .btn-primary {

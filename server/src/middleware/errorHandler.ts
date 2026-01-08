@@ -115,7 +115,7 @@ function sendErrorResponse(res: Response, appError: AppError, req: Request): voi
   const isDevelopment = process.env.NODE_ENV === 'development';
   
   // Prepare response data
-  const responseData: Record<string, unknown> = {
+  const responseData: any = {
     success: false,
     error: {
       message: appError.message,
@@ -126,8 +126,9 @@ function sendErrorResponse(res: Response, appError: AppError, req: Request): voi
 
   // Add additional details in development
   if (isDevelopment && responseData.error) {
+    const errObj = responseData.error as Record<string, any>;
     responseData.error = {
-      ...responseData.error,
+      ...errObj,
       name: appError.name,
       stack: appError.stack,
       path: appError.path,

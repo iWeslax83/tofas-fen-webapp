@@ -2,12 +2,30 @@ import { Router } from "express";
 import { Request, Response } from "express";
 import { User } from "../models";
 import bcrypt from "bcryptjs";
-import { authenticateJWT } from "../utils/jwt";
+import { authenticateJWT, authorizeRoles } from "../utils/jwt";
 
 const router = Router();
 
-// Parent-child link
-router.post("/parent-child-link", async (req, res) => {
+// Get all users (with optional role filter) - requires authentication
+router.get("/", authenticateJWT, async (req: Request, res: Response) => {
+  try {
+    const { role } = req.query;
+    const filter: any = {};
+    if (role) {
+      filter.rol = role;
+    }
+    
+    // Select all fields except sensitive ones
+    const users = await User.find(filter).select('-sifre -tckn');
+    res.json(users);
+  } catch (error) {
+    console.error('Error getting users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Parent-child link - requires authentication
+router.post("/parent-child-link", authenticateJWT, async (req, res) => {
   const { parentId, childId } = req.body;
   const parent = await User.findOne({ id: parentId });
   const child = await User.findOne({ id: childId });
@@ -27,8 +45,8 @@ router.post("/parent-child-link", async (req, res) => {
   res.json({ success: true });
 });
 
-// Get parent's children
-router.get("/parent/:parentId/children", async (req, res) => {
+// Get parent's children - requires authentication
+router.get("/parent/:parentId/children", authenticateJWT, async (req, res) => {
   const { parentId } = req.params;
   const parent = await User.findOne({ id: parentId });
   if (!parent) {
@@ -41,8 +59,8 @@ router.get("/parent/:parentId/children", async (req, res) => {
 
 // Şifre değiştirme endpoint'i kaldırıldı - artık TCKN kullanılıyor ve değiştirilemez
 
-// Update user
-router.put("/:userId/update", async (req, res) => {
+// Update user - requires authentication
+router.put("/:userId/update", authenticateJWT, async (req, res) => {
   const { userId } = req.params;
   const updateData = req.body;
   
@@ -71,8 +89,8 @@ router.put("/:userId/update", async (req, res) => {
   }
 });
 
-// Create user
-router.post("/create", async (req, res) => {
+// Create user - requires admin authentication
+router.post("/create", authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   const { id, adSoyad, tckn, sifre, rol, sinif, sube, oda, pansiyon, email } = req.body;
   
   if (!id || !adSoyad || !rol) {
@@ -86,24 +104,19 @@ router.post("/create", async (req, res) => {
     return;
   }
 
-  // TCKN varsa kullan, yoksa eski şifre sistemine geri dön (geriye dönük uyumluluk)
-  let passwordField: any = {};
-  if (tckn) {
-    // TCKN kullanılıyor - şifre olarak TCKN kaydedilir (hash'lenmez)
-    passwordField.tckn = tckn;
-  } else if (sifre) {
-    // Eski sistem: bcrypt ile hash'le (geriye dönük uyumluluk)
-    const hashedPassword = await bcrypt.hash(sifre, 10);
-    passwordField.sifre = hashedPassword;
-  } else {
-    res.status(400).json({ error: "TCKN veya şifre gereklidir" });
+  // Only bcrypt hashed passwords allowed - TCKN plaintext removed for security
+  if (!sifre) {
+    res.status(400).json({ error: "Şifre gereklidir" });
     return;
   }
+
+  // Hash password with bcrypt
+  const hashedPassword = await bcrypt.hash(sifre, 10);
 
   const user = new User({
     id,
     adSoyad,
-    ...passwordField,
+    sifre: hashedPassword,
     rol,
     sinif,
     sube,
@@ -117,23 +130,22 @@ router.post("/create", async (req, res) => {
   res.status(201).json({ success: true });
 });
 
-// Delete user (admin)
-router.delete("/:userId", async (req, res) => {
+// Delete user (admin) - requires admin authentication
+router.delete("/:userId", authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   const { userId } = req.params;
   await User.deleteOne({ id: userId });
   res.status(204).end();
 });
 
-// Get current user info (different from /api/auth/me)
-router.get("/me", async (req, res) => {
+// Get current user info (different from /api/auth/me) - requires authentication
+router.get("/me", authenticateJWT, async (req, res) => {
   try {
-    // Get user ID from header (JWT middleware will be implemented later)
-    const userId = req.headers['x-user-id'];
+    const userId = (req as any).user?.userId;
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
     
-    const user = await User.findOne({ id: userId }).select('-sifre');
+    const user = await User.findOne({ id: userId }).select('-sifre -tckn');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -145,8 +157,8 @@ router.get("/me", async (req, res) => {
   }
 });
 
-// Get user by ID
-router.get("/:userId", async (req, res) => {
+// Get user by ID - requires authentication
+router.get("/:userId", authenticateJWT, async (req, res) => {
   try {
     const { userId } = req.params;
     const user = await User.findOne({ id: userId }).select('-sifre');

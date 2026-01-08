@@ -27,20 +27,16 @@ export class AuthController {
       throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
     }
 
-    // Check password - artık TCKN kullanılıyor
-    // Önce TCKN kontrolü yap, yoksa eski şifre sistemine geri dön (geriye dönük uyumluluk)
-    if (user.tckn) {
-      // TCKN ile giriş
-      if (user.tckn !== sifre) {
-        throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
-      }
-    } else if (user.sifre) {
-      // Eski sistem: bcrypt ile şifre kontrolü (geriye dönük uyumluluk)
-      if (!(await bcrypt.compare(sifre, user.sifre))) {
-        throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
-      }
-    } else {
+    // Check password - only bcrypt hashed passwords allowed
+    // TCKN plaintext authentication removed for security
+    if (!user.sifre) {
       throw AppError.unauthorized('Kullanıcı şifresi tanımlanmamış');
+    }
+
+    // Verify password using bcrypt
+    const isValidPassword = await bcrypt.compare(sifre, user.sifre);
+    if (!isValidPassword) {
+      throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
     }
 
     // Update last login
@@ -51,7 +47,27 @@ export class AuthController {
     // Generate tokens
     const tokens = generateTokenPair(user.id, user.rol, user.email, user.tokenVersion);
 
-    // Return user data and tokens
+    // Set httpOnly cookies for secure token storage
+    // ⚠️ GÜVENLİK: localStorage yerine httpOnly cookies kullanılıyor (XSS koruması)
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    res.cookie('accessToken', tokens.accessToken, {
+      httpOnly: true, // JavaScript'ten erişilemez (XSS koruması)
+      secure: isProduction, // HTTPS'te çalışır
+      sameSite: 'strict', // CSRF koruması
+      maxAge: tokens.expiresIn * 1000, // 15 minutes in milliseconds
+      path: '/',
+    });
+
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'strict',
+      maxAge: tokens.refreshExpiresIn * 1000, // 7 days in milliseconds
+      path: '/',
+    });
+
+    // Return user data (tokens are in httpOnly cookies, not in response body)
     res.json({
       success: true,
       message: 'Giriş başarılı',
@@ -66,7 +82,9 @@ export class AuthController {
         pansiyon: user.pansiyon,
         lastLogin: user.lastLogin
       },
-      ...tokens
+      // Token expiry info for frontend (actual tokens in httpOnly cookies)
+      expiresIn: tokens.expiresIn,
+      refreshExpiresIn: tokens.refreshExpiresIn
     });
   });
 
@@ -74,11 +92,35 @@ export class AuthController {
    * User logout
    */
   static logout = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const { accessToken, refreshToken } = req.body;
+    // Get tokens from cookies (httpOnly cookies)
+    const accessToken = req.cookies?.accessToken;
+    const refreshToken = req.cookies?.refreshToken;
 
-    if (accessToken && refreshToken) {
-      await logoutUser(accessToken, refreshToken);
+    // Also check body for backward compatibility during migration
+    const bodyAccessToken = req.body?.accessToken;
+    const bodyRefreshToken = req.body?.refreshToken;
+
+    const finalAccessToken = accessToken || bodyAccessToken;
+    const finalRefreshToken = refreshToken || bodyRefreshToken;
+
+    if (finalAccessToken && finalRefreshToken) {
+      await logoutUser(finalAccessToken, finalRefreshToken);
     }
+
+    // Clear httpOnly cookies
+    res.clearCookie('accessToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
 
     res.json({
       success: true,
@@ -90,7 +132,8 @@ export class AuthController {
    * Refresh access token
    */
   static refreshToken = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const { refreshToken } = req.body;
+    // Get refresh token from cookie (preferred) or body (backward compatibility)
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
     if (!refreshToken) {
       throw AppError.validation('Refresh token gereklidir');
@@ -116,10 +159,30 @@ export class AuthController {
     // Generate new tokens
     const tokens = generateTokenPair(user.id, user.rol, user.email, user.tokenVersion);
 
+    // Set new httpOnly cookies
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    res.cookie('accessToken', tokens.accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'strict',
+      maxAge: tokens.expiresIn * 1000,
+      path: '/',
+    });
+
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'strict',
+      maxAge: tokens.refreshExpiresIn * 1000,
+      path: '/',
+    });
+
     res.json({
       success: true,
       message: 'Token yenilendi',
-      ...tokens
+      expiresIn: tokens.expiresIn,
+      refreshExpiresIn: tokens.refreshExpiresIn
     });
   });
 

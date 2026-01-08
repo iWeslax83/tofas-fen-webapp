@@ -1,0 +1,403 @@
+/* Select Component Styles */
+@import url('../../styles/theme.css');
+
+/* Select Root */
+.select {
+  position: relative;
+  width: 100%;
+}
+
+/* Select Trigger */
+.select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  color: var(--gray-900);
+  background: var(--white);
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  min-height: 40px;
+}
+
+.select-trigger:hover:not(.select-disabled .select-trigger) {
+  border-color: var(--gray-400);
+}
+
+.select-trigger:focus-visible {
+  border-color: var(--primary-red);
+  box-shadow: 0 0 0 3px var(--primary-red-10);
+}
+
+.select-disabled .select-trigger {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--gray-50);
+}
+
+.select-error .select-trigger {
+  border-color: var(--color-error);
+}
+
+.select-error .select-trigger:focus-visible {
+  box-shadow: 0 0 0 3px var(--error-10);
+}
+
+/* Select Sizes */
+.select-sm .select-trigger {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  min-height: 32px;
+}
+
+.select-md .select-trigger {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-base);
+  min-height: 40px;
+}
+
+.select-lg .select-trigger {
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--font-size-lg);
+  min-height: 48px;
+}
+
+/* Select Value */
+.select-value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+}
+
+.select-value-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-value-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--gray-600);
+}
+
+.select-trigger:not(:has(.select-value-text:not(:empty))) .select-value-text {
+  color: var(--gray-500);
+}
+
+/* Select Actions */
+.select-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.select-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.select-clear:hover {
+  background: var(--gray-200);
+  color: var(--gray-900);
+}
+
+.select-chevron {
+  color: var(--gray-500);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.select-chevron-open {
+  transform: rotate(180deg);
+}
+
+/* Select Overlay */
+.select-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dropdown);
+  background: transparent;
+}
+
+/* Select Content */
+.select-content {
+  position: absolute;
+  min-width: 200px;
+  max-width: 100%;
+  max-height: 300px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  z-index: var(--z-dropdown);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Select Search */
+.select-search {
+  position: relative;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.select-search-icon {
+  position: absolute;
+  left: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-500);
+  pointer-events: none;
+}
+
+.select-search-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-2) var(--space-2) calc(var(--space-2) + 24px);
+  font-size: var(--font-size-sm);
+  color: var(--gray-900);
+  background: var(--gray-50);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.select-search-input:focus {
+  background: var(--white);
+  border-color: var(--primary-red);
+  box-shadow: 0 0 0 2px var(--primary-red-10);
+}
+
+/* Select Options */
+.select-options {
+  max-height: 250px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) transparent;
+}
+
+.select-options::-webkit-scrollbar {
+  width: 8px;
+}
+
+.select-options::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.select-options::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: var(--radius-full);
+}
+
+.select-options::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+
+/* Select Option */
+.select-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--gray-900);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  outline: none;
+}
+
+.select-option:hover:not(.select-option-disabled) {
+  background: var(--gray-100);
+  color: var(--gray-900);
+}
+
+.select-option:focus-visible {
+  background: var(--primary-red-lighter);
+  color: var(--primary-red);
+  outline: 2px solid var(--primary-red);
+  outline-offset: -2px;
+}
+
+.select-option-selected {
+  background: var(--primary-red-lighter);
+  color: var(--primary-red);
+  font-weight: var(--font-weight-medium);
+}
+
+.select-option-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Select Option Icon */
+.select-option-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--gray-600);
+  width: 18px;
+  height: 18px;
+}
+
+.select-option-selected .select-option-icon {
+  color: var(--primary-red);
+}
+
+/* Select Option Label */
+.select-option-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Select Option Check */
+.select-option-check {
+  flex-shrink: 0;
+  color: var(--primary-red);
+  margin-left: auto;
+}
+
+/* Select Group Label */
+.select-group-label {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+  margin-top: var(--space-1);
+}
+
+.select-group-label:first-child {
+  margin-top: 0;
+}
+
+/* Select Empty */
+.select-empty {
+  padding: var(--space-4);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--gray-500);
+}
+
+/* Position Calculation (will be handled by JS) */
+.select-content-top {
+  bottom: 100%;
+  margin-bottom: var(--space-1);
+}
+
+.select-content-bottom {
+  top: 100%;
+  margin-top: var(--space-1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .select-content {
+    max-width: calc(100vw - var(--space-4));
+    max-height: 50vh;
+  }
+
+  .select-options {
+    max-height: 40vh;
+  }
+}
+
+/* Dark Mode Support */
+[data-theme="dark"] .select-trigger,
+@media (prefers-color-scheme: dark) {
+  .select-trigger {
+    background: var(--gray-100);
+    border-color: var(--gray-700);
+    color: var(--gray-900);
+  }
+
+  .select-trigger:hover:not(.select-disabled .select-trigger) {
+    border-color: var(--gray-600);
+  }
+
+  .select-disabled .select-trigger {
+    background: var(--gray-200);
+  }
+
+  .select-content {
+    background: var(--gray-100);
+    border-color: var(--gray-700);
+  }
+
+  .select-search {
+    border-bottom-color: var(--gray-700);
+  }
+
+  .select-search-input {
+    background: var(--gray-200);
+    border-color: var(--gray-600);
+    color: var(--gray-900);
+  }
+
+  .select-option {
+    color: var(--gray-900);
+  }
+
+  .select-option:hover:not(.select-option-disabled) {
+    background: var(--gray-800);
+  }
+
+  .select-option-selected {
+    background: var(--primary-red-10);
+  }
+
+  .select-group-label {
+    background: var(--gray-200);
+    border-bottom-color: var(--gray-700);
+    color: var(--gray-600);
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .select-trigger,
+  .select-option,
+  .select-chevron {
+    transition: none;
+  }
+
+  .select-content {
+    animation: none;
+  }
+}
+

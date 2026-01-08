@@ -36,52 +36,36 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    console.log('Login attempt started:', { id, sifre: '***' });
-    console.log('API URL:', import.meta.env.VITE_API_URL || 'http://localhost:3001');
-    
+
     // Basic validation
     if (!id.trim()) {
       setError('Kullanıcı ID gereklidir');
       return;
     }
-    
+
     if (!sifre.trim()) {
       setError('Şifre gereklidir');
       return;
     }
-    
+
     setIsSubmitting(true);
     setError('');
 
     try {
-      console.log('Calling login function...');
-      
-      // Test API connection first
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/health`);
-        console.log('API health check:', response.status);
-      } catch (healthError) {
-        console.error('API health check failed:', healthError);
-        setError('Sunucuya bağlanılamıyor. Lütfen daha sonra tekrar deneyin.');
-        toast.error('Sunucuya bağlanılamıyor');
-        return;
-      }
-      
       await login(id.trim(), sifre);
-      console.log('Login successful!');
       toast.success('Giriş başarılı!');
-      
+
       // The redirect will be handled by useEffect when user state updates
     } catch (error: unknown) {
-      console.error('Login error details:', {
-        error,
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      const errorMessage = (error as any)?.response?.data?.message || (error as any)?.message || 'Giriş başarısız';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      // Prefer structured API message when available, otherwise fallback to error.message
+      const apiMessage = (error as any)?.response?.data?.message || (error as any)?.response?.data?.error;
+      const errorMessage = apiMessage || (error as any)?.message || 'Giriş başarısız';
+
+      // Truncate overly large messages for UI/toast
+      const shortMessage = typeof errorMessage === 'string' && errorMessage.length > 300 ? `${errorMessage.slice(0, 300)}...` : errorMessage;
+
+      setError(shortMessage as string);
+      toast.error(shortMessage as string);
     } finally {
       setIsSubmitting(false);
     }
@@ -93,7 +77,7 @@ export default function LoginPage() {
       <div className="login-blob login-blob-1" aria-hidden="true"></div>
       <div className="login-blob login-blob-2" aria-hidden="true"></div>
       <div className="login-blob login-blob-3" aria-hidden="true"></div>
-      
+
       {/* Gradient Border */}
       <div className="login-gradient-border">
         <div className="login-container">

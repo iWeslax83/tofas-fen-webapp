@@ -8,11 +8,11 @@ vi.mock('nodemailer', () => ({
 }));
 import request from 'supertest'
 import express from 'express'
-import authRoutes from '../routes/auth'
+import authRoutes from '../modules/auth/routes/authRoutes'
 
 const app = express()
 app.use(express.json())
-app.use('/auth', authRoutes)
+app.use('/api/auth', authRoutes)
 
 describe('Security Tests', () => {
   beforeEach(() => {
@@ -30,7 +30,7 @@ describe('Security Tests', () => {
 
       for (const payload of sqlInjectionPayloads) {
         const response = await request(app)
-          .post('/auth/login')
+          .post('/api/auth/login')
           .send({
             id: payload,
             sifre: 'password123'
@@ -53,7 +53,7 @@ describe('Security Tests', () => {
 
       for (const payload of xssPayloads) {
         const response = await request(app)
-          .post('/auth/login')
+          .post('/api/auth/login')
           .send({
             id: payload,
             sifre: payload
@@ -75,7 +75,7 @@ describe('Security Tests', () => {
 
       for (const payload of nosqlPayloads) {
         const response = await request(app)
-          .post('/auth/login')
+          .post('/api/auth/login')
           .send({
             id: payload,
             sifre: 'password123'
@@ -99,7 +99,7 @@ describe('Security Tests', () => {
 
       for (const email of invalidEmails) {
         const response = await request(app)
-          .post('/auth/forgot-password')
+          .post('/api/auth/forgot-password')
           .send({ email })
 
         // Should reject invalid email formats
@@ -118,7 +118,7 @@ describe('Security Tests', () => {
 
       for (const password of weakPasswords) {
         const response = await request(app)
-          .post('/auth/reset-password')
+          .post('/api/auth/reset-password')
           .send({
             token: 'valid-token',
             newPassword: password
@@ -178,7 +178,7 @@ describe('Security Tests', () => {
       for (let i = 0; i < 10; i++) {
         requests.push(
           request(app)
-            .post('/auth/login')
+            .post('/api/auth/login')
             .send({
               id: 'testuser',
               sifre: 'password123'
@@ -200,7 +200,7 @@ describe('Security Tests', () => {
       for (let i = 0; i < 10; i++) {
         requests.push(
           request(app)
-            .post('/auth/forgot-password')
+            .post('/api/auth/forgot-password')
             .send({ email: 'test@example.com' })
         );
       }
@@ -241,7 +241,7 @@ describe('Security Tests', () => {
 
       for (const token of malformedTokens) {
         const response = await request(app)
-          .get('/auth/me')
+          .get('/api/auth/me')
           .set('Authorization', token)
 
         expect(response.status).toBe(401)
@@ -262,17 +262,17 @@ describe('Security Tests', () => {
 
         // Try to use the token before logout
         const beforeLogoutResponse = await request(app)
-          .get('/auth/me')
+          .get('/api/auth/me')
           .set('Authorization', `Bearer ${accessToken}`)
 
         // Logout
         await request(app)
-          .post('/auth/logout')
+          .post('/api/auth/logout')
           .set('Authorization', `Bearer ${accessToken}`)
 
         // Try to use the token after logout
         const afterLogoutResponse = await request(app)
-          .get('/auth/me')
+          .get('/api/auth/me')
           .set('Authorization', `Bearer ${accessToken}`)
 
         // Token should be invalid after logout
@@ -336,7 +336,7 @@ describe('Security Tests', () => {
 
       for (const payload of invalidPayloads) {
         const response = await request(app)
-          .post('/auth/login')
+          .post('/api/auth/login')
           .set('Content-Type', 'application/json')
           .send(payload)
 
