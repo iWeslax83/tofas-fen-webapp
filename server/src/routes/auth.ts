@@ -1,3 +1,10 @@
+/**
+ * @deprecated This file is deprecated. Use server/src/modules/auth/routes/authRoutes.ts instead.
+ * This file will be removed in a future version.
+ * 
+ * DEPRECATED: This legacy auth route file is kept for backward compatibility only.
+ * All new authentication logic should use the modular auth system in server/src/modules/auth/
+ */
 // src/routes/auth.ts
 import express from "express";
 import bcrypt from "bcryptjs";

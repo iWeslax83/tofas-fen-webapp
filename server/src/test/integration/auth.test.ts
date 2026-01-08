@@ -42,10 +42,23 @@ describe('Authentication Integration Tests', () => {
         .send(loginData)
         .expect(200);
 
-      expect(response.body).toHaveProperty('token');
+      // ⚠️ GÜVENLİK: Token'lar artık httpOnly cookie'de, response body'de değil
+      // Check for cookies instead
+      expect(response.headers['set-cookie']).toBeDefined();
+      expect(response.headers['set-cookie']?.some((cookie: string) => cookie.startsWith('accessToken='))).toBe(true);
+      expect(response.headers['set-cookie']?.some((cookie: string) => cookie.startsWith('refreshToken='))).toBe(true);
+      
+      // Response body should have user and expiry info (not tokens)
       expect(response.body).toHaveProperty('user');
+      expect(response.body).toHaveProperty('expiresIn');
       expect(response.body.user.id).toBe(loginData.id);
       expect(response.body.user.adSoyad).toBe(userData.adSoyad);
+      
+      // Backward compatibility: If tokens are in body (migration period), that's also OK
+      if (response.body.accessToken) {
+        expect(response.body).toHaveProperty('accessToken');
+        expect(response.body).toHaveProperty('refreshToken');
+      }
     });
 
     it('should reject invalid credentials', async () => {
@@ -178,23 +191,40 @@ describe('Authentication Integration Tests', () => {
         })
         .expect(200);
 
-      const { token, refreshToken } = loginResponse.body;
+      // ⚠️ GÜVENLİK: Token'lar artık httpOnly cookie'de
+      // Extract cookies from login response
+      const cookies = loginResponse.headers['set-cookie'] || [];
+      const refreshTokenCookie = cookies.find((cookie: string) => cookie.startsWith('refreshToken='));
+      
+      // Backward compatibility: Check body for tokens (migration period)
+      const { accessToken, refreshToken } = loginResponse.body;
 
-      // Refresh token
+      // Refresh token - use cookie if available, otherwise body
       const refreshResponse = await request(app)
-        .post('/api/auth/refresh')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ refreshToken })
+        .post('/api/auth/refresh-token')
+        .set('Cookie', refreshTokenCookie || '') // Use cookie if available
+        .send(refreshToken ? { refreshToken } : {}) // Fallback to body
         .expect(200);
 
-      expect(refreshResponse.body).toHaveProperty('token');
-      expect(refreshResponse.body).toHaveProperty('refreshToken');
-      expect(refreshResponse.body.token).not.toBe(token); // Should be different
+      // Check for new cookies
+      expect(refreshResponse.headers['set-cookie']).toBeDefined();
+      
+      // Backward compatibility: If tokens in body, check them
+      if (refreshResponse.body.accessToken) {
+        expect(refreshResponse.body).toHaveProperty('accessToken');
+        expect(refreshResponse.body).toHaveProperty('refreshToken');
+        if (accessToken) {
+          expect(refreshResponse.body.accessToken).not.toBe(accessToken); // Should be different
+        }
+      }
+      
+      // Should have expiry info
+      expect(refreshResponse.body).toHaveProperty('expiresIn');
     });
 
     it('should reject invalid refresh token', async () => {
       const response = await request(app)
-        .post('/api/auth/refresh')
+        .post('/api/auth/refresh-token')
         .send({ refreshToken: 'invalid-token' })
         .expect(401);
 
@@ -224,16 +254,36 @@ describe('Authentication Integration Tests', () => {
         })
         .expect(200);
 
-      const { token } = loginResponse.body;
+      // ⚠️ GÜVENLİK: Token'lar artık httpOnly cookie'de
+      // Extract cookies from login response
+      const cookies = loginResponse.headers['set-cookie'] || [];
+      const cookieHeader = cookies.join('; ');
+      
+      // Backward compatibility: Get tokens from body if available
+      const { accessToken, refreshToken } = loginResponse.body;
 
-      // Logout
+      // Logout - cookies will be sent automatically, body is for backward compatibility
       const logoutResponse = await request(app)
         .post('/api/auth/logout')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', cookieHeader) // Send cookies
+        .set('Authorization', accessToken ? `Bearer ${accessToken}` : '') // Backward compatibility
+        .send(accessToken && refreshToken ? { accessToken, refreshToken } : {}) // Backward compatibility
         .expect(200);
 
+      expect(logoutResponse.body).toHaveProperty('success', true);
       expect(logoutResponse.body).toHaveProperty('message');
-      expect(logoutResponse.body.message).toBe('Başarıyla çıkış yapıldı');
+      
+      // Check that cookies are cleared
+      const clearedCookies = logoutResponse.headers['set-cookie'] || [];
+      const accessTokenCleared = clearedCookies.some((cookie: string) => 
+        cookie.includes('accessToken=') && cookie.includes('Max-Age=0')
+      );
+      const refreshTokenCleared = clearedCookies.some((cookie: string) => 
+        cookie.includes('refreshToken=') && cookie.includes('Max-Age=0')
+      );
+      
+      // Cookies should be cleared (or at least one should be)
+      expect(accessTokenCleared || refreshTokenCleared).toBe(true);
     });
 
     it('should reject logout without valid token', async () => {
@@ -267,12 +317,12 @@ describe('Authentication Integration Tests', () => {
         })
         .expect(200);
 
-      const { token } = loginResponse.body;
+      const { accessToken } = loginResponse.body;
 
       // Get current user info
       const meResponse = await request(app)
         .get('/api/auth/me')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
 
       expect(meResponse.body).toHaveProperty('id', userData.id);

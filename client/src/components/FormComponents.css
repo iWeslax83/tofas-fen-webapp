@@ -1,66 +1,66 @@
 /* Enhanced Form Components CSS */
 
-/* CSS Variables */
+/* CSS Variables - mapped to global theme tokens to ensure consistency */
 :root {
-  /* Colors */
-  --form-primary: #8A1538;
-  --form-primary-light: #A61E4A;
-  --form-primary-dark: #6B1028;
-  --form-secondary: #F8F9FA;
-  --form-success: #28A745;
-  --form-error: #DC3545;
-  --form-warning: #FFC107;
-  --form-info: #17A2B8;
-  
+  /* Map form palette to global theme tokens */
+  --form-primary: var(--primary-red);
+  --form-primary-light: var(--primary-red-light);
+  --form-primary-dark: var(--primary-red-dark);
+  --form-secondary: var(--primary-red-lighter);
+  --form-success: var(--color-success);
+  --form-error: var(--color-error);
+  --form-warning: var(--color-warning);
+  --form-info: var(--color-info);
+
   /* Text Colors */
-  --form-text-primary: #212529;
-  --form-text-secondary: #6C757D;
-  --form-text-muted: #ADB5BD;
-  --form-text-light: #FFFFFF;
-  
+  --form-text-primary: var(--gray-900);
+  --form-text-secondary: var(--gray-600);
+  --form-text-muted: var(--gray-400);
+  --form-text-light: var(--white);
+
   /* Border Colors */
-  --form-border: #DEE2E6;
-  --form-border-focus: #8A1538;
-  --form-border-error: #DC3545;
-  --form-border-success: #28A745;
-  
-  /* Background Colors */
-  --form-bg: #FFFFFF;
-  --form-bg-disabled: #F8F9FA;
-  --form-bg-hover: #F8F9FA;
-  --form-bg-focus: #FFFFFF;
-  
+  --form-border: var(--gray-200);
+  --form-border-focus: var(--primary-red);
+  --form-border-error: var(--color-error);
+  --form-border-success: var(--color-success);
+
+  /* Background Colors - use subtle primary tints for form surfaces */
+  --form-bg: var(--primary-red-lighter);
+  --form-bg-disabled: var(--gray-100);
+  --form-bg-hover: var(--primary-red-10);
+  --form-bg-focus: var(--white);
+
   /* Spacing */
   --form-spacing-xs: 0.25rem;
   --form-spacing-sm: 0.5rem;
   --form-spacing-md: 1rem;
   --form-spacing-lg: 1.5rem;
   --form-spacing-xl: 2rem;
-  
+
   /* Border Radius */
   --form-radius-sm: 0.25rem;
   --form-radius-md: 0.5rem;
   --form-radius-lg: 0.75rem;
   --form-radius-xl: 1rem;
-  
+
   /* Shadows */
-  --form-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --form-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --form-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --form-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
-  
+  --form-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --form-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.08);
+  --form-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08);
+  --form-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.08);
+
   /* Transitions */
   --form-transition-fast: 0.15s ease-in-out;
   --form-transition-normal: 0.3s ease-in-out;
   --form-transition-slow: 0.5s ease-in-out;
-  
+
   /* Typography */
   --form-font-size-xs: 0.75rem;
   --form-font-size-sm: 0.875rem;
   --form-font-size-md: 1rem;
   --form-font-size-lg: 1.125rem;
   --form-font-size-xl: 1.25rem;
-  
+
   /* Z-Index */
   --form-z-dropdown: 1000;
   --form-z-tooltip: 1050;
@@ -630,7 +630,7 @@
   
   .form-field__input-container {
     border: 1px solid #000 !important;
-    background: #fff !important;
+    background: var(--primary-red-lighter) !important;
   }
   
   .form-field__input {

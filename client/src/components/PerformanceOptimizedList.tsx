@@ -57,7 +57,7 @@ const PerformanceOptimizedList: React.FC<PerformanceOptimizedListProps> = memo((
           ...style,
           padding: '8px 16px',
           borderBottom: '1px solid #e5e7eb',
-          backgroundColor: isSelected ? '#dbeafe' : 'white',
+          backgroundColor: isSelected ? '#dbeafe' : 'var(--primary-red-lighter)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',

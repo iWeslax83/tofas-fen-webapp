@@ -1,5 +1,5 @@
 // Central config for dashboard panel buttons, routes, roles, and permissions
-import { BookOpen, ClipboardList, Wrench, Utensils, Users, BarChart3, FileText, Folder, ShoppingBag } from 'lucide-react';
+import { BookOpen, ClipboardList, Wrench, Utensils, Users, FileText, ShoppingBag } from 'lucide-react';
 
 export type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli';
 
@@ -18,16 +18,8 @@ export interface DashboardButton {
 
 export const dashboardButtons: DashboardButton[] = [
   // STUDENT PRIORITY BUTTONS (Most Important First)
-  {
-    key: 'assignments-student',
-    title: 'Ödevler',
-    description: 'Ödevlerini takip et',
-    route: '/student/odevler',
-    roles: ['student'],
-    icon: BookOpen,
-    color: 'blue',
-    actionText: 'Görüntüle',
-  },
+  // STUDENT PRIORITY BUTTONS (Most Important First)
+
   {
     key: 'lesson-schedule-student',
     title: 'Ders Programı',
@@ -137,16 +129,7 @@ export const dashboardButtons: DashboardButton[] = [
   },
 
   // TEACHER PRIORITY BUTTONS
-  {
-    key: 'teacher-students',
-    title: 'Öğrencilerim',
-    description: 'Öğrenci bilgilerini görüntüle',
-    route: '/teacher/ogrencilerim',
-    roles: ['teacher'],
-    icon: Users,
-    color: 'indigo',
-    actionText: 'Öğrencileri Gör',
-  },
+
   {
     key: 'teacher-assignments',
     title: 'Ödevler',
@@ -167,16 +150,7 @@ export const dashboardButtons: DashboardButton[] = [
     color: 'green',
     actionText: 'Notları Gir',
   },
-  {
-    key: 'teacher-attendance',
-    title: 'Yoklama',
-    description: 'Yoklama girişi yap ve devamsızlık takibi',
-    route: '/teacher/yoklama',
-    roles: ['teacher'],
-    icon: ClipboardList,
-    color: 'purple',
-    actionText: 'Yoklama Girişi',
-  },
+
   {
     key: 'teacher-schedule',
     title: 'Ders Programı',
@@ -397,36 +371,7 @@ export const dashboardButtons: DashboardButton[] = [
     color: 'green',
     actionText: 'Senkronize Et',
   },
-  // Analytics ve Raporlama
-  {
-    key: 'analytics-dashboard',
-    title: 'Analytics Dashboard',
-    description: 'Sistem analitikleri ve istatistikler',
-    route: '/admin/analytics',
-    roles: ['admin', 'teacher'],
-    icon: BarChart3,
-    color: 'indigo',
-    actionText: 'Analizleri Gör',
-  },
-  {
-    key: 'report-management',
-    title: 'Rapor Yönetimi',
-    description: 'Raporları oluştur ve yönet',
-    route: '/admin/reports',
-    roles: ['admin', 'teacher'],
-    icon: FileText,
-    color: 'purple',
-    actionText: 'Raporları Yönet',
-  },
-  // Dosya Yönetimi Sistemi (Sadece Admin)
-  {
-    key: 'file-management',
-    title: 'Dosya Yönetimi',
-    description: 'Dosyaları ve klasörleri yönet',
-    route: '/admin/dosyalar',
-    roles: ['admin'],
-    icon: Folder,
-    color: 'green',
-    actionText: 'Dosyaları Yönet',
-  },
+  // Analytics ve Raporlama - REMOVED
+
+  // Dosya Yönetimi Sistemi (Sadece Admin) - REMOVED
 ];

@@ -31,7 +31,7 @@
 }
 
 .stat-item {
-  background: white;
+  background: var(--primary-red-lighter);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -198,7 +198,7 @@
 }
 
 .upload-section {
-  background: white;
+  background: var(--primary-red-lighter);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -262,7 +262,7 @@
 }
 
 .manual-note-section {
-  background: white;
+  background: var(--primary-red-lighter);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

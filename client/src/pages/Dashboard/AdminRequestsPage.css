@@ -4,12 +4,19 @@
 @import url('../../styles/theme.css');
 .dashboard-container {
   min-height: 100vh;
-  background: var(--gradient-purple);
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #6B0000 50%, #8B0000 75%, #1a1a1a 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 20s ease infinite;
   padding: var(--space-5);
 }
 
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
 .dashboard-header {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   backdrop-filter: blur(10px);
   border-radius: 20px;
   padding: 20px;
@@ -52,7 +59,7 @@
 }
 
 .dashboard-content {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   backdrop-filter: blur(10px);
   border-radius: 20px;
   padding: 30px;
@@ -113,7 +120,7 @@
 }
 
 .requests-table {
-  background: white;
+  background: var(--primary-red-lighter);
   border-radius: 15px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -142,8 +149,8 @@
   transition: background-color 0.2s ease;
 }
 
-.table-body .table-row:hover {
-  background-color: #f7fafc;
+  .table-body .table-row:hover {
+  background-color: var(--primary-red-10);
 }
 
 .table-body .table-row:last-child {

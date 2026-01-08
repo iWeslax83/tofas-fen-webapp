@@ -7,8 +7,15 @@
   max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
-  background: var(--bg-primary);
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #6B0000 50%, #8B0000 75%, #1a1a1a 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 20s ease infinite;
   color: var(--text-primary);
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .page-header {

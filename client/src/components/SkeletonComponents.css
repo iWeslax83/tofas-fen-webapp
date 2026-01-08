@@ -49,7 +49,7 @@
   bottom: 0;
   background: linear-gradient(90deg, 
     transparent 0%, 
-    rgba(255, 255, 255, 0.1) 50%, 
+    var(--primary-red-10) 50%, 
     transparent 100%);
   animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }
@@ -102,7 +102,7 @@
 
 /* Card Skeletons */
 .skeleton-card {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   padding: 20px;
@@ -166,7 +166,7 @@
 
 /* Club Card Skeleton */
 .skeleton-club-card {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   overflow: hidden;
@@ -217,7 +217,7 @@
 
 /* Table Skeleton */
 .skeleton-table {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   overflow: hidden;
@@ -278,7 +278,7 @@
   flex-direction: column;
   gap: 20px;
   padding: 24px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);
@@ -334,7 +334,7 @@
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(139, 0, 0, 0.1);
@@ -398,7 +398,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);
@@ -417,7 +417,7 @@
 }
 
 .skeleton-dashboard-content {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   padding: 20px;
@@ -438,7 +438,7 @@
   align-items: center;
   gap: 20px;
   padding: 24px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);
@@ -466,7 +466,7 @@
 }
 
 .skeleton-profile-content {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);
@@ -479,7 +479,7 @@
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(139, 0, 0, 0.1);
@@ -527,7 +527,7 @@
 
 /* Calendar Skeleton */
 .skeleton-calendar {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   padding: 24px;
@@ -573,7 +573,7 @@
 
 /* Chart Skeleton */
 .skeleton-chart {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   padding: 24px;
@@ -656,7 +656,7 @@
   justify-content: center;
   padding: 48px 24px;
   text-align: center;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(139, 0, 0, 0.1);

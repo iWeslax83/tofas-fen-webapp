@@ -42,6 +42,8 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
 
       // Actions
+      // ⚠️ GÜVENLİK: Token'lar artık httpOnly cookie'de saklanıyor
+      // localStorage'a kaydetmeye gerek yok (XSS koruması)
       login: async (id: string, sifre: string) => {
         try {
           set({ isLoading: true, error: null });
@@ -64,6 +66,16 @@ export const useAuthStore = create<AuthStore>()(
             pansiyon: Boolean(userData.pansiyon)
           };
           
+          // Token'lar httpOnly cookie'de, localStorage'a kaydetmeye gerek yok
+          // Backward compatibility: Eğer response'da token varsa kaydet (migration dönemi için)
+          if (response.accessToken && response.refreshToken) {
+            TokenManager.setTokens(
+              response.accessToken,
+              response.refreshToken,
+              response.expiresIn || 900
+            );
+          }
+          
           set({
             user,
             isAuthenticated: true,
@@ -71,19 +83,62 @@ export const useAuthStore = create<AuthStore>()(
             error: null
           });
         } catch (error) {
-          const appError = error instanceof AppError ? error : AppError.server('Giriş yapılırken hata oluştu');
+          const mapToAppError = (err: unknown): AppError => {
+            if (err instanceof AppError) return err;
+
+            const anyErr = err as any;
+            const resp = anyErr?.response;
+            const respData = resp?.data;
+            const messageFromResp = respData?.message || respData?.error;
+            const status = resp?.status;
+
+            const context = {
+              statusCode: status,
+              response: respData,
+              original: anyErr
+            } as Record<string, unknown>;
+
+            if (status === 400) return AppError.validation(messageFromResp || 'İstek doğrulama hatası', context);
+            if (status === 401) return AppError.unauthorized(messageFromResp || 'Yetkilendirme hatası', context);
+            if (status === 403) return AppError.forbidden(messageFromResp || 'Erişim yasak', context);
+            if (status === 404) return AppError.notFound(messageFromResp || 'Kaynak bulunamadı', context);
+            if (status === 429) return AppError.rateLimit(messageFromResp || 'Çok fazla istek', context);
+            if (status && status >= 500) return AppError.server(messageFromResp || 'Sunucu hatası oluştu', context);
+
+            if (anyErr?.code === 'NETWORK_ERROR' || (anyErr?.message && anyErr.message.includes('Network'))) {
+              return AppError.network(messageFromResp || anyErr.message || 'Bağlantı hatası', context);
+            }
+
+            if (anyErr?.message) return new AppError(anyErr.message, anyErr?.code || 'UNKNOWN_ERROR', anyErr?.statusCode, true, context);
+
+            return AppError.server('Giriş yapılırken hata oluştu', context);
+          };
+
+          const appError = mapToAppError(error);
+
           set({
             user: null,
             isAuthenticated: false,
             isLoading: false,
             error: appError.getUserMessage()
           });
+
           throw appError;
         }
       },
 
-      logout: () => {
-        // Clear all possible token keys
+      logout: async () => {
+        try {
+          // Call backend logout to clear httpOnly cookies
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include', // Important for cookies
+          });
+        } catch (error) {
+          console.error('Logout API call failed:', error);
+        }
+        
+        // Clear all possible token keys (backward compatibility)
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('auth_token');

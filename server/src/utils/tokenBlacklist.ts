@@ -9,14 +9,19 @@ class TokenBlacklistManager {
   private static instance: TokenBlacklistManager;
 
   constructor() {
-    // Initialize Redis connection
-    this.redis = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD,
-      maxRetriesPerRequest: 3,
-      lazyConnect: true
-    } as any);
+    // Initialize Redis connection (prefer REDIS_URL if provided)
+    const redisUrl = process.env.REDIS_URL;
+    if (redisUrl) {
+      this.redis = new Redis(redisUrl as any);
+    } else {
+      this.redis = new Redis({
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        password: process.env.REDIS_PASSWORD,
+        maxRetriesPerRequest: 3,
+        lazyConnect: true
+      } as any);
+    }
 
     // Handle Redis connection errors
     this.redis.on('error', (error) => {

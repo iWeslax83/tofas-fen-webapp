@@ -39,7 +39,7 @@ const AdminClubsPage = () => {
   });
 
   // const navigate = useNavigate(); // Not used
-  
+
   // Initialize navigation - removed unused function
 
   useEffect(() => {
@@ -178,7 +178,7 @@ const AdminClubsPage = () => {
               <p>Okul kulüplerini görüntüleyin ve yönetin</p>
             </div>
             <div className="welcome-actions">
-              <button 
+              <button
                 className="btn-blue"
                 onClick={() => setIsModalOpen(true)}
                 disabled={isSubmitting}
@@ -211,14 +211,14 @@ const AdminClubsPage = () => {
                     <span>{club.memberCount || club.members?.length || 0} üye</span>
                   </div>
                 </div>
-                
+
                 <div className="card-content">
                   <h3 className="card-title">{club.name}</h3>
                   <p className="card-subtitle">Oluşturulma: {formatDate(club.createdAt)}</p>
                   <p className="card-description">Başkan ID: {club.presidentId}</p>
-                  
+
                   <div className="card-footer">
-                    <button 
+                    <button
                       className="btn-red"
                       onClick={() => handleDeleteClub(club._id)}
                       disabled={isSubmitting}
@@ -239,15 +239,15 @@ const AdminClubsPage = () => {
             <div className="modal">
               <div className="modal-header">
                 <h3 className="modal-title">Yeni Kulüp Ekle</h3>
-                <button 
-                  type="button" 
-                  className="close-button"
+                <button
+                  type="button"
+                  className="modal-close"
                   onClick={resetForm}
                 >
                   &times;
                 </button>
               </div>
-              
+
               <form onSubmit={handleSubmit} className="modal-form">
                 <div className="form-group">
                   <label htmlFor="name" className="form-label">Kulüp Adı</label>
@@ -262,7 +262,7 @@ const AdminClubsPage = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="presidentId" className="form-label">Kulüp Başkanı ID</label>
                   <input
@@ -276,7 +276,7 @@ const AdminClubsPage = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="logo" className="form-label">Kulüp Logosu (Opsiyonel)</label>
                   <div className="file-upload">
@@ -292,25 +292,25 @@ const AdminClubsPage = () => {
                       />
                     </label>
                     {formData.logoPreview && (
-                      <img 
-                        src={formData.logoPreview} 
-                        alt="Logo önizleme" 
+                      <img
+                        src={formData.logoPreview}
+                        alt="Logo önizleme"
                         className="logo-preview"
                       />
                     )}
                   </div>
                 </div>
-                
+
                 <div className="form-actions">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="secondary-button"
                     onClick={resetForm}
                   >
                     İptal
                   </button>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="primary-button"
                     disabled={isSubmitting}
                   >

@@ -55,24 +55,20 @@ export default function ResetPasswordPage() {
     <div style={{
       minHeight: '100vh',
       width: '100%',
-      background: 'linear-gradient(120deg, #f8fafc 0%, #e3e6ed 100%)',
-      backgroundImage: 'url("/bg-tofas.jpg")',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
+      background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #6B0000 50%, #8B0000 75%, #1a1a1a 100%)',
+      backgroundSize: '400% 400%',
+      animation: 'gradientShift 20s ease infinite',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       position: 'relative',
     }}>
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'rgba(255,255,255,0.9)',
-        zIndex: 0
-      }} />
+      <style>{`
+        @keyframes gradientShift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+      `}</style>
       
       <div style={{
         position: 'relative',

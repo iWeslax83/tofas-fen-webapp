@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import request from 'supertest'
 import express from 'express'
-import authRoutes from '../routes/auth'
+import authRoutes from '../modules/auth/routes/authRoutes'
 
 const app = express()
 app.use(express.json())
-app.use('/auth', authRoutes)
+app.use('/api/auth', authRoutes)
 
 describe('Performance Tests', () => {
   const startTime = Date.now()
@@ -27,7 +27,7 @@ describe('Performance Tests', () => {
       for (let i = 0; i < concurrentRequests; i++) {
         requests.push(
           request(app)
-            .post('/auth/login')
+            .post('/api/auth/login')
             .send({
               id: `user${i}`,
               sifre: 'password123'
@@ -62,7 +62,7 @@ describe('Performance Tests', () => {
       for (let i = 0; i < rapidRequests; i++) {
         requests.push(
           request(app)
-            .post('/auth/login')
+            .post('/api/auth/login')
             .send({
               id: 'testuser',
               sifre: 'password123'
@@ -165,7 +165,7 @@ describe('Performance Tests', () => {
       for (let i = 0; i < 20; i++) {
         connectionPromises.push(
           request(app)
-            .get('/auth/me')
+            .get('/api/auth/me')
             .set('Authorization', 'Bearer test-token')
             .timeout(5000)
         );

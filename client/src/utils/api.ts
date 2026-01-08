@@ -35,11 +35,12 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Create axios instance with security features
+// ⚠️ GÜVENLİK: withCredentials: true - httpOnly cookies için gerekli
 const createSecureApiClient = (): AxiosInstance => {
   const client = axios.create({
     baseURL: API_BASE_URL,
     timeout: 120000, // 2 dakika timeout
-    withCredentials: false, // JWT token'ları localStorage'da saklandığı için false
+    withCredentials: true, // httpOnly cookies için gerekli
     headers: {
       'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
@@ -47,9 +48,12 @@ const createSecureApiClient = (): AxiosInstance => {
   });
 
   // Request interceptor for authentication and CSRF
+  // ⚠️ GÜVENLİK: Token artık httpOnly cookie'de, Authorization header'a eklemeye gerek yok
+  // Backward compatibility için hala destekleniyor ama cookie tercih ediliyor
   client.interceptors.request.use(
     (config) => {
-      // Add JWT token if available
+      // Token httpOnly cookie'de olduğu için otomatik gönderilir
+      // Backward compatibility: Eğer localStorage'da token varsa Authorization header ekle
       const token = TokenManager.getAccessToken();
       if (token && !TokenManager.isTokenExpired()) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -85,27 +89,69 @@ const createSecureApiClient = (): AxiosInstance => {
       return response;
     },
     async (error) => {
-      const originalRequest = error.config;
+      const originalRequest = (error as any)?.config;
+
+      // Normalize error into a consistent shape for consumers
+      const normalizeApiError = (err: unknown): ApiError => {
+        const normalized = new Error('Unknown API error') as ApiError;
+
+        // Axios errors
+        if (axios.isAxiosError(err)) {
+          const axErr = err as any;
+          normalized.message = axErr.message || 'API request failed';
+          normalized.code = axErr.code || undefined;
+          normalized.response = axErr.response
+            ? { status: axErr.response.status, data: axErr.response.data }
+            : undefined;
+        } else if (err instanceof Error) {
+          normalized.message = err.message;
+        } else {
+          try {
+            normalized.message = JSON.stringify(err as object);
+          } catch (_) {
+            normalized.message = String(err);
+          }
+        }
+
+        return normalized;
+      };
+
+      const apiError = normalizeApiError(error);
 
       // Handle 401 errors (unauthorized)
-      if (error.response?.status === 401 && !originalRequest._retry) {
+      if (apiError.response?.status === 401 && !originalRequest?._retry) {
         originalRequest._retry = true;
 
         try {
           // Try to refresh token
+          // httpOnly cookie kullanılıyorsa refresh token da cookie'de
+          // Backward compatibility için body'den de okuyabiliriz
           const refreshToken = TokenManager.getRefreshToken();
-          if (refreshToken) {
-            const response = await axios.post(`${API_BASE_URL}/api/auth/refresh-token`, {
-              refreshToken
-            }, { withCredentials: false });
 
-            const { accessToken, refreshToken: newRefreshToken, expiresIn } = response.data;
-            TokenManager.setTokens(accessToken, newRefreshToken, expiresIn);
+          const response = await axios.post(
+            `${API_BASE_URL}/api/auth/refresh-token`,
+            refreshToken ? { refreshToken } : {}, // Body'ye sadece backward compatibility için ekle
+            {
+              withCredentials: true, // httpOnly cookies için gerekli
+            }
+          );
 
-            // Retry original request with new token
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-            return client(originalRequest);
+          // Token'lar artık httpOnly cookie'de set ediliyor
+          // Sadece expiry bilgisi response'da geliyor
+          const { expiresIn } = response.data;
+
+          // Backward compatibility: Eğer response'da token varsa localStorage'a da kaydet
+          if (response.data.accessToken) {
+            TokenManager.setTokens(
+              response.data.accessToken,
+              response.data.refreshToken || refreshToken || '',
+              expiresIn
+            );
+            originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
           }
+
+          // Retry original request
+          return client(originalRequest);
         } catch (refreshError) {
           // Refresh failed, redirect to login
           TokenManager.clearTokens();
@@ -116,25 +162,25 @@ const createSecureApiClient = (): AxiosInstance => {
       }
 
       // Handle 429 Too Many Requests with exponential backoff
-      if (error.response?.status === 429) {
+      if (apiError.response?.status === 429) {
         const retryCount = originalRequest._retryCount || 0;
         const maxRetries = 3;
-        
+
         if (retryCount < maxRetries) {
           originalRequest._retryCount = retryCount + 1;
           const retryAfter = error.response.data?.retryAfter || Math.pow(2, retryCount);
           console.warn(`Rate limited. Retry ${retryCount + 1}/${maxRetries} after ${retryAfter} seconds...`);
-          
+
           // Exponential backoff
           await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
           return client(originalRequest);
         } else {
           console.error('Max retries exceeded for rate limited request');
-          return Promise.reject(error);
+          return Promise.reject(apiError);
         }
       }
 
-      return Promise.reject(error);
+      return Promise.reject(apiError);
     }
   );
 
@@ -159,64 +205,57 @@ export class SecureAPI {
     }
 
     try {
-      const response = await apiClient.post('/api/auth/login', credentials);
-      
+      // ⚠️ GÜVENLİK: withCredentials: true - httpOnly cookies için gerekli
+      const response = await apiClient.post('/api/auth/login', credentials, {
+        withCredentials: true,
+      });
+
       // Clear rate limit on successful login
       RateLimiter.clearAttempts(this.LOGIN_ATTEMPTS_KEY);
-      
-      // Extract and store tokens from response
+
+      // Extract tokens from response (backward compatibility during migration)
+      // Token'lar artık httpOnly cookie'de, response'da sadece expiry bilgisi var
       const { accessToken, refreshToken, expiresIn, user, ...otherData } = response.data;
-      
+
+      // Backward compatibility: Eğer response'da token varsa localStorage'a da kaydet
+      // (Migration dönemi için - sonra kaldırılacak)
       if (accessToken) {
         TokenManager.setTokens(accessToken, refreshToken, expiresIn || 900); // 15 minutes default
-        
+
         // Also store tokens with alternative keys for compatibility
         localStorage.setItem('accessToken', accessToken);
         if (refreshToken) {
           localStorage.setItem('refreshToken', refreshToken);
         }
-        
-        console.log('[SecureAPI] Tokens stored successfully');
-        console.log('[SecureAPI] Access token exists:', !!localStorage.getItem('accessToken'));
-        console.log('[SecureAPI] Auth token exists:', !!localStorage.getItem('auth_token'));
-      } else {
-        throw new Error('Login response does not contain access token');
       }
-      
-      // Debug logging
-      console.log('[SecureAPI] Raw response data:', response.data);
-      console.log('[SecureAPI] Extracted user:', user);
-      console.log('[SecureAPI] Other data:', otherData);
-      
+
       // Return the user data - ensure we return the user object, not the entire response
       if (user) {
-        console.log('[SecureAPI] Returning user from user property');
         return { user };
       } else {
         // Fallback: if user data is at root level, wrap it
-        console.log('[SecureAPI] Returning user from otherData fallback');
         return { user: otherData };
       }
     } catch (error: unknown) {
-      
+
       // Use the existing error handling infrastructure
       const { extractError } = await import('./apiResponseHandler');
       const errorMessage = extractError(error);
-      
+
       // Check if the API response contains a specific error message
       const apiError = error as ApiError;
       if (apiError.response?.data?.error || apiError.response?.data?.message) {
         const apiErrorMessage = apiError.response.data.error || apiError.response.data.message;
         throw new Error(apiErrorMessage);
       }
-      
+
       // Provide more specific error messages based on error type
       if (apiError.response?.status === 401) {
         // Check if it's actually an authentication failure or something else
-        if (apiError.response?.data?.error === 'Invalid credentials' || 
-            apiError.response?.data?.message === 'Invalid credentials' ||
-            apiError.response?.data?.error === 'Invalid username or password' ||
-            apiError.response?.data?.message === 'Invalid username or password') {
+        if (apiError.response?.data?.error === 'Invalid credentials' ||
+          apiError.response?.data?.message === 'Invalid credentials' ||
+          apiError.response?.data?.error === 'Invalid username or password' ||
+          apiError.response?.data?.message === 'Invalid username or password') {
           throw new Error('Kullanıcı adı veya şifre hatalı');
         } else {
           // Generic 401 error - could be token issues, etc.
@@ -256,8 +295,14 @@ export class SecureAPI {
   }
 
   // User management methods
-  static async updateProfile(data: { adSoyad?: string; sifre?: string }) {
-    return apiClient.post('/api/profile/update', data);
+  static async updateProfile(data: { adSoyad?: string; sifre?: string; userId?: string }) {
+    // Use userId from data if provided, otherwise this will need to be handled by caller
+    const userId = data.userId;
+    if (!userId) {
+      throw new Error('userId is required for profile update');
+    }
+    const { userId: _, ...updateData } = data;
+    return apiClient.put(`/api/user/${userId}/update`, updateData);
   }
 
   // Şifre değiştirme fonksiyonu kaldırıldı - artık TCKN kullanılıyor

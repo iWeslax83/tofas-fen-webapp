@@ -192,7 +192,7 @@ export class NotificationService {
           <h1 style="color: white; margin: 0; text-align: center;">Tofaş Fen Lisesi</h1>
         </div>
         
-        <div style="padding: 30px; background: white; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <div style="padding: 30px; background: #F8F4F5; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           <div style="display: flex; align-items: center; margin-bottom: 20px;">
             <span style="font-size: 24px; margin-right: 10px;">${typeIcons[data.type || 'info']}</span>
             <h2 style="margin: 0; color: #1F2937;">${data.title}</h2>

@@ -21,10 +21,17 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #6B0000 50%, #8B0000 75%, #1a1a1a 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
   overflow: hidden;
   padding: 1rem;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 /* Background Blobs */
@@ -82,7 +89,7 @@
 .login-card,
 .login-container {
   position: relative;
-  background: #FFFFFF;
+  background: var(--primary-red-lighter);
   border-radius: 1.5rem;
   padding: 2rem;
   box-shadow: var(--login-shadow-lg);
@@ -198,7 +205,7 @@
   border-radius: 0.75rem;
   font-size: 1rem;
   color: rgba(17, 24, 39, 0.3);
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--primary-red-20);
   transition: all 0.2s ease;
   outline: none;
   width: 100%;
@@ -208,7 +215,7 @@
   border-color: rgba(139, 74, 90, 0.4);
   box-shadow: 0 0 0 3px rgba(139, 74, 90, 0.1);
   color: rgba(17, 24, 39, 0.5);
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--primary-red-20);
   outline: none;
 }
 
@@ -226,7 +233,7 @@
 .login-input:not(:placeholder-shown) ~ .login-label {
   transform: translateY(0) scale(1);
   color: #8B4A5A;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--primary-red-lighter);
   padding: 0.125rem 0.375rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
@@ -239,7 +246,7 @@
   color: rgba(139, 74, 90, 0.8);
   font-size: 0.75rem;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--primary-red-lighter);
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   transition: all 0.2s ease;
@@ -256,7 +263,7 @@
   width: 20px;
   height: 20px;
   color: rgba(139, 74, 90, 0.6);
-  z-index: 2;
+  background: var(--primary-red-lighter);
 }
 
 /* Password Toggle */
@@ -368,7 +375,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, var(--primary-red-20), transparent);
   transition: left 0.2s;
 }
 
@@ -412,8 +419,8 @@
 .loading-spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid #FFFFFF;
+  border: 2px solid var(--primary-red-30);
+  border-top: 2px solid var(--primary-red-50);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

@@ -48,6 +48,34 @@ const queryClient = new QueryClient({
 // Initialize monitoring and analytics
 initializeMonitoring();
 
+// Register service worker for PWA and offline support
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => {
+        console.log('[SW] Service Worker registered:', registration.scope);
+        
+        // Check for updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New version available
+                console.log('[SW] New service worker available');
+                // Optionally show update notification to user
+              }
+            });
+          }
+        });
+      })
+      .catch((error) => {
+        console.error('[SW] Service Worker registration failed:', error);
+      });
+  });
+}
+
 // Track Core Web Vitals in production
 if (import.meta.env.PROD) {
   import('./utils/performance').then(({ trackWebVitals }) => {
