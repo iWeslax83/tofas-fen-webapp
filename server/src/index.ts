@@ -426,7 +426,7 @@ app.post('/api/upload', upload.single('file'), (req: express.Request, res: expre
     const fileUrl = `${process.env.BACKEND_URL || 'http://localhost:3001'}/uploads/${file.filename}`;
     res.json({ url: fileUrl, filename: file.filename });
   } catch (error) {
-    console.error('Dosya yükleme hatası:', error);
+    logger.error('File upload error', { error });
     res.status(500).json({ error: 'Dosya yüklenemedi' });
   }
 });
@@ -488,14 +488,12 @@ if (process.env.ENABLE_GRAPHQL === 'true' || process.env.NODE_ENV !== 'productio
       const apolloServer = createApolloServer();
       apolloServer.start().then(() => {
         apolloServer.applyMiddleware({ app, path: '/graphql' });
-        console.log(`🚀 GraphQL server ready at http://localhost:${PORT}${apolloServer.graphqlPath}`);
+        logger.info(`GraphQL server ready at http://localhost:${PORT}${apolloServer.graphqlPath}`);
       });
     })
     .catch((err) => {
       // GraphQL is optional in local dev; log and continue if dependencies are missing
-      logger && logger.warn
-        ? logger.warn('GraphQL server could not be initialized (optional in dev)', { error: err.message })
-        : console.warn('GraphQL server could not be initialized (optional in dev):', err.message);
+      logger.warn('GraphQL server could not be initialized (optional in dev)', { error: err.message });
     });
 }
 
@@ -518,28 +516,27 @@ connectDB()
         timestamp: new Date().toISOString(),
       });
 
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔒 Security middleware active`);
-      console.log(`⚡ Compression enabled`);
-      console.log(`📝 Logging enabled`);
-      console.log(`📈 Monitoring enabled - Status: http://localhost:${PORT}/status`);
-      console.log(`📚 Swagger API Docs: http://localhost:${PORT}/api-docs`);
-      console.log(`📚 API Info: http://localhost:${PORT}/api-docs-info`);
-      console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
+      logger.info(`Server running on http://localhost:${PORT}`);
+      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`Security middleware active`);
+      logger.info(`Compression enabled`);
+      logger.info(`Logging enabled`);
+      logger.info(`Monitoring enabled - Status: http://localhost:${PORT}/status`);
+      logger.info(`Swagger API Docs: http://localhost:${PORT}/api-docs`);
+      logger.info(`API Info: http://localhost:${PORT}/api-docs-info`);
+      logger.info(`Health Check: http://localhost:${PORT}/health`);
 
       // Initialize WebSocket for real-time notifications
       initializeWebSocket(server);
-      console.log(`🔔 WebSocket notifications enabled`);
+      logger.info(`WebSocket notifications enabled`);
 
       // Initialize event-driven architecture
       const { initializeEventDrivenWebSocket } = await import('./utils/websocket-enhanced');
       initializeEventDrivenWebSocket();
-      console.log(`⚡ Event-driven architecture enabled`);
+      logger.info(`Event-driven architecture enabled`);
     });
   })
   .catch((err) => {
     logger.error("MongoDB connection failed", { error: err.message });
-    console.error("MongoDB bağlantı hatası:", err);
     process.exit(1);
   });

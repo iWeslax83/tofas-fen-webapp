@@ -54,17 +54,13 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     navigator.serviceWorker
       .register('/sw.js')
       .then((registration) => {
-        console.log('[SW] Service Worker registered:', registration.scope);
-        
         // Check for updates
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New version available
-                console.log('[SW] New service worker available');
-                // Optionally show update notification to user
+                // New version available - optionally show update notification to user
               }
             });
           }

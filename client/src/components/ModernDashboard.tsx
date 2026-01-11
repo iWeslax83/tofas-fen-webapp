@@ -64,7 +64,6 @@ const ModernDashboard: React.FC = () => {
           sonGiris: undefined // Not in User type
         };
         setUserData(finalUserData);
-        console.log('[ModernDashboard] User data set:', finalUserData);
       }
     } catch (error) {
       safeConsoleError('Error setting user data:', error);
@@ -93,7 +92,6 @@ const ModernDashboard: React.FC = () => {
 
     // Rate limit: don't fetch more than once every 5 seconds
     if (timeSinceLastFetch < 5000) {
-      console.log('Rate limiting: Skipping stats fetch, too soon since last fetch');
       return;
     }
 

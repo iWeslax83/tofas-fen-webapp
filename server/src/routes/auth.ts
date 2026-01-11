@@ -14,6 +14,7 @@ import rateLimit from "express-rate-limit";
 import { User } from "../models";
 import { sendMail } from "../mailService";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt";
+import logger from "../utils/logger";
 
 const router = express.Router();
 
@@ -62,38 +63,25 @@ router.post('/login', (process.env.NODE_ENV === 'production' ? loginLimiter : (_
     // Trim whitespace
     const trimmedId = id.trim();
     const trimmedSifre = sifre.trim();
-
-    console.log(`[LOGIN] Starting login for user: ${trimmedId}`);
     
     const user = await User.findOne({ id: trimmedId });
-    console.log(`[LOGIN] Database query result:`, user ? 'User found' : 'User not found');
     if (!user) {
-      console.log(`[LOGIN] User not found in database, sending 401`);
       res.status(401).json({ error: 'Geçersiz kullanıcı adı veya şifre' });
       return;
     }
-
-    console.log(`[LOGIN] User found, checking password...`);
-    console.log(`[LOGIN] Input password: ${trimmedSifre}`);
-    console.log(`[LOGIN] Stored password hash: ${user.sifre ? 'EXISTS' : 'MISSING'}`);
     
     try {
-      console.log(`[LOGIN] Checking password with bcrypt...`);
       const isValidPassword = await bcrypt.compare(trimmedSifre, user.sifre || '');
-      console.log(`[LOGIN] Password comparison result: ${isValidPassword}`);
       
       if (!isValidPassword) {
-        console.log(`[LOGIN] Password invalid, sending 401`);
         res.status(401).json({ error: 'Geçersiz kullanıcı adı veya şifre' });
         return;
       }
     } catch (bcryptError) {
-      console.error(`[LOGIN] Bcrypt error:`, bcryptError);
+      logger.error('Login bcrypt error', { error: bcryptError, userId: trimmedId });
       res.status(500).json({ error: 'Şifre karşılaştırma hatası' });
       return;
     }
-
-    console.log(`[LOGIN] Password valid, generating tokens...`);
 
     // Generate JWT tokens
     const accessToken = generateAccessToken({
@@ -130,11 +118,15 @@ router.post('/login', (process.env.NODE_ENV === 'production' ? loginLimiter : (_
     };
 
     const endTime = Date.now();
-    console.log(`[LOGIN] Kullanıcı: ${user.id} | Rol: ${user.rol} | Zaman: ${new Date().toISOString()} | Süre: ${endTime - startTime}ms`);
+    logger.info('User logged in successfully', {
+      userId: user.id,
+      role: user.rol,
+      duration: endTime - startTime
+    });
     
     res.json(response);
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error', { error });
     res.status(500).json({ error: 'Sunucu hatası' });
   }
 });
@@ -185,7 +177,7 @@ router.post('/refresh', async (req, res) => {
       refreshExpiresIn: 2419200
     });
   } catch (error) {
-    console.error('Token refresh error:', error);
+    logger.error('Token refresh error', { error });
     res.status(500).json({ error: 'Token refresh failed' });
   }
 });
@@ -210,22 +202,20 @@ router.post('/logout', async (req, res) => {
           }
         }
       } catch (error) {
-        console.error('JWT verify error during logout:', error);
+        logger.warn('JWT verify error during logout', { error });
         // Token geçersiz olsa bile işleme devam et
       }
     }
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Logout error:', error);
+    logger.error('Logout error', { error });
     res.status(500).json({ error: 'Logout failed' });
   }
 });
 
 // ME - Only JWT authentication
 router.get('/me', async (req, res) => {
-  console.log('🔍 /me endpoint called');
-  console.log('Headers:', req.headers);
   try {
     let userId = null;
     
@@ -240,21 +230,20 @@ router.get('/me', async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
         userId = decoded.userId;
       } catch (error) {
-        console.error('JWT verify error:', error);
+        logger.warn('JWT verify error in /me endpoint', { error });
         res.status(401).json({ error: 'Invalid token' });
         return;
       }
     }
 
     if (!userId) {
-      console.log('❌ No userId found');
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
 
     const user = await User.findOne({ id: userId });
     if (!user) {
-      console.log('❌ User not found for userId:', userId);
+      logger.warn('User not found in /me endpoint', { userId });
       res.status(404).json({ error: 'User not found' });
       return;
     }
@@ -269,10 +258,9 @@ router.get('/me', async (req, res) => {
       pansiyon: user.pansiyon,
       email: user.email
     };
-    console.log('✅ /me response:', response);
     res.json(response);
   } catch (error) {
-    console.error('ME error:', error);
+    logger.error('ME endpoint error', { error });
     res.status(500).json({ error: 'Sunucu hatası' });
   }
 });
@@ -313,7 +301,7 @@ router.post('/forgot-password', async (req, res) => {
     await sendMail(email, "Şifre Sıfırlama", html, true);
     res.json({ success: true, message: 'Şifre sıfırlama linki gönderildi' });
   } catch (error) {
-    console.error('Forgot password error:', error);
+    logger.error('Forgot password error', { error });
     res.status(500).json({ error: 'Sunucu hatası' });
   }
 });
@@ -347,7 +335,7 @@ router.post('/reset-password', async (req, res) => {
 
     res.json({ success: true, message: 'Şifre başarıyla güncellendi' });
   } catch (error) {
-    console.error('Reset password error:', error);
+    logger.error('Reset password error', { error });
     res.status(500).json({ error: 'Sunucu hatası' });
   }
 });
@@ -383,7 +371,7 @@ router.post('/register', async (req, res) => {
     await newUser.save();
     res.status(201).json({ success: true, message: 'Kullanıcı başarıyla oluşturuldu' });
   } catch (error) {
-    console.error('Register error:', error);
+    logger.error('Register error', { error });
     res.status(500).json({ error: 'Sunucu hatası' });
   }
 });
