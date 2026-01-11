@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-password123}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?MONGO_PASSWORD environment variable is required}
       MONGO_INITDB_DATABASE: tofas-fen
     volumes:
       - mongodb_data:/data/db
@@ -32,9 +32,9 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      MONGODB_URI: mongodb://admin:${MONGO_PASSWORD:-password123}@mongodb:27017/tofas-fen?authSource=admin
-      JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-here}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-jwt-refresh-secret-here}
+      MONGODB_URI: mongodb://admin:${MONGO_PASSWORD:?MONGO_PASSWORD environment variable is required}@mongodb:27017/tofas-fen?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET environment variable is required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET environment variable is required}
       PORT: 3001
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       REDIS_URL: redis://redis:6379

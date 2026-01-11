@@ -1,0 +1,60 @@
+{
+  "name": "Tofaş Fen Lisesi Bilgi Sistemi",
+  "short_name": "Tofaş Fen",
+  "description": "Tofaş Fen Lisesi öğrenci, öğretmen ve veli bilgi yönetim sistemi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e40af",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/tofaslogo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/tofaslogo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Duyurular",
+      "short_name": "Duyurular",
+      "description": "Son duyuruları görüntüle",
+      "url": "/duyurular",
+      "icons": [{ "src": "/tofaslogo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Ödevler",
+      "short_name": "Ödevler",
+      "description": "Ödevleri görüntüle",
+      "url": "/odevler",
+      "icons": [{ "src": "/tofaslogo.png", "sizes": "96x96" }]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "file",
+          "accept": ["image/*", "application/pdf"]
+        }
+      ]
+    }
+  }
+}
+

@@ -308,34 +308,26 @@ export const EnhancedSidebar: React.FC = () => {
   };
 
   const isActive = (path: string) => {
-    // Debug logging
-    console.log('isActive check:', `path: ${path}, currentPath: ${currentPath}, userRole: ${user?.rol || 'undefined'}`);
-
     // Exact match
     if (currentPath === path) {
-      console.log('Exact match found:', path);
       return true;
     }
 
     // For role-based routes, check if current path starts with the route
     if (path !== '/' && currentPath.startsWith(path + '/')) {
-      console.log('Path starts with match found:', path);
       return true;
     }
 
     // Special case for dashboard home routes
     if (path === `/${String(user?.rol || '')}` && currentPath === `/${String(user?.rol || '')}`) {
-      console.log('Dashboard home match found:', path);
       return true;
     }
 
     // Special case for exact matches with trailing slash
     if (currentPath === path + '/') {
-      console.log('Trailing slash match found:', path);
       return true;
     }
 
-    console.log('No match found for:', path);
     return false;
   };
 
@@ -642,34 +634,26 @@ export const MobileNavigation: React.FC = () => {
   ];
 
   const isActive = (path: string) => {
-    // Debug logging
-    console.log('isActive check:', `path: ${path}, currentPath: ${currentPath}, userRole: ${user?.rol || 'undefined'}`);
-
     // Exact match
     if (currentPath === path) {
-      console.log('Exact match found:', path);
       return true;
     }
 
     // For role-based routes, check if current path starts with the route
     if (path !== '/' && currentPath.startsWith(path + '/')) {
-      console.log('Path starts with match found:', path);
       return true;
     }
 
     // Special case for dashboard home routes
     if (path === `/${String(user?.rol || '')}` && currentPath === `/${String(user?.rol || '')}`) {
-      console.log('Dashboard home match found:', path);
       return true;
     }
 
     // Special case for exact matches with trailing slash
     if (currentPath === path + '/') {
-      console.log('Trailing slash match found:', path);
       return true;
     }
 
-    console.log('No match found for:', path);
     return false;
   };
 

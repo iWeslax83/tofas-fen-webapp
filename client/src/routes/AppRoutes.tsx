@@ -66,7 +66,6 @@ const ErrorHandlingDemoPage = lazy(() => import('../pages/Dashboard/ErrorHandlin
 const FormUXDemoPage = lazy(() => import('../pages/Dashboard/FormUXDemoPage'));
 const NavigationDemoPage = lazy(() => import('../pages/Dashboard/NavigationDemoPage'));
 const AccessibilityDemoPage = lazy(() => import('../pages/Dashboard/AccessibilityDemoPage'));
-const DebugPage = lazy(() => import('../pages/DebugPage'));
 
 // Root redirect component - Optimized to prevent unnecessary renders
 function RootRedirect() {
@@ -255,9 +254,6 @@ export default function AppRoutes() {
         <Route path="/student/accessibility-demo" element={<AccessibilityDemoPage />} />
         <Route path="/parent/accessibility-demo" element={<AccessibilityDemoPage />} />
         <Route path="/hizmetli/accessibility-demo" element={<AccessibilityDemoPage />} />
-
-        {/* Debug Route */}
-        <Route path="/debug" element={<DebugPage />} />
 
         {/* 404 Route */}
         <Route path="*" element={<NotFoundPage />} />
