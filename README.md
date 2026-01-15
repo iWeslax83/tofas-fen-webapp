@@ -143,20 +143,42 @@ npm run test security     # Security testleri
 
 ## 🚀 Production Deployment
 
+### Production Preparation
+
+**Before deploying to production, run the preparation script:**
+```bash
+# Generate secure secrets
+node scripts/generate-secrets.js
+
+# Run production preparation checklist (Linux/Mac)
+./scripts/prepare-production.sh
+
+# Or on Windows (PowerShell)
+node scripts/generate-secrets.js
+```
+
+**📚 For detailed production deployment guide, see:**
+- [Production Deployment Guide](docs/PRODUCTION_DEPLOYMENT.md)
+
 ### Docker ile Deployment
 
 1. **Production build**
 ```bash
-docker-compose -f docker-compose.yml --profile production up -d
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
 2. **Environment değişkenlerini ayarlayın**
 ```bash
-# Production environment variables
+# Create .env file with production values
+# See docs/PRODUCTION_DEPLOYMENT.md for complete list
+
+# Required environment variables:
 NODE_ENV=production
-MONGODB_URI=mongodb://admin:password@mongodb:27017/tofas-fen?authSource=admin
-JWT_SECRET=your-production-secret
-JWT_REFRESH_SECRET=your-production-refresh-secret
+MONGO_PASSWORD=your-strong-mongodb-password
+JWT_SECRET=your-generated-jwt-secret
+JWT_REFRESH_SECRET=your-generated-refresh-secret
+FRONTEND_URL=https://yourdomain.com
+BACKEND_URL=https://api.yourdomain.com
 ```
 
 ### Kubernetes ile Deployment

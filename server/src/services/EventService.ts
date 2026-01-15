@@ -64,41 +64,103 @@ class EventService {
   private isSubscribed: boolean = false;
 
   constructor() {
-    // Create Redis clients for pub/sub
+    const isDevelopment = process.env.NODE_ENV !== 'production';
     const redisUrl = process.env.REDIS_URL;
     const redisConfig = {
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379'),
       password: process.env.REDIS_PASSWORD,
       retryStrategy: (times: number) => {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
+        if (times > 3) {
+          if (isDevelopment) {
+            logger.warn('Redis connection failed for EventService, continuing without Redis in development mode');
+            return null;
+          }
+          return null;
+        }
+        return Math.min(times * 50, 2000);
       },
+      maxRetriesPerRequest: 3,
+      lazyConnect: true,
+      enableOfflineQueue: false
     };
 
-    // Prefer REDIS_URL if provided (supports Upstash rediss:// URLs), otherwise fall back to host/port
-    if (redisUrl) {
-      logger.info('Using REDIS_URL for EventService:', redisUrl.split('@').pop());
-      this.publisher = new Redis(redisUrl);
-      this.subscriber = new Redis(redisUrl);
-    } else {
-      this.publisher = new Redis(redisConfig);
-      this.subscriber = new Redis(redisConfig);
-    }
+    try {
+      // Prefer REDIS_URL if provided (supports Upstash rediss:// URLs), otherwise fall back to host/port
+      if (redisUrl) {
+        logger.info('Using REDIS_URL for EventService:', redisUrl.split('@').pop());
+        this.publisher = new Redis(redisUrl, {
+          maxRetriesPerRequest: 3,
+          lazyConnect: true,
+          retryStrategy: (times: number) => {
+            if (times > 3) {
+              if (isDevelopment) {
+                logger.warn('Redis connection failed for EventService, continuing without Redis in development mode');
+                return null;
+              }
+              return null;
+            }
+            return Math.min(times * 50, 2000);
+          },
+          enableOfflineQueue: false
+        });
+        this.subscriber = new Redis(redisUrl, {
+          maxRetriesPerRequest: 3,
+          lazyConnect: true,
+          retryStrategy: (times: number) => {
+            if (times > 3) {
+              if (isDevelopment) {
+                logger.warn('Redis connection failed for EventService, continuing without Redis in development mode');
+                return null;
+              }
+              return null;
+            }
+            return Math.min(times * 50, 2000);
+          },
+          enableOfflineQueue: false
+        });
+      } else {
+        this.publisher = new Redis(redisConfig);
+        this.subscriber = new Redis(redisConfig);
+      }
 
-    this.setupEventHandlers();
-    this.setupRedisHandlers();
+      this.setupEventHandlers();
+      this.setupRedisHandlers();
+    } catch (error) {
+      logger.warn('Failed to initialize Redis for EventService, continuing without event pub/sub:', error);
+      // Create no-op Redis instances
+      this.publisher = {
+        publish: async () => 0,
+        on: () => undefined,
+        quit: async () => undefined
+      } as any;
+      this.subscriber = {
+        psubscribe: async () => undefined,
+        on: () => undefined,
+        quit: async () => undefined
+      } as any;
+    }
   }
 
   private setupRedisHandlers() {
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    
     // Publisher error handling
-    this.publisher.on('error', (error) => {
-      logger.error('Redis publisher error:', error);
+    this.publisher.on('error', (error: Error) => {
+      if (isDevelopment) {
+        logger.warn('Redis publisher error (development mode, continuing without Redis):', error.message);
+      } else {
+        logger.error('Redis publisher error:', error);
+      }
     });
 
     // Subscriber error handling
-    this.subscriber.on('error', (error) => {
-      logger.error('Redis subscriber error:', error);
+    this.subscriber.on('error', (error: Error) => {
+      if (isDevelopment) {
+        logger.warn('Redis subscriber error (development mode, continuing without Redis):', error.message);
+      } else {
+        logger.error('Redis subscriber error:', error);
+      }
     });
 
     // Connection events
@@ -156,6 +218,11 @@ class EventService {
       eventsPublished.inc({ event_type: eventType });
       logger.debug(`Event published: ${eventType}`, { eventId: payload.eventId, userId });
     } catch (error) {
+      // In development, fail silently if Redis is not available
+      if (process.env.NODE_ENV === 'development') {
+        logger.debug(`Event publish skipped (Redis unavailable): ${eventType}`, { eventId: payload.eventId, userId });
+        return;
+      }
       logger.error(`Error publishing event ${eventType}:`, error);
       throw error;
     }
