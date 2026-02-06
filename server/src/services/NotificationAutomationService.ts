@@ -213,10 +213,11 @@ export class NotificationAutomationService {
       let recipients: string[] = [];
 
       switch (rule.recipients.type) {
-        case 'all':
+        case 'all': {
           const allUsers = await User.find({}, 'id');
           recipients = allUsers.map(user => user.id);
           break;
+        }
         case 'role':
           if (rule.recipients.roles) {
             const roleUsers = await User.find({
@@ -265,13 +266,14 @@ export class NotificationAutomationService {
     try {
       switch (event) {
         case 'homework.created':
-        case 'homework.due_soon':
+        case 'homework.due_soon': {
           // Get all students and parents
           const students = await User.find({ rol: 'student' }, 'id');
           const parents = await User.find({ rol: 'parent' }, 'id');
           return [...students.map(s => s.id), ...parents.map(p => p.id)];
+        }
 
-        case 'grade.updated':
+        case 'grade.updated': {
           // Get the specific student and their parent
           if (data.studentId) {
             const student = await User.findOne({ id: data.studentId }, 'id');
@@ -286,14 +288,16 @@ export class NotificationAutomationService {
             return recipients;
           }
           break;
+        }
 
 
 
         case 'announcement.created':
-        case 'system.maintenance':
+        case 'system.maintenance': {
           // Get all users
           const allUsers = await User.find({}, 'id');
           return allUsers.map(user => user.id);
+        }
 
         default:
           return [];

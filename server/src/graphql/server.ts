@@ -6,6 +6,7 @@
 import { ApolloServer } from 'apollo-server-express';
 import depthLimit from 'graphql-depth-limit';
 import { createComplexityRule, fieldExtensionsEstimator, simpleEstimator } from 'graphql-query-complexity';
+import jwt from 'jsonwebtoken';
 import { typeDefs } from './schema';
 import { resolvers } from './resolvers';
 import { GraphQLContext } from './resolvers';
@@ -13,17 +14,16 @@ import { createUserLoader } from './resolvers/index';
 import logger from '../utils/logger';
 
 // JWT verification helper
-async function verifyToken(token: string): Promise<any> {
+async function verifyToken(token: string): Promise<unknown> {
   try {
-    const jwt = require('jsonwebtoken');
     const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-    
+
     // Verify and decode token
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     if (!decoded || !decoded.userId) {
       return null;
     }
-    
+
     const { User } = await import('../models/User');
     return User.findById(decoded.userId);
   } catch (error) {

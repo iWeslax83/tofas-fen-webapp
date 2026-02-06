@@ -66,7 +66,7 @@ export class PerformanceService {
   static async recordMetric(data: MetricData): Promise<void> {
     try {
       const status = this.determineStatus(data.value, data.threshold);
-      
+
       const metric = new PerformanceMetric({
         id: uuidv4(),
         ...data,
@@ -233,11 +233,13 @@ export class PerformanceService {
     try {
       const stats = await OptimizationLog.aggregate([
         { $match: { isActive: true } },
-        { $group: {
-          _id: '$action',
-          count: { $sum: 1 },
-          avgImprovement: { $avg: '$results.improvement' }
-        }}
+        {
+          $group: {
+            _id: '$action',
+            count: { $sum: 1 },
+            avgImprovement: { $avg: '$results.improvement' }
+          }
+        }
       ]);
       return stats;
     } catch (error) {
@@ -339,7 +341,7 @@ export class PerformanceService {
 
       const db = mongoose.connection.db;
       const stats = await db.stats();
-      
+
       const metrics = {
         collections: stats.collections,
         dataSize: stats.dataSize,
@@ -414,7 +416,7 @@ export class PerformanceService {
   static async runScheduledOptimizations(): Promise<void> {
     try {
       const configs = await this.getConfigs();
-      
+
       for (const config of configs) {
         if (config.schedule && config.isEnabled) {
           await this.checkAndExecuteOptimization(config);
@@ -487,7 +489,7 @@ export class PerformanceService {
       }
     } catch (error) {
       console.error('Error executing optimization:', error);
-      
+
       optimization.status = 'failed';
       optimization.error = (error as Error).message;
       optimization.completedAt = new Date();
@@ -535,7 +537,7 @@ export class PerformanceService {
     const startUsage = process.cpuUsage();
     await new Promise(resolve => setTimeout(resolve, 100));
     const endUsage = process.cpuUsage(startUsage);
-    
+
     return {
       user: endUsage.user,
       system: endUsage.system
@@ -548,7 +550,7 @@ export class PerformanceService {
       const lines = stdout.split('\n');
       const dataLine = lines[1];
       const parts = dataLine.split(/\s+/);
-      
+
       return {
         total: parts[1],
         used: parts[2],
@@ -562,25 +564,27 @@ export class PerformanceService {
 
   private static async getCurrentMetrics(action: string): Promise<Record<string, number>> {
     const metrics: Record<string, number> = {};
-    
+
     switch (action) {
       case 'cache_clear':
         metrics.cacheSize = this.cache.size;
         break;
-      case 'db_optimization':
+      case 'db_optimization': {
         const dbMetrics = await this.getDatabaseMetrics();
         metrics.collections = dbMetrics.collections;
         metrics.dataSize = dbMetrics.dataSize;
         break;
-      case 'memory_cleanup':
+      }
+      case 'memory_cleanup': {
         const memMetrics = await this.getMemoryUsage();
         metrics.heapUsed = memMetrics.heapUsed;
         metrics.rss = memMetrics.rss;
         break;
+      }
       default:
         break;
     }
-    
+
     return metrics;
   }
 
@@ -591,7 +595,7 @@ export class PerformanceService {
 
     const beforeAvg = Object.values(before).reduce((a, b) => a + b, 0) / Object.keys(before).length;
     const afterAvg = Object.values(after).reduce((a, b) => a + b, 0) / Object.keys(after).length;
-    
+
     if (beforeAvg === 0) return 0;
     return ((beforeAvg - afterAvg) / beforeAvg) * 100;
   }
@@ -631,7 +635,7 @@ export class PerformanceService {
   private static async checkAndExecuteOptimization(config: any): Promise<void> {
     // Check if conditions are met for automatic execution
     const shouldExecute = await this.evaluateConditions(config.conditions);
-    
+
     if (shouldExecute) {
       await this.createOptimization({
         type: 'automatic',

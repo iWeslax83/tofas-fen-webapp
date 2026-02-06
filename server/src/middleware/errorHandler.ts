@@ -18,7 +18,6 @@ export const globalErrorHandler = (
   }
 
   let appError: AppError;
-  let errorContext: ErrorContext;
 
   // Convert regular Error to AppError if needed
   if (error instanceof AppError) {
@@ -37,10 +36,10 @@ export const globalErrorHandler = (
   }
 
   // Build error context for logging
-  errorContext = {
-    userId: (req as any).user?.userId,
-    requestId: (req as any).requestId,
-    sessionId: (req as any).sessionId,
+  const errorContextData: ErrorContext = {
+    userId: (req as unknown as { user?: { userId?: string } }).user?.userId,
+    requestId: (req as unknown as { requestId?: string }).requestId,
+    sessionId: (req as unknown as { sessionId?: string }).sessionId,
     userAgent: req.get('User-Agent') || '',
     ip: req.ip || req.connection.remoteAddress || '',
     path: req.path,
@@ -58,7 +57,7 @@ export const globalErrorHandler = (
   };
 
   // Log the error
-  logError(appError, errorContext);
+  logError(appError, errorContextData);
 
   // Send error response
   sendErrorResponse(res, appError, req);
@@ -181,7 +180,7 @@ export const handleUncaughtException = (error: Error): void => {
 /**
  * Async error wrapper for route handlers
  */
-export const asyncHandler = (fn: Function) => {
+export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };

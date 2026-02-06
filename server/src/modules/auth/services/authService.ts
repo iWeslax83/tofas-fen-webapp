@@ -2,6 +2,7 @@ import { User } from '../../../models/User';
 import { AppError } from '../../../utils/AppError';
 import bcrypt from 'bcryptjs';
 import { generateTokenPair } from '../../../utils/jwt';
+import crypto from 'crypto';
 
 /**
  * Authentication Service
@@ -100,7 +101,7 @@ export class AuthService {
     }
 
     // Generate reset token
-    const resetToken = require('crypto').randomBytes(32).toString('hex');
+    const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
 
     user.resetToken = resetToken;
