@@ -163,11 +163,11 @@ PerformanceMetricSchema.index({ createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 
 OptimizationLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 }); // 90 days
 
 // Instance methods
-PerformanceMetricSchema.methods.isAboveThreshold = function(): boolean {
+PerformanceMetricSchema.methods.isAboveThreshold = function (): boolean {
   return this.value > this.threshold;
 };
 
-PerformanceMetricSchema.methods.getStatusColor = function(): string {
+PerformanceMetricSchema.methods.getStatusColor = function (): string {
   switch (this.status) {
     case 'normal': return 'green';
     case 'warning': return 'yellow';
@@ -177,7 +177,7 @@ PerformanceMetricSchema.methods.getStatusColor = function(): string {
   }
 };
 
-OptimizationLogSchema.methods.calculateImprovement = function(): number {
+OptimizationLogSchema.methods.calculateImprovement = function (): number {
   if (this.results.beforeMetrics && this.results.afterMetrics) {
     const beforeValues = Object.values(this.results.beforeMetrics) as number[];
     const afterValues = Object.values(this.results.afterMetrics) as number[];
@@ -189,24 +189,24 @@ OptimizationLogSchema.methods.calculateImprovement = function(): number {
 };
 
 // Static methods
-PerformanceMetricSchema.statics.getMetricsByType = function(type: string, limit = 100) {
+PerformanceMetricSchema.statics.getMetricsByType = function (type: string, limit = 100) {
   return this.find({ type, isActive: true })
     .sort({ 'context.timestamp': -1 })
     .limit(limit);
 };
 
-PerformanceMetricSchema.statics.getCriticalMetrics = function() {
+PerformanceMetricSchema.statics.getCriticalMetrics = function () {
   return this.find({ status: 'critical', isActive: true })
     .sort({ 'context.timestamp': -1 });
 };
 
-OptimizationLogSchema.statics.getRecentOptimizations = function(limit = 50) {
+OptimizationLogSchema.statics.getRecentOptimizations = function (limit = 50) {
   return this.find({ isActive: true })
     .sort({ executedAt: -1 })
     .limit(limit);
 };
 
-OptimizationLogSchema.statics.getOptimizationStats = function() {
+OptimizationLogSchema.statics.getOptimizationStats = function () {
   return this.aggregate([
     { $match: { isActive: true } },
     {
@@ -220,11 +220,11 @@ OptimizationLogSchema.statics.getOptimizationStats = function() {
   ]);
 };
 
-PerformanceConfigSchema.statics.getActiveConfigs = function() {
+PerformanceConfigSchema.statics.getActiveConfigs = function () {
   return this.find({ isEnabled: true, isActive: true })
     .sort({ priority: 1 });
 };
 
-export const PerformanceMetric = mongoose.model<IPerformanceMetric>('PerformanceMetric', PerformanceMetricSchema);
-export const OptimizationLog = mongoose.model<IOptimizationLog>('OptimizationLog', OptimizationLogSchema);
-export const PerformanceConfig = mongoose.model<IPerformanceConfig>('PerformanceConfig', PerformanceConfigSchema);
+export const PerformanceMetric = mongoose.models.PerformanceMetric || mongoose.model<IPerformanceMetric>('PerformanceMetric', PerformanceMetricSchema);
+export const OptimizationLog = mongoose.models.OptimizationLog || mongoose.model<IOptimizationLog>('OptimizationLog', OptimizationLogSchema);
+export const PerformanceConfig = mongoose.models.PerformanceConfig || mongoose.model<IPerformanceConfig>('PerformanceConfig', PerformanceConfigSchema);

@@ -19,22 +19,28 @@ export class ErrorHandlerWrapper {
       // Categorize error based on response
       const errorType = this.categorizeError(error);
       const severity = this.determineSeverity(error, errorType);
-      
+
+      const errorContext: Partial<import('./errorHandling').ErrorContext> = {
+        component: context.component,
+        action: context.action,
+        url: window.location.href,
+        additionalData: {
+          userAgent: navigator.userAgent
+        }
+      };
+
+      if (context.userId) {
+        errorContext.userId = context.userId;
+      }
+
       const appError = new AppError(
         this.getErrorMessage(error),
         errorType,
         severity,
-        {
-          component: context.component,
-          action: context.action,
-          userId: context.userId,
-          timestamp: Date.now(),
-          url: window.location.href,
-          userAgent: navigator.userAgent
-        },
+        errorContext,
         error as Error
       );
-      
+
       throw appError;
     }
   }
@@ -42,37 +48,40 @@ export class ErrorHandlerWrapper {
   /**
    * Categorize error based on response properties
    */
-  private static categorizeError(error: any): ErrorType {
+  private static categorizeError(error: unknown): ErrorType {
     if (!error) return ErrorType.UNKNOWN;
-    
+
     // Network errors
-    if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
-      return ErrorType.NETWORK;
+    if (typeof error === 'object' && error !== null) {
+      const err = error as Record<string, any>;
+      if (err.code === 'NETWORK_ERROR' || err.message?.includes('Network Error')) {
+        return ErrorType.NETWORK;
+      }
+
+      // HTTP status based categorization
+      if (err.response?.status) {
+        const status = err.response.status;
+
+        if (status === 401) return ErrorType.AUTHENTICATION;
+        if (status === 403) return ErrorType.AUTHORIZATION;
+        if (status >= 400 && status < 500) return ErrorType.CLIENT;
+        if (status >= 500) return ErrorType.SERVER;
+      }
+
+      // Validation errors
+      if (err.response?.data?.error?.includes('validation') ||
+        err.response?.data?.error?.includes('required')) {
+        return ErrorType.VALIDATION;
+      }
     }
-    
-    // HTTP status based categorization
-    if (error.response?.status) {
-      const status = error.response.status;
-      
-      if (status === 401) return ErrorType.AUTHENTICATION;
-      if (status === 403) return ErrorType.AUTHORIZATION;
-      if (status >= 400 && status < 500) return ErrorType.CLIENT;
-      if (status >= 500) return ErrorType.SERVER;
-    }
-    
-    // Validation errors
-    if (error.response?.data?.error?.includes('validation') || 
-        error.response?.data?.error?.includes('required')) {
-      return ErrorType.VALIDATION;
-    }
-    
+
     return ErrorType.UNKNOWN;
   }
 
   /**
    * Determine error severity based on type and context
    */
-  private static determineSeverity(error: any, type: ErrorType): ErrorSeverity {
+  private static determineSeverity(_error: unknown, type: ErrorType): ErrorSeverity {
     switch (type) {
       case ErrorType.AUTHENTICATION:
       case ErrorType.AUTHORIZATION:
@@ -92,19 +101,22 @@ export class ErrorHandlerWrapper {
   /**
    * Extract user-friendly error message
    */
-  private static getErrorMessage(error: any): string {
-    if (error.response?.data?.error) {
-      return error.response.data.error;
+  private static getErrorMessage(error: unknown): string {
+    if (typeof error === 'object' && error !== null) {
+      const err = error as Record<string, any>;
+      if (err.response?.data?.error) {
+        return err.response.data.error;
+      }
+
+      if (err.response?.data?.message) {
+        return err.response.data.message;
+      }
+
+      if (err.message) {
+        return err.message;
+      }
     }
-    
-    if (error.response?.data?.message) {
-      return error.response.data.message;
-    }
-    
-    if (error.message) {
-      return error.message;
-    }
-    
+
     return 'Beklenmeyen bir hata oluştu';
   }
 }

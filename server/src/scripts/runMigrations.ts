@@ -27,7 +27,7 @@ async function getMigrationHistory(): Promise<string[]> {
     
     const collection = db.collection(MIGRATIONS_COLLECTION);
     const records = await collection.find({}).sort({ executedAt: 1 }).toArray();
-    return records.map((r: MigrationRecord) => r.name);
+    return records.map((r) => (r as unknown as MigrationRecord).name);
   } catch (error) {
     // Collection doesn't exist yet, return empty array
     return [];

@@ -5,7 +5,7 @@ import type { TestingLibraryMatchers } from '@testing-library/jest-dom/matchers'
 
 declare global {
   namespace Vi {
-    interface JestAssertion<T = any> extends jest.Matchers<void, T>, TestingLibraryMatchers<T, void> {}
+    interface JestAssertion<T = any> extends jest.Matchers<void, T>, TestingLibraryMatchers<T, void> { }
   }
 }
 
@@ -48,14 +48,17 @@ vi.mock('../../hooks/useAuth', () => ({
 }));
 
 // Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(),
-};
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value.toString(); }),
+    removeItem: vi.fn((key: string) => { delete store[key]; }),
+    clear: vi.fn(() => { store = {}; }),
+    length: 0,
+    key: vi.fn((index: number) => Object.keys(store)[index] || null),
+  };
+})();
 
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
@@ -63,29 +66,35 @@ Object.defineProperty(window, 'localStorage', {
 });
 
 // Mock sessionStorage
-const sessionStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(),
-};
+const sessionStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value.toString(); }),
+    removeItem: vi.fn((key: string) => { delete store[key]; }),
+    clear: vi.fn(() => { store = {}; }),
+    length: 0,
+    key: vi.fn((index: number) => Object.keys(store)[index] || null),
+  };
+})();
 
 Object.defineProperty(window, 'sessionStorage', {
   value: sessionStorageMock,
   writable: true,
 });
 
+// Mock fetch
+window.fetch = vi.fn().mockResolvedValue({
+  ok: true,
+  json: async () => ({}),
+  text: async () => '',
+  blob: async () => new Blob(),
+} as Response);
+
 // Reset mocks before each test
 beforeEach(() => {
   vi.clearAllMocks();
-  localStorageMock.getItem.mockClear();
-  localStorageMock.setItem.mockClear();
-  localStorageMock.removeItem.mockClear();
-  localStorageMock.clear.mockClear();
-  sessionStorageMock.getItem.mockClear();
-  sessionStorageMock.setItem.mockClear();
-  sessionStorageMock.removeItem.mockClear();
-  sessionStorageMock.clear.mockClear();
+  (window.fetch as any).mockClear();
+  localStorage.clear();
+  sessionStorage.clear();
 });

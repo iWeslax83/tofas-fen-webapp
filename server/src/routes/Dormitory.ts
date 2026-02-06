@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { MealList, SupervisorList, MaintenanceRequest, User } from "../models";
+import { MealList, SupervisorList, User } from "../models";
 import { requireAuth, requireRole } from "../middleware/auth";
 
 // Simple in-memory cache for meals data
@@ -59,7 +59,7 @@ router.delete("/meals/cache", requireAuth, requireRole(['admin']), async (req, r
 router.get("/meals", requireAuth, async (req, res) => {
   try {
     const { month, year } = req.query;
-    let filter: any = {};
+    const filter: any = {};
     
     if (month) filter.month = month;
     if (year) filter.year = parseInt(year as string);
@@ -116,7 +116,7 @@ router.get("/meals", requireAuth, async (req, res) => {
     
     // Try to serve from cache even if expired
     const { month, year } = req.query;
-    let filter: any = {};
+    const filter: any = {};
     if (month) filter.month = month;
     if (year) filter.year = parseInt(year as string);
     const cacheKey = `meals_${JSON.stringify(filter)}`;
@@ -221,7 +221,7 @@ router.get("/meals/:id/download", requireAuth, async (req, res) => {
 router.get("/supervisors", requireAuth, async (req, res) => {
   try {
     const { month, year } = req.query;
-    let filter: any = {};
+    const filter: any = {};
     
     if (month) filter.month = month;
     if (year) filter.year = parseInt(year as string);
@@ -294,148 +294,6 @@ router.get("/supervisors/:id/download", requireAuth, async (req, res) => {
     res.download(supervisorList.fileUrl);
   } catch (error) {
     console.error("Supervisor list download error:", error);
-    res.status(500).json({ error: "Sunucu hatası" });
-  }
-});
-
-// ===== MAINTENANCE REQUEST ROUTES =====
-
-// Create maintenance request
-router.post("/maintenance", requireAuth, requireRole(['student', 'admin', 'hizmetli']), async (req, res) => {
-  try {
-    const { roomNumber, issue } = req.body;
-    
-    if (!roomNumber || !issue) {
-      res.status(400).json({ error: "Oda numarası ve sorun açıklaması gerekli" });
-      return;
-    }
-
-    // For students, use their own ID and validate room number; for admins/hizmetli, find student by room number
-    let studentId = (req as any).user.id;
-    let studentName = (req as any).user.adSoyad;
-    
-    if ((req as any).user.rol === 'student') {
-      // For students, validate that the room number matches their own
-      if ((req as any).user.oda !== roomNumber) {
-        res.status(403).json({ error: "Sadece kendi odanız için bakım talebi oluşturabilirsiniz" });
-        return;
-      }
-    } else {
-      // Find student by room number for admin/hizmetli
-      const student = await User.findOne({ oda: roomNumber, rol: "student" });
-      if (!student) {
-        res.status(404).json({ error: "Öğrenci bulunamadı" });
-        return;
-      }
-      studentId = student.id;
-      studentName = student.adSoyad;
-    }
-
-    const maintenanceRequest = new MaintenanceRequest({
-      studentId,
-      studentName,
-      roomNumber,
-      issue,
-      status: "pending",
-      createdAt: new Date(),
-    });
-
-    await maintenanceRequest.save();
-    res.status(201).json(maintenanceRequest);
-  } catch (error) {
-    console.error("Maintenance request creation error:", error);
-    res.status(500).json({ error: "Sunucu hatası" });
-  }
-});
-
-// Get maintenance requests (filtered by role)
-router.get("/maintenance", requireAuth, requireRole(['admin', 'hizmetli']), async (req, res) => {
-  try {
-    const { status, roomNumber } = req.query;
-    let filter: any = {};
-    
-    if (status) filter.status = status;
-    if (roomNumber) filter.roomNumber = roomNumber;
-    
-    const requests = await MaintenanceRequest.find(filter)
-      .sort({ createdAt: -1 })
-      .populate('studentId', 'adSoyad');
-    
-    res.json(requests);
-  } catch (error) {
-    console.error("Maintenance requests fetch error:", error);
-    res.status(500).json({ error: "Sunucu hatası" });
-  }
-});
-
-// Get maintenance requests for specific student
-router.get("/maintenance/student/:studentId", requireAuth, requireRole(['student', 'admin', 'hizmetli']), async (req, res) => {
-  try {
-    const requests = await MaintenanceRequest.find({ 
-      studentId: req.params.studentId 
-    }).sort({ createdAt: -1 });
-    
-    res.json(requests);
-  } catch (error) {
-    console.error("Student maintenance requests fetch error:", error);
-    res.status(500).json({ error: "Sunucu hatası" });
-  }
-});
-
-// Get current user's maintenance requests (for students)
-router.get("/maintenance/my-requests", requireAuth, requireRole(['student']), async (req, res) => {
-  try {
-    const requests = await MaintenanceRequest.find({ 
-      studentId: (req as any).user.id 
-    }).sort({ createdAt: -1 });
-    
-    res.json(requests);
-  } catch (error) {
-    console.error("User maintenance requests fetch error:", error);
-    res.status(500).json({ error: "Sunucu hatası" });
-  }
-});
-
-// Update maintenance request status
-router.patch("/maintenance/:id", requireAuth, requireRole(['admin', 'hizmetli']), async (req, res) => {
-  try {
-    const { status, adminNote, serviceNote } = req.body;
-    const updateData: any = { status, updatedAt: new Date() };
-    
-    if (adminNote !== undefined) updateData.adminNote = adminNote;
-    if (serviceNote !== undefined) updateData.serviceNote = serviceNote;
-    
-    const request = await MaintenanceRequest.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true }
-    );
-    
-    if (!request) {
-      res.status(404).json({ error: "Talep bulunamadı" });
-      return;
-    }
-    
-    res.json(request);
-  } catch (error) {
-    console.error("Maintenance request update error:", error);
-    res.status(500).json({ error: "Sunucu hatası" });
-  }
-});
-
-// Delete maintenance request
-router.delete("/maintenance/:id", requireAuth, requireRole(['admin', 'hizmetli']), async (req, res) => {
-  try {
-    const request = await MaintenanceRequest.findByIdAndDelete(req.params.id);
-    
-    if (!request) {
-      res.status(404).json({ error: "Talep bulunamadı" });
-      return;
-    }
-    
-    res.status(204).end();
-  } catch (error) {
-    console.error("Maintenance request deletion error:", error);
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });

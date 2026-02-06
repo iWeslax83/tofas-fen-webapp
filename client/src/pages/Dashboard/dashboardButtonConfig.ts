@@ -1,5 +1,5 @@
 // Central config for dashboard panel buttons, routes, roles, and permissions
-import { BookOpen, ClipboardList, Wrench, Utensils, Users, FileText, ShoppingBag } from 'lucide-react';
+import { BookOpen, ClipboardList, Utensils, FileText, ShoppingBag, Wrench } from 'lucide-react';
 
 export type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli';
 
@@ -11,7 +11,6 @@ export interface DashboardButton {
   roles: UserRole[]; // Who can see this button
   crudRoles?: UserRole[]; // Who can add/edit/delete (if different from view)
   icon?: React.ElementType;
-  color?: string; // Optional color property for button styling
   showForDormitory?: boolean; // Only show for students with pansiyon=true
   actionText?: string; // Custom action text for the button
 }
@@ -27,7 +26,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/student/ders-programi',
     roles: ['student'],
     icon: ClipboardList,
-    color: 'purple',
     actionText: 'Programı Gör',
   },
   {
@@ -37,7 +35,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/student/notlar',
     roles: ['student'],
     icon: BookOpen,
-    color: 'green',
     actionText: 'Notlarımı Gör',
   },
   {
@@ -47,18 +44,7 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/student/duyurular',
     roles: ['student'],
     icon: ClipboardList,
-    color: 'orange',
     actionText: 'Duyuruları Gör',
-  },
-  {
-    key: 'my-clubs-student',
-    title: 'Kulüplerim',
-    description: 'Katıldığın kulüpleri görüntüle',
-    route: '/student/kuluplerim',
-    roles: ['student'],
-    icon: Users,
-    color: 'indigo',
-    actionText: 'Kulüplerimi Gör',
   },
   {
     key: 'dilekce-student',
@@ -67,7 +53,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/student/dilekce',
     roles: ['student'],
     icon: FileText,
-    color: 'teal',
     actionText: 'Dilekçe Oluştur',
   },
   {
@@ -78,7 +63,6 @@ export const dashboardButtons: DashboardButton[] = [
     roles: ['student'],
     showForDormitory: true,
     icon: ClipboardList,
-    color: 'yellow',
     actionText: 'Bilgilerimi Gör',
   },
   {
@@ -89,7 +73,6 @@ export const dashboardButtons: DashboardButton[] = [
     roles: ['student'],
     showForDormitory: true,
     icon: ShoppingBag,
-    color: 'blue',
     actionText: 'İzin Talep Et',
   },
 
@@ -102,7 +85,6 @@ export const dashboardButtons: DashboardButton[] = [
     roles: ['student'],
     showForDormitory: true,
     icon: Utensils,
-    color: 'orange',
     actionText: 'Menüyü Gör',
   },
   {
@@ -112,20 +94,8 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/student/belletmen-listesi',
     roles: ['student'],
     showForDormitory: true,
-    icon: Users,
-    color: 'purple',
+    icon: Utensils,
     actionText: 'Listeyi Gör',
-  },
-  {
-    key: 'student-maintenance-request',
-    title: 'Bakım talepleri',
-    description: 'Oda bakım talebi oluştur',
-    route: '/student/bakim-talepleri',
-    roles: ['student'],
-    showForDormitory: true,
-    icon: Wrench,
-    color: 'teal',
-    actionText: 'Talep Oluştur',
   },
 
   // TEACHER PRIORITY BUTTONS
@@ -137,7 +107,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/teacher/odevler',
     roles: ['teacher'],
     icon: BookOpen,
-    color: 'blue',
     actionText: 'Ödevleri Yönet',
   },
   {
@@ -147,7 +116,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/teacher/notlar',
     roles: ['teacher'],
     icon: BookOpen,
-    color: 'green',
     actionText: 'Notları Gir',
   },
 
@@ -158,7 +126,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/teacher/ders-programi',
     roles: ['teacher'],
     icon: ClipboardList,
-    color: 'orange',
     actionText: 'Programı Gör',
   },
   {
@@ -168,7 +135,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/teacher/duyurular',
     roles: ['teacher'],
     icon: ClipboardList,
-    color: 'teal',
     actionText: 'Duyuruları Yönet',
   },
   {
@@ -178,7 +144,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/teacher/dilekce',
     roles: ['teacher'],
     icon: FileText,
-    color: 'yellow',
     actionText: 'Dilekçe Oluştur',
   },
 
@@ -190,7 +155,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/parent/odevler',
     roles: ['parent'],
     icon: ClipboardList,
-    color: 'blue',
     actionText: 'Ödevleri Takip Et',
   },
   {
@@ -200,7 +164,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/parent/ders-programi',
     roles: ['parent'],
     icon: BookOpen,
-    color: 'purple',
     actionText: 'Programı Gör',
   },
   {
@@ -210,7 +173,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/parent/notlar',
     roles: ['parent'],
     icon: BookOpen,
-    color: 'green',
     actionText: 'Notları Gör',
   },
   {
@@ -220,7 +182,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/parent/duyurular',
     roles: ['parent'],
     icon: ClipboardList,
-    color: 'orange',
     actionText: 'Duyuruları Gör',
   },
   {
@@ -230,18 +191,7 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/parent/dilekce',
     roles: ['parent'],
     icon: FileText,
-    color: 'teal',
     actionText: 'Dilekçe Oluştur',
-  },
-  {
-    key: 'my-clubs-parent',
-    title: 'Kulüplerim',
-    description: 'Çocuğunun kulüplerini görüntüle',
-    route: '/parent/kuluplerim',
-    roles: ['parent'],
-    icon: Users,
-    color: 'indigo',
-    actionText: 'Kulüpleri Gör',
   },
   {
     key: 'parent-evci',
@@ -250,7 +200,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/parent/evci',
     roles: ['parent'],
     icon: ClipboardList,
-    color: 'yellow',
     actionText: 'Bilgileri Gör',
   },
 
@@ -263,7 +212,6 @@ export const dashboardButtons: DashboardButton[] = [
     roles: ['admin', 'hizmetli'],
     crudRoles: ['admin', 'hizmetli'],
     icon: BookOpen,
-    color: 'orange',
     actionText: 'Menüyü Yönet',
   },
   // Belletmen Listesi (separate for admin and hizmetli)
@@ -275,7 +223,6 @@ export const dashboardButtons: DashboardButton[] = [
     roles: ['admin'],
     crudRoles: ['admin'],
     icon: ClipboardList,
-    color: 'purple',
     actionText: 'Listeyi Yönet',
   },
   {
@@ -286,31 +233,9 @@ export const dashboardButtons: DashboardButton[] = [
     roles: ['hizmetli'],
     crudRoles: ['hizmetli'],
     icon: ClipboardList,
-    color: 'purple',
     actionText: 'Listeyi Yönet',
   },
-  {
-    key: 'maintenance-requests',
-    title: 'Oda Bakım-Onarım Talepleri',
-    description: 'Bakım taleplerini görüntüle ve yönet',
-    route: '/admin/bakim-talepleri',
-    roles: ['admin', 'hizmetli'],
-    crudRoles: ['admin', 'hizmetli'],
-    icon: Wrench,
-    color: 'teal',
-    actionText: 'Talepleri Yönet',
-  },
   // Admin only
-  {
-    key: 'admin-clubs',
-    title: 'Kulüpler',
-    description: 'Tüm kulüpleri yönet',
-    route: '/admin/kulupler',
-    roles: ['admin'],
-    icon: ClipboardList,
-    color: 'indigo',
-    actionText: 'Kulüpleri Yönet',
-  },
   {
     key: 'admin-evci-list',
     title: 'Evci Listesi',
@@ -318,7 +243,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/admin/evci-listesi',
     roles: ['admin'],
     icon: ClipboardList,
-    color: 'yellow',
     actionText: 'Listeyi Yönet',
   },
   {
@@ -328,7 +252,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/admin/carzi-listesi',
     roles: ['admin'],
     icon: ShoppingBag,
-    color: 'blue',
     actionText: 'Listeyi Yönet',
   },
   {
@@ -338,7 +261,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/admin/dilekce-listesi',
     roles: ['admin'],
     icon: FileText,
-    color: 'teal',
     actionText: 'Dilekçeleri Yönet',
   },
   {
@@ -348,7 +270,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/admin/odevler',
     roles: ['admin'],
     icon: ClipboardList,
-    color: 'blue',
     actionText: 'Ödevleri Gör',
   },
   {
@@ -358,7 +279,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/admin/duyurular',
     roles: ['admin'],
     icon: ClipboardList,
-    color: 'orange',
     actionText: 'Duyuruları Gör',
   },
   {
@@ -368,7 +288,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/admin/senkronizasyon',
     roles: ['admin'],
     icon: Wrench,
-    color: 'green',
     actionText: 'Senkronize Et',
   },
   // Analytics ve Raporlama - REMOVED

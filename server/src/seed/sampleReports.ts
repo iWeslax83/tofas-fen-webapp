@@ -1,7 +1,14 @@
-import { Report } from '../models/Report';
+// Report model not found - commenting out for now
+// import { Report } from '../models/Report';
 
 export const createSampleReports = async () => {
+  // Report model not available - skipping for now
+  console.log('⚠️ Report model not found - skipping sample reports creation');
+  return;
+  
+  /* Commented out until Report model is available
   try {
+    const { Report } = await import('../models/Report');
     // Clear existing sample reports
     await Report.deleteMany({ 
       id: { 
@@ -302,4 +309,5 @@ export const createSampleReports = async () => {
     console.error('❌ Error creating sample reports:', error);
     throw error;
   }
+  */
 };

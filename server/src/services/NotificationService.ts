@@ -225,7 +225,7 @@ export class NotificationService {
    */
   static async markAsRead(notificationId: string): Promise<INotification | null> {
     try {
-      const notification = await Notification.findById(notificationId);
+      const notification = await Notification.findOne({ _id: notificationId });
       if (!notification) {
         throw new Error('Notification not found');
       }
@@ -244,9 +244,9 @@ export class NotificationService {
     try {
       await Notification.updateMany(
         { _id: { $in: notificationIds } },
-        { 
-          read: true, 
-          readAt: new Date() 
+        {
+          read: true,
+          readAt: new Date()
         }
       );
 
@@ -262,7 +262,7 @@ export class NotificationService {
    */
   static async archiveNotification(notificationId: string): Promise<INotification | null> {
     try {
-      const notification = await Notification.findById(notificationId);
+      const notification = await Notification.findOne({ _id: notificationId });
       if (!notification) {
         throw new Error('Notification not found');
       }
@@ -409,7 +409,7 @@ export class NotificationService {
       } = options;
 
       const query: any = {};
-      
+
       if (type) query.type = type;
       if (category) query.category = category;
       if (priority) query.priority = priority;
@@ -425,7 +425,7 @@ export class NotificationService {
         .sort({ priority: -1, createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit);
-      
+
       const total = await Notification.countDocuments(query);
 
       return { notifications, total };
@@ -460,9 +460,9 @@ export class NotificationService {
       ] = await Promise.all([
         Notification.countDocuments({}),
         Notification.countDocuments({ read: false, archived: false }),
-        Notification.countDocuments({ 
+        Notification.countDocuments({
           createdAt: { $gte: today },
-          archived: false 
+          archived: false
         }),
         Notification.aggregate([
           { $group: { _id: '$type', count: { $sum: 1 } } }
@@ -562,9 +562,9 @@ export class NotificationService {
     try {
       await Notification.updateMany(
         { _id: { $in: notificationIds } },
-        { 
-          read: false, 
-          readAt: undefined 
+        {
+          read: false,
+          readAt: undefined
         }
       );
 
@@ -582,8 +582,8 @@ export class NotificationService {
     try {
       await Notification.updateMany(
         { _id: { $in: notificationIds } },
-        { 
-          archived: true 
+        {
+          archived: true
         }
       );
 

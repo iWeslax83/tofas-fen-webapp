@@ -23,7 +23,7 @@ export const validateSchoolId = (id: string): boolean => {
   return schoolIdRegex.test(id);
 };
 
-export const validateRequired = (value: any): boolean => {
+export const validateRequired = (value: unknown): boolean => {
   if (value === null || value === undefined) return false;
   if (typeof value === 'string') return value.trim().length > 0;
   return true;

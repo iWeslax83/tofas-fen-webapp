@@ -73,12 +73,12 @@ const NotEkleme: React.FC = () => {
       navigate('/login');
       return;
     }
-    
+
     if (!['admin', 'teacher'].includes(userRole)) {
       navigate('/');
       return;
     }
-    
+
     // Load supported formats
     const loadFormats = async () => {
       try {
@@ -94,7 +94,7 @@ const NotEkleme: React.FC = () => {
         setLoading(false);
       }
     };
-    
+
     loadFormats();
   }, [userRole, navigate]);
 
@@ -122,7 +122,7 @@ const NotEkleme: React.FC = () => {
         toast.error(error);
       } else {
         setImportResult(data as ImportResult);
-        
+
         if ((data as ImportResult).savedCount > 0) {
           toast.success(`${(data as ImportResult).savedCount} not başarıyla import edildi!`);
         } else {
@@ -134,7 +134,7 @@ const NotEkleme: React.FC = () => {
       console.error('Upload hatası:', error);
       const errorMessage = (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Dosya yükleme hatası';
       toast.error(errorMessage);
-      
+
       if ((error as { response?: { data?: { errors?: unknown } } })?.response?.data?.errors) {
         setImportResult({
           success: false,
@@ -177,12 +177,12 @@ const NotEkleme: React.FC = () => {
   const calculateAverage = useCallback(() => {
     const grades = [manualNote.exam1, manualNote.exam2, manualNote.exam3, manualNote.oral, manualNote.project];
     const validGrades = grades.filter(grade => grade !== undefined && grade !== null) as number[];
-    
+
     if (validGrades.length === 0) {
       setManualNote(prev => ({ ...prev, average: 0 }));
       return;
     }
-    
+
     const sum = validGrades.reduce((a, b) => a + b, 0);
     const average = Math.round((sum / validGrades.length) * 10) / 10;
     setManualNote(prev => ({ ...prev, average }));
@@ -210,7 +210,7 @@ const NotEkleme: React.FC = () => {
         toast.error(error);
       } else {
         toast.success('Not başarıyla eklendi!');
-        
+
         // Formu temizle
         setManualNote({
           studentId: '',
@@ -261,41 +261,24 @@ const NotEkleme: React.FC = () => {
       pageTitle="Not Ekleme"
       breadcrumb={breadcrumb}
     >
-      <div className="admin-panel">
-        <header className="panel-header">
-          <div className="header-left">
-            <div className="panel-logo">
-              <div className="panel-logo-icon">
-                <BookOpen className="icon" />
-              </div>
-              <div className="panel-logo-text">
-                <h1>
-                  Not Ekleme
-                </h1>
-              </div>
-            </div>
+      <div className="not-ekleme-page">
+        <div className="tabs-container">
+          <div className="tabs">
+            <button
+              className={`tab ${activeTab === 'import' ? 'active' : ''}`}
+              onClick={() => setActiveTab('import')}
+            >
+              <Upload size={18} className="tab-icon" />
+              Toplu İçe Aktar
+            </button>
+            <button
+              className={`tab ${activeTab === 'manual' ? 'active' : ''}`}
+              onClick={() => setActiveTab('manual')}
+            >
+              <Plus size={18} className="tab-icon" />
+              Manuel Ekle
+            </button>
           </div>
-
-      </header>
-
-      <main className="panel-main">
-
-      <div className="tabs-container">
-        <div className="tabs">
-          <button
-            className={`tab ${activeTab === 'import' ? 'active' : ''}`}
-            onClick={() => setActiveTab('import')}
-          >
-            <Upload size={18} className="tab-icon" />
-            Toplu İçe Aktar
-          </button>
-          <button
-            className={`tab ${activeTab === 'manual' ? 'active' : ''}`}
-            onClick={() => setActiveTab('manual')}
-          >
-            <Plus size={18} className="tab-icon" />
-            Manuel Ekle
-          </button>
         </div>
       </div>
 
@@ -305,7 +288,7 @@ const NotEkleme: React.FC = () => {
             <div className="import-instructions">
               <h3>📋 Excel Dosyası İle Toplu Not Yükleme</h3>
               <p>Hazırladığınız Excel dosyasını yükleyerek toplu not girişi yapabilirsiniz.</p>
-              
+
               <h4>📌 Kurallar:</h4>
               <ul>
                 <li>Excel dosyasında ilk satır başlık satırı olmalıdır</li>
@@ -329,7 +312,7 @@ const NotEkleme: React.FC = () => {
             {/* File Upload Section */}
             <div className="file-upload-container">
               <h3>📤 Dosya Yükle</h3>
-              
+
               <div className={`file-upload-area ${file ? 'has-file' : ''}`}>
                 <input
                   type="file"
@@ -380,14 +363,14 @@ const NotEkleme: React.FC = () => {
                 </div>
               )}
             </div>
-            
+
             {/* Results */}
             {importResult && (
               <div className={`import-result ${importResult.success ? 'success' : 'error'}`}>
                 <h3 className="import-result-title">
                   📊 Import Sonuçları
                 </h3>
-                
+
 
                 <div className="import-result-message">
                   {importResult.message}
@@ -442,7 +425,7 @@ const NotEkleme: React.FC = () => {
             {/* Manuel Not Ekleme Formu */}
             <div className="manual-note-form">
               <h3 className="manual-note-title">✏️ Manuel Not Ekle</h3>
-              
+
               <div className="not-ekleme-form-grid">
                 {/* Öğrenci Bilgileri */}
                 <div className="form-group">
@@ -457,7 +440,7 @@ const NotEkleme: React.FC = () => {
                     placeholder="Öğrenci ID"
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label">
                     Ad Soyad *
@@ -483,7 +466,7 @@ const NotEkleme: React.FC = () => {
                     placeholder="Ders Adı"
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label">
                     Öğretmen
@@ -516,7 +499,7 @@ const NotEkleme: React.FC = () => {
                       placeholder="0-100"
                     />
                   </div>
-                  
+
                   <div className="grade-input">
                     <label className="grade-label">
                       2. Sınav
@@ -531,7 +514,7 @@ const NotEkleme: React.FC = () => {
                       placeholder="0-100"
                     />
                   </div>
-                  
+
                   <div className="grade-input">
                     <label className="grade-label">
                       3. Sınav
@@ -546,7 +529,7 @@ const NotEkleme: React.FC = () => {
                       placeholder="0-100"
                     />
                   </div>
-                  
+
                   <div className="grade-input">
                     <label className="grade-label">
                       Sözlü
@@ -561,7 +544,7 @@ const NotEkleme: React.FC = () => {
                       placeholder="0-100"
                     />
                   </div>
-                  
+
                   <div className="grade-input">
                     <label className="grade-label">
                       Proje
@@ -601,7 +584,7 @@ const NotEkleme: React.FC = () => {
                     <option value="2">2. Dönem</option>
                   </select>
                 </div>
-                
+
                 <div className="info-group">
                   <label className="info-label">
                     Öğretim Yılı
@@ -614,7 +597,7 @@ const NotEkleme: React.FC = () => {
                     placeholder="2024-2025"
                   />
                 </div>
-                
+
                 <div className="info-group">
                   <label className="info-label">
                     Sınıf
@@ -627,7 +610,7 @@ const NotEkleme: React.FC = () => {
                     placeholder="9, 10, 11, 12"
                   />
                 </div>
-                
+
                 <div className="info-group">
                   <label className="info-label">
                     Şube
@@ -677,8 +660,6 @@ const NotEkleme: React.FC = () => {
             <li>Ortalama otomatik hesaplanır</li>
           </ul>
         </div>
-      </div>
-    </main>
       </div>
     </ModernDashboardLayout>
   );

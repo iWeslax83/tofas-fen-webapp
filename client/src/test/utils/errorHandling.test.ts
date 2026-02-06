@@ -17,9 +17,10 @@ describe('Error Handling', () => {
           component: 'TestComponent',
           action: 'testAction',
           userId: 'user123',
-          timestamp: Date.now(),
           url: 'http://test.com',
-          userAgent: 'test-agent'
+          additionalData: {
+            userAgent: 'test-agent'
+          }
         }
       );
 
@@ -39,8 +40,7 @@ describe('Error Handling', () => {
         ErrorSeverity.HIGH,
         {
           component: 'TestComponent',
-          action: 'testAction',
-          timestamp: Date.now()
+          action: 'testAction'
         },
         originalError
       );

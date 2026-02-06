@@ -5,14 +5,26 @@ interface ImportMetaEnv {
   // more env variables...
 }
 
-interface ImportMeta {
-  readonly env: ImportMetaEnv
-}
-
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
       NODE_ENV: string
     }
   }
+
+  interface Window {
+    gtag?: (
+      command: string,
+      targetId: string,
+      config?: {
+        event_category?: string;
+        value?: number;
+        event_label?: string;
+        non_interaction?: boolean;
+        [key: string]: unknown;
+      }
+    ) => void;
+  }
 }
+
+export { };

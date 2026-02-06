@@ -2,6 +2,8 @@
  * Performance monitoring and Core Web Vitals tracking
  */
 
+import { useEffect } from 'react';
+
 interface PerformanceMetric {
   name: string;
   value: number;
@@ -60,14 +62,15 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
     try {
       const lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        const lastEntry = entries[entries.length - 1] as any;
-        const metric: PerformanceMetric = {
-          name: 'LCP',
-          value: lastEntry.renderTime || lastEntry.loadTime,
-          rating: getRating(lastEntry.renderTime || lastEntry.loadTime, THRESHOLDS.lcp),
-          id: lastEntry.id,
-          navigationType: lastEntry.navigationType,
-        };
+        const lastEntry = entries[entries.length - 1] as PerformanceEntry & Record<string, unknown>;
+          const value = (lastEntry as any).renderTime || (lastEntry as any).loadTime || 0;
+          const metric: PerformanceMetric = {
+            name: 'LCP',
+            value,
+            rating: getRating(value, THRESHOLDS.lcp),
+            id: (lastEntry as any).id || '',
+            navigationType: (lastEntry as any).navigationType
+          };
         onPerfEntry(metric);
       });
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
@@ -79,13 +82,14 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
     try {
       const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
+        entries.forEach((entry: PerformanceEntry & Record<string, any>) => {
+          const value = (entry as any).processingStart - (entry as any).startTime;
           const metric: PerformanceMetric = {
             name: 'FID',
-            value: entry.processingStart - entry.startTime,
-            rating: getRating(entry.processingStart - entry.startTime, THRESHOLDS.fid),
-            id: entry.id,
-            navigationType: entry.navigationType,
+            value,
+            rating: getRating(value, THRESHOLDS.fid),
+            id: (entry as any).id || '',
+            navigationType: (entry as any).navigationType,
           };
           onPerfEntry(metric);
         });
@@ -100,9 +104,9 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
       let clsValue = 0;
       const clsObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
-          if (!entry.hadRecentInput) {
-            clsValue += entry.value;
+        entries.forEach((entry: PerformanceEntry & Record<string, any>) => {
+          if (!(entry as any).hadRecentInput) {
+            clsValue += (entry as any).value || 0;
           }
         });
         const metric: PerformanceMetric = {
@@ -122,13 +126,14 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
     try {
       const fcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
-          if (entry.name === 'first-contentful-paint') {
+        entries.forEach((entry: PerformanceEntry & Record<string, any>) => {
+          if ((entry as any).name === 'first-contentful-paint') {
+            const start = (entry as any).startTime || 0;
             const metric: PerformanceMetric = {
               name: 'FCP',
-              value: entry.startTime,
-              rating: getRating(entry.startTime, THRESHOLDS.fcp),
-              id: entry.id,
+              value: start,
+              rating: getRating(start, THRESHOLDS.fcp),
+              id: (entry as any).id || '',
             };
             onPerfEntry(metric);
           }
@@ -206,4 +211,22 @@ export function logPerformanceMetrics() {
     });
     console.groupEnd();
   }
+}
+
+/**
+ * Hook to monitor component performance
+ */
+export function usePerformanceMonitor(componentName: string) {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const startTime = performance.now();
+
+    return () => {
+      const renderTime = performance.now() - startTime;
+      if (import.meta.env.DEV && renderTime > 16) {
+        console.log(`[Performance] ${componentName} rendered in ${renderTime.toFixed(2)}ms`);
+      }
+    };
+  });
 }

@@ -6,8 +6,8 @@
  * background refetching, and optimistic updates.
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
-import { SecureAPI, ApiResponse, PaginatedResponse } from '../utils/api';
+import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
+import { ApiResponse, PaginatedResponse } from '../utils/api';
 import { toast } from 'react-hot-toast';
 
 // Query Keys Factory - Centralized query key management
@@ -56,19 +56,10 @@ export const queryKeys = {
     student: (studentId: string) => ['evci-requests', 'student', studentId] as const,
   },
   
-  // Clubs
-  clubs: {
-    all: ['clubs'] as const,
-    list: (filters?: Record<string, unknown>) => ['clubs', 'list', filters] as const,
-    detail: (id: string) => ['clubs', 'detail', id] as const,
-    myClubs: ['clubs', 'my'] as const,
-  },
-  
   // Dormitory
   dormitory: {
     meals: (date?: string) => ['dormitory', 'meals', date] as const,
     supervisors: ['dormitory', 'supervisors'] as const,
-    maintenanceRequests: (filters?: Record<string, unknown>) => ['dormitory', 'maintenance', filters] as const,
   },
   
   // Schedule
@@ -126,7 +117,7 @@ export function useApiMutation<TData, TVariables>(
   options?: {
     onSuccess?: (data: ApiResponse<TData>, variables: TVariables) => void;
     onError?: (error: Error, variables: TVariables) => void;
-    invalidateQueries?: readonly unknown[][];
+    invalidateQueries?: (readonly unknown[])[];
     showToast?: boolean;
     successMessage?: string;
     errorMessage?: string;

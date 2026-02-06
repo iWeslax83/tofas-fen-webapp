@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../../../utils/AppError';
 import { User } from '../../../models/User';
+import { AuthService } from '../services/authService';
 import { generateTokenPair, verifyRefreshToken, logoutUser } from '../../../utils/jwt';
 import { asyncHandler } from '../../../middleware/errorHandler';
 import bcrypt from 'bcryptjs';
@@ -21,36 +22,17 @@ export class AuthController {
       throw AppError.validation('ID ve şifre gereklidir');
     }
 
-    // Find user by ID
-    const user = await User.findOne({ id, isActive: true });
-    if (!user) {
-      throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
+    if (typeof id !== 'string' || typeof sifre !== 'string') {
+      throw AppError.validation('ID ve şifre string olmalıdır');
     }
 
-    // Check password - only bcrypt hashed passwords allowed
-    // TCKN plaintext authentication removed for security
-    if (!user.sifre) {
-      throw AppError.unauthorized('Kullanıcı şifresi tanımlanmamış');
-    }
-
-    // Verify password using bcrypt
-    const isValidPassword = await bcrypt.compare(sifre, user.sifre);
-    if (!isValidPassword) {
-      throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
-    }
-
-    // Update last login
-    user.lastLogin = new Date();
-    user.loginCount = (user.loginCount || 0) + 1;
-    await user.save();
-
-    // Generate tokens
-    const tokens = generateTokenPair(user.id, user.rol, user.email, user.tokenVersion);
+    // Authenticate user
+    const { user, tokens } = await AuthService.authenticateUser(id, sifre);
 
     // Set httpOnly cookies for secure token storage
     // ⚠️ GÜVENLİK: localStorage yerine httpOnly cookies kullanılıyor (XSS koruması)
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true, // JavaScript'ten erişilemez (XSS koruması)
       secure: isProduction, // HTTPS'te çalışır
@@ -84,7 +66,29 @@ export class AuthController {
       },
       // Token expiry info for frontend (actual tokens in httpOnly cookies)
       expiresIn: tokens.expiresIn,
-      refreshExpiresIn: tokens.refreshExpiresIn
+      refreshExpiresIn: tokens.refreshExpiresIn,
+      // Backward compatibility for frontend migration
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken
+    });
+  });
+
+  /**
+   * User registration
+   */
+  static register = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const { id, adSoyad, rol, sifre, email } = req.body;
+
+    if (!id || !adSoyad || !rol || !sifre) {
+      throw AppError.validation('Tüm alanlar (ID, Ad Soyad, Rol, Şifre) gereklidir');
+    }
+
+    const user = await AuthService.registerUser({ id, adSoyad, rol, sifre, email });
+
+    res.status(201).json({
+      success: true,
+      message: 'Kullanıcı başarıyla oluşturuldu',
+      user
     });
   });
 
@@ -161,7 +165,7 @@ export class AuthController {
 
     // Set new httpOnly cookies
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: isProduction,
@@ -191,7 +195,7 @@ export class AuthController {
    */
   static getProfile = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const userId = (req as any).user?.userId;
-    
+
     if (!userId) {
       throw AppError.unauthorized('Kullanıcı bilgisi bulunamadı');
     }
@@ -223,7 +227,7 @@ export class AuthController {
    */
   static getMe = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const userId = (req as any).user?.userId;
-    
+
     if (!userId) {
       throw AppError.unauthorized('Kullanıcı bilgisi bulunamadı');
     }
@@ -245,6 +249,42 @@ export class AuthController {
       pansiyon: user.pansiyon,
       lastLogin: user.lastLogin,
       createdAt: user.createdAt
+    });
+  });
+
+  /**
+   * Request password reset
+   */
+  static forgotPassword = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const { email } = req.body;
+    if (!email) {
+      throw AppError.validation('Email adresi gereklidir');
+    }
+
+    const result = await AuthService.requestPasswordReset(email);
+
+    res.json({
+      success: true,
+      message: 'Şifre sıfırlama linki e-posta adresinize gönderildi',
+      // Token included in development/test for automated testing
+      resetToken: result.resetToken
+    });
+  });
+
+  /**
+   * Reset password with token
+   */
+  static resetPassword = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      throw AppError.validation('Token ve yeni şifre gereklidir');
+    }
+
+    await AuthService.resetPassword(token, newPassword);
+
+    res.json({
+      success: true,
+      message: 'Şifre başarıyla güncellendi'
     });
   });
 

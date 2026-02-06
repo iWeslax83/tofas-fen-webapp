@@ -94,7 +94,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
   };
 
   getErrorIcon = (error: AppError) => {
-    switch (error.code) {
+    switch (error.type) {
       case ErrorType.NETWORK:
         return <Wifi size={48} className="error-icon-network" />;
       case ErrorType.AUTHENTICATION:
@@ -140,7 +140,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     }
 
     // Show refresh for client errors
-    if (error.code === ErrorType.CLIENT) {
+    if (error.type === ErrorType.CLIENT) {
       actions.push({
         label: 'Sayfayı Yenile',
         icon: <RefreshCw size={16} />,
@@ -150,7 +150,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     }
 
     // Show home for authentication errors
-    if (error.code === ErrorType.AUTHENTICATION) {
+    if (error.type === ErrorType.AUTHENTICATION) {
       actions.push({
         label: 'Ana Sayfaya Dön',
         icon: <Home size={16} />,
@@ -185,7 +185,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
               <div className="error-info">
                 <div className="error-type">
                   <span className="error-label">Hata Türü:</span>
-                  <span className="error-value">{error.code}</span>
+                  <span className="error-value">{error.type}</span>
                 </div>
                 <div className="error-severity">
                   <span className="error-label">Önem:</span>

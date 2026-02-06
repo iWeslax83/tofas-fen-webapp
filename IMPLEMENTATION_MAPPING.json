@@ -1,0 +1,801 @@
+{
+  "analysis_metadata": {
+    "type": "Implementation Planning - Code Deletion & Cleanup Analysis",
+    "analysis_date": "2026-02-06",
+    "scope": "Research phase - no implementation performed",
+    "purpose": "Provide exact file paths and code locations for Bakım and Kulüp system deletion"
+  },
+
+  "1_bakım_sistem_deletion_mapping": {
+    "description": "Room Maintenance Request System (Oda Bakım Talepleri) - Complete deletion mapping",
+    "sections": {
+      "frontend_pages": {
+        "files_to_delete": [
+          {
+            "path": "client/src/pages/Dashboard/MaintenanceRequestPage.tsx",
+            "size": "509 lines",
+            "purpose": "Main UI for maintenance requests (students can create/view requests)",
+            "roles_affected": ["student", "admin", "hizmetli"],
+            "features": "Form submission, request list, status tracking, notes display"
+          },
+          {
+            "path": "client/src/pages/Dashboard/AdminRequestsPage.tsx",
+            "purpose": "Admin panel for maintenance request management",
+            "roles_affected": ["admin", "hizmetli"],
+            "features": "View all requests, update status, add admin notes, assign work"
+          },
+          {
+            "path": "client/src/pages/Dashboard/MaintenanceRequestPage.css",
+            "purpose": "Styling for maintenance request page"
+          }
+        ],
+        "css_files_to_clean": [
+          "client/src/pages/Dashboard/MaintenanceRequestPage.css"
+        ]
+      },
+      "frontend_routing": {
+        "routes_to_delete_in_AppRoutes.tsx": [
+          {
+            "path": "client/src/routes/AppRoutes.tsx",
+            "line_range": "35, 35",
+            "code": "const MaintenanceRequestPage = lazy(() => import('../pages/Dashboard/MaintenanceRequestPage'));",
+            "type": "lazy import statement"
+          },
+          {
+            "path": "client/src/routes/AppRoutes.tsx",
+            "line_range": "161, 167",
+            "routes": [
+              "/student/bakim-talepleri",
+              "/hizmetli/bakim-talepleri",
+              "/admin/bakim-talepleri"
+            ],
+            "code_snippet": "Route path=\"/student/bakim-talepleri\" element={<MaintenanceRequestPage />}\nRoute path=\"/hizmetli/bakim-talepleri\" element={<AdminRequestsPage />}\nRoute path=\"/admin/bakim-talepleri\" element={<AdminRequestsPage />}"
+          }
+        ],
+        "related_imports": [
+          {
+            "file": "client/src/routes/AppRoutes.tsx",
+            "line": "36",
+            "import": "const AdminRequestsPage = lazy(() => import('../pages/Dashboard/AdminRequestsPage'));",
+            "note": "Check if AdminRequestsPage is used only for maintenance - if only for maintenance, can be deleted"
+          }
+        ]
+      },
+      "frontend_components": {
+        "components_referencing_maintenance": [
+          {
+            "file": "client/src/components/ModernDashboard.tsx",
+            "references": "dashboardButtons filtering",
+            "action": "No component deletion needed - filtering will remove maintenance items automatically"
+          },
+          {
+            "file": "client/src/components/NavigationComponents.tsx",
+            "references": "Uses dashboardButtons from config",
+            "action": "No component deletion needed - filtering will remove maintenance items"
+          }
+        ]
+      },
+      "frontend_dashboard_config": {
+        "file": "client/src/pages/Dashboard/dashboardButtonConfig.ts",
+        "buttons_to_remove": [
+          {
+            "key": "student-maintenance-request",
+            "line_range": "120, 128",
+            "button_config": "{\n  key: 'student-maintenance-request',\n  title: 'Bakım talepleri',\n  description: 'Oda bakım talebi oluştur',\n  route: '/student/bakim-talepleri',\n  roles: ['student'],\n  showForDormitory: true,\n  icon: Wrench,\n  color: 'teal',\n  actionText: 'Talep Oluştur',\n}",
+            "scope": "Only visible to dormitory students"
+          },
+          {
+            "key": "maintenance-requests",
+            "line_range": "293, 304",
+            "button_config": "{\n  key: 'maintenance-requests',\n  title: 'Oda Bakım-Onarım Talepleri',\n  description: 'Bakım taleplerini görüntüle ve yönet',\n  route: '/admin/bakim-talepleri',\n  roles: ['admin', 'hizmetli'],\n  crudRoles: ['admin', 'hizmetli'],\n  icon: Wrench,\n  color: 'teal',\n  actionText: 'Talepleri Yönet',\n}",
+            "scope": "Admin and hizmetli"
+          }
+        ]
+      },
+      "frontend_api_integration": {
+        "apiService.ts": {
+          "file": "client/src/utils/apiService.ts",
+          "lines": "494-510 (approximately)",
+          "methods_to_remove": [
+            "DormitoryService.getMaintenanceRequests()",
+            "DormitoryService.createMaintenanceRequest()",
+            "DormitoryService.updateMaintenanceRequest()",
+            "DormitoryService.deleteMaintenanceRequest()"
+          ],
+          "note": "Check if DormitoryService is used for other endpoints (meals, supervisors) - may need to keep partial service"
+        },
+        "apiEndpoints.ts": {
+          "file": "client/src/utils/apiEndpoints.ts",
+          "lines": "128, 133",
+          "endpoints_to_remove": [
+            "MAINTENANCE.BASE: '/api/maintenance'",
+            "MAINTENANCE.CREATE: '/api/maintenance'",
+            "MAINTENANCE.UPDATE: (id: string) => `/api/maintenance/${id}`",
+            "MAINTENANCE.DELETE: (id: string) => `/api/maintenance/${id}`",
+            "MAINTENANCE.MY_REQUESTS: '/api/maintenance/my-requests'"
+          ]
+        }
+      },
+      "frontend_hooks": {
+        "dormitoryQueries.ts": {
+          "file": "client/src/hooks/queries/dormitoryQueries.ts",
+          "hooks_to_remove": [
+            "useMaintenanceRequests()",
+            "useCreateMaintenanceRequest()",
+            "useUpdateMaintenanceRequest()",
+            "useDeleteMaintenanceRequest()"
+          ]
+        }
+      }
+    },
+    "backend_files": {
+      "models": {
+        "file": "server/src/models/MaintenanceRequest.ts",
+        "lines": "1-37",
+        "action": "DELETE ENTIRE FILE",
+        "fields": "studentId, studentName, roomNumber, issue, status, adminNote, serviceNote",
+        "indexes": "userId, status, priority, createdAt"
+      },
+      "routes": {
+        "maintenance_routes_file": {
+          "file": "server/src/routes/MaintenanceRequest.ts",
+          "lines": "1-138",
+          "action": "DELETE ENTIRE FILE",
+          "endpoints": [
+            "GET /api/maintenance",
+            "POST /api/maintenance",
+            "GET /api/maintenance/:id",
+            "PATCH /api/maintenance/:id",
+            "DELETE /api/maintenance/:id"
+          ]
+        },
+        "dormitory_routes_maintenance_section": {
+          "file": "server/src/routes/Dormitory.ts",
+          "lines": "301-438",
+          "action": "DELETE MAINTENANCE ROUTES SECTION",
+          "routes_to_delete": [
+            "POST /api/dormitory/maintenance (line 304)",
+            "GET /api/dormitory/maintenance (line 352)",
+            "GET /api/dormitory/maintenance/student/:studentId (line 372)",
+            "GET /api/dormitory/maintenance/my-requests (line 386)",
+            "PATCH /api/dormitory/maintenance/:id (line 399)",
+            "DELETE /api/dormitory/maintenance/:id (line 413)"
+          ],
+          "import_cleanup": {
+            "file": "server/src/routes/Dormitory.ts",
+            "line": "5",
+            "current": "import { MealList, SupervisorList, MaintenanceRequest, User } from \"../models\";",
+            "updated": "import { MealList, SupervisorList, User } from \"../models\";",
+            "note": "Remove MaintenanceRequest import"
+          }
+        }
+      },
+      "model_exports": {
+        "file": "server/src/models/index.ts",
+        "lines": "7, 15, 30, 38",
+        "exports_to_remove": [
+          "export { MaintenanceRequest } from './MaintenanceRequest';",
+          "export type { IMaintenanceRequest } from './MaintenanceRequest';"
+        ]
+      }
+    },
+    "database": {
+      "collections_to_drop": [
+        {
+          "name": "maintenance_requests",
+          "command": "db.maintenance_requests.drop()",
+          "indexes_to_remove": [
+            "userId",
+            "status",
+            "priority",
+            "createdAt"
+          ]
+        }
+      ],
+      "mongodb_init": {
+        "file": "mongo-init.js",
+        "lines": "13, 63-66",
+        "actions": [
+          "Remove: db.createCollection('maintenance_requests');",
+          "Remove index creation lines: db.maintenance_requests.createIndex(...)"
+        ]
+      }
+    },
+    "configuration": {
+      "dashboard_button_removal": {
+        "file": "client/src/pages/Dashboard/dashboardButtonConfig.ts",
+        "icons_still_used_elsewhere": ["Wrench is used in sync button - safe to keep import"]
+      }
+    }
+  },
+
+  "2_kulüp_sistem_deletion_mapping": {
+    "description": "Club Management System (Kulüp Yönetimi) - Complete deletion mapping",
+    "sections": {
+      "frontend_pages": {
+        "files_to_delete": [
+          {
+            "path": "client/src/pages/Dashboard/MyClubsPage.tsx",
+            "size": "~300 lines",
+            "purpose": "Student/user club listing, invites, join/leave functionality",
+            "roles": ["student", "parent"]
+          },
+          {
+            "path": "client/src/pages/Dashboard/AdminClubsPage.tsx",
+            "size": "~330 lines",
+            "purpose": "Admin panel for club creation and management",
+            "roles": ["admin"]
+          },
+          {
+            "path": "client/src/pages/Dashboard/ClubDetailPage.tsx",
+            "size": ">1400 lines",
+            "purpose": "Full club detail view with tabs: info, chat, members, events, announcements, gallery, admin",
+            "features": "Most complex club page",
+            "roles": ["admin", "student"]
+          },
+          {
+            "path": "client/src/pages/Dashboard/JoinClubPage.tsx",
+            "size": "~163 lines",
+            "purpose": "Club join confirmation page (accessed via invite links)",
+            "roles": ["student"]
+          },
+          {
+            "path": "client/src/pages/Dashboard/MyClubsPage.css",
+            "purpose": "Styling for my clubs page"
+          },
+          {
+            "path": "client/src/pages/Dashboard/AdminClubsPage.css",
+            "purpose": "Styling for admin clubs page"
+          },
+          {
+            "path": "client/src/pages/Dashboard/ClubDetailPage.css",
+            "purpose": "Styling for club detail page (likely large)"
+          }
+        ]
+      },
+      "frontend_routing": {
+        "routes_file": "client/src/routes/AppRoutes.tsx",
+        "lazy_imports_to_remove": [
+          {
+            "line": "58",
+            "import": "const JoinClubPage = lazy(() => import('../pages/Dashboard/JoinClubPage'));"
+          },
+          {
+            "line": "59",
+            "import": "const ClubDetailPage = lazy(() => import('../pages/Dashboard/ClubDetailPage'));"
+          },
+          {
+            "line": "60",
+            "import": "const AdminClubsPage = lazy(() => import('../pages/Dashboard/AdminClubsPage'));"
+          },
+          {
+            "line": "61",
+            "import": "const MyClubsPage = lazy(() => import('../pages/Dashboard/MyClubsPage'));"
+          }
+        ],
+        "routes_to_delete": [
+          {
+            "path": "/katil/:clubId",
+            "element": "JoinClubPage",
+            "description": "Club join page"
+          },
+          {
+            "path": "/join/:code",
+            "element": "JoinClubPage",
+            "description": "Join via invite code"
+          },
+          {
+            "path": "/student/kulup/:clubId",
+            "element": "ClubDetailPage",
+            "description": "Club detail view for students"
+          },
+          {
+            "path": "/admin/kulupler",
+            "element": "AdminClubsPage",
+            "description": "Admin clubs management"
+          },
+          {
+            "path": "/student/kuluplerim",
+            "element": "MyClubsPage",
+            "description": "My clubs (student)"
+          },
+          {
+            "path": "/parent/kuluplerim",
+            "element": "MyClubsPage",
+            "description": "My clubs (parent)"
+          }
+        ]
+      },
+      "frontend_dashboard_config": {
+        "file": "client/src/pages/Dashboard/dashboardButtonConfig.ts",
+        "buttons_to_remove": [
+          {
+            "key": "my-clubs-student",
+            "line_range": "54, 62",
+            "title": "Kulüplerim",
+            "route": "/student/kuluplerim",
+            "roles": ["student"]
+          },
+          {
+            "key": "my-clubs-parent",
+            "line_range": "237, 245",
+            "title": "Kulüplerim",
+            "route": "/parent/kuluplerim",
+            "roles": ["parent"]
+          },
+          {
+            "key": "admin-clubs",
+            "line_range": "305, 313",
+            "title": "Kulüpler",
+            "route": "/admin/kulupler",
+            "roles": ["admin"]
+          }
+        ]
+      },
+      "frontend_api_integration": {
+        "apiService.ts": {
+          "file": "client/src/utils/apiService.ts",
+          "service_class": "ClubService",
+          "line_range": "357-440 (approximately)",
+          "methods_to_remove": [
+            "getClubs()",
+            "getClubById(id)",
+            "createClub(clubData)",
+            "updateClub(id, clubData)",
+            "deleteClub(id)",
+            "joinClub(id)",
+            "leaveClub(id)",
+            "getClubMembers(id)",
+            "addClubMember(id, memberData)",
+            "removeClubMember(id, memberId)",
+            "changeClubMemberRole(id, memberId, newRole)",
+            "inviteClubMember(id, userId, role)",
+            "createEvent(clubId, eventData)",
+            "deleteEvent(clubId, eventId)",
+            "createAnnouncement(clubId, announcementData)",
+            "deleteAnnouncement(clubId, announcementId)",
+            "getClubRequests(id)",
+            "acceptClubRequest(id, userId)",
+            "rejectClubRequest(id, userId)",
+            "getUserClubs(userId)",
+            "getUserClubInvites(userId)"
+          ]
+        },
+        "apiEndpoints.ts": {
+          "file": "client/src/utils/apiEndpoints.ts",
+          "lines": "79-108",
+          "endpoints_to_remove": [
+            "CLUBS.BASE: '/api/clubs'",
+            "CLUBS.CREATE: '/api/clubs/create'",
+            "CLUBS.UPDATE: (id) => `/api/clubs/${id}`",
+            "CLUBS.DELETE: (id) => `/api/clubs/${id}`",
+            "CLUBS.GET_BY_ID: (id) => `/api/clubs/${id}`",
+            "CLUBS.JOIN: (id) => `/api/clubs/${id}/join`",
+            "CLUBS.LEAVE: (id) => `/api/clubs/${id}/leave`",
+            "CLUBS.MEMBERS (entire nested object)",
+            "CLUBS.REQUESTS (entire nested object)",
+            "CLUBS.INVITES (entire nested object)",
+            "CLUBS.USER (entire nested object)"
+          ]
+        }
+      },
+      "frontend_hooks": {
+        "file": "client/src/hooks/queries/clubQueries.ts (if exists)",
+        "action": "DELETE ENTIRE FILE IF EXISTS",
+        "likely_hooks": [
+          "useClubs()",
+          "useClubById()",
+          "useCreateClub()",
+          "useUpdateClub()",
+          "useDeleteClub()",
+          "useClubMembers()",
+          "useUserClubs()"
+        ]
+      }
+    },
+    "backend_files": {
+      "models": {
+        "models_to_delete": [
+          {
+            "file": "server/src/models/Club.ts",
+            "lines": "1-75",
+            "fields": "id, name, presidentId, logo, description, socialLinks, members[], roles, chats, events, announcements, requests",
+            "action": "DELETE ENTIRE FILE"
+          },
+          {
+            "file": "server/src/models/ClubAnnouncement.ts",
+            "fields": "clubId, content, createdBy, timestamps",
+            "action": "DELETE ENTIRE FILE"
+          },
+          {
+            "file": "server/src/models/ClubEvent.ts",
+            "fields": "clubId, date, location, description, capacity",
+            "action": "DELETE ENTIRE FILE"
+          },
+          {
+            "file": "server/src/models/ClubChat.ts",
+            "fields": "clubId, userId, message, timestamp",
+            "action": "DELETE ENTIRE FILE"
+          }
+        ]
+      },
+      "routes": {
+        "clubs_routes": {
+          "file": "server/src/routes/clubs.ts",
+          "lines": "1-683",
+          "action": "DELETE ENTIRE FILE",
+          "endpoint_count": "41 endpoints (see endpoint details below)"
+        },
+        "club_endpoints": [
+          "GET /api/clubs",
+          "GET /api/clubs/:clubId",
+          "GET /api/clubs/user/:userId",
+          "POST /api/clubs",
+          "DELETE /api/clubs/:clubId",
+          "PATCH /api/clubs/:clubId",
+          "GET /api/clubs/:clubId/chats",
+          "POST /api/clubs/:clubId/chats",
+          "DELETE /api/clubs/:clubId/chats/:timestamp",
+          "GET /api/clubs/:clubId/events",
+          "POST /api/clubs/:clubId/events",
+          "DELETE /api/clubs/:clubId/events/:eventId",
+          "GET /api/clubs/:clubId/announcements",
+          "POST /api/clubs/:clubId/announcements",
+          "DELETE /api/clubs/:clubId/announcements/:announcementId",
+          "DELETE /api/clubs/:clubId/members/:userId",
+          "PATCH /api/clubs/:clubId/roles",
+          "PUT /api/clubs/:clubId/members/:memberId/role",
+          "GET /api/clubs/:clubId/requests",
+          "POST /api/clubs/:clubId/requests",
+          "DELETE /api/clubs/:clubId/requests/:userId",
+          "POST /api/clubs/:clubId/requests/:userId/accept",
+          "POST /api/clubs/:clubId/requests/:userId/reject",
+          "PATCH /api/clubs/:clubId/meta",
+          "GET /api/clubs/:clubId/gallery",
+          "POST /api/clubs/:clubId/gallery",
+          "DELETE /api/clubs/:clubId/gallery/:mediaId",
+          "GET /api/clubs/:clubId/announcements/:announcementId/comments",
+          "POST /api/clubs/:clubId/announcements/:announcementId/comments",
+          "DELETE /api/clubs/:clubId/announcements/:announcementId/comments/:commentId",
+          "GET /api/clubs/:clubId/notifications",
+          "POST /api/clubs/:clubId/notifications",
+          "GET /api/clubs/:clubId/invite-links",
+          "POST /api/clubs/:clubId/invite-links",
+          "DELETE /api/clubs/:clubId/invite-links/:linkCode",
+          "POST /api/clubs/join-by-link/:inviteCode",
+          "DELETE /api/clubs/:clubId/secure",
+          "GET /api/clubs/search-users",
+          "GET /api/clubs/invites/:userId",
+          "POST /api/clubs/:clubId/invite"
+        ]
+      },
+      "model_exports": {
+        "file": "server/src/models/index.ts",
+        "exports_to_remove": [
+          {
+            "line": "7",
+            "export": "export { Club } from './Club';"
+          },
+          {
+            "line": "8",
+            "export": "export { ClubEvent } from './ClubEvent';"
+          },
+          {
+            "line": "9",
+            "export": "export { ClubAnnouncement } from './ClubAnnouncement';"
+          },
+          {
+            "line": "10",
+            "export": "export { ClubChat } from './ClubChat';"
+          },
+          {
+            "line": "30",
+            "export": "export type { IClub } from './Club';"
+          },
+          {
+            "line": "31",
+            "export": "export type { IClubEvent } from './ClubEvent';"
+          },
+          {
+            "line": "32",
+            "export": "export type { IClubAnnouncement } from './ClubAnnouncement';"
+          },
+          {
+            "line": "33",
+            "export": "export type { IClubChat } from './ClubChat';"
+          }
+        ]
+      }
+    },
+    "database": {
+      "collections_to_drop": [
+        "clubs",
+        "club_announcements",
+        "club_events",
+        "club_chat"
+      ],
+      "mongodb_init": {
+        "file": "mongo-init.js",
+        "collections_to_remove": [
+          {
+            "line": "7",
+            "code": "db.createCollection('clubs');"
+          },
+          {
+            "line": "23",
+            "code": "db.createCollection('club_announcements');"
+          },
+          {
+            "line": "24",
+            "code": "db.createCollection('club_events');"
+          },
+          {
+            "line": "25",
+            "code": "db.createCollection('club_chat');"
+          }
+        ],
+        "indexes_to_remove": [
+          {
+            "lines": "37-56",
+            "collections": "clubs (multiple indexes)"
+          },
+          {
+            "lines": "99-106",
+            "collections": "club_announcements, club_events, club_chat"
+          }
+        ]
+      }
+    }
+  },
+
+  "3_dashboard_navigation_cleanup": {
+    "description": "Components that reference maintenance and club systems",
+    "dashboard_component": {
+      "file": "client/src/components/ModernDashboard.tsx",
+      "usage": "Displays all dashboard buttons from dashboardButtonConfig",
+      "action": "No deletion - buttons will auto-filter based on roles and visibility",
+      "import_line": "9",
+      "import": "import { dashboardButtons } from '../pages/Dashboard/dashboardButtonConfig';"
+    },
+    "navigation_components": {
+      "file": "client/src/components/NavigationComponents.tsx",
+      "line_range": "1-774",
+      "usage": "Sidebar navigation, breadcrumbs, mobile menu - uses dashboardButtons",
+      "action": "No deletion - filtering works automatically",
+      "imports": [
+        {
+          "line": "36",
+          "import": "import { dashboardButtons } from '../pages/Dashboard/dashboardButtonConfig';"
+        },
+        {
+          "line": "227",
+          "usage": "const roleItems = dashboardButtons.filter(...)"
+        }
+      ]
+    },
+    "navigation_component_documentation": {
+      "file": "client/src/components/NavigationComponents.md",
+      "action": "Update documentation to remove references to maintenance/club systems",
+      "update_needed": true
+    },
+    "dashboard_button_config": {
+      "file": "client/src/pages/Dashboard/dashboardButtonConfig.ts",
+      "scope": "Source of truth for all dashboard buttons",
+      "total_buttons_defined": 50,
+      "buttons_to_remove": 3,
+      "buttons_after_deletion": 47,
+      "cleanup_steps": [
+        "Remove student-maintenance-request button (line 120-128)",
+        "Remove maintenance-requests button (line 293-304)",
+        "Remove my-clubs-student button (line 54-62)",
+        "Remove my-clubs-parent button (line 237-245)",
+        "Remove admin-clubs button (line 305-313)"
+      ]
+    }
+  },
+
+  "4_tailwind_installation_analysis": {
+    "description": "Tailwind CSS setup requirements and current state",
+    "postcss_configuration": {
+      "status": "NOT FOUND",
+      "location_checked": "client/postcss.config.js or postcss.config.ts",
+      "finding": "No postcss.config.js found in client directory",
+      "implication": "PostCSS configuration needs to be created if Tailwind CSS will be added"
+    },
+    "tailwind_configuration": {
+      "status": "NOT FOUND",
+      "location_checked": "client/tailwind.config.js or tailwind.config.ts",
+      "finding": "No tailwind.config.js found",
+      "implication": "Will need to be created for Tailwind CSS setup"
+    },
+    "current_styling_approach": {
+      "entry_point": "client/src/index.css",
+      "lines": "1-7839 total",
+      "imports": [
+        {
+          "line": "1",
+          "import": "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap');"
+        },
+        {
+          "line": "2",
+          "import": "@import url('./styles/theme.css');"
+        }
+      ],
+      "features": [
+        "Google Fonts: Inter, Poppins",
+        "Custom CSS animations (gradient-x, float-logo, blob1, blob2)",
+        "CSS variables for theming",
+        "Large CSS file with custom utilities"
+      ]
+    },
+    "design_tokens": {
+      "file": "client/src/design-tokens/tokens.ts",
+      "lines": "1-134",
+      "type": "TypeScript design tokens (not CSS variables)",
+      "contents": {
+        "colors": {
+          "primary": "red variations",
+          "secondary": "blue, green, purple, orange, yellow, indigo, teal",
+          "neutral": "gray scale from white to gray900"
+        },
+        "gradients": "primary, secondary, success, warning",
+        "shadows": "sm, md, lg, xl, 2xl",
+        "borderRadius": "sm to full",
+        "spacing": "1-24 (rem based)",
+        "typography": "fontFamily, fontSize, fontWeight, lineHeight"
+      },
+      "usage": "Exported as tokens object for use in component styling"
+    },
+    "css_architecture": {
+      "directory": "client/src/styles/",
+      "main_file": "client/src/styles/theme.css",
+      "approach": "CSS variables and custom properties",
+      "global_styles": "client/src/index.css (7839 lines)"
+    },
+    "current_dependencies": {
+      "package_json_location": "client/package.json",
+      "related_packages": [
+        {
+          "package": "tailwind-merge",
+          "version": "^3.3.1",
+          "note": "Already installed (used for merging Tailwind classes)"
+        },
+        {
+          "package": "postcss-import",
+          "version": "^16.1.1",
+          "type": "devDependency",
+          "note": "Already installed"
+        },
+        {
+          "package": "postcss-nesting",
+          "version": "^13.0.2",
+          "type": "devDependency",
+          "note": "Already installed"
+        },
+        {
+          "package": "postcss-preset-env",
+          "version": "^10.2.4",
+          "type": "devDependency",
+          "note": "Already installed"
+        },
+        {
+          "package": "@fullhuman/postcss-purgecss",
+          "version": "^7.0.2",
+          "type": "devDependency",
+          "note": "Already installed - for CSS purging"
+        }
+      ],
+      "missing_packages": [
+        {
+          "package": "tailwindcss",
+          "reason": "Not found in dependencies"
+        },
+        {
+          "package": "autoprefixer",
+          "reason": "Not found in dependencies"
+        }
+      ]
+    },
+    "tailwind_installation_requirements": {
+      "step_1_npm_packages": [
+        "npm install -D tailwindcss@latest autoprefixer"
+      ],
+      "step_2_create_postcss_config": {
+        "file": "client/postcss.config.js",
+        "content": "module.exports = {\n  plugins: {\n    tailwindcss: {},\n    autoprefixer: {},\n  },\n};"
+      },
+      "step_3_create_tailwind_config": {
+        "file": "client/tailwind.config.js",
+        "template": "export default {\n  content: [\n    './index.html',\n    './src/**/*.{js,ts,jsx,tsx}',\n  ],\n  theme: {\n    extend: {\n      colors: {\n        // Use existing design tokens\n      }\n    },\n  },\n  plugins: [],\n};"
+      },
+      "step_4_add_directives": {
+        "file": "client/src/index.css",
+        "location": "After imports, before animations",
+        "directives": "@tailwind base;\n@tailwind components;\n@tailwind utilities;",
+        "note": "Add after line 2, before line 5 (before @keyframes)"
+      },
+      "step_5_vite_config": {
+        "file": "client/vite.config.ts",
+        "check": "Verify PostCSS is configured (usually auto-detected by Vite)"
+      }
+    },
+    "css_file_locations": {
+      "global_styles": "client/src/index.css",
+      "theme_file": "client/src/styles/theme.css",
+      "component_specific_css": "Multiple .css files alongside .tsx files",
+      "tailwind_directives_location": "Should be added to client/src/index.css"
+    }
+  },
+
+  "5_shared_types_analysis": {
+    "description": "API types and interfaces in shared directory",
+    "types_directory": "shared/types/",
+    "files_present": [
+      "announcement.ts",
+      "api.ts",
+      "homework.ts",
+      "note.ts",
+      "user.ts",
+      "index.ts"
+    ],
+    "club_maintenance_types": {
+      "finding": "No specific club or maintenance type files found in shared/types/",
+      "implication": "Types may be defined inline in respective page/component files or server models"
+    },
+    "cleanup_needed": "Search and remove any club/maintenance type references if they exist in shared/types files"
+  },
+
+  "6_server_integration_points": {
+    "main_index": "server/src/index.ts",
+    "simple_server": "server/src/simple-server.ts",
+    "routes_to_disable": [
+      {
+        "file": "server/src/simple-server.ts",
+        "line": "79",
+        "current": "// app.use('/api/clubs', v1Routes);",
+        "note": "Already commented out"
+      },
+      {
+        "file": "server/src/simple-server.ts",
+        "line": "84",
+        "current": "// app.use('/api/maintenance-requests', v1Routes);",
+        "note": "Already commented out"
+      }
+    ]
+  },
+
+  "7_migration_checklist": {
+    "bakım_deletion_order": [
+      "1. Delete button config entries (dashboardButtonConfig.ts - 2 buttons)",
+      "2. Delete frontend pages (MaintenanceRequestPage.tsx, AdminRequestsPage)",
+      "3. Delete frontend routes (AppRoutes.tsx)",
+      "4. Delete frontend API integration (apiService.ts, apiEndpoints.ts)",
+      "5. Delete frontend hooks (dormitoryQueries.ts - maintenance hooks only)",
+      "6. Delete backend routes (Dormitory.ts maintenance section, MaintenanceRequest.ts)",
+      "7. Delete backend models (MaintenanceRequest.ts)",
+      "8. Remove model exports (models/index.ts)",
+      "9. Delete database collection (mongo-init.js)",
+      "10. Test all dormitory features (meals, supervisors) still work"
+    ],
+    "kulüp_deletion_order": [
+      "1. Delete button config entries (dashboardButtonConfig.ts - 3 buttons)",
+      "2. Delete frontend pages (MyClubsPage, AdminClubsPage, ClubDetailPage, JoinClubPage)",
+      "3. Delete frontend routes (AppRoutes.tsx - 6 routes)",
+      "4. Delete frontend API integration (apiService.ts ClubService, apiEndpoints.ts CLUBS)",
+      "5. Delete frontend hooks (clubQueries.ts if exists)",
+      "6. Delete backend routes (clubs.ts - entire 683 line file)",
+      "7. Delete backend models (Club.ts, ClubEvent.ts, ClubAnnouncement.ts, ClubChat.ts)",
+      "8. Remove model exports (models/index.ts)",
+      "9. Delete database collections (mongo-init.js - 4 collections and their indexes)",
+      "10. Comprehensive testing of remaining features"
+    ],
+    "tailwind_setup_order": [
+      "1. Install packages: npm install -D tailwindcss autoprefixer",
+      "2. Create postcss.config.js in client root",
+      "3. Create tailwind.config.js in client root",
+      "4. Add @tailwind directives to client/src/index.css",
+      "5. Configure Vite (if needed)",
+      "6. Test Tailwind classes work in components"
+    ]
+  }
+}

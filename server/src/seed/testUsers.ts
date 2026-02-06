@@ -336,7 +336,7 @@ export const createTestUsers = async () => {
 };
 
 // Test kullanıcılarını sil
-export const deleteTestUsers = async () => {
+export const deleteTestUsers = async (): Promise<{ deletedCount?: number }> => {
   try {
     const result = await User.deleteMany({ 
       id: { 

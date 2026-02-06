@@ -19,34 +19,34 @@ export interface ICarziRequest extends Document {
 }
 
 const carziRequestSchema = new Schema<ICarziRequest>({
-  studentId: { 
-    type: String, 
+  studentId: {
+    type: String,
     required: true,
     index: true
   },
-  studentName: { 
-    type: String 
+  studentName: {
+    type: String
   },
-  date: { 
-    type: String, 
+  date: {
+    type: String,
     required: true,
     index: true
   },
-  startTime: { 
-    type: String, 
-    required: true 
+  startTime: {
+    type: String,
+    required: true
   },
-  endTime: { 
-    type: String, 
-    required: true 
+  endTime: {
+    type: String,
+    required: true
   },
-  reason: { 
+  reason: {
     type: String,
     maxlength: 500
   },
-  status: { 
-    type: String, 
-    enum: ['pending', 'approved', 'rejected'], 
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
     default: 'pending',
     index: true
   },
@@ -65,7 +65,7 @@ const carziRequestSchema = new Schema<ICarziRequest>({
   adminNote: String,
   approvedBy: String,
   approvedAt: Date,
-}, { 
+}, {
   timestamps: true
 });
 
@@ -81,5 +81,5 @@ carziRequestSchema.index({ studentId: 1, createdAt: -1 }); // Student's recent r
 carziRequestSchema.index({ status: 1, parentApproval: 1 }); // Status and parent approval
 carziRequestSchema.index({ date: 1, status: 1 }); // Date range with status
 
-export const CarziRequest = mongoose.model<ICarziRequest>("CarziRequest", carziRequestSchema);
+export const CarziRequest = mongoose.models.CarziRequest || mongoose.model<ICarziRequest>("CarziRequest", carziRequestSchema);
 

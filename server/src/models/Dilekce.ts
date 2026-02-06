@@ -108,5 +108,5 @@ dilekceSchema.index({ createdAt: -1 }); // Recent requests
 dilekceSchema.index({ reviewedBy: 1, status: 1 }); // Reviewer queries
 dilekceSchema.index({ status: 1, priority: 1, createdAt: -1 }); // Admin dashboard queries
 
-export const Dilekce = mongoose.model<IDilekce>("Dilekce", dilekceSchema);
+export const Dilekce = mongoose.models.Dilekce || mongoose.model<IDilekce>("Dilekce", dilekceSchema);
 

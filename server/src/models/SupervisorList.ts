@@ -18,9 +18,9 @@ const supervisorListSchema = new Schema<ISupervisorList>({
   uploadedBy: { type: String, required: true },
   uploadedAt: { type: Date, default: Date.now },
   isActive: { type: Boolean, default: true }
-}, { 
+}, {
   timestamps: true,
   // Indexes will be created automatically by Mongoose
 });
 
-export const SupervisorList = mongoose.model<ISupervisorList>("SupervisorList", supervisorListSchema);
+export const SupervisorList = mongoose.models.SupervisorList || mongoose.model<ISupervisorList>("SupervisorList", supervisorListSchema);

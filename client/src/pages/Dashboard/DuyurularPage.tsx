@@ -173,10 +173,10 @@ export default function DuyurularPage() {
               e.preventDefault();
               const formData = new FormData(e.target as HTMLFormElement);
               const announcementData = {
-                title: formData.get('title'),
-                content: formData.get('content'),
+                title: String(formData.get('title') || ''),
+                content: String(formData.get('content') || ''),
                 date: new Date().toISOString(),
-                expire: formData.get('expire') || undefined
+                expire: formData.get('expire') ? String(formData.get('expire')) : undefined
               };
               try {
                 const { error } = await AnnouncementService.createAnnouncement(announcementData);

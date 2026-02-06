@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { User } from 'lucide-react';
 import { useAuthContext } from "../../contexts/AuthContext";
-import { UserService } from "../../utils/apiService";
-import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import BackButton from '../../components/BackButton';

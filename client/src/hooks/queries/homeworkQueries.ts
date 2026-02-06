@@ -101,7 +101,7 @@ export function useCreateHomework() {
       return response as any;
     },
     {
-      invalidateQueries: [queryKeys.homeworks.all],
+      invalidateQueries: [[...queryKeys.homeworks.all]],
       successMessage: 'Ödev oluşturuldu',
     }
   );
@@ -115,7 +115,7 @@ export function useUpdateHomework() {
       return response as any;
     },
     {
-      invalidateQueries: [queryKeys.homeworks.all],
+      invalidateQueries: [[...queryKeys.homeworks.all]],
       successMessage: 'Ödev güncellendi',
     }
   );
@@ -129,7 +129,7 @@ export function useDeleteHomework() {
       return response as any;
     },
     {
-      invalidateQueries: [queryKeys.homeworks.all],
+      invalidateQueries: [[...queryKeys.homeworks.all]],
       successMessage: 'Ödev silindi',
     }
   );

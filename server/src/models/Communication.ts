@@ -211,8 +211,8 @@ const MessageSchema = new Schema<IMessage>({
   senderName: { type: String, required: true },
   senderRole: { type: String, required: true },
   content: { type: String, required: true },
-  contentType: { 
-    type: String, 
+  contentType: {
+    type: String,
     enum: ['text', 'image', 'file', 'audio', 'video', 'location', 'system'],
     default: 'text'
   },
@@ -255,8 +255,8 @@ const MessageSchema = new Schema<IMessage>({
       height: { type: Number }
     }
   },
-  priority: { 
-    type: String, 
+  priority: {
+    type: String,
     enum: ['low', 'normal', 'high', 'urgent'],
     default: 'normal'
   },
@@ -270,8 +270,8 @@ const MessageSchema = new Schema<IMessage>({
 // Conversation Schema
 const ConversationSchema = new Schema<IConversation>({
   id: { type: String, required: true, unique: true },
-  type: { 
-    type: String, 
+  type: {
+    type: String,
     enum: ['direct', 'group', 'broadcast', 'announcement'],
     required: true
   },
@@ -279,8 +279,8 @@ const ConversationSchema = new Schema<IConversation>({
   description: { type: String },
   participants: [{
     userId: { type: String, required: true },
-    role: { 
-      type: String, 
+    role: {
+      type: String,
       enum: ['admin', 'moderator', 'member', 'readonly'],
       default: 'member'
     },
@@ -329,16 +329,16 @@ const EmailSchema = new Schema<IEmail>({
     userId: { type: String },
     email: { type: String, required: true },
     name: { type: String },
-    type: { 
-      type: String, 
+    type: {
+      type: String,
       enum: ['to', 'cc', 'bcc'],
       default: 'to'
     }
   }],
   subject: { type: String, required: true },
   content: { type: String, required: true },
-  contentType: { 
-    type: String, 
+  contentType: {
+    type: String,
     enum: ['text', 'html'],
     default: 'text'
   },
@@ -351,13 +351,13 @@ const EmailSchema = new Schema<IEmail>({
   }],
   replyTo: { type: String },
   forwardedFrom: { type: String },
-  priority: { 
-    type: String, 
+  priority: {
+    type: String,
     enum: ['low', 'normal', 'high'],
     default: 'normal'
   },
-  status: { 
-    type: String, 
+  status: {
+    type: String,
     enum: ['draft', 'sent', 'delivered', 'read', 'failed'],
     default: 'draft'
   },
@@ -378,13 +378,13 @@ const ChatRoomSchema = new Schema<IChatRoom>({
   id: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   description: { type: String },
-  type: { 
-    type: String, 
+  type: {
+    type: String,
     enum: ['public', 'private', 'restricted'],
     default: 'public'
   },
-  category: { 
-    type: String, 
+  category: {
+    type: String,
     enum: ['general', 'academic', 'social', 'announcements', 'support', 'events'],
     default: 'general'
   },
@@ -392,8 +392,8 @@ const ChatRoomSchema = new Schema<IChatRoom>({
   currentParticipants: { type: Number, default: 0 },
   participants: [{
     userId: { type: String, required: true },
-    role: { 
-      type: String, 
+    role: {
+      type: String,
       enum: ['admin', 'moderator', 'member', 'readonly'],
       default: 'member'
     },
@@ -435,8 +435,8 @@ const ContactSchema = new Schema<IContact>({
   contactPhone: { type: String },
   contactRole: { type: String, required: true },
   avatar: { type: String },
-  status: { 
-    type: String, 
+  status: {
+    type: String,
     enum: ['online', 'offline', 'away', 'busy', 'invisible'],
     default: 'offline'
   },
@@ -477,7 +477,7 @@ ContactSchema.index({ userId: 1, isFavorite: 1 });
 ContactSchema.index({ userId: 1, isBlocked: 1 });
 
 // Instance methods
-MessageSchema.methods.markAsRead = function(userId: string) {
+MessageSchema.methods.markAsRead = function (userId: string) {
   const existingRead = this.readBy.find((read: any) => read.userId === userId);
   if (!existingRead) {
     this.readBy.push({ userId, readAt: new Date() });
@@ -485,7 +485,7 @@ MessageSchema.methods.markAsRead = function(userId: string) {
   return this.save();
 };
 
-MessageSchema.methods.markAsDelivered = function(userId: string) {
+MessageSchema.methods.markAsDelivered = function (userId: string) {
   const existingDelivery = this.deliveredTo.find((delivery: any) => delivery.userId === userId);
   if (!existingDelivery) {
     this.deliveredTo.push({ userId, deliveredAt: new Date() });
@@ -493,7 +493,7 @@ MessageSchema.methods.markAsDelivered = function(userId: string) {
   return this.save();
 };
 
-MessageSchema.methods.addReaction = function(userId: string, emoji: string) {
+MessageSchema.methods.addReaction = function (userId: string, emoji: string) {
   const existingReaction = this.reactions.find((reaction: any) => reaction.userId === userId);
   if (existingReaction) {
     existingReaction.emoji = emoji;
@@ -504,7 +504,7 @@ MessageSchema.methods.addReaction = function(userId: string, emoji: string) {
   return this.save();
 };
 
-ConversationSchema.methods.addParticipant = function(userId: string, role: string = 'member') {
+ConversationSchema.methods.addParticipant = function (userId: string, role: string = 'member') {
   const existingParticipant = this.participants.find((p: any) => p.userId === userId);
   if (!existingParticipant) {
     this.participants.push({
@@ -518,7 +518,7 @@ ConversationSchema.methods.addParticipant = function(userId: string, role: strin
   return this.save();
 };
 
-ConversationSchema.methods.removeParticipant = function(userId: string) {
+ConversationSchema.methods.removeParticipant = function (userId: string) {
   const participant = this.participants.find((p: any) => p.userId === userId);
   if (participant) {
     participant.isActive = false;
@@ -529,7 +529,7 @@ ConversationSchema.methods.removeParticipant = function(userId: string) {
 };
 
 // Static methods
-MessageSchema.statics.getUnreadCount = function(userId: string, conversationId: string) {
+MessageSchema.statics.getUnreadCount = function (userId: string, conversationId: string) {
   return this.countDocuments({
     conversationId,
     senderId: { $ne: userId },
@@ -538,7 +538,7 @@ MessageSchema.statics.getUnreadCount = function(userId: string, conversationId: 
   });
 };
 
-ConversationSchema.statics.getConversationsForUser = function(userId: string) {
+ConversationSchema.statics.getConversationsForUser = function (userId: string) {
   return this.find({
     'participants.userId': userId,
     'participants.isActive': true,
@@ -547,8 +547,8 @@ ConversationSchema.statics.getConversationsForUser = function(userId: string) {
 };
 
 // Export models
-export const Message = mongoose.model<IMessage>('Message', MessageSchema);
-export const Conversation = mongoose.model<IConversation>('Conversation', ConversationSchema);
-export const Email = mongoose.model<IEmail>('Email', EmailSchema);
-export const ChatRoom = mongoose.model<IChatRoom>('ChatRoom', ChatRoomSchema);
-export const Contact = mongoose.model<IContact>('Contact', ContactSchema);
+export const Message = mongoose.models.Message || mongoose.model<IMessage>('Message', MessageSchema);
+export const Conversation = mongoose.models.Conversation || mongoose.model<IConversation>('Conversation', ConversationSchema);
+export const Email = mongoose.models.Email || mongoose.model<IEmail>('Email', EmailSchema);
+export const ChatRoom = mongoose.models.ChatRoom || mongoose.model<IChatRoom>('ChatRoom', ChatRoomSchema);
+export const Contact = mongoose.models.Contact || mongoose.model<IContact>('Contact', ContactSchema);

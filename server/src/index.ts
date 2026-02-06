@@ -34,7 +34,7 @@ import monitoringService from './utils/monitoring';
 // Modular routes
 import authRoutes from './modules/auth/routes/authRoutes';
 import userRoutes from './routes/User'; // Keep existing for now
-import clubsRouter from "./routes/clubs";
+
 import notificationRoutes from './routes/Notification';
 import requestRoutes from './routes/Request';
 import homeworkRoutes from "./routes/Homework";
@@ -46,7 +46,7 @@ import monitoringRoutes from './routes/monitoring';
 import scheduleRoutes from './routes/Schedule';
 import mealListRoutes from './routes/MealList';
 import supervisorListRoutes from './routes/SupervisorList';
-import maintenanceRequestRoutes from './routes/MaintenanceRequest';
+// import maintenanceRequestRoutes from './routes/MaintenanceRequest'; // File doesn't exist
 // import analyticsRoutes from './routes/Analytics';
 import calendarRoutes from './routes/Calendar';
 // import fileRoutes from './routes/files';
@@ -362,7 +362,7 @@ app.get('/api-docs-info', (_req: express.Request, res: express.Response) => {
       status: '/status',
       monitoring: '/api/monitoring',
       auth: '/api/auth',
-      clubs: '/api/clubs',
+
       notifications: '/api/notifications',
       requests: '/api/requests',
       user: '/api/user',
@@ -387,10 +387,12 @@ app.get('/api-docs-info', (_req: express.Request, res: express.Response) => {
 
 // Router'lar - Type safety: Express Router tipi zaten doğru, 'as any' gerekmez
 app.use('/api/auth', authRoutes);
-app.use("/api/clubs", clubsRouter);
+
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/homework', homeworkRoutes);
 app.use('/api/homeworks', homeworkRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/notes', notesRoutes);
@@ -399,7 +401,7 @@ app.use('/api/dormitory', dormitoryRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/meals', mealListRoutes);
 app.use('/api/supervisors', supervisorListRoutes);
-app.use('/api/maintenance', maintenanceRequestRoutes);
+// app.use('/api/maintenance', maintenanceRequestRoutes); // Route file doesn't exist
 app.use('/api/monitoring', monitoringRoutes);
 // app.use('/api/analytics', analyticsRoutes);
 app.use('/api/calendar', calendarRoutes);
@@ -507,36 +509,42 @@ app.use(globalErrorHandler);
 
 // Sunucu başlat
 const PORT = process.env.PORT || 3001;
-connectDB()
-  .then(async () => {
-    const server = app.listen(PORT, async () => {
-      logger.info(`🚀 Server started successfully`, {
-        port: PORT,
-        environment: process.env.NODE_ENV || 'development',
-        timestamp: new Date().toISOString(),
+
+// Export app for testing
+export { app };
+
+if (process.env.NODE_ENV !== 'test') {
+  connectDB()
+    .then(async () => {
+      const server = app.listen(PORT, async () => {
+        logger.info(`🚀 Server started successfully`, {
+          port: PORT,
+          environment: process.env.NODE_ENV || 'development',
+          timestamp: new Date().toISOString(),
+        });
+
+        logger.info(`Server running on http://localhost:${PORT}`);
+        logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+        logger.info(`Security middleware active`);
+        logger.info(`Compression enabled`);
+        logger.info(`Logging enabled`);
+        logger.info(`Monitoring enabled - Status: http://localhost:${PORT}/status`);
+        logger.info(`Swagger API Docs: http://localhost:${PORT}/api-docs`);
+        logger.info(`API Info: http://localhost:${PORT}/api-docs-info`);
+        logger.info(`Health Check: http://localhost:${PORT}/health`);
+
+        // Initialize WebSocket for real-time notifications
+        initializeWebSocket(server);
+        logger.info(`WebSocket notifications enabled`);
+
+        // Initialize event-driven architecture
+        const { initializeEventDrivenWebSocket } = await import('./utils/websocket-enhanced');
+        initializeEventDrivenWebSocket();
+        logger.info(`Event-driven architecture enabled`);
       });
-
-      logger.info(`Server running on http://localhost:${PORT}`);
-      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      logger.info(`Security middleware active`);
-      logger.info(`Compression enabled`);
-      logger.info(`Logging enabled`);
-      logger.info(`Monitoring enabled - Status: http://localhost:${PORT}/status`);
-      logger.info(`Swagger API Docs: http://localhost:${PORT}/api-docs`);
-      logger.info(`API Info: http://localhost:${PORT}/api-docs-info`);
-      logger.info(`Health Check: http://localhost:${PORT}/health`);
-
-      // Initialize WebSocket for real-time notifications
-      initializeWebSocket(server);
-      logger.info(`WebSocket notifications enabled`);
-
-      // Initialize event-driven architecture
-      const { initializeEventDrivenWebSocket } = await import('./utils/websocket-enhanced');
-      initializeEventDrivenWebSocket();
-      logger.info(`Event-driven architecture enabled`);
+    })
+    .catch((err) => {
+      logger.error("MongoDB connection failed", { error: err.message });
+      process.exit(1);
     });
-  })
-  .catch((err) => {
-    logger.error("MongoDB connection failed", { error: err.message });
-    process.exit(1);
-  });
+}

@@ -1,8 +1,7 @@
 
 import express from 'express';
 import { User } from '../models/User';
-import { Club } from '../models/Club';
-import { CalendarEvent } from '../models/Calendar'; // Assuming Calendar has Event export or similar, checking file first might be safe but I will guess-check or read first.
+import { CalendarEvent } from '../models/Calendar';
 import { AuditLog } from '../models/AuditLog';
 import { requireAuth } from '../middleware/auth';
 
@@ -15,7 +14,6 @@ router.get('/stats', requireAuth, async (req, res) => {
         const totalStudents = await User.countDocuments({ rol: 'student' });
         const totalTeachers = await User.countDocuments({ rol: 'teacher' });
         const totalParents = await User.countDocuments({ rol: 'parent' });
-        const activeClubs = await Club.countDocuments();
 
         // For now, simple counts or 0 if models complex to query quickly without inspecting
         // Assuming generic query for upcoming events
@@ -33,7 +31,6 @@ router.get('/stats', requireAuth, async (req, res) => {
                 totalStudents,
                 totalTeachers,
                 totalParents,
-                activeClubs,
                 upcomingEvents,
                 recentActivities
             }

@@ -17,7 +17,7 @@ export const API_ENDPOINTS = {
     BASE: '/api/user',
     CREATE: '/api/user/create',
     UPDATE: (id: string) => `/api/user/${id}/update`,
-    DELETE: (id: string) => `/api/user/${id}`,
+    DELETE: (id: string) => `/api/user/${id}/delete`,
     GET_BY_ID: (id: string) => `/api/user/${id}`,
     GET_BY_ROLE: (role: string) => `/api/user?role=${role}`,
     GET_CHILDREN: (parentId: string) => `/api/user/${parentId}/children`,

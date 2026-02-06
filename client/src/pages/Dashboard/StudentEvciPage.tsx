@@ -67,7 +67,7 @@ const StudentEvciPage = () => {
   const { user: authUser } = useAuth(["student"]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [, setToastMessage] = useState<string | null>(null);
+  const [toastMessage] = useState<string | null>(null);
 
   const [requests, setRequests] = useState<EvciTalep[]>([]);
   const [modalOpen, setModalOpen] = useState(false);

@@ -37,7 +37,7 @@ const NoteSchema: Schema = new Schema({
     type: String,
     required: true,
     enum: [
-      'Matematik', 'Fizik', 'Kimya', 'Biyoloji', 'İngilizce', 
+      'Matematik', 'Fizik', 'Kimya', 'Biyoloji', 'İngilizce',
       'Türkçe', 'Tarih', 'Coğrafya', 'Din Kültürü', 'Beden Eğitimi',
       'Müzik', 'Görsel Sanatlar', 'Teknoloji ve Tasarım', 'Bilişim Teknolojileri'
     ]
@@ -47,7 +47,7 @@ const NoteSchema: Schema = new Schema({
     min: 0,
     max: 100,
     validate: {
-      validator: function(v: number) {
+      validator: function (v: number) {
         return v >= 0 && v <= 100;
       },
       message: 'Sınav notu 0-100 arasında olmalıdır'
@@ -58,7 +58,7 @@ const NoteSchema: Schema = new Schema({
     min: 0,
     max: 100,
     validate: {
-      validator: function(v: number) {
+      validator: function (v: number) {
         return v >= 0 && v <= 100;
       },
       message: 'Sınav notu 0-100 arasında olmalıdır'
@@ -69,7 +69,7 @@ const NoteSchema: Schema = new Schema({
     min: 0,
     max: 100,
     validate: {
-      validator: function(v: number) {
+      validator: function (v: number) {
         return v >= 0 && v <= 100;
       },
       message: 'Sınav notu 0-100 arasında olmalıdır'
@@ -80,7 +80,7 @@ const NoteSchema: Schema = new Schema({
     min: 0,
     max: 100,
     validate: {
-      validator: function(v: number) {
+      validator: function (v: number) {
         return v >= 0 && v <= 100;
       },
       message: 'Sözlü notu 0-100 arasında olmalıdır'
@@ -91,7 +91,7 @@ const NoteSchema: Schema = new Schema({
     min: 0,
     max: 100,
     validate: {
-      validator: function(v: number) {
+      validator: function (v: number) {
         return v >= 0 && v <= 100;
       },
       message: 'Proje notu 0-100 arasında olmalıdır'
@@ -103,7 +103,7 @@ const NoteSchema: Schema = new Schema({
     min: 0,
     max: 100,
     validate: {
-      validator: function(v: number) {
+      validator: function (v: number) {
         return v >= 0 && v <= 100;
       },
       message: 'Ortalama 0-100 arasında olmalıdır'
@@ -154,19 +154,19 @@ const NoteSchema: Schema = new Schema({
 });
 
 // Ortalama hesaplama middleware
-NoteSchema.pre('save', function(next) {
+NoteSchema.pre('save', function (next) {
   const grades = [];
-  
+
   if (this.exam1 !== undefined) grades.push(this.exam1);
   if (this.exam2 !== undefined) grades.push(this.exam2);
   if (this.exam3 !== undefined) grades.push(this.exam3);
   if (this.oral !== undefined) grades.push(this.oral);
   if (this.project !== undefined) grades.push(this.project);
-  
+
   if (grades.length > 0) {
     this.average = Math.round((grades.reduce((a, b) => a + b, 0) / grades.length) * 10) / 10;
   }
-  
+
   this.lastUpdated = new Date();
   next();
 });
@@ -176,4 +176,4 @@ NoteSchema.index({ studentId: 1, lesson: 1, semester: 1, academicYear: 1 });
 NoteSchema.index({ source: 1, lastUpdated: 1 });
 NoteSchema.index({ isActive: 1 });
 
-export default mongoose.model<INote>('Note', NoteSchema); 
+export default mongoose.models.Note || mongoose.model<INote>('Note', NoteSchema);

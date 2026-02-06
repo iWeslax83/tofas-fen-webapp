@@ -22,15 +22,15 @@ const evciRequestSchema = new Schema<IEvciRequest>({
   startDate: { type: String, required: true },
   endDate: { type: String, required: true },
   destination: { type: String, required: true },
-  status: { 
-    type: String, 
-    enum: ['pending', 'approved', 'rejected'], 
-    default: 'pending' 
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
   },
   adminNote: String,
   approvedBy: String,
   approvedAt: Date,
-}, { 
+}, {
   timestamps: true
 });
 
@@ -51,4 +51,4 @@ evciRequestSchema.index({ studentId: 1, willGo: 1, status: 1 }); // Student goin
 evciRequestSchema.index({ startDate: 1, endDate: 1, status: 1 }); // Date range with status
 evciRequestSchema.index({ approvedBy: 1, approvedAt: -1 }); // Admin approval history
 
-export const EvciRequest = mongoose.model<IEvciRequest>("EvciRequest", evciRequestSchema);
+export const EvciRequest = mongoose.models.EvciRequest || mongoose.model<IEvciRequest>("EvciRequest", evciRequestSchema);

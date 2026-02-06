@@ -128,7 +128,7 @@ export const roleBasedLimiter = (req: Request, res: Response, next: any) => {
 
   // Different limits based on user role
   let maxRequests: number;
-  let windowMs = 15 * 60 * 1000; // 15 minutes
+  const windowMs = 15 * 60 * 1000; // 15 minutes
 
   switch (user.role) {
     case 'admin':

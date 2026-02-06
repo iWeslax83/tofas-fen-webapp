@@ -32,79 +32,79 @@ export interface INotification extends Document {
 }
 
 const notificationSchema = new Schema<INotification>({
-  userId: { 
-    type: String, 
+  userId: {
+    type: String,
     required: true,
     index: true
   },
-  title: { 
-    type: String, 
+  title: {
+    type: String,
     required: true,
     trim: true,
     maxlength: 200
   },
-  message: { 
-    type: String, 
+  message: {
+    type: String,
     required: true,
     trim: true,
     maxlength: 1000
   },
-  type: { 
-    type: String, 
+  type: {
+    type: String,
     enum: ['info', 'success', 'warning', 'error', 'request', 'approval', 'reminder', 'announcement'],
     default: 'info',
     index: true
   },
-  priority: { 
-    type: String, 
+  priority: {
+    type: String,
     enum: ['low', 'medium', 'high', 'urgent'],
     default: 'medium',
     index: true
   },
-  category: { 
-    type: String, 
+  category: {
+    type: String,
     enum: ['academic', 'administrative', 'social', 'technical', 'security', 'general'],
     default: 'general',
     index: true
   },
-  read: { 
-    type: Boolean, 
+  read: {
+    type: Boolean,
     default: false,
     index: true
   },
-  archived: { 
-    type: Boolean, 
+  archived: {
+    type: Boolean,
     default: false,
     index: true
   },
-  actionUrl: { 
+  actionUrl: {
     type: String,
     trim: true
   },
-  actionText: { 
+  actionText: {
     type: String,
     trim: true,
     maxlength: 50
   },
-  icon: { 
+  icon: {
     type: String,
     trim: true
   },
-  expiresAt: { 
+  expiresAt: {
     type: Date,
     index: true
   },
-  sentAt: { 
+  sentAt: {
     type: Date,
     default: Date.now
   },
-  deliveredAt: { 
+  deliveredAt: {
     type: Date
   },
-  readAt: { 
+  readAt: {
     type: Date
   },
-  metadata: { 
+  metadata: {
     type: Schema.Types.Mixed
   },
   relatedEntity: {
@@ -114,15 +114,15 @@ const notificationSchema = new Schema<INotification>({
     },
     id: String
   },
-  recipients: [{ 
-    type: String 
+  recipients: [{
+    type: String
   }],
   sender: {
     id: String,
     name: String,
     role: String
   }
-}, { 
+}, {
   timestamps: true
 });
 
@@ -134,7 +134,7 @@ notificationSchema.index({ userId: 1, category: 1, createdAt: -1 });
 notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index for expired notifications
 
 // Pre-save middleware to set deliveredAt
-notificationSchema.pre('save', function(next) {
+notificationSchema.pre('save', function (next) {
   if (this.isNew && !this.deliveredAt) {
     this.deliveredAt = new Date();
   }
@@ -142,23 +142,23 @@ notificationSchema.pre('save', function(next) {
 });
 
 // Instance method to mark as read
-notificationSchema.methods.markAsRead = function() {
+notificationSchema.methods.markAsRead = function () {
   this.read = true;
   this.readAt = new Date();
   return this.save();
 };
 
 // Instance method to archive
-notificationSchema.methods.archive = function() {
+notificationSchema.methods.archive = function () {
   this.archived = true;
   return this.save();
 };
 
 // Static method to get unread count
-notificationSchema.statics.getUnreadCount = function(userId: string) {
-  return this.countDocuments({ 
-    userId, 
-    read: false, 
+notificationSchema.statics.getUnreadCount = function (userId: string) {
+  return this.countDocuments({
+    userId,
+    read: false,
     archived: false,
     $or: [
       { expiresAt: { $exists: false } },
@@ -168,7 +168,7 @@ notificationSchema.statics.getUnreadCount = function(userId: string) {
 };
 
 // Static method to get notifications with pagination
-notificationSchema.statics.getNotifications = function(userId: string, options: {
+notificationSchema.statics.getNotifications = function (userId: string, options: {
   page?: number;
   limit?: number;
   read?: boolean;
@@ -188,13 +188,13 @@ notificationSchema.statics.getNotifications = function(userId: string, options: 
   } = options;
 
   const query: any = { userId };
-  
+
   if (read !== undefined) query.read = read;
   if (type) query.type = type;
   if (category) query.category = category;
   if (priority) query.priority = priority;
   if (!includeArchived) query.archived = false;
-  
+
   // Exclude expired notifications
   query.$or = [
     { expiresAt: { $exists: false } },
@@ -207,4 +207,4 @@ notificationSchema.statics.getNotifications = function(userId: string, options: 
     .limit(limit);
 };
 
-export const Notification = mongoose.model<INotification>("Notification", notificationSchema);
+export const Notification = mongoose.models.Notification || mongoose.model<INotification>("Notification", notificationSchema);

@@ -1,23 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { SecureAPI } from '../utils/api';
-import { AppError } from '../utils/AppError';
+import { AppError, ErrorType, ErrorSeverity } from '../utils/AppError';
 import { User } from '../types/user';
+import { TokenManager } from '../utils/security';
+import { AxiosResponse } from 'axios';
 
-// Token expiration check
-const isTokenExpired = (token: string): boolean => {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return Date.now() >= payload.exp * 1000;
-  } catch {
-    return true;
-  }
-};
+// httpOnly cookies are now used for authentication
+// No need to check token expiration from localStorage
 
 interface AuthState {
   user: User | null;
   isLoading: boolean;
-  error: string | null;
+  error: AppError | string | null;
   isAuthenticated: boolean;
 }
 
@@ -42,19 +37,17 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
 
       // Actions
-      // ⚠️ GÜVENLİK: Token'lar artık httpOnly cookie'de saklanıyor
-      // localStorage'a kaydetmeye gerek yok (XSS koruması)
       login: async (id: string, sifre: string) => {
         try {
           set({ isLoading: true, error: null });
-          
+
           const response = await SecureAPI.login(id, sifre, { id, sifre });
           const userData = response.user;
-          
+
           if (!userData || !userData.rol) {
             throw AppError.server('Geçersiz kullanıcı verisi alındı');
           }
-          
+
           const user: User = {
             id: String(userData.id || ''),
             adSoyad: String(userData.adSoyad || ''),
@@ -65,17 +58,9 @@ export const useAuthStore = create<AuthStore>()(
             ...(userData.oda && { oda: String(userData.oda) }),
             pansiyon: Boolean(userData.pansiyon)
           };
-          
-          // Token'lar httpOnly cookie'de, localStorage'a kaydetmeye gerek yok
-          // Backward compatibility: Eğer response'da token varsa kaydet (migration dönemi için)
-          if (response.accessToken && response.refreshToken) {
-            TokenManager.setTokens(
-              response.accessToken,
-              response.refreshToken,
-              response.expiresIn || 900
-            );
-          }
-          
+
+          // Tokens are handled by SecureAPI.login internally if present
+
           set({
             user,
             isAuthenticated: true,
@@ -83,20 +68,21 @@ export const useAuthStore = create<AuthStore>()(
             error: null
           });
         } catch (error) {
-          const mapToAppError = (err: unknown): AppError => {
+            const mapToAppError = (err: unknown): AppError => {
             if (err instanceof AppError) return err;
 
-            const anyErr = err as any;
-            const resp = anyErr?.response;
-            const respData = resp?.data;
-            const messageFromResp = respData?.message || respData?.error;
-            const status = resp?.status;
+            const errObj = err as unknown as Record<string, unknown>;
+            const resp = errObj['response'] as Record<string, unknown> | undefined;
+            const respData = resp?.['data'] as Record<string, unknown> | undefined;
+            const messageFromResp = respData ? ( (typeof respData['message'] === 'string' ? respData['message'] : (typeof respData['error'] === 'string' ? respData['error'] : undefined)) ) : undefined;
+            const status = resp?.['status'] as number | undefined;
 
             const context = {
               statusCode: status,
               response: respData,
-              original: anyErr
-            } as Record<string, unknown>;
+              url: errObj['config'] ? (errObj['config'] as Record<string, unknown>)['url'] : undefined,
+              method: errObj['config'] ? (errObj['config'] as Record<string, unknown>)['method'] : undefined
+            };
 
             if (status === 400) return AppError.validation(messageFromResp || 'İstek doğrulama hatası', context);
             if (status === 401) return AppError.unauthorized(messageFromResp || 'Yetkilendirme hatası', context);
@@ -105,13 +91,19 @@ export const useAuthStore = create<AuthStore>()(
             if (status === 429) return AppError.rateLimit(messageFromResp || 'Çok fazla istek', context);
             if (status && status >= 500) return AppError.server(messageFromResp || 'Sunucu hatası oluştu', context);
 
-            if (anyErr?.code === 'NETWORK_ERROR' || (anyErr?.message && anyErr.message.includes('Network'))) {
-              return AppError.network(messageFromResp || anyErr.message || 'Bağlantı hatası', context);
+            const code = errObj['code'] as string | undefined;
+            const msg = errObj['message'] as string | undefined;
+            if (code === 'NETWORK_ERROR' || (msg && msg.includes('Network'))) {
+              return AppError.network(messageFromResp || msg || 'Bağlantı hatası', context);
             }
 
-            if (anyErr?.message) return new AppError(anyErr.message, anyErr?.code || 'UNKNOWN_ERROR', anyErr?.statusCode, true, context);
-
-            return AppError.server('Giriş yapılırken hata oluştu', context);
+            return new AppError(
+              (errObj['message'] as string) || 'Giriş yapılırken hata oluştu',
+              (errObj['type'] as string) || (errObj['code'] as string) || ErrorType.UNKNOWN,
+              ErrorSeverity.MEDIUM,
+              context,
+              err instanceof Error ? err : undefined
+            );
           };
 
           const appError = mapToAppError(error);
@@ -120,7 +112,7 @@ export const useAuthStore = create<AuthStore>()(
             user: null,
             isAuthenticated: false,
             isLoading: false,
-            error: appError.getUserMessage()
+            error: appError
           });
 
           throw appError;
@@ -128,60 +120,85 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: async () => {
-        try {
-          // Call backend logout to clear httpOnly cookies
-          await fetch('/api/auth/logout', {
-            method: 'POST',
-            credentials: 'include', // Important for cookies
-          });
-        } catch (error) {
-          console.error('Logout API call failed:', error);
-        }
-        
-        // Clear all possible token keys (backward compatibility)
+        // Clear tokens first to prevent race conditions
+        TokenManager.clearTokens();
+
+        localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('auth_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('token_expiry');
         localStorage.removeItem('csrf_token');
-        
+
         set({
           user: null,
           isAuthenticated: false,
           error: null,
           isLoading: false
         });
+
+        try {
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include',
+          });
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.error('Logout API call failed:', error);
+          }
+        }
       },
 
       checkAuth: async () => {
         try {
           set({ isLoading: true, error: null });
-          
-          // Check if we have a valid token - check both possible keys
-          const token = localStorage.getItem('accessToken') || localStorage.getItem('auth_token');
-          if (!token) {
-            set({ isLoading: false, isAuthenticated: false, user: null });
-            return;
+
+          // 1. Try to get user from localStorage (legacy/test support)
+          const storedUser = localStorage.getItem('user');
+          const accessToken = TokenManager.getAccessToken() || localStorage.getItem('accessToken');
+
+          if (accessToken && !TokenManager.isTokenExpired()) {
+            if (storedUser) {
+              try {
+                const user = JSON.parse(storedUser);
+                set({ user, isAuthenticated: true, isLoading: false });
+                return;
+              } catch (e) {
+                localStorage.removeItem('user');
+              }
+            }
+
+            // 2. If no user in localStorage but we have a token, fetch it
+            try {
+              const response = await SecureAPI.get<any>('/user/profile');
+              const userData = response.data?.user || response.data;
+
+              if (userData && userData.rol) {
+                const user: User = {
+                  id: String(userData.id || ''),
+                  adSoyad: String(userData.adSoyad || ''),
+                  rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli',
+                  ...(userData.email && { email: String(userData.email) }),
+                  ...(userData.sinif && { sinif: String(userData.sinif) }),
+                  ...(userData.sube && { sube: String(userData.sube) }),
+                  ...(userData.oda && { oda: String(userData.oda) }),
+                  pansiyon: Boolean(userData.pansiyon)
+                };
+
+                set({ user, isAuthenticated: true, isLoading: false });
+                return;
+              }
+            } catch (e) {
+              // Failed to fetch, continue to httpOnly check
+            }
           }
-          
-          // Check if token is expired
-          if (isTokenExpired(token)) {
-            // Clear all possible token keys
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('token_expiry');
-            set({ isLoading: false, isAuthenticated: false, user: null });
-            return;
-          }
-          
-          // If we have a valid token, try to get user info
+
+          // 3. Fallback to httpOnly cookie check
           try {
-            const response = await SecureAPI.getCurrentUser();
+            const response = await SecureAPI.getCurrentUser() as AxiosResponse;
             const userData = response.data?.user || response.data;
-            
+
             if (userData && userData.rol) {
               const user: User = {
                 id: String(userData.id || ''),
@@ -193,29 +210,12 @@ export const useAuthStore = create<AuthStore>()(
                 ...(userData.oda && { oda: String(userData.oda) }),
                 pansiyon: Boolean(userData.pansiyon)
               };
-              
-              set({
-                user,
-                isAuthenticated: true,
-                isLoading: false,
-                error: null
-              });
+
+              set({ user, isAuthenticated: true, isLoading: false });
             } else {
-              // Invalid user data, clear auth
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('refreshToken');
-              localStorage.removeItem('auth_token');
-              localStorage.removeItem('refresh_token');
-              localStorage.removeItem('token_expiry');
               set({ isLoading: false, isAuthenticated: false, user: null });
             }
           } catch (error) {
-            // Token is invalid or expired, clear auth
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('token_expiry');
             set({ isLoading: false, isAuthenticated: false, user: null });
           }
         } catch (error) {
@@ -267,7 +267,7 @@ export const useAuth = () => {
   const isLoading = useIsLoading();
   const error = useError();
   const isAuthenticated = useIsAuthenticated();
-  
+
   return { user, isLoading, error, isAuthenticated };
 };
 
@@ -278,6 +278,6 @@ export const useAuthActions = () => {
   const clearError = useClearError();
   const setLoading = useSetLoading();
   const updateUser = useUpdateUser();
-  
+
   return { login, logout, checkAuth, clearError, setLoading, updateUser };
 };

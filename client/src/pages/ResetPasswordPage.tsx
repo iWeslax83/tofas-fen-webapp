@@ -23,7 +23,7 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       toast.error('Şifreler eşleşmiyor');
       return;
@@ -40,7 +40,7 @@ export default function ResetPasswordPage() {
         token,
         newPassword: password
       });
-      
+
       toast.success('Şifreniz başarıyla güncellendi');
       navigate('/login');
     } catch (error: unknown) {
@@ -55,7 +55,7 @@ export default function ResetPasswordPage() {
     <div style={{
       minHeight: '100vh',
       width: '100%',
-      background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #6B0000 50%, #8B0000 75%, #1a1a1a 100%)',
+      background: 'var(--gradient-primary-animated, var(--gradient-primary))',
       backgroundSize: '400% 400%',
       animation: 'gradientShift 20s ease infinite',
       display: 'flex',
@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
           50% { background-position: 100% 50%; }
         }
       `}</style>
-      
+
       <div style={{
         position: 'relative',
         zIndex: 1,
@@ -84,21 +84,21 @@ export default function ResetPasswordPage() {
         flexDirection: 'column',
         alignItems: 'center',
       }}>
-        <h1 style={{ 
-          fontSize: 28, 
-          fontWeight: 700, 
-          color: '#8A1538', 
-          margin: '0 0 24px 0', 
+        <h1 style={{
+          fontSize: 28,
+          fontWeight: 700,
+          color: 'var(--primary-red)',
+          margin: '0 0 24px 0',
           letterSpacing: 0.2,
           textAlign: 'center'
         }}>
           🔐 Şifre Sıfırlama
         </h1>
-        
-        <p style={{ 
-          color: '#666', 
-          fontSize: 16, 
-          marginBottom: 24, 
+
+        <p style={{
+          color: '#666',
+          fontSize: 16,
+          marginBottom: 24,
           textAlign: 'center',
           lineHeight: 1.5
         }}>
@@ -107,11 +107,11 @@ export default function ResetPasswordPage() {
 
         <form onSubmit={handleSubmit} style={{ width: '100%' }}>
           <div style={{ marginBottom: 16 }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: 8, 
-              fontWeight: 600, 
-              color: '#495057' 
+            <label style={{
+              display: 'block',
+              marginBottom: 8,
+              fontWeight: 600,
+              color: '#495057'
             }}>
               Yeni Şifre
             </label>
@@ -119,11 +119,11 @@ export default function ResetPasswordPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ 
-                width: '100%', 
-                padding: 12, 
-                border: '1.5px solid #d1d5db', 
-                borderRadius: 8, 
+              style={{
+                width: '100%',
+                padding: 12,
+                border: '1.5px solid #d1d5db',
+                borderRadius: 8,
                 fontSize: 15,
                 boxSizing: 'border-box'
               }}
@@ -133,11 +133,11 @@ export default function ResetPasswordPage() {
           </div>
 
           <div style={{ marginBottom: 24 }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: 8, 
-              fontWeight: 600, 
-              color: '#495057' 
+            <label style={{
+              display: 'block',
+              marginBottom: 8,
+              fontWeight: 600,
+              color: '#495057'
             }}>
               Şifre Tekrar
             </label>
@@ -145,11 +145,11 @@ export default function ResetPasswordPage() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              style={{ 
-                width: '100%', 
-                padding: 12, 
-                border: '1.5px solid #d1d5db', 
-                borderRadius: 8, 
+              style={{
+                width: '100%',
+                padding: 12,
+                border: '1.5px solid #d1d5db',
+                borderRadius: 8,
                 fontSize: 15,
                 boxSizing: 'border-box'
               }}
@@ -161,14 +161,14 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={isLoading}
-            style={{ 
+            style={{
               width: '100%',
-              padding: 14, 
-              background: isLoading ? '#6c757d' : '#8A1538', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: 8, 
-              fontSize: 16, 
+              padding: 14,
+              background: isLoading ? '#6c757d' : 'var(--primary-red)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              fontSize: 16,
               fontWeight: 600,
               cursor: isLoading ? 'not-allowed' : 'pointer',
               opacity: isLoading ? 0.6 : 1,
@@ -179,16 +179,16 @@ export default function ResetPasswordPage() {
           </button>
         </form>
 
-        <div style={{ 
-          marginTop: 24, 
-          textAlign: 'center' 
+        <div style={{
+          marginTop: 24,
+          textAlign: 'center'
         }}>
           <button
             onClick={() => navigate('/login')}
-            style={{ 
+            style={{
               background: 'none',
               border: 'none',
-              color: '#8A1538',
+              color: 'var(--primary-red)',
               fontSize: 14,
               cursor: 'pointer',
               textDecoration: 'underline'

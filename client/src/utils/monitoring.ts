@@ -13,7 +13,7 @@ interface PerformanceMetrics {
 // User analytics interface
 interface UserEvent {
   event: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   timestamp?: number;
 }
 
@@ -158,7 +158,7 @@ export class PerformanceMonitor {
     }
   }
 
-  private sendMetricsToService(metric: any): void {
+  private sendMetricsToService(metric: unknown): void {
     // Send to your analytics service
     fetch('/api/metrics', {
       method: 'POST',

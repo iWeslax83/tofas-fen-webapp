@@ -30,20 +30,21 @@ export const useRenderPerformance = (componentName: string) => {
 /**
  * Hook to debounce function calls
  */
-export const useDebounce = <T extends (...args: any[]) => any>(
+export const useDebounce = <T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number
 ): T => {
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<number | undefined>(undefined);
 
   return useCallback(
     ((...args: Parameters<T>) => {
-      if (timeoutRef.current) {
+      if (timeoutRef.current !== undefined) {
         clearTimeout(timeoutRef.current);
       }
 
-      timeoutRef.current = setTimeout(() => {
-        callback(...(args as any));
+      timeoutRef.current = window.setTimeout(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (callback as any)(...args);
       }, delay);
     }) as T,
     [callback, delay]
@@ -53,7 +54,7 @@ export const useDebounce = <T extends (...args: any[]) => any>(
 /**
  * Hook to throttle function calls
  */
-export const useThrottle = <T extends (...args: any[]) => any>(
+export const useThrottle = <T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number
 ): T => {
@@ -65,7 +66,8 @@ export const useThrottle = <T extends (...args: any[]) => any>(
       
       if (now - lastCallRef.current >= delay) {
         lastCallRef.current = now;
-        callback(...args);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (callback as any)(...args);
       }
     }) as T,
     [callback, delay]
@@ -79,19 +81,12 @@ export const useMemoizedCallback = <T extends (...args: any[]) => any>(
   callback: T,
   deps: React.DependencyList
 ): T => {
-  const memoizedCallback = useRef<T>();
-  const depsRef = useRef<React.DependencyList>();
-
-  if (
-    !memoizedCallback.current ||
-    !depsRef.current ||
-    deps.some((dep, index) => dep !== depsRef.current?.[index])
-  ) {
-    memoizedCallback.current = callback;
-    depsRef.current = deps;
-  }
-
-  return memoizedCallback.current;
+  // Use useCallback with provided deps to produce a stable memoized function
+  // This avoids reading/updating refs during render and preserves behavior
+  return useCallback((...args: Parameters<T>) => {
+    // Call the latest callback according to deps
+    return callback(...(args as any));
+  }, deps) as T;
 };
 
 /**
@@ -207,17 +202,28 @@ export const useImageOptimization = () => {
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [loadingImages, setLoadingImages] = useState<Set<string>>(new Set());
 
+  const loadedImagesRef = useRef<Set<string>>(loadedImages);
+  const loadingImagesRef = useRef<Set<string>>(loadingImages);
+
+  useEffect(() => {
+    loadedImagesRef.current = loadedImages;
+  }, [loadedImages]);
+
+  useEffect(() => {
+    loadingImagesRef.current = loadingImages;
+  }, [loadingImages]);
+
   const loadImage = useCallback((src: string): Promise<void> => {
     return new Promise((resolve, reject) => {
-      if (loadedImages.has(src)) {
+      if (loadedImagesRef.current.has(src)) {
         resolve();
         return;
       }
 
-      if (loadingImages.has(src)) {
+      if (loadingImagesRef.current.has(src)) {
         // Wait for existing load to complete
         const checkLoaded = () => {
-          if (loadedImages.has(src)) {
+          if (loadedImagesRef.current.has(src)) {
             resolve();
           } else {
             setTimeout(checkLoaded, 100);
@@ -227,11 +233,19 @@ export const useImageOptimization = () => {
         return;
       }
 
-      setLoadingImages(prev => new Set(prev).add(src));
+      setLoadingImages(prev => {
+        const next = new Set(prev);
+        next.add(src);
+        return next;
+      });
 
       const img = new Image();
       img.onload = () => {
-        setLoadedImages(prev => new Set(prev).add(src));
+        setLoadedImages(prev => {
+          const next = new Set(prev);
+          next.add(src);
+          return next;
+        });
         setLoadingImages(prev => {
           const newSet = new Set(prev);
           newSet.delete(src);
@@ -249,15 +263,15 @@ export const useImageOptimization = () => {
       };
       img.src = src;
     });
-  }, [loadedImages, loadingImages]);
+  }, []);
 
   const isImageLoaded = useCallback((src: string) => {
-    return loadedImages.has(src);
-  }, [loadedImages]);
+    return loadedImagesRef.current.has(src);
+  }, []);
 
   const isImageLoading = useCallback((src: string) => {
-    return loadingImages.has(src);
-  }, [loadingImages]);
+    return loadingImagesRef.current.has(src);
+  }, []);
 
   return {
     loadImage,

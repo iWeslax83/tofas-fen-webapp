@@ -169,7 +169,7 @@ export const resolvers: IResolvers = {
 
     dashboardStats: async (_parent, { role }, context: GraphQLContext) => {
       if (!context.user) throw new Error('Not authenticated');
-      
+
       const [announcements, homeworks, evciRequests] = await Promise.all([
         Announcement.countDocuments({ targetAudience: { $in: [role] } }),
         Homework.countDocuments({ assignedTo: context.user._id }),
@@ -189,13 +189,13 @@ export const resolvers: IResolvers = {
     login: async (_parent, { id, sifre }) => {
       // Use existing auth logic - import dynamically to avoid circular dependencies
       const { SecureAPI } = await import('../../utils/api');
-      const response = await SecureAPI.login(id, sifre, { id, sifre });
+      const response = await SecureAPI.login(id, sifre);
       return response;
     },
 
     createAnnouncement: async (_parent, { input }, context: GraphQLContext) => {
       if (!context.user) throw new Error('Not authenticated');
-      
+
       const announcement = new Announcement({
         ...input,
         createdBy: context.user._id,
@@ -205,7 +205,7 @@ export const resolvers: IResolvers = {
 
     createEvciRequest: async (_parent, { input }, context: GraphQLContext) => {
       if (!context.user) throw new Error('Not authenticated');
-      
+
       const request = new EvciRequest({
         ...input,
         studentId: context.user._id,

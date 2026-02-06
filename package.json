@@ -68,11 +68,16 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/express-session": "^1.18.2",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
     "@types/react-router-dom": "^5.3.3",
     "@types/react-toastify": "^4.0.2",
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "globals": "^17.0.0",
+    "typescript-eslint": "^8.53.1"
   }
 }

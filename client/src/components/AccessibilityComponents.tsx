@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, forwardRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Volume2, 
@@ -347,8 +347,8 @@ export const AccessibleDropdown: React.FC<AccessibleDropdownProps> = ({
   placement = 'bottom',
   className = ''
 }) => {
-  const dropdownId = useRef(generateAriaId('dropdown'));
-  const triggerId = useRef(generateAriaId('trigger'));
+  const [dropdownId] = useState(() => generateAriaId('dropdown'));
+  const [triggerId] = useState(() => generateAriaId('trigger'));
   const announce = useAnnouncement();
 
   useEffect(() => {
@@ -416,7 +416,7 @@ export const AccessibleTooltip: React.FC<AccessibleTooltipProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  const tooltipId = useRef(generateAriaId('tooltip'));
+  const [tooltipId] = useState(() => generateAriaId('tooltip'));
 
   const showTooltip = () => {
     if (timeoutId) {
@@ -695,12 +695,7 @@ export const AccessibilityToggle: React.FC<{ className?: string }> = ({ classNam
 // Accessibility Status Component
 export const AccessibilityStatus: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { config } = useAccessibility();
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const hasActiveFeatures = Object.values(config).some(value => value === true);
-    setIsVisible(hasActiveFeatures);
-  }, [config]);
+  const isVisible = useMemo(() => Object.values(config).some(value => value === true), [config]);
 
   if (!isVisible) return null;
 

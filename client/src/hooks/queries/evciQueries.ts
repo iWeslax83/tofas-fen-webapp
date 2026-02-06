@@ -71,7 +71,7 @@ export function useCreateEvciRequest() {
       return response as any;
     },
     {
-      invalidateQueries: [queryKeys.evciRequests.all],
+      invalidateQueries: [[...queryKeys.evciRequests.all]],
       successMessage: 'Evci izni talebi oluşturuldu',
     }
   );
@@ -85,7 +85,7 @@ export function useUpdateEvciRequest() {
       return response as any;
     },
     {
-      invalidateQueries: [queryKeys.evciRequests.all],
+      invalidateQueries: [[...queryKeys.evciRequests.all]],
       successMessage: 'Evci izni güncellendi',
     }
   );
@@ -99,7 +99,7 @@ export function useDeleteEvciRequest() {
       return response as any;
     },
     {
-      invalidateQueries: [queryKeys.evciRequests.all],
+      invalidateQueries: [[...queryKeys.evciRequests.all]],
       successMessage: 'Evci izni talebi silindi',
     }
   );

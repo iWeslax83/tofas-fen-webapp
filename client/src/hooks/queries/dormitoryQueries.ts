@@ -72,7 +72,7 @@ export function useCreateMaintenanceRequest() {
       return response as any;
     },
     {
-      invalidateQueries: [queryKeys.dormitory.maintenanceRequests()],
+      invalidateQueries: [[...queryKeys.dormitory.maintenanceRequests()]],
       successMessage: 'Bakım talebi oluşturuldu',
     }
   );
@@ -90,7 +90,7 @@ export function useUpdateMaintenanceRequest() {
       return response as any;
     },
     {
-      invalidateQueries: [queryKeys.dormitory.maintenanceRequests()],
+      invalidateQueries: [[...queryKeys.dormitory.maintenanceRequests()]],
       successMessage: 'Bakım talebi güncellendi',
     }
   );

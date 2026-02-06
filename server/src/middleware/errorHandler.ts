@@ -25,9 +25,10 @@ export const globalErrorHandler = (
     appError = error;
   } else {
     // Convert unknown errors to AppError
+    const status = (error instanceof SyntaxError && (error as any).status === 400) ? 400 : 500;
     appError = new AppError(
       error.message || 'An unexpected error occurred',
-      500,
+      status,
       false,
       req.path,
       req.method,
@@ -113,7 +114,7 @@ function logError(appError: AppError, context: ErrorContext): void {
  */
 function sendErrorResponse(res: Response, appError: AppError, req: Request): void {
   const isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   // Prepare response data
   const responseData: any = {
     success: false,
@@ -154,7 +155,7 @@ export const handleUnhandledRejection = (reason: unknown, promise: Promise<unkno
     promise,
     timestamp: new Date().toISOString()
   });
-  
+
   // In production, you might want to exit the process
   if (process.env.NODE_ENV === 'production') {
     process.exit(1);
@@ -170,7 +171,7 @@ export const handleUncaughtException = (error: Error): void => {
     stack: error.stack,
     timestamp: new Date().toISOString()
   });
-  
+
   // In production, you might want to exit the process
   if (process.env.NODE_ENV === 'production') {
     process.exit(1);

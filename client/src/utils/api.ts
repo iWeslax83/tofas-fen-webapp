@@ -49,11 +49,12 @@ const createSecureApiClient = (): AxiosInstance => {
 
   // Request interceptor for authentication and CSRF
   // ⚠️ GÜVENLİK: Token artık httpOnly cookie'de, Authorization header'a eklemeye gerek yok
-  // Backward compatibility için hala destekleniyor ama cookie tercih ediliyor
+  // httpOnly cookies browser tarafından otomatik olarak withCredentials: true ile gönderilir
   client.interceptors.request.use(
     (config) => {
-      // Token httpOnly cookie'de olduğu için otomatik gönderilir
+      // httpOnly cookie'ler browser tarafından otomatik gönderilir (withCredentials: true)
       // Backward compatibility: Eğer localStorage'da token varsa Authorization header ekle
+      // (Eski API endpoint'leri veya migration dönemi için)
       const token = TokenManager.getAccessToken();
       if (token && !TokenManager.isTokenExpired()) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -100,9 +101,9 @@ const createSecureApiClient = (): AxiosInstance => {
           const axErr = err as any;
           normalized.message = axErr.message || 'API request failed';
           normalized.code = axErr.code || undefined;
-          normalized.response = axErr.response
-            ? { status: axErr.response.status, data: axErr.response.data }
-            : undefined;
+          if (axErr.response) {
+            normalized.response = { status: axErr.response.status, data: axErr.response.data };
+          }
         } else if (err instanceof Error) {
           normalized.message = err.message;
         } else {
@@ -120,6 +121,15 @@ const createSecureApiClient = (): AxiosInstance => {
 
       // Handle 401 errors (unauthorized)
       if (apiError.response?.status === 401 && !originalRequest?._retry) {
+        // Don't retry if specific endpoints fail to avoid infinite loops
+        const url = originalRequest.url || '';
+        const isLoginRequest = url.includes('/auth/login');
+        const isRefreshRequest = url.includes('/auth/refresh-token');
+
+        if (isLoginRequest || isRefreshRequest) {
+          return Promise.reject(apiError);
+        }
+
         originalRequest._retry = true;
 
         try {
@@ -156,7 +166,12 @@ const createSecureApiClient = (): AxiosInstance => {
           // Refresh failed, redirect to login
           TokenManager.clearTokens();
           CSRFProtection.clearToken();
-          window.location.href = '/login';
+
+          // Only redirect if not already on login page to prevent infinite loops
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+
           return Promise.reject(refreshError);
         }
       }

@@ -60,7 +60,7 @@ const SkeletonDemoPage: React.FC = () => {
             </div>
           </div>
         );
-      
+
       case 'tables':
         return (
           <div className="demo-section">
@@ -68,7 +68,7 @@ const SkeletonDemoPage: React.FC = () => {
             <SkeletonTable rows={6} columns={4} />
           </div>
         );
-      
+
       case 'forms':
         return (
           <div className="demo-section">
@@ -76,7 +76,7 @@ const SkeletonDemoPage: React.FC = () => {
             <SkeletonForm fields={5} />
           </div>
         );
-      
+
       case 'lists':
         return (
           <div className="demo-section">
@@ -84,7 +84,7 @@ const SkeletonDemoPage: React.FC = () => {
             <SkeletonList items={4} />
           </div>
         );
-      
+
       case 'dashboard':
         return (
           <div className="demo-section">
@@ -92,7 +92,7 @@ const SkeletonDemoPage: React.FC = () => {
             <SkeletonDashboard />
           </div>
         );
-      
+
       case 'profile':
         return (
           <div className="demo-section">
@@ -100,7 +100,7 @@ const SkeletonDemoPage: React.FC = () => {
             <SkeletonProfile />
           </div>
         );
-      
+
       case 'notifications':
         return (
           <div className="demo-section">
@@ -112,7 +112,7 @@ const SkeletonDemoPage: React.FC = () => {
             </div>
           </div>
         );
-      
+
       case 'calendar':
         return (
           <div className="demo-section">
@@ -120,7 +120,7 @@ const SkeletonDemoPage: React.FC = () => {
             <SkeletonCalendar />
           </div>
         );
-      
+
       case 'charts':
         return (
           <div className="demo-section">
@@ -128,7 +128,7 @@ const SkeletonDemoPage: React.FC = () => {
             <SkeletonChart />
           </div>
         );
-      
+
       case 'loading':
         return (
           <div className="demo-section">
@@ -156,7 +156,7 @@ const SkeletonDemoPage: React.FC = () => {
             </LoadingState>
           </div>
         );
-      
+
       default:
         return null;
     }
@@ -177,7 +177,6 @@ const SkeletonDemoPage: React.FC = () => {
           <p>Skeleton loading bileşenlerini test edin ve görüntüleyin</p>
         </div>
 
-        <main className="panel-main">
         {/* Navigation */}
         <nav className="demo-nav">
           {sections.map((section) => (
@@ -196,7 +195,6 @@ const SkeletonDemoPage: React.FC = () => {
         <div className="demo-content-wrapper">
           {renderSection()}
         </div>
-        </main>
       </div>
     </ModernDashboardLayout>
   );

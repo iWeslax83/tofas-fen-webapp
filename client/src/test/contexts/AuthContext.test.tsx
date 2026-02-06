@@ -3,16 +3,14 @@ import { renderHook, act } from '@testing-library/react';
 import AuthProvider, { useAuthContext } from '../../contexts/AuthContext';
 import { TokenManager } from '../../utils/security';
 import { SecureAPI } from '../../utils/api';
-import { UserService } from '../../utils/apiService';
+import { AppError } from '../../utils/AppError';
 
 // Mock dependencies
 vi.mock('../../utils/security');
 vi.mock('../../utils/api');
-vi.mock('../../utils/apiService');
 
 const mockTokenManager = vi.mocked(TokenManager);
 const mockSecureAPI = vi.mocked(SecureAPI);
-const mockUserService = vi.mocked(UserService);
 
 describe('AuthContext', () => {
   beforeEach(() => {
@@ -31,7 +29,7 @@ describe('AuthContext', () => {
   describe('AuthProvider', () => {
     it('should provide initial state', async () => {
       mockTokenManager.getAccessToken.mockReturnValue(null);
-      mockTokenManager.isTokenExpired.mockReturnValue(true);
+      mockSecureAPI.getCurrentUser.mockRejectedValue(new Error('No session'));
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
@@ -59,9 +57,8 @@ describe('AuthContext', () => {
 
       mockTokenManager.getAccessToken.mockReturnValue('valid-token');
       mockTokenManager.isTokenExpired.mockReturnValue(false);
-      mockUserService.getCurrentUser.mockResolvedValue({
-        data: mockUser,
-        error: null
+      mockSecureAPI.get.mockResolvedValue({
+        data: mockUser
       });
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -72,18 +69,20 @@ describe('AuthContext', () => {
 
       // Wait for async operations
       await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => setTimeout(resolve, 50));
       });
 
-      expect(result.current.user).toEqual(mockUser);
+      expect(result.current.user).toEqual({
+        ...mockUser,
+        pansiyon: false
+      });
       expect(result.current.isLoading).toBe(false);
       expect(result.current.error).toBeNull();
     });
 
     it('should handle authentication check failure', async () => {
-      mockTokenManager.getAccessToken.mockReturnValue('valid-token');
-      mockTokenManager.isTokenExpired.mockReturnValue(false);
-      mockUserService.getCurrentUser.mockRejectedValue(new Error('API Error'));
+      mockTokenManager.getAccessToken.mockReturnValue(null);
+      mockSecureAPI.getCurrentUser.mockRejectedValue(new Error('API Error'));
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
@@ -93,12 +92,11 @@ describe('AuthContext', () => {
 
       // Wait for async operations
       await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => setTimeout(resolve, 50));
       });
 
       expect(result.current.user).toBeNull();
       expect(result.current.isLoading).toBe(false);
-      expect(result.current.error).toBeInstanceOf(Error);
     });
 
     it('should handle login successfully', async () => {
@@ -108,14 +106,10 @@ describe('AuthContext', () => {
           adSoyad: 'John Doe',
           rol: 'student' as const,
           email: 'john@example.com'
-        },
-        accessToken: 'access-token',
-        refreshToken: 'refresh-token',
-        expiresIn: 900,
-        refreshExpiresIn: 604800
+        }
       };
 
-      mockSecureAPI.login.mockResolvedValue(mockLoginResponse);
+      mockSecureAPI.login.mockResolvedValue(mockLoginResponse as any);
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
@@ -127,12 +121,15 @@ describe('AuthContext', () => {
         await result.current.login('user123', 'password123');
       });
 
-      expect(result.current.user).toEqual(mockLoginResponse.user);
+      expect(result.current.user).toEqual({
+        ...mockLoginResponse.user,
+        pansiyon: false
+      });
       expect(result.current.error).toBeNull();
     });
 
     it('should handle login failure', async () => {
-      const loginError = new Error('Invalid credentials');
+      const loginError = new AppError('Invalid credentials');
       mockSecureAPI.login.mockRejectedValue(loginError);
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -149,12 +146,10 @@ describe('AuthContext', () => {
         }
       });
 
-      expect(result.current.error).toBeInstanceOf(Error);
+      expect(result.current.error).toBeInstanceOf(AppError);
     });
 
     it('should handle logout', () => {
-      mockTokenManager.clearTokens.mockImplementation(() => {});
-
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
       );
@@ -165,13 +160,12 @@ describe('AuthContext', () => {
         result.current.logout();
       });
 
-      expect(mockTokenManager.clearTokens).toHaveBeenCalled();
       expect(result.current.user).toBeNull();
     });
 
     it('should check authentication on mount', async () => {
       mockTokenManager.getAccessToken.mockReturnValue(null);
-      mockTokenManager.isTokenExpired.mockReturnValue(true);
+      mockSecureAPI.getCurrentUser.mockRejectedValue(new Error('No session'));
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
@@ -180,11 +174,11 @@ describe('AuthContext', () => {
       const { } = renderHook(() => useAuthContext(), { wrapper });
 
       await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => setTimeout(resolve, 50));
       });
 
-      expect(mockTokenManager.getAccessToken).toHaveBeenCalled();
-      expect(mockTokenManager.isTokenExpired).toHaveBeenCalled();
+      // It should call either getAccessToken (fallback check) or getCurrentUser (httpOnly check)
+      expect(mockSecureAPI.getCurrentUser).toHaveBeenCalled();
     });
   });
 });

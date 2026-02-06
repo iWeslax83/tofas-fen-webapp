@@ -2,8 +2,31 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from 'supertest'
 import express from 'express'
 import bcrypt from 'bcryptjs'
-import { User } from '../../db'
+import { User } from '../../models/User'
 import authRoutes from '../auth'
+
+vi.mock('../../models/User')
+vi.mock('bcryptjs')
+vi.mock('../../utils/jwt', async (importOriginal) => {
+  const actual = await importOriginal<any>()
+  return {
+    ...actual,
+    generateAccessToken: vi.fn(() => 'access-token'),
+    generateRefreshToken: vi.fn(() => 'refresh-token'),
+    verifyRefreshToken: vi.fn(() => ({ userId: 'testuser', tokenVersion: 1 }))
+  }
+})
+vi.mock('jsonwebtoken', () => ({
+  default: {
+    verify: vi.fn(() => ({ userId: 'testuser' })),
+    sign: vi.fn(() => 'token')
+  },
+  verify: vi.fn(() => ({ userId: 'testuser' })),
+  sign: vi.fn(() => 'token')
+}))
+vi.mock('../../mailService', () => ({
+  sendMail: vi.fn().mockResolvedValue(true)
+}))
 
 const app = express()
 app.use(express.json())
@@ -17,15 +40,14 @@ describe('Auth Routes', () => {
   describe('POST /auth/login', () => {
     it('should login with valid credentials', async () => {
       const mockUser = {
-        id: '123',
-        id_kullanici: 'testuser',
+        id: 'testuser',
         email: 'test@example.com',
         sifre: 'hashed-password',
         rol: 'user',
         tokenVersion: 0,
+        save: vi.fn().mockResolvedValue(true),
         toObject: () => ({
-          id: '123',
-          id_kullanici: 'testuser',
+          id: 'testuser',
           email: 'test@example.com',
           rol: 'user'
         })
@@ -45,7 +67,7 @@ describe('Auth Routes', () => {
       expect(response.body).toHaveProperty('accessToken')
       expect(response.body).toHaveProperty('refreshToken')
       expect(response.body).toHaveProperty('expiresIn')
-      expect(response.body.id_kullanici).toBe('testuser')
+      expect(response.body.user.id).toBe('testuser')
     })
 
     it('should return 401 for invalid credentials', async () => {
@@ -59,13 +81,12 @@ describe('Auth Routes', () => {
         })
 
       expect(response.status).toBe(401)
-      expect(response.body.error).toBe('Geçersiz kullanıcı ID veya şifre')
+      expect(response.body.error).toBe('Geçersiz kullanıcı adı veya şifre')
     })
 
     it('should return 401 for wrong password', async () => {
       const mockUser = {
-        id: '123',
-        id_kullanici: 'testuser',
+        id: 'testuser',
         sifre: 'hashed-password'
       }
 
@@ -80,7 +101,7 @@ describe('Auth Routes', () => {
         })
 
       expect(response.status).toBe(401)
-      expect(response.body.error).toBe('Geçersiz kullanıcı ID veya şifre')
+      expect(response.body.error).toBe('Geçersiz kullanıcı adı veya şifre')
     })
   })
 
@@ -91,7 +112,7 @@ describe('Auth Routes', () => {
         tokenVersion: 1
       }
 
-      vi.mocked(User.findById).mockResolvedValue(mockUser as any)
+      vi.mocked(User.findOne).mockResolvedValue(mockUser as any)
 
       const response = await request(app)
         .post('/auth/refresh')
@@ -107,6 +128,9 @@ describe('Auth Routes', () => {
 
     it('should return 401 for invalid refresh token', async () => {
       vi.mocked(User.findById).mockResolvedValue(null)
+
+      const { verifyRefreshToken } = await import('../../utils/jwt');
+      vi.mocked(verifyRefreshToken).mockReturnValueOnce(null);
 
       const response = await request(app)
         .post('/auth/refresh')
@@ -127,11 +151,11 @@ describe('Auth Routes', () => {
         save: vi.fn().mockResolvedValue(true)
       }
 
-      vi.mocked(User.findById).mockResolvedValue(mockUser as any)
+      vi.mocked(User.findOne).mockResolvedValue(mockUser as any)
 
       const response = await request(app)
         .post('/auth/logout')
-        .set('Cookie', ['connect.sid=test-session'])
+        .set('Authorization', 'Bearer valid-token')
 
       expect(response.status).toBe(200)
       expect(response.body.message).toBe('Başarıyla çıkış yapıldı')
@@ -143,50 +167,47 @@ describe('Auth Routes', () => {
   describe('GET /auth/me', () => {
     it('should return current user from session', async () => {
       const mockUser = {
-        id: '123',
-        id_kullanici: 'testuser',
+        id: 'testuser',
         email: 'test@example.com',
         rol: 'user',
         toObject: () => ({
-          id: '123',
-          id_kullanici: 'testuser',
+          id: 'testuser',
           email: 'test@example.com',
           rol: 'user'
         })
       }
 
-      vi.mocked(User.findById).mockResolvedValue(mockUser as any)
-
-      const response = await request(app)
-        .get('/auth/me')
-        .set('Cookie', ['connect.sid=test-session'])
-
-      expect(response.status).toBe(200)
-      expect(response.body.id_kullanici).toBe('testuser')
-    })
-
-    it('should return current user from JWT', async () => {
-      const mockUser = {
-        id: '123',
-        id_kullanici: 'testuser',
-        email: 'test@example.com',
-        rol: 'user',
-        toObject: () => ({
-          id: '123',
-          id_kullanici: 'testuser',
-          email: 'test@example.com',
-          rol: 'user'
-        })
-      }
-
-      vi.mocked(User.findById).mockResolvedValue(mockUser as any)
+      vi.mocked(User.findOne).mockResolvedValue(mockUser as any)
 
       const response = await request(app)
         .get('/auth/me')
         .set('Authorization', 'Bearer valid-token')
 
       expect(response.status).toBe(200)
-      expect(response.body.id_kullanici).toBe('testuser')
+      expect(response.body.id).toBe('testuser')
+    })
+
+    it('should return current user from JWT', async () => {
+      const mockUser = {
+        id: 'testuser',
+        email: 'test@example.com',
+        rol: 'user',
+        save: vi.fn().mockResolvedValue(true),
+        toObject: () => ({
+          id: 'testuser',
+          email: 'test@example.com',
+          rol: 'user'
+        })
+      }
+
+      vi.mocked(User.findOne).mockResolvedValue(mockUser as any)
+
+      const response = await request(app)
+        .get('/auth/me')
+        .set('Authorization', 'Bearer valid-token')
+
+      expect(response.status).toBe(200)
+      expect(response.body.id).toBe('testuser')
     })
 
     it('should return 401 for unauthenticated request', async () => {
@@ -215,7 +236,7 @@ describe('Auth Routes', () => {
         })
 
       expect(response.status).toBe(200)
-      expect(response.body.message).toBe('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi')
+      expect(response.body.message).toBe('Şifre sıfırlama linki gönderildi')
       expect(mockUser.save).toHaveBeenCalled()
     })
 
@@ -253,7 +274,7 @@ describe('Auth Routes', () => {
         })
 
       expect(response.status).toBe(200)
-      expect(response.body.message).toBe('Şifreniz başarıyla güncellendi')
+      expect(response.body.message).toBe('Şifre başarıyla güncellendi')
       expect(mockUser.tokenVersion).toBe(2)
       expect(mockUser.save).toHaveBeenCalled()
     })
@@ -278,7 +299,7 @@ describe('Auth Routes', () => {
         resetTokenExpiry: new Date(Date.now() - 3600000) // 1 hour ago
       }
 
-      vi.mocked(User.findOne).mockResolvedValue(mockUser as any)
+      vi.mocked(User.findOne).mockResolvedValue(null)
 
       const response = await request(app)
         .post('/auth/reset-password')

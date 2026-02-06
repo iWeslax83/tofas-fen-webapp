@@ -123,7 +123,6 @@ const PerformancePage: React.FC = () => {
     endDate: ''
   });
   const [, setShowCreateModal] = useState(false);
-  const [, setSelectedItem] = useState<any>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy] = useState('timestamp');

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useAuthStore } from '../../stores/authStore';
-import { AppError } from '../../utils/AppError';
+import { AppError, ErrorSeverity } from '../../utils/AppError';
 
 // Mock dependencies
 vi.mock('../../utils/api', () => ({
@@ -74,7 +74,7 @@ describe('AuthStore', () => {
     });
 
     it('should handle login error', async () => {
-      const mockError = new AppError('Invalid credentials', 'AUTHENTICATION_ERROR', 401);
+      const mockError = new AppError('Invalid credentials', 'AUTHENTICATION_ERROR', ErrorSeverity.HIGH);
       
       const { SecureAPI } = await import('../../utils/api');
       (SecureAPI.login as any).mockRejectedValue(mockError);

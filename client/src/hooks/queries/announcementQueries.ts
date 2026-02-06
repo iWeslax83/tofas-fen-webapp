@@ -84,7 +84,7 @@ export function useCreateAnnouncement() {
       return response as any;
     },
     {
-      invalidateQueries: [queryKeys.announcements.all],
+      invalidateQueries: [[...queryKeys.announcements.all]],
       successMessage: 'Duyuru oluşturuldu',
     }
   );
@@ -98,7 +98,7 @@ export function useUpdateAnnouncement() {
       return response as any;
     },
     {
-      invalidateQueries: [queryKeys.announcements.all],
+      invalidateQueries: [[...queryKeys.announcements.all]],
       successMessage: 'Duyuru güncellendi',
     }
   );
@@ -112,7 +112,7 @@ export function useDeleteAnnouncement() {
       return response as any;
     },
     {
-      invalidateQueries: [queryKeys.announcements.all],
+      invalidateQueries: [[...queryKeys.announcements.all]],
       successMessage: 'Duyuru silindi',
     }
   );

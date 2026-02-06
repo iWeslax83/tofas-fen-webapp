@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { FileText, Filter, Search, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { FileText, Filter, Search } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import BackButton from '../../components/BackButton';
@@ -60,7 +60,7 @@ const AdminDilekceListPage: React.FC = () => {
       if (response.data.success) {
         setDilekceler(response.data.dilekceler || []);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading dilekce:', error);
       toast.error('Dilekçeler yüklenemedi');
     } finally {
@@ -83,9 +83,10 @@ const AdminDilekceListPage: React.FC = () => {
         toast.success('Dilekçe durumu güncellendi');
         loadDilekceler();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating status:', error);
-      toast.error(error.response?.data?.error || 'İşlem başarısız');
+      const msg = (error as any)?.response?.data?.error || 'İşlem başarısız';
+      toast.error(msg);
     }
   };
 
@@ -318,7 +319,7 @@ const AdminDilekceListPage: React.FC = () => {
                         <button
                           onClick={() => {
                             const note = window.prompt('Onay notu (opsiyonel):');
-                            handleStatusUpdate(dilekce._id, 'approved', note);
+                            handleStatusUpdate(dilekce._id, 'approved', note || undefined);
                           }}
                           style={{
                             padding: '6px 12px',
@@ -336,7 +337,7 @@ const AdminDilekceListPage: React.FC = () => {
                         <button
                           onClick={() => {
                             const note = window.prompt('Red nedeni (opsiyonel):');
-                            handleStatusUpdate(dilekce._id, 'rejected', note);
+                            handleStatusUpdate(dilekce._id, 'rejected', note || undefined);
                           }}
                           style={{
                             padding: '6px 12px',
@@ -358,7 +359,7 @@ const AdminDilekceListPage: React.FC = () => {
                         <button
                           onClick={() => {
                             const response = window.prompt('Yanıt (opsiyonel):');
-                            handleStatusUpdate(dilekce._id, 'completed', undefined, response);
+                            handleStatusUpdate(dilekce._id, 'completed', undefined, response || undefined);
                           }}
                           style={{
                             padding: '6px 12px',
@@ -376,7 +377,7 @@ const AdminDilekceListPage: React.FC = () => {
                         <button
                           onClick={() => {
                             const note = window.prompt('Red nedeni (opsiyonel):');
-                            handleStatusUpdate(dilekce._id, 'rejected', note);
+                            handleStatusUpdate(dilekce._id, 'rejected', note || undefined);
                           }}
                           style={{
                             padding: '6px 12px',
@@ -398,7 +399,7 @@ const AdminDilekceListPage: React.FC = () => {
                         onClick={() => {
                           const response = window.prompt('Yanıt:');
                           if (response) {
-                            handleStatusUpdate(dilekce._id, 'completed', undefined, response);
+                            handleStatusUpdate(dilekce._id, 'completed', undefined, response || undefined);
                           }
                         }}
                         style={{
