@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useRef } from "react";
 import { useUser, useIsLoading, useError, useLogin, useLogout, useCheckAuth } from "../stores/authStore";
+import { User } from '../types/user';
 
 interface AuthContextType {
-  user: any;
+  user: User | null;
   isLoading: boolean;
-  error: any;
+  error: unknown;
   login: (id: string, sifre: string) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;

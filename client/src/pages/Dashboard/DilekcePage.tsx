@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { FileText, Upload, X, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { FileText, X } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import BackButton from '../../components/BackButton';
@@ -107,7 +107,7 @@ const DilekcePage: React.FC = () => {
       formData.append('priority', priority);
       if (category) formData.append('category', category);
       
-      attachments.forEach((file, index) => {
+      attachments.forEach((file) => {
         formData.append('attachments', file);
       });
 

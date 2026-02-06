@@ -112,7 +112,9 @@ export default function AdvancedNotesPage() {
       setProcessing(true);
       setError(null);
 
-      const { error } = await NotesService.bulkUpdateNotes(selectedNotes, bulkEditData);
+      const { error } = await NotesService.bulkUpdateNotes(selectedNotes, {
+        subject: bulkEditData.lesson || undefined,
+      } as Partial<{ subject: string; note: number; examType: string; date: string | Date }>);
       if (error) {
         setError(error);
         return;

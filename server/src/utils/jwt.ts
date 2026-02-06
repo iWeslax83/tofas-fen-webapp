@@ -1,9 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import { tokenBlacklist } from './tokenBlacklist';
+import logger from './logger';
 
 // Extend Request interface to include user property
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: JWTPayload;
@@ -44,7 +46,7 @@ export interface RefreshTokenPayload {
 
 // Generate access token (short-lived)
 export const generateAccessToken = (payload: Omit<JWTPayload, 'iat' | 'exp'>): string => {
-  return jwt.sign(payload, JWT_SECRET, { 
+  return jwt.sign(payload, JWT_SECRET, {
     expiresIn: '15m',
     issuer: 'tofas-fen-webapp',
     audience: 'tofas-fen-users'
@@ -53,7 +55,7 @@ export const generateAccessToken = (payload: Omit<JWTPayload, 'iat' | 'exp'>): s
 
 // Generate refresh token (long-lived)
 export const generateRefreshToken = (payload: RefreshTokenPayload): string => {
-  return jwt.sign(payload, JWT_REFRESH_SECRET, { 
+  return jwt.sign(payload, JWT_REFRESH_SECRET, {
     expiresIn: '7d', // Reduced from 28d for better security
     issuer: 'tofas-fen-webapp',
     audience: 'tofas-fen-users'
@@ -68,7 +70,9 @@ export const verifyAccessToken = (token: string): JWTPayload | null => {
       audience: 'tofas-fen-users'
     }) as JWTPayload;
   } catch (error) {
-    console.error('Access token verification failed:', error);
+    logger.error('Access token verification failed', {
+      error: error instanceof Error ? error.message : String(error)
+    });
     return null;
   }
 };
@@ -81,7 +85,9 @@ export const verifyRefreshToken = (token: string): RefreshTokenPayload | null =>
       audience: 'tofas-fen-users'
     }) as RefreshTokenPayload;
   } catch (error) {
-    console.error('Refresh token verification failed:', error);
+    logger.error('Refresh token verification failed', {
+      error: error instanceof Error ? error.message : String(error)
+    });
     return null;
   }
 };
@@ -92,7 +98,7 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
   try {
     // Try to get token from httpOnly cookie first (preferred method)
     let token = req.cookies?.accessToken;
-    
+
     // Fallback to Authorization header for backward compatibility during migration
     if (!token) {
       const authHeader = req.headers.authorization;
@@ -100,12 +106,12 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
         token = authHeader.substring(7); // Remove 'Bearer ' prefix
       }
     }
-    
+
     if (!token) {
       res.status(401).json({ error: 'Access token required' });
       return;
     }
-    
+
     // Check if token is blacklisted
     const isBlacklisted = await tokenBlacklist.isBlacklisted(token);
     if (isBlacklisted) {
@@ -124,7 +130,10 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
     req.user = payload;
     next();
   } catch (error) {
-    console.error('JWT authentication error:', error);
+    logger.error('JWT authentication error', {
+      error: error instanceof Error ? error.message : String(error),
+      path: req.path
+    });
     res.status(401).json({ error: 'Authentication failed' });
   }
 };
@@ -163,18 +172,29 @@ export const generateTokenPair = (userId: string, role: string, email?: string, 
 // Token refresh function
 export const refreshTokens = async (refreshToken: string, tokenVersion: number) => {
   const payload = verifyRefreshToken(refreshToken);
-  
+
   if (!payload) {
-    throw new Error('Invalid refresh token');
+    const { AppError } = await import('./AppError');
+    throw AppError.unauthorized('Invalid refresh token');
   }
 
   // Check if token version matches (for token invalidation)
   if (payload.tokenVersion !== tokenVersion) {
-    throw new Error('Token version mismatch');
+    const { AppError } = await import('./AppError');
+    throw AppError.unauthorized('Token version mismatch', undefined, undefined, payload.userId);
   }
 
-  // Generate new token pair
-  return generateTokenPair(payload.userId, '', '', tokenVersion);
+  // Fetch user from database to get role and email
+  const { User } = await import('../models');
+  const user = await User.findOne({ id: payload.userId });
+
+  if (!user) {
+    const { AppError } = await import('./AppError');
+    throw AppError.unauthorized('User not found');
+  }
+
+  // Generate new token pair with user's actual role and email
+  return generateTokenPair(payload.userId, user.rol || '', user.email || '', tokenVersion);
 };
 
 // Logout function with token blacklisting
@@ -193,7 +213,9 @@ export const logoutUser = async (accessToken: string, refreshToken: string): Pro
       await tokenBlacklist.addToBlacklist(refreshToken, refreshPayload.exp * 1000);
     }
   } catch (error) {
-    console.error('Error during logout token blacklisting:', error);
+    logger.error('Error during logout token blacklisting', {
+      error: error instanceof Error ? error.message : String(error)
+    });
     // Don't throw error to prevent logout failure
   }
 };
@@ -204,8 +226,11 @@ export const revokeAllUserTokens = async (userId: string): Promise<void> => {
     // This would require storing active tokens per user
     // For now, we'll implement a simple version
     // In production, you might want to store active tokens in Redis
-    console.log(`Revoking all tokens for user: ${userId}`);
+    logger.info('Revoking all tokens for user', { userId });
   } catch (error) {
-    console.error('Error revoking user tokens:', error);
+    logger.error('Error revoking user tokens', {
+      error: error instanceof Error ? error.message : String(error),
+      userId
+    });
   }
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { ShoppingBag, Calendar, Clock, MapPin, FileText, CheckCircle, XCircle, Clock as ClockIcon } from 'lucide-react';
+import { ShoppingBag, Calendar, FileText, Clock as ClockIcon } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import BackButton from '../../components/BackButton';

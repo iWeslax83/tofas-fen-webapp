@@ -28,7 +28,7 @@ export function useLogin() {
       return { success: true, data: result.user } as any;
     },
     {
-      invalidateQueries: [queryKeys.auth.me],
+      invalidateQueries: [[...queryKeys.auth.me]],
       successMessage: 'Giriş başarılı',
       errorMessage: 'Giriş başarısız',
     }
@@ -43,7 +43,7 @@ export function useLogout() {
       return { success: true } as any;
     },
     {
-      invalidateQueries: [queryKeys.auth.me],
+      invalidateQueries: [[...queryKeys.auth.me]],
       successMessage: 'Çıkış yapıldı',
     }
   );
@@ -57,7 +57,7 @@ export function useUpdateProfile() {
       return response.data as any;
     },
     {
-      invalidateQueries: [queryKeys.auth.me],
+      invalidateQueries: [[...queryKeys.auth.me]],
       successMessage: 'Profil güncellendi',
     }
   );

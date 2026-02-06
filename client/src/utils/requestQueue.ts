@@ -1,9 +1,9 @@
 // Request Queue System for batching and rate limiting
 interface QueuedRequest {
   id: string;
-  request: () => Promise<any>;
-  resolve: (value: any) => void;
-  reject: (error: any) => void;
+  request: () => Promise<unknown>;
+  resolve: (value: unknown) => void;
+  reject: (error: unknown) => void;
   timestamp: number;
 }
 
@@ -18,8 +18,8 @@ class RequestQueue {
       const queuedRequest: QueuedRequest = {
         id: Math.random().toString(36).substr(2, 9),
         request,
-        resolve,
-        reject,
+        resolve: (v: unknown) => resolve(v as T),
+        reject: (e: unknown) => reject(e),
         timestamp: Date.now()
       };
 
@@ -74,28 +74,32 @@ class RequestQueue {
 export const requestQueue = new RequestQueue();
 
 // Debounce function for API calls
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
+  let timeout: number | undefined;
   
   return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    if (timeout !== undefined) clearTimeout(timeout);
+    timeout = window.setTimeout(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (func as any)(...args);
+    }, wait);
   };
 }
 
 // Throttle function for API calls
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number
 ): (...args: Parameters<T>) => void {
-  let inThrottle: boolean;
+  let inThrottle = false;
   
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
-      func(...args);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (func as any)(...args);
       inThrottle = true;
       setTimeout(() => inThrottle = false, limit);
     }

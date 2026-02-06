@@ -89,5 +89,5 @@ AuditLogSchema.index({ createdAt: -1 }); // For time-based queries
 // TTL index - logs older than 1 year will be automatically deleted
 AuditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 31536000 }); // 1 year
 
-export const AuditLog = mongoose.model<IAuditLog>('AuditLog', AuditLogSchema);
+export const AuditLog = mongoose.models.AuditLog || mongoose.model<IAuditLog>('AuditLog', AuditLogSchema);
 

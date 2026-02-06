@@ -58,14 +58,28 @@ export default function LoginPage() {
       // The redirect will be handled by useEffect when user state updates
     } catch (error: unknown) {
       // Prefer structured API message when available, otherwise fallback to error.message
-      const apiMessage = (error as any)?.response?.data?.message || (error as any)?.response?.data?.error;
-      const errorMessage = apiMessage || (error as any)?.message || 'Giriş başarısız';
+      // Prefer structured API message when available
+      const apiError = (error as any)?.response?.data;
+      // Server sends { success: false, error: { message: "..." } }
+      // So/ we should check apiError.error.message first
+      let apiMessage = apiError?.error?.message || apiError?.message || apiError?.error;
 
-      // Truncate overly large messages for UI/toast
-      const shortMessage = typeof errorMessage === 'string' && errorMessage.length > 300 ? `${errorMessage.slice(0, 300)}...` : errorMessage;
+      // If the message is an object (e.g. validation errors), stringify it or extract the first error
+      if (typeof apiMessage === 'object' && apiMessage !== null) {
+        try {
+          // If it has a 'message' property or similar, try to use valid string
+          // Otherwise json stringify
+          apiMessage = JSON.stringify(apiMessage);
+        } catch (e) {
+          apiMessage = 'Beklenmeyen hata formatı';
+        }
+      }
 
-      setError(shortMessage as string);
-      toast.error(shortMessage as string);
+      const errorMessage = (typeof apiMessage === 'string' ? apiMessage : undefined) || (error as any)?.message || 'Giriş başarısız';
+      const shortMessage = typeof errorMessage === 'string' && errorMessage.length > 300 ? `${errorMessage.slice(0, 300)}...` : String(errorMessage);
+
+      setError(shortMessage);
+      toast.error(shortMessage);
     } finally {
       setIsSubmitting(false);
     }

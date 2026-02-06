@@ -1,4 +1,4 @@
-import React, { useState, useMemo, ReactNode } from 'react';
+import { useState, useMemo, ReactNode } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import './Table.css';
 

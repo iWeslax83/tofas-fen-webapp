@@ -5,12 +5,6 @@
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-interface TrackEventOptions {
-  eventType: string;
-  metadata?: Record<string, any>;
-  userId?: string;
-}
-
 interface FeedbackData {
   type: 'bug' | 'feature' | 'improvement' | 'other';
   category: string;
@@ -22,22 +16,10 @@ interface FeedbackData {
 
 class Analytics {
   private sessionId: string;
-  private userId: string | null = null;
 
   constructor() {
     // Generate session ID
     this.sessionId = this.generateSessionId();
-    
-    // Get user ID from auth store if available
-    try {
-      const authData = localStorage.getItem('auth_token');
-      if (authData) {
-        const parsed = JSON.parse(authData);
-        this.userId = parsed.userId || null;
-      }
-    } catch (e) {
-      // Ignore
-    }
   }
 
   private generateSessionId(): string {
@@ -158,12 +140,6 @@ class Analytics {
     }
   }
 
-  /**
-   * Set user ID
-   */
-  setUserId(userId: string | null): void {
-    this.userId = userId;
-  }
 }
 
 // Singleton instance

@@ -18,9 +18,9 @@ const mealListSchema = new Schema<IMealList>({
   uploadedBy: { type: String, required: true },
   uploadedAt: { type: Date, default: Date.now },
   isActive: { type: Boolean, default: true }
-}, { 
+}, {
   timestamps: true,
   // Indexes will be created automatically by Mongoose
 });
 
-export const MealList = mongoose.model<IMealList>("MealList", mealListSchema);
+export const MealList = mongoose.models.MealList || mongoose.model<IMealList>("MealList", mealListSchema);

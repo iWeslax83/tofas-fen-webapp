@@ -3,27 +3,30 @@
  * Provides structured error handling for client-side errors
  */
 export class AppError extends Error {
-  public readonly code: string;
-  public readonly statusCode?: number;
-  public readonly isOperational: boolean;
+  public readonly type: string;
+  public readonly severity: ErrorSeverity;
+  public readonly context: ErrorContext;
+  public readonly originalError: Error | undefined;
   public readonly timestamp: string;
-  public readonly context?: Record<string, unknown>;
 
   constructor(
     message: string,
-    code: string = 'UNKNOWN_ERROR',
-    statusCode?: number,
-    isOperational: boolean = true,
-    context?: Record<string, unknown>
+    type: string = ErrorType.UNKNOWN,
+    severity: ErrorSeverity = ErrorSeverity.MEDIUM,
+    context: Partial<ErrorContext> = {},
+    originalError?: Error
   ) {
     super(message);
-    
+
     this.name = this.constructor.name;
-    this.code = code;
-    this.statusCode = statusCode ?? undefined;
-    this.isOperational = isOperational;
+    this.type = type;
+    this.severity = severity;
+    this.context = {
+      timestamp: Date.now(),
+      ...context
+    } as ErrorContext;
+    this.originalError = originalError;
     this.timestamp = new Date().toISOString();
-    this.context = context ?? undefined;
 
     // Capture stack trace
     Error.captureStackTrace(this, this.constructor);
@@ -32,97 +35,97 @@ export class AppError extends Error {
   /**
    * Create a network error
    */
-  static network(message: string = 'Network error occurred', context?: Record<string, unknown>): AppError {
-    return new AppError(message, 'NETWORK_ERROR', undefined, true, context);
+  static network(message: string = 'Network error occurred', context?: Partial<ErrorContext>): AppError {
+    return new AppError(message, ErrorType.NETWORK, ErrorSeverity.MEDIUM, context);
   }
 
   /**
    * Create a validation error
    */
-  static validation(message: string, context?: Record<string, unknown>): AppError {
-    return new AppError(message, 'VALIDATION_ERROR', 400, true, context);
+  static validation(message: string, context?: Partial<ErrorContext>): AppError {
+    return new AppError(message, ErrorType.VALIDATION, ErrorSeverity.LOW, context);
   }
 
   /**
    * Create an authentication error
    */
-  static unauthorized(message: string = 'Unauthorized access', context?: Record<string, unknown>): AppError {
-    return new AppError(message, 'UNAUTHORIZED_ERROR', 401, true, context);
+  static unauthorized(message: string = 'Unauthorized access', context?: Partial<ErrorContext>): AppError {
+    return new AppError(message, ErrorType.AUTHENTICATION, ErrorSeverity.HIGH, context);
   }
 
   /**
    * Create an authorization error
    */
-  static forbidden(message: string = 'Access forbidden', context?: Record<string, unknown>): AppError {
-    return new AppError(message, 'FORBIDDEN_ERROR', 403, true, context);
+  static forbidden(message: string = 'Access forbidden', context?: Partial<ErrorContext>): AppError {
+    return new AppError(message, ErrorType.AUTHORIZATION, ErrorSeverity.HIGH, context);
   }
 
   /**
    * Create a not found error
    */
-  static notFound(message: string = 'Resource not found', context?: Record<string, unknown>): AppError {
-    return new AppError(message, 'NOT_FOUND_ERROR', 404, true, context);
+  static notFound(message: string = 'Resource not found', context?: Partial<ErrorContext>): AppError {
+    return new AppError(message, ErrorType.NOT_FOUND, ErrorSeverity.MEDIUM, context);
   }
 
   /**
    * Create a timeout error
    */
-  static timeout(message: string = 'Request timeout', context?: Record<string, unknown>): AppError {
-    return new AppError(message, 'TIMEOUT_ERROR', 408, true, context);
+  static timeout(message: string = 'Request timeout', context?: Partial<ErrorContext>): AppError {
+    return new AppError(message, ErrorType.TIMEOUT, ErrorSeverity.MEDIUM, context);
   }
 
   /**
    * Create a rate limit error
    */
-  static rateLimit(message: string = 'Too many requests', context?: Record<string, unknown>): AppError {
-    return new AppError(message, 'RATE_LIMIT_ERROR', 429, true, context);
+  static rateLimit(message: string = 'Too many requests', context?: Partial<ErrorContext>): AppError {
+    return new AppError(message, ErrorType.RATE_LIMIT, ErrorSeverity.MEDIUM, context);
   }
 
   /**
    * Create a server error
    */
-  static server(message: string = 'Server error occurred', context?: Record<string, unknown>): AppError {
-    return new AppError(message, 'SERVER_ERROR', 500, true, context);
+  static server(message: string = 'Server error occurred', context?: Partial<ErrorContext>): AppError {
+    return new AppError(message, ErrorType.SERVER, ErrorSeverity.HIGH, context);
   }
 
   /**
    * Create a parsing error
    */
-  static parsing(message: string = 'Failed to parse response', context?: Record<string, unknown>): AppError {
-    return new AppError(message, 'PARSING_ERROR', undefined, true, context);
+  static parsing(message: string = 'Failed to parse response', context?: Partial<ErrorContext>): AppError {
+    return new AppError(message, ErrorType.PARSING, ErrorSeverity.MEDIUM, context);
   }
 
   /**
    * Create a storage error
    */
-  static storage(message: string = 'Storage operation failed', context?: Record<string, unknown>): AppError {
-    return new AppError(message, 'STORAGE_ERROR', undefined, true, context);
+  static storage(message: string = 'Storage operation failed', context?: Partial<ErrorContext>): AppError {
+    return new AppError(message, ErrorType.STORAGE, ErrorSeverity.HIGH, context);
   }
 
   /**
    * Convert error to user-friendly message
    */
   getUserMessage(): string {
-    switch (this.code) {
-      case 'NETWORK_ERROR':
+    switch (this.type) {
+      case ErrorType.NETWORK:
         return 'Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.';
-      case 'VALIDATION_ERROR':
+      case ErrorType.VALIDATION:
         return this.message;
-      case 'UNAUTHORIZED_ERROR':
+      case ErrorType.AUTHENTICATION:
         return 'Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.';
-      case 'FORBIDDEN_ERROR':
+      case ErrorType.AUTHORIZATION:
         return 'Bu işlemi yapmaya yetkiniz yok.';
-      case 'NOT_FOUND_ERROR':
+      case ErrorType.NOT_FOUND:
         return 'Aradığınız kaynak bulunamadı.';
-      case 'TIMEOUT_ERROR':
+      case ErrorType.TIMEOUT:
         return 'İstek zaman aşımına uğradı. Lütfen tekrar deneyin.';
-      case 'RATE_LIMIT_ERROR':
+      case ErrorType.RATE_LIMIT:
         return 'Çok fazla istek gönderdiniz. Lütfen biraz bekleyin.';
-      case 'SERVER_ERROR':
+      case ErrorType.SERVER:
         return 'Sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.';
-      case 'PARSING_ERROR':
+      case ErrorType.PARSING:
         return 'Veri işleme hatası oluştu.';
-      case 'STORAGE_ERROR':
+      case ErrorType.STORAGE:
         return 'Veri saklama hatası oluştu.';
       default:
         return this.message || 'Beklenmeyen bir hata oluştu.';
@@ -136,9 +139,8 @@ export class AppError extends Error {
     return {
       name: this.name,
       message: this.message,
-      code: this.code,
-      statusCode: this.statusCode,
-      isOperational: this.isOperational,
+      type: this.type,
+      severity: this.severity,
       timestamp: this.timestamp,
       context: this.context,
       stack: process.env.NODE_ENV === 'development' ? this.stack : undefined

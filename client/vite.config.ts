@@ -27,8 +27,8 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         // ⚠️ GÜVENLİK: httpOnly cookies için gerekli
-        configure: (proxy, _options) => {
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req) => {
             // Forward cookies
             if (req.headers.cookie) {
               proxyReq.setHeader('Cookie', req.headers.cookie);
@@ -41,8 +41,8 @@ export default defineConfig({
         target: "http://localhost:3001",
         changeOrigin: true,
         secure: false,
-        configure: (proxy, _options) => {
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req) => {
             if (req.headers.cookie) {
               proxyReq.setHeader('Cookie', req.headers.cookie);
             }

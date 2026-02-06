@@ -44,7 +44,7 @@
   top: 0;
   left: 0;
   height: 100vh;
-  z-index: 99;
+  z-index: 1002;
   transition: transform 0.3s ease;
   box-shadow: var(--shadow-lg);
 }
@@ -185,17 +185,18 @@
   color: var(--white) !important;
   /* backdrop-filter: blur(15px) !important; */
   padding: var(--space-4) var(--space-6) !important;
-  min-height: var(--header-height, 60px) !important;
+  min-height: var(--header-height, 90px) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
   position: fixed !important;
   top: 0 !important;
-  left: 0 !important;
+  left: 280px !important;
   right: 0 !important;
-  z-index: 100 !important;
+  z-index: 1000 !important;
   box-shadow: var(--shadow-sm) !important;
+  transition: left 0.3s ease;
 }
 
 .header-left {
@@ -282,7 +283,7 @@
   }
 
   .modern-header {
-    left: 0;
+    left: 0 !important;
   }
 
   .mobile-menu-button {
@@ -457,6 +458,24 @@
 
 .action-card[data-color="yellow"]::before {
   background: #EAB308;
+}
+
+.action-card[data-color="yellow"]:hover {
+  border-color: #EAB308;
+}
+
+/* Tofaş Theme Color */
+.action-card[data-color="tofas-700"] .action-icon {
+  background: linear-gradient(135deg, #8B4A5A 0%, #6B3A4A 100%);
+  color: var(--white);
+}
+
+.action-card[data-color="tofas-700"]::before {
+  background: #8B4A5A;
+}
+
+.action-card[data-color="tofas-700"]:hover {
+  border-color: #8B4A5A;
 }
 
 .action-card[data-color="yellow"]:hover {

@@ -4,6 +4,7 @@ import { AppError, ErrorType, ErrorSeverity, ErrorContext } from './AppError';
 
 // Re-export for backward compatibility
 export { AppError, ErrorType, ErrorSeverity };
+export type { ErrorContext };
 
 // Error Categories
 export interface ErrorCategory {
@@ -154,7 +155,7 @@ export class ErrorHandler {
     // HTTP status based categorization
     else if ((error as any).response?.status) {
       const status = (error as any).response.status;
-      
+
       switch (status) {
         case 401:
           type = ErrorType.AUTHENTICATION;
@@ -194,30 +195,31 @@ export class ErrorHandler {
       message = (error as any).message || 'İstemci hatası';
     }
 
+    const category = ERROR_CATEGORIES[type];
     return new AppError(
       message,
       type,
-      undefined, // statusCode
-      true, // isOperational
-      context
+      category?.severity || ErrorSeverity.MEDIUM,
+      context,
+      error instanceof Error ? error : undefined
     );
   }
 
   // Handle error with user notification
   async handleError(error: unknown, context?: Partial<ErrorContext>): Promise<void> {
     const appError = this.categorizeError(error, context);
-    
+
     // Add to queue for processing
     this.errorQueue.push(appError);
-    
+
     // Process queue if not already processing
     if (!this.isProcessing) {
       this.processErrorQueue();
     }
 
-    // Show user notification
-    this.showUserNotification(appError);
-    
+    // Process error (notifications etc)
+    this.processError(appError);
+
     // Track error analytics
     this.trackError(appError);
   }
@@ -225,42 +227,26 @@ export class ErrorHandler {
   // Process error queue
   private async processErrorQueue(): Promise<void> {
     if (this.isProcessing || this.errorQueue.length === 0) return;
-    
+
     this.isProcessing = true;
-    
+
     while (this.errorQueue.length > 0) {
       const error = this.errorQueue.shift();
       if (error) {
         await this.processError(error);
       }
     }
-    
+
     this.isProcessing = false;
   }
 
   // Process individual error
   private async processError(error: AppError): Promise<void> {
     // Handle authentication errors
-    if (error.code === ErrorType.AUTHENTICATION) {
-      // Redirect to login
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 2000);
-    }
-    
-    // Handle critical errors
-    if (error.isOperational === false) {
-      // Log critical error and potentially show modal
-      // Critical error logged to monitoring service
-    }
-  }
+    const category = ERROR_CATEGORIES[error.type as ErrorType];
 
-  // Show user-friendly notification
-  private showUserNotification(error: AppError): void {
-    const category = ERROR_CATEGORIES[error.code as ErrorType];
-    
     if (!category) return;
-    
+
     // Don't show toast for low severity errors
     if (category.severity === ErrorSeverity.LOW) {
       return;
@@ -268,7 +254,7 @@ export class ErrorHandler {
 
     const toastOptions = {
       duration: this.getToastDuration(category.severity),
-      icon: this.getToastIcon(error.code as ErrorType),
+      icon: this.getToastIcon(error.type as ErrorType),
       style: {
         background: this.getToastBackground(category.severity),
         color: '#fff',
@@ -320,10 +306,10 @@ export class ErrorHandler {
   // Track error for analytics
   private trackError(error: AppError): void {
     const analytics = Analytics.getInstance();
-    
+
     analytics.trackError(error, {
-      type: error.code,
-      severity: error.isOperational ? 'medium' : 'high',
+      type: error.type,
+      severity: error.severity,
       ...error.context
     });
   }
@@ -345,8 +331,8 @@ export class ErrorHandler {
           ...context
         });
 
-        const category = ERROR_CATEGORIES[lastError.code as ErrorType];
-        
+        const category = ERROR_CATEGORIES[lastError.type as ErrorType];
+
         // Don't retry if error type doesn't support retry
         if (!category?.shouldRetry || attempt >= category.maxRetries) {
           throw lastError;
@@ -354,7 +340,7 @@ export class ErrorHandler {
 
         // Wait before retry
         await this.delay(category.retryDelay);
-        
+
         // Show retry notification
         if (attempt < retryCount) {
           toast.loading(`Tekrar deneniyor... (${attempt + 1}/${retryCount})`, {
@@ -374,13 +360,13 @@ export class ErrorHandler {
 
   // Get error recovery suggestion
   getRecoverySuggestion(error: AppError): string | null {
-    const category = ERROR_CATEGORIES[error.code as ErrorType];
+    const category = ERROR_CATEGORIES[error.type as ErrorType];
     return category ? category.recoveryAction || null : null;
   }
 
   // Check if error should be retried
   shouldRetry(error: AppError): boolean {
-    const category = ERROR_CATEGORIES[error.code as ErrorType];
+    const category = ERROR_CATEGORIES[error.type as ErrorType];
     return category ? category.shouldRetry : false;
   }
 
@@ -393,7 +379,7 @@ export class ErrorHandler {
     };
 
     this.errorQueue.forEach(error => {
-      const errorType = error.code as ErrorType;
+      const errorType = error.type as ErrorType;
       const category = ERROR_CATEGORIES[errorType];
       if (category) {
         stats.byType[errorType] = (stats.byType[errorType] || 0) + 1;
@@ -456,5 +442,5 @@ export const useErrorBoundary = () => {
   };
 };
 
-// Import React hooks
+// Import React hooks at the top or keep them here if consistent
 import { useState, useCallback } from 'react';

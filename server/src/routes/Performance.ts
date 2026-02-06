@@ -102,7 +102,7 @@ router.get('/metrics', [
     const limit = parseInt(req.query.limit as string) || 50;
 
     const result = await PerformanceService.getMetrics(filters, page, limit);
-    
+
     res.json({
       success: true,
       data: result
@@ -124,7 +124,7 @@ router.get('/metrics/type/:type', [
   try {
     const limit = parseInt(req.query.limit as string) || 100;
     const metrics = await PerformanceService.getMetricsByType(req.params.type, limit);
-    
+
     res.json({
       success: true,
       data: metrics
@@ -142,7 +142,7 @@ router.get('/metrics/type/:type', [
 router.get('/metrics/critical', async (req, res) => {
   try {
     const metrics = await PerformanceService.getCriticalMetrics();
-    
+
     res.json({
       success: true,
       data: metrics
@@ -162,9 +162,9 @@ router.post('/optimizations', validateOptimizationCreate, handleValidationErrors
   try {
     const optimization = await PerformanceService.createOptimization({
       ...req.body,
-      executedBy: req.user?.id || 'system'
+      executedBy: req.user?.userId || 'system'
     });
-    
+
     res.status(201).json({
       success: true,
       data: optimization
@@ -205,7 +205,7 @@ router.get('/optimizations', [
     const limit = parseInt(req.query.limit as string) || 50;
 
     const result = await PerformanceService.getOptimizations(filters, page, limit);
-    
+
     res.json({
       success: true,
       data: result
@@ -223,7 +223,7 @@ router.get('/optimizations', [
 router.get('/optimizations/stats', async (req, res) => {
   try {
     const stats = await PerformanceService.getOptimizationStats();
-    
+
     res.json({
       success: true,
       data: stats
@@ -242,7 +242,7 @@ router.get('/optimizations/stats', async (req, res) => {
 router.post('/configs', validateConfigCreate, handleValidationErrors, async (req, res) => {
   try {
     const config = await PerformanceService.createConfig(req.body);
-    
+
     res.status(201).json({
       success: true,
       data: config
@@ -263,7 +263,7 @@ router.get('/configs', [
   try {
     const category = req.query.category as string;
     const configs = await PerformanceService.getConfigs(category);
-    
+
     res.json({
       success: true,
       data: configs
@@ -291,14 +291,14 @@ router.patch('/configs/:id', [
 ], handleValidationErrors, async (req, res) => {
   try {
     const config = await PerformanceService.updateConfig(req.params.id, req.body);
-    
+
     if (!config) {
       return res.status(404).json({
         success: false,
         message: 'Configuration not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: config
@@ -317,7 +317,7 @@ router.patch('/configs/:id', [
 router.get('/system', async (req, res) => {
   try {
     const metrics = await PerformanceService.getSystemMetrics();
-    
+
     res.json({
       success: true,
       data: metrics
@@ -335,7 +335,7 @@ router.get('/system', async (req, res) => {
 router.get('/database', async (req, res) => {
   try {
     const metrics = await PerformanceService.getDatabaseMetrics();
-    
+
     res.json({
       success: true,
       data: metrics
@@ -353,7 +353,7 @@ router.get('/database', async (req, res) => {
 router.get('/api', async (req, res) => {
   try {
     const metrics = await PerformanceService.getAPIMetrics();
-    
+
     res.json({
       success: true,
       data: metrics
@@ -372,7 +372,7 @@ router.get('/api', async (req, res) => {
 router.post('/optimize/scheduled', async (req, res) => {
   try {
     await PerformanceService.runScheduledOptimizations();
-    
+
     res.json({
       success: true,
       message: 'Scheduled optimizations completed'
@@ -396,9 +396,9 @@ router.post('/optimize/cache', async (req, res) => {
       target: 'application_cache',
       description: 'Manual cache clear triggered',
       impact: 'medium',
-      executedBy: req.user?.id || 'system'
+      executedBy: req.user?.userId || 'system'
     });
-    
+
     res.json({
       success: true,
       data: optimization
@@ -421,9 +421,9 @@ router.post('/optimize/database', async (req, res) => {
       target: 'database',
       description: 'Manual database optimization triggered',
       impact: 'high',
-      executedBy: req.user?.id || 'system'
+      executedBy: req.user?.userId || 'system'
     });
-    
+
     res.json({
       success: true,
       data: optimization
@@ -446,9 +446,9 @@ router.post('/optimize/memory', async (req, res) => {
       target: 'application_memory',
       description: 'Manual memory cleanup triggered',
       impact: 'medium',
-      executedBy: req.user?.id || 'system'
+      executedBy: req.user?.userId || 'system'
     });
-    
+
     res.json({
       success: true,
       data: optimization
@@ -473,7 +473,7 @@ router.get('/dashboard', async (req, res) => {
       PerformanceService.getCriticalMetrics(),
       PerformanceService.getOptimizations({}, 1, 5)
     ]);
-    
+
     res.json({
       success: true,
       data: {
@@ -501,14 +501,14 @@ router.get('/health', async (req, res) => {
       PerformanceService.getSystemMetrics(),
       PerformanceService.getCriticalMetrics()
     ]);
-    
+
     const healthStatus = {
       status: criticalMetrics.length > 0 ? 'warning' : 'healthy',
       timestamp: new Date(),
       system: systemMetrics,
       criticalIssues: criticalMetrics.length
     };
-    
+
     res.json({
       success: true,
       data: healthStatus

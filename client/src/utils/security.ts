@@ -7,18 +7,27 @@ export class TokenManager {
   private static readonly TOKEN_EXPIRY_KEY = 'token_expiry';
 
   static setTokens(accessToken: string, refreshToken: string, expiresIn: number) {
-    const expiryTime = Date.now() + (expiresIn * 1000);
-    console.log('[TokenManager] Setting tokens - expiresIn:', expiresIn, 'expiryTime:', new Date(expiryTime).toISOString());
+    const expiryTime = Date.now() + (expiresIn * 1000); // Convert seconds to milliseconds
+
+    if (import.meta.env.DEV) {
+      console.log('[TokenManager] Setting tokens - expiresIn:', expiresIn, 'expiryTime:', new Date(expiryTime).toISOString());
+    }
+
     localStorage.setItem(this.TOKEN_KEY, accessToken);
     localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
     localStorage.setItem(this.TOKEN_EXPIRY_KEY, expiryTime.toString());
-    console.log('[TokenManager] Tokens stored - accessToken exists:', !!localStorage.getItem(this.TOKEN_KEY));
-    console.log('[TokenManager] Token expiry stored:', localStorage.getItem(this.TOKEN_EXPIRY_KEY));
+
+    if (import.meta.env.DEV) {
+      console.log('[TokenManager] Tokens stored - accessToken exists:', !!localStorage.getItem(this.TOKEN_KEY));
+      console.log('[TokenManager] Token expiry stored:', localStorage.getItem(this.TOKEN_EXPIRY_KEY));
+    }
   }
 
   static getAccessToken(): string | null {
     const token = localStorage.getItem(this.TOKEN_KEY);
-    console.log('[TokenManager] Getting access token - exists:', !!token);
+    if (import.meta.env.DEV) {
+      console.log('[TokenManager] Getting access token - exists:', !!token);
+    }
     return token;
   }
 
@@ -29,11 +38,15 @@ export class TokenManager {
   static isTokenExpired(): boolean {
     const expiry = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
     if (!expiry) {
-      console.log('[TokenManager] No expiry found - token expired');
+      if (import.meta.env.DEV) {
+        console.log('[TokenManager] No expiry found - token expired');
+      }
       return true;
     }
-    const isExpired = Date.now() > parseInt(expiry);
-    console.log('[TokenManager] Token expiry check - current:', new Date().toISOString(), 'expiry:', new Date(parseInt(expiry)).toISOString(), 'expired:', isExpired);
+    const isExpired = Date.now() >= parseInt(expiry);
+    if (import.meta.env.DEV) {
+      console.log('[TokenManager] Token expiry check - current:', new Date().toISOString(), 'expiry:', new Date(parseInt(expiry)).toISOString(), 'expired:', isExpired);
+    }
     return isExpired;
   }
 
@@ -69,28 +82,33 @@ export class InputSanitizer {
 
   static sanitizePassword(password: string): string {
     if (typeof password !== 'string') return '';
-    // Remove any HTML tags and trim
-    return DOMPurify.sanitize(password, { ALLOWED_TAGS: [] });
+    // Passwords shouldn't be sanitized for HTML tags as they can contain valid special characters
+    return password;
   }
 
-  static sanitizeObject<T extends Record<string, any>>(obj: T): T {
-    const sanitized: any = {};
+  static sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
+    const sanitized: Record<string, unknown> = {};
+    const sensitiveKeys = ['sifre', 'password', 'passwordConfirm', 'newPassword', 'currentPassword', 'oldPassword'];
+
     for (const [key, value] of Object.entries(obj)) {
-      if (typeof value === 'string') {
+      if (sensitiveKeys.includes(key)) {
+        // Passwords should NOT be sanitized (HTML tags are valid chars in passwords)
+        sanitized[key] = value;
+      } else if (typeof value === 'string') {
         // Remove HTML tags completely and trim whitespace
         sanitized[key] = DOMPurify.sanitize(value, { ALLOWED_TAGS: [] }).trim();
       } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-        sanitized[key] = this.sanitizeObject(value);
+      sanitized[key] = this.sanitizeObject(value as Record<string, unknown>);
       } else if (Array.isArray(value)) {
-        sanitized[key] = value.map(item => 
-          typeof item === 'string' 
+        sanitized[key] = value.map(item =>
+          typeof item === 'string'
             ? DOMPurify.sanitize(item, { ALLOWED_TAGS: [] }).trim()
-            : typeof item === 'object' && item !== null 
+            : typeof item === 'object' && item !== null
               ? this.sanitizeObject(item)
               : item
         );
       } else {
-        sanitized[key] = value;
+        sanitized[key] = value as unknown;
       }
     }
     return sanitized as T;
@@ -101,27 +119,27 @@ export class InputSanitizer {
 export class PasswordPolicy {
   static validate(password: string): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
+
     if (password.length < 8) {
       errors.push('Şifre en az 8 karakter olmalıdır');
     }
-    
+
     if (!/[A-Z]/.test(password)) {
       errors.push('Şifre en az bir büyük harf içermelidir');
     }
-    
+
     if (!/[a-z]/.test(password)) {
       errors.push('Şifre en az bir küçük harf içermelidir');
     }
-    
+
     if (!/\d/.test(password)) {
       errors.push('Şifre en az bir rakam içermelidir');
     }
-    
+
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
       errors.push('Şifre en az bir özel karakter içermelidir');
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors
@@ -130,16 +148,16 @@ export class PasswordPolicy {
 
   static getStrength(password: string): 'weak' | 'medium' | 'strong' {
     let score = 0;
-    
+
     if (password.length >= 8) score++;
     if (password.length >= 12) score++;
     if (/[A-Z]/.test(password)) score++;
     if (/[a-z]/.test(password)) score++;
     if (/\d/.test(password)) score++;
     if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
-    
-    if (score <= 2) return 'weak';
-    if (score <= 4) return 'medium';
+
+    if (score <= 3) return 'weak';
+    if (score <= 5) return 'medium';
     return 'strong';
   }
 }
@@ -174,30 +192,26 @@ export class CSRFProtection {
   private static readonly CSRF_TOKEN_KEY = 'csrf_token';
 
   static setToken(token: string) {
-    localStorage.setItem(this.CSRF_TOKEN_KEY, token);
+    sessionStorage.setItem(this.CSRF_TOKEN_KEY, token);
   }
 
   static getToken(): string | null {
-    return localStorage.getItem(this.CSRF_TOKEN_KEY);
+    return sessionStorage.getItem(this.CSRF_TOKEN_KEY);
   }
 
   static clearToken() {
-    localStorage.removeItem(this.CSRF_TOKEN_KEY);
+    sessionStorage.removeItem(this.CSRF_TOKEN_KEY);
   }
 
   static generateToken(): string {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    this.setToken(token);
+    return token;
   }
 
-  static validateToken(token: string): { allowed: boolean; reason?: string } {
+  static validateToken(token: string): boolean {
     const storedToken = this.getToken();
-    if (!storedToken) {
-      return { allowed: false, reason: 'No CSRF token found' };
-    }
-    if (storedToken !== token) {
-      return { allowed: false, reason: 'Invalid CSRF token' };
-    }
-    return { allowed: true };
+    return !!storedToken && storedToken === token;
   }
 }
 
@@ -224,5 +238,9 @@ export class RateLimiter {
 
   static clearAttempts(key: string) {
     this.attempts.delete(key);
+  }
+
+  static clearAll() {
+    this.attempts.clear();
   }
 }

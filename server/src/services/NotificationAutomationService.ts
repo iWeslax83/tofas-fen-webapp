@@ -114,27 +114,7 @@ export class NotificationAutomationService {
       createdAt: new Date(),
       updatedAt: new Date()
     },
-    {
-      id: '5',
-      name: 'Kulüp Katılım Onayı',
-      event: 'club.membership_approved',
-      conditions: {},
-      notification: {
-        title: 'Kulüp Katılım Onaylandı',
-        message: 'Kulüp katılım başvurunuz onaylandı.',
-        type: 'success',
-        category: 'social',
-        priority: 'medium',
-        icon: '✅',
-        actionText: 'Kulübü Görüntüle'
-      },
-      recipients: {
-        type: 'event_related'
-      },
-      enabled: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
+
     {
       id: '6',
       name: 'Sistem Bakımı Uyarısı',
@@ -163,7 +143,7 @@ export class NotificationAutomationService {
    */
   static async processEvent(event: string, data: any): Promise<void> {
     try {
-      const relevantRules = this.automationRules.filter(rule => 
+      const relevantRules = this.automationRules.filter(rule =>
         rule.enabled && rule.event === event
       );
 
@@ -173,10 +153,10 @@ export class NotificationAutomationService {
         }
       }
     } catch (error) {
-      logger.error('Error processing notification event', { 
-        error: (error as any).message, 
-        event, 
-        data 
+      logger.error('Error processing notification event', {
+        error: (error as any).message,
+        event,
+        data
       });
     }
   }
@@ -192,17 +172,17 @@ export class NotificationAutomationService {
         const now = new Date();
         const diffTime = dueDate.getTime() - now.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         return diffDays <= conditions.daysBefore;
       }
 
       // Add more condition types as needed
       return true;
     } catch (error) {
-      logger.error('Error evaluating notification conditions', { 
-        error: (error as any).message, 
-        conditions, 
-        data 
+      logger.error('Error evaluating notification conditions', {
+        error: (error as any).message,
+        conditions,
+        data
       });
       return false;
     }
@@ -239,8 +219,8 @@ export class NotificationAutomationService {
           break;
         case 'role':
           if (rule.recipients.roles) {
-            const roleUsers = await User.find({ 
-              rol: { $in: rule.recipients.roles } 
+            const roleUsers = await User.find({
+              rol: { $in: rule.recipients.roles }
             }, 'id');
             recipients = roleUsers.map(user => user.id);
           }
@@ -270,10 +250,10 @@ export class NotificationAutomationService {
         });
       }
     } catch (error) {
-      logger.error('Error triggering automated notification', { 
-        error: (error as any).message, 
-        ruleId: rule.id, 
-        data 
+      logger.error('Error triggering automated notification', {
+        error: (error as any).message,
+        ruleId: rule.id,
+        data
       });
     }
   }
@@ -295,24 +275,19 @@ export class NotificationAutomationService {
           // Get the specific student and their parent
           if (data.studentId) {
             const student = await User.findOne({ id: data.studentId }, 'id');
-            const parent = await User.findOne({ 
-              rol: 'parent', 
+            const parent = await User.findOne({
+              rol: 'parent',
               // Assuming there's a relationship field
               // This would need to be adjusted based on your data model
             }, 'id');
-            
+
             const recipients = [student?.id].filter(Boolean);
             if (parent) recipients.push(parent.id);
             return recipients;
           }
           break;
 
-        case 'club.membership_approved':
-          // Get the specific user who was approved
-          if (data.userId) {
-            return [data.userId];
-          }
-          break;
+
 
         case 'announcement.created':
         case 'system.maintenance':
@@ -326,10 +301,10 @@ export class NotificationAutomationService {
 
       return [];
     } catch (error) {
-      logger.error('Error getting event-related recipients', { 
-        error: (error as any).message, 
-        event, 
-        data 
+      logger.error('Error getting event-related recipients', {
+        error: (error as any).message,
+        event,
+        data
       });
       return [];
     }
@@ -384,7 +359,7 @@ export class NotificationAutomationService {
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
+
     this.automationRules.push(newRule);
     return newRule;
   }

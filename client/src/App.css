@@ -17,16 +17,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
-  background: linear-gradient(135deg, #8B0000 0%, #DC143C 50%, #B22222 100%);
+  background: var(--gradient-primary-animated, var(--gradient-primary));
   min-height: 100vh;
   animation: globalGradientShift 20s ease-in-out infinite;
 }
 
 @keyframes globalGradientShift {
-  0%, 100% { background: linear-gradient(135deg, #8B0000 0%, #DC143C 50%, #B22222 100%); }
-  25% { background: linear-gradient(135deg, #DC143C 0%, #B22222 50%, #8B0000 100%); }
-  50% { background: linear-gradient(135deg, #B22222 0%, #8B0000 50%, #DC143C 100%); }
-  75% { background: linear-gradient(135deg, #8B0000 0%, #DC143C 50%, #B22222 100%); }
+
+  0%,
+  100% {
+    background: var(--gradient-primary);
+  }
+
+  50% {
+    background: var(--gradient-primary-animated, var(--gradient-primary));
+  }
 }
 
 /* Reset Styles */
@@ -64,8 +69,13 @@ img {
 /* Loading styles moved to theme.css - using centralized styles */
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* Global Button Styles */
@@ -101,9 +111,9 @@ img {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+  background: var(--gradient-primary);
   color: white;
-  box-shadow: 0 6px 20px rgba(139, 0, 0, 0.4);
+  box-shadow: 0 6px 20px var(--primary-red-30);
 }
 
 .btn-primary:hover {
@@ -113,16 +123,16 @@ img {
 
 .btn-secondary {
   background: transparent;
-  color: #8B0000;
-  border: 2px solid #8B0000;
-  box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2);
+  color: var(--primary-red);
+  border: 2px solid var(--primary-red);
+  box-shadow: 0 4px 12px var(--primary-red-10);
 }
 
 .btn-secondary:hover {
-  background: #8B0000;
+  background: var(--primary-red);
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(139, 0, 0, 0.4);
+  box-shadow: 0 8px 20px var(--primary-red-30);
 }
 
 .btn-success {
@@ -161,8 +171,8 @@ img {
 
 .input:focus {
   outline: none;
-  border-color: #8B0000;
-  box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
+  border-color: var(--primary-red);
+  box-shadow: 0 0 0 3px var(--primary-red-10);
   background: var(--primary-red-lighter);
   transform: scale(1.02);
 }
@@ -179,8 +189,8 @@ img {
 
 .card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(139, 0, 0, 0.2);
-  border-color: #8B0000;
+  box-shadow: 0 16px 40px var(--primary-red-20);
+  border-color: var(--primary-red);
 }
 
 /* Global Animation Classes */
@@ -193,8 +203,15 @@ img {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .slide-down {
@@ -202,8 +219,15 @@ img {
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-40px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .fade-in-left {
@@ -211,8 +235,15 @@ img {
 }
 
 @keyframes fadeInLeft {
-  from { opacity: 0; transform: translateX(-30px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .fade-in-right {
@@ -220,8 +251,15 @@ img {
 }
 
 @keyframes fadeInRight {
-  from { opacity: 0; transform: translateX(30px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .scale-in {
@@ -229,8 +267,15 @@ img {
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Utility Classes */
@@ -246,26 +291,77 @@ img {
   text-align: right;
 }
 
-.mb-1 { margin-bottom: 0.25rem; }
-.mb-2 { margin-bottom: 0.5rem; }
-.mb-3 { margin-bottom: 0.75rem; }
-.mb-4 { margin-bottom: 1rem; }
-.mb-5 { margin-bottom: 1.25rem; }
-.mb-6 { margin-bottom: 1.5rem; }
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
 
-.mt-1 { margin-top: 0.25rem; }
-.mt-2 { margin-top: 0.5rem; }
-.mt-3 { margin-top: 0.75rem; }
-.mt-4 { margin-top: 1rem; }
-.mt-5 { margin-top: 1.25rem; }
-.mt-6 { margin-top: 1.5rem; }
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
 
-.p-1 { padding: 0.25rem; }
-.p-2 { padding: 0.5rem; }
-.p-3 { padding: 0.75rem; }
-.p-4 { padding: 1rem; }
-.p-5 { padding: 1.25rem; }
-.p-6 { padding: 1.5rem; }
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mb-5 {
+  margin-bottom: 1.25rem;
+}
+
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-3 {
+  margin-top: 0.75rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mt-5 {
+  margin-top: 1.25rem;
+}
+
+.mt-6 {
+  margin-top: 1.5rem;
+}
+
+.p-1 {
+  padding: 0.25rem;
+}
+
+.p-2 {
+  padding: 0.5rem;
+}
+
+.p-3 {
+  padding: 0.75rem;
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+.p-5 {
+  padding: 1.25rem;
+}
+
+.p-6 {
+  padding: 1.5rem;
+}
 
 /* Responsive Utilities */
 @media (max-width: 768px) {
@@ -273,12 +369,12 @@ img {
     padding: 10px 20px;
     font-size: 13px;
   }
-  
+
   .input {
     padding: 10px 14px;
     font-size: 13px;
   }
-  
+
   .card {
     border-radius: 12px;
   }
@@ -286,8 +382,15 @@ img {
 
 /* Loading Animation */
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .loading {
@@ -300,6 +403,11 @@ img {
 }
 
 @keyframes textGlow {
-  from { filter: drop-shadow(0 0 5px rgba(139, 0, 0, 0.3)); }
-  to { filter: drop-shadow(0 0 15px rgba(139, 0, 0, 0.6)); }
+  from {
+    filter: drop-shadow(0 0 5px rgba(139, 0, 0, 0.3));
+  }
+
+  to {
+    filter: drop-shadow(0 0 15px rgba(139, 0, 0, 0.6));
+  }
 }

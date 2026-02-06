@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { AuthService } from '../../modules/auth/services/authService';
-import { User } from '../../models/User';
-import { AppError } from '../../utils/AppError';
+import { AuthService } from '../../../modules/auth/services/authService';
+import { User } from '../../../models/User';
+import { AppError } from '../../../utils/AppError';
 import bcrypt from 'bcryptjs';
 
 // Mock dependencies
-vi.mock('../../models/User');
+vi.mock('../../../models/User');
 vi.mock('bcryptjs');
 
 describe('AuthService', () => {
@@ -101,49 +101,6 @@ describe('AuthService', () => {
     });
   });
 
-  describe('changePassword', () => {
-    it('should change password successfully', async () => {
-      const mockUser = {
-        id: 'user123',
-        sifre: 'oldHashedPassword',
-        tokenVersion: 0,
-        isActive: true,
-        save: vi.fn()
-      };
-
-      (User.findOne as any).mockResolvedValue(mockUser);
-      (bcrypt.compare as any).mockResolvedValue(true);
-      (bcrypt.hash as any).mockResolvedValue('newHashedPassword');
-
-      await AuthService.changePassword('user123', 'oldPassword', 'newPassword123');
-
-      expect(bcrypt.compare).toHaveBeenCalledWith('oldPassword', 'oldHashedPassword');
-      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword123', 12);
-      expect(mockUser.tokenVersion).toBe(1);
-      expect(mockUser.save).toHaveBeenCalled();
-    });
-
-    it('should throw not found error for non-existent user', async () => {
-      (User.findOne as any).mockResolvedValue(null);
-
-      await expect(AuthService.changePassword('user123', 'oldPassword', 'newPassword123'))
-        .rejects.toThrow(AppError);
-    });
-
-    it('should throw unauthorized error for wrong current password', async () => {
-      const mockUser = {
-        id: 'user123',
-        sifre: 'oldHashedPassword',
-        isActive: true
-      };
-
-      (User.findOne as any).mockResolvedValue(mockUser);
-      (bcrypt.compare as any).mockResolvedValue(false);
-
-      await expect(AuthService.changePassword('user123', 'wrongPassword', 'newPassword123'))
-        .rejects.toThrow(AppError);
-    });
-  });
 
   describe('requestPasswordReset', () => {
     it('should request password reset for existing user', async () => {

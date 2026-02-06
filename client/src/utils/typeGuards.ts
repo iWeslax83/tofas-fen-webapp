@@ -3,7 +3,7 @@ import { IUser, UserRole, ApiResponse, AppError, Theme } from '../@types';
 // User Type Guards
 export const isUser = (obj: unknown): obj is IUser => {
   if (!obj || typeof obj !== 'object' || obj === null) return false;
-  
+
   const o = obj as any;
   return (
     typeof o._id === 'string' &&
@@ -26,17 +26,17 @@ export const isUserRole = (value: unknown): value is UserRole => {
 
 export const isPartialUser = (obj: unknown): obj is Partial<IUser> => {
   if (!obj || typeof obj !== 'object') return false;
-  
+
   const validKeys = ['_id', 'id', 'name', 'surname', 'rol', 'email', 'emailVerified', 'pansiyon', 'tokenVersion', 'createdAt', 'updatedAt'];
   const objKeys = Object.keys(obj);
-  
+
   return objKeys.every(key => validKeys.includes(key));
 };
 
 // API Response Type Guards
 export const isApiResponse = <T>(obj: unknown): obj is ApiResponse<T> => {
   if (!obj || typeof obj !== 'object' || obj === null) return false;
-  
+
   const o = obj as any;
   return (
     typeof o.success === 'boolean' &&
@@ -46,21 +46,22 @@ export const isApiResponse = <T>(obj: unknown): obj is ApiResponse<T> => {
 
 export const isPaginatedResponse = <T>(obj: unknown): obj is ApiResponse<T[]> & { pagination: { page: number; limit: number; total: number; totalPages: number } } => {
   if (!isApiResponse<T[]>(obj) || !('pagination' in obj)) return false;
-  
+
+  const pagination = obj.pagination as { page: number; limit: number; total: number; totalPages: number };
   return (
-    obj.pagination &&
-    typeof obj.pagination === 'object' &&
-    typeof (obj.pagination as { page: number; limit: number; total: number }).page === 'number' &&
-    typeof (obj.pagination as { page: number; limit: number; total: number }).limit === 'number' &&
-    typeof (obj.pagination as { page: number; limit: number; total: number }).total === 'number' &&
-    typeof (obj.pagination as { totalPages: number }).totalPages === 'number'
+    pagination &&
+    typeof pagination === 'object' &&
+    typeof pagination.page === 'number' &&
+    typeof pagination.limit === 'number' &&
+    typeof pagination.total === 'number' &&
+    typeof pagination.totalPages === 'number'
   );
 };
 
 // Error Type Guards
 export const isAppError = (obj: unknown): obj is AppError => {
   if (!obj || typeof obj !== 'object' || obj === null) return false;
-  
+
   const o = obj as any;
   return (
     typeof o.id === 'string' &&
@@ -72,7 +73,7 @@ export const isAppError = (obj: unknown): obj is AppError => {
 
 export const isError = (obj: unknown): obj is Error => {
   if (!obj || typeof obj !== 'object' || obj === null) return false;
-  
+
   const o = obj as any;
   return (
     typeof o.message === 'string' &&
@@ -84,7 +85,7 @@ export const isError = (obj: unknown): obj is Error => {
 // Theme Type Guards
 export const isTheme = (obj: unknown): obj is Theme => {
   if (!obj || typeof obj !== 'object' || obj === null) return false;
-  
+
   const o = obj as any;
   return (
     ['light', 'dark', 'system'].includes(o.mode) &&
@@ -118,7 +119,7 @@ export const isDate = (value: unknown): value is Date => {
   return value instanceof Date;
 };
 
-export const isFunction = (value: unknown): value is Function => {
+export const isFunction = (value: unknown): value is (...args: unknown[]) => unknown => {
   return typeof value === 'function';
 };
 
@@ -154,7 +155,7 @@ export const isValidPassword = (password: string): boolean => {
 };
 
 export const isValidPhoneNumber = (phone: string): boolean => {
-  const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+  const phoneRegex = /^\+?[1-9][\d]{0,15}$/;
   return phoneRegex.test(phone.replace(/\s/g, ''));
 };
 

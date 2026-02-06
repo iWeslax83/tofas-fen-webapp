@@ -14,30 +14,25 @@ export enum EventType {
   ANNOUNCEMENT_CREATED = 'announcement.created',
   ANNOUNCEMENT_UPDATED = 'announcement.updated',
   ANNOUNCEMENT_DELETED = 'announcement.deleted',
-  
+
   // Homework events
   HOMEWORK_CREATED = 'homework.created',
   HOMEWORK_UPDATED = 'homework.updated',
   HOMEWORK_SUBMITTED = 'homework.submitted',
-  
+
   // Evci Request events
   EVCI_REQUEST_CREATED = 'evci_request.created',
   EVCI_REQUEST_APPROVED = 'evci_request.approved',
   EVCI_REQUEST_REJECTED = 'evci_request.rejected',
-  
+
   // Note events
   NOTE_ADDED = 'note.added',
   NOTE_UPDATED = 'note.updated',
-  
-  // Club events
-  CLUB_CREATED = 'club.created',
-  CLUB_MEMBER_JOINED = 'club.member_joined',
-  CLUB_MEMBER_LEFT = 'club.member_left',
-  
+
   // Notification events
   NOTIFICATION_CREATED = 'notification.created',
   NOTIFICATION_READ = 'notification.read',
-  
+
   // User events
   USER_UPDATED = 'user.updated',
   USER_LOGIN = 'user.login',
@@ -144,7 +139,7 @@ class EventService {
 
   private setupRedisHandlers() {
     const isDevelopment = process.env.NODE_ENV !== 'production';
-    
+
     // Publisher error handling
     this.publisher.on('error', (error: Error) => {
       if (isDevelopment) {
@@ -181,7 +176,7 @@ class EventService {
       // Subscribe to all event channels
       const channels = Object.values(EventType);
       await this.subscriber.psubscribe(...channels.map(ch => `event:${ch}`));
-      
+
       // Handle incoming messages
       this.subscriber.on('pmessage', async (pattern, channel, message) => {
         try {
@@ -249,7 +244,7 @@ class EventService {
    */
   private async handleEvent(payload: EventPayload): Promise<void> {
     const handlers = this.handlers.get(payload.eventType);
-    
+
     if (!handlers || handlers.size === 0) {
       logger.debug(`No handlers for event type: ${payload.eventType}`);
       return;

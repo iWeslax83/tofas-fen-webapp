@@ -13,7 +13,7 @@ let RegistryClass: any;
 let register: any;
 
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
   const prom = require('prom-client');
   Counter = prom.Counter;
   Histogram = prom.Histogram;
@@ -25,16 +25,16 @@ try {
 
   // No-op implementations
   register = {
-    registerMetric: () => {},
+    registerMetric: () => { },
     getMetricsAsJSON: async () => [],
   };
 
   const noopMetric = () => ({
-    inc: () => {},
-    observe: () => {},
-    set: () => {},
-    labels: () => ({ inc: () => {}, set: () => {}, observe: () => {} }),
-    startTimer: () => () => {},
+    inc: () => { },
+    observe: () => { },
+    set: () => { },
+    labels: () => ({ inc: () => { }, set: () => { }, observe: () => { } }),
+    startTimer: () => () => { },
   });
 
   Counter = function () { return noopMetric(); };

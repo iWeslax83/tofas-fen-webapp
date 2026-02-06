@@ -34,10 +34,7 @@ export const typeDefs = gql`
     evciRequest(id: ID!): EvciRequest
     myEvciRequests: [EvciRequest!]!
 
-    # Club queries
-    clubs(filters: ClubFilters, page: Int, limit: Int): ClubConnection
-    club(id: ID!): Club
-    myClubs: [Club!]!
+
 
     # Dormitory queries
     meals(date: String): [Meal!]!
@@ -79,10 +76,7 @@ export const typeDefs = gql`
     updateEvciRequest(id: ID!, input: UpdateEvciRequestInput!): EvciRequest
     deleteEvciRequest(id: ID!): Boolean
 
-    # Club mutations
-    createClub(input: CreateClubInput!): Club
-    joinClub(clubId: ID!, code: String): Club
-    leaveClub(clubId: ID!): Boolean
+
 
     # Maintenance mutations
     createMaintenanceRequest(input: CreateMaintenanceRequestInput!): MaintenanceRequest
@@ -158,14 +152,7 @@ export const typeDefs = gql`
     createdAt: Date!
   }
 
-  type Club {
-    id: ID!
-    name: String!
-    description: String!
-    advisor: User!
-    members: [User!]!
-    createdAt: Date!
-  }
+
 
   type Meal {
     id: ID!
@@ -239,11 +226,7 @@ export const typeDefs = gql`
     pageInfo: PageInfo!
   }
 
-  type ClubConnection {
-    nodes: [Club!]!
-    totalCount: Int!
-    pageInfo: PageInfo!
-  }
+
 
   type PageInfo {
     hasNextPage: Boolean!
@@ -277,10 +260,7 @@ export const typeDefs = gql`
     status: String
   }
 
-  input ClubFilters {
-    advisorId: ID
-    memberId: ID
-  }
+
 
   input MaintenanceRequestFilters {
     status: String
@@ -349,10 +329,7 @@ export const typeDefs = gql`
     reason: String
   }
 
-  input CreateClubInput {
-    name: String!
-    description: String!
-  }
+
 
   input CreateMaintenanceRequestInput {
     title: String!

@@ -27,7 +27,7 @@ export const registerServiceWorker = async (): Promise<void> => {
         }
       });
       
-      return registration;
+      return;
     } catch (error) {
       console.error('Service Worker registration failed:', error);
     }

@@ -27,7 +27,7 @@ interface UIState {
   
   // Modal states
   activeModal: string | null;
-  modalData: any;
+  modalData: unknown;
   
   // Toast settings
   toastPosition: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
@@ -52,10 +52,10 @@ interface UIState {
   
   setGlobalLoading: (loading: boolean, message?: string) => void;
   
-  setActiveModal: (modal: string | null, data?: any) => void;
+  setActiveModal: (modal: string | null, data?: unknown) => void;
   closeModal: () => void;
   
-  setToastSettings: (position: string, duration: number) => void;
+  setToastSettings: (position: UIState['toastPosition'], duration: number) => void;
   
   resetUI: () => void;
 }
@@ -155,7 +155,7 @@ export const useUIStore = create<UIState>()(
       },
 
       // Modal actions
-      setActiveModal: (modal: string | null, data?: any) => {
+      setActiveModal: (modal: string | null, data?: unknown) => {
         set({ 
           activeModal: modal, 
           modalData: data || null 
@@ -170,9 +170,9 @@ export const useUIStore = create<UIState>()(
       },
 
       // Toast settings
-      setToastSettings: (position: string, duration: number) => {
+      setToastSettings: (position: UIState['toastPosition'], duration: number) => {
         set({ 
-          toastPosition: position as any, 
+          toastPosition: position, 
           toastDuration: duration 
         });
       },

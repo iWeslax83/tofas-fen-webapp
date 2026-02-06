@@ -77,9 +77,11 @@ const LazyImage: React.FC<LazyImageProps> = memo(({
 
   // Reset state when src changes
   useEffect(() => {
-    setIsLoaded(false);
-    setHasError(false);
-    setCurrentSrc(placeholder);
+    queueMicrotask(() => {
+      setIsLoaded(false);
+      setHasError(false);
+      setCurrentSrc(placeholder);
+    });
   }, [src, placeholder]);
 
   const handleLoad = () => {

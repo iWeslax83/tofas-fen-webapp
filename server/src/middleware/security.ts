@@ -161,7 +161,10 @@ const sanitizeObject = (obj: any): any => {
   if (obj !== null && typeof obj === 'object') {
     const sanitized: any = {};
     for (const [key, value] of Object.entries(obj)) {
-      sanitized[key] = sanitizeObject(value);
+      // Strip keys starting with $ to prevent NoSQL injection
+      if (!key.startsWith('$')) {
+        sanitized[key] = sanitizeObject(value);
+      }
     }
     return sanitized;
   }
@@ -270,7 +273,7 @@ export const preventXSS = (req: Request, res: Response, next: NextFunction) => {
  */
 export const enhancedValidation = (_req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(_req);
-  
+
   if (!errors.isEmpty()) {
     // Log validation errors for security monitoring
     console.warn('Validation failed:', {
@@ -297,23 +300,23 @@ export const enhancedValidation = (_req: Request, res: Response, next: NextFunct
 export const securityHeaders = (_req: Request, res: Response, next: NextFunction) => {
   // Prevent MIME type sniffing
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  
+
   // Prevent clickjacking
   res.setHeader('X-Frame-Options', 'DENY');
-  
+
   // XSS protection
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  
+
   // Referrer policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+
   // Permissions policy
-  res.setHeader('Permissions-Policy', 
+  res.setHeader('Permissions-Policy',
     'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=()'
   );
-  
+
   // Content security policy report only (for monitoring)
-  res.setHeader('Content-Security-Policy-Report-Only', 
+  res.setHeader('Content-Security-Policy-Report-Only',
     "default-src 'self'; report-uri /api/security/csp-report"
   );
 
@@ -326,7 +329,7 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
  */
 export const auditLog = (req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
-  
+
   // Log request details
   const requestLog = {
     timestamp: new Date().toISOString(),
@@ -342,7 +345,7 @@ export const auditLog = (req: Request, res: Response, next: NextFunction) => {
 
   // Override response.json to log response
   const originalJson = res.json;
-  res.json = function(data: any) {
+  res.json = function (data: any) {
     const responseLog = {
       ...requestLog,
       responseTime: Date.now() - startTime,
@@ -445,17 +448,17 @@ export const sanitizeInput = (req: Request, _res: Response, next: NextFunction) 
   if (req.body && typeof req.body === 'object') {
     req.body = sanitizeObject(req.body);
   }
-  
+
   // Sanitize query parameters
   if (req.query && typeof req.query === 'object') {
     req.query = sanitizeObject(req.query);
   }
-  
+
   // Sanitize URL parameters
   if (req.params && typeof req.params === 'object') {
     req.params = sanitizeObject(req.params);
   }
-  
+
   return next();
 };
 

@@ -45,6 +45,40 @@ router.post('/login', authLimiter, AuthController.login);
 
 /**
  * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Yeni kullanıcı kaydı
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [id, adSoyad, rol, sifre]
+ *             properties:
+ *               id:
+ *                 type: string
+ *               adSoyad:
+ *                 type: string
+ *               rol:
+ *                 type: string
+ *               sifre:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Kullanıcı başarıyla oluşturuldu
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       409:
+ *         description: Kullanıcı zaten var
+ */
+router.post('/register', AuthController.register);
+
+/**
+ * @swagger
  * /api/auth/refresh-token:
  *   post:
  *     summary: Token yenileme
@@ -182,6 +216,52 @@ router.get('/profile', authenticateJWT, AuthController.getProfile);
  *         $ref: '#/components/responses/NotFoundError'
  */
 router.get('/me', authenticateJWT, AuthController.getMe);
+
+/**
+ * @swagger
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Şifre sıfırlama talebi
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: İstek başarılı
+ */
+router.post('/forgot-password', AuthController.forgotPassword);
+
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Şifre sıfırlama
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token, newPassword]
+ *             properties:
+ *               token:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Şifre güncellendi
+ */
+router.post('/reset-password', AuthController.resetPassword);
 
 // Şifre değiştirme endpoint'i kaldırıldı - artık TCKN kullanılıyor ve değiştirilemez
 

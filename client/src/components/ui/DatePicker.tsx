@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, getDay, startOfWeek, endOfWeek, isToday, isPast, isFuture, Locale } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isToday, Locale } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import './DatePicker.css';
 
@@ -47,11 +47,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [internalValue, setInternalValue] = useState<Date | null>(defaultValue || null);
-  const [currentMonth, setCurrentMonth] = useState<Date>(value || defaultValue || new Date());
   const pickerRef = useRef<HTMLDivElement>(null);
 
   const isControlled = controlledValue !== undefined;
   const value = isControlled ? controlledValue : internalValue;
+  const [currentMonth, setCurrentMonth] = useState<Date>(value || defaultValue || new Date());
 
   useEffect(() => {
     if (value) {
@@ -133,6 +133,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       document.addEventListener('keydown', handleEscape);
       return () => document.removeEventListener('keydown', handleEscape);
     }
+    return undefined;
   }, [open]);
 
   const displayValue = value ? format(value, 'dd MMMM yyyy', { locale }) : '';

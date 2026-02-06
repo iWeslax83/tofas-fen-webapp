@@ -142,20 +142,23 @@ export interface ConversationFilters {
 export class CommunicationService {
   // Message Management
   static async createMessage(data: MessageCreateData): Promise<IMessage> {
-    const sender = await User.findById(data.senderId);
+    const sender = await User.findOne({ id: data.senderId });
     if (!sender) {
-      throw new Error('Sender not found');
+      const { AppError } = await import('../utils/AppError');
+      throw AppError.notFound('Sender not found');
     }
 
-    const conversation = await Conversation.findById(data.conversationId);
+    const conversation = await Conversation.findOne({ id: data.conversationId });
     if (!conversation) {
-      throw new Error('Conversation not found');
+      const { AppError } = await import('../utils/AppError');
+      throw AppError.notFound('Conversation not found');
     }
 
     // Check if user is participant
     const isParticipant = conversation.participants.some(p => p.userId === data.senderId && p.isActive);
     if (!isParticipant) {
-      throw new Error('User is not a participant in this conversation');
+      const { AppError } = await import('../utils/AppError');
+      throw AppError.forbidden('User is not a participant in this conversation');
     }
 
     const message = new Message({
@@ -203,25 +206,27 @@ export class CommunicationService {
   }
 
   static async getMessages(conversationId: string, userId: string, page: number = 1, limit: number = 50): Promise<{ messages: IMessage[], total: number }> {
-    const conversation = await Conversation.findById(conversationId);
+    const conversation = await Conversation.findOne({ id: conversationId });
     if (!conversation) {
-      throw new Error('Conversation not found');
+      const { AppError } = await import('../utils/AppError');
+      throw AppError.notFound('Conversation not found');
     }
 
     const isParticipant = conversation.participants.some(p => p.userId === userId && p.isActive);
     if (!isParticipant) {
-      throw new Error('User is not a participant in this conversation');
+      const { AppError } = await import('../utils/AppError');
+      throw AppError.forbidden('User is not a participant in this conversation');
     }
 
     const skip = (page - 1) * limit;
-    const messages = await Message.find({
+    const messageDocs = await Message.find({
       conversationId,
       deleted: false
     })
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .populate('replyTo', 'content senderName');
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('replyTo', 'content senderName');
 
     const total = await Message.countDocuments({
       conversationId,
@@ -229,8 +234,8 @@ export class CommunicationService {
     });
 
     // Mark messages as read
-    const unreadMessages = messages.filter((msg: any) => 
-      msg.senderId !== userId && 
+    const unreadMessages = messageDocs.filter((msg: any) =>
+      msg.senderId !== userId &&
       !msg.readBy.some((read: any) => read.userId === userId)
     );
 
@@ -238,11 +243,12 @@ export class CommunicationService {
       await (message as any).markAsRead(userId);
     }
 
-    return { messages: messages.reverse(), total };
+    const messages = messageDocs.reverse() as unknown as IMessage[];
+    return { messages, total };
   }
 
   static async updateMessage(messageId: string, userId: string, updates: Partial<MessageCreateData>): Promise<IMessage> {
-    const message = await Message.findById(messageId);
+    const message = await Message.findOne({ id: messageId });
     if (!message) {
       throw new Error('Message not found');
     }
@@ -267,7 +273,7 @@ export class CommunicationService {
   }
 
   static async deleteMessage(messageId: string, userId: string): Promise<void> {
-    const message = await Message.findById(messageId);
+    const message = await Message.findOne({ id: messageId });
     if (!message) {
       throw new Error('Message not found');
     }
@@ -283,7 +289,7 @@ export class CommunicationService {
   }
 
   static async addReaction(messageId: string, userId: string, emoji: string): Promise<IMessage> {
-    const message = await Message.findById(messageId);
+    const message = await Message.findOne({ id: messageId });
     if (!message) {
       throw new Error('Message not found');
     }
@@ -310,8 +316,8 @@ export class CommunicationService {
       description: data.description,
       participants: data.participants.map(userId => ({
         userId,
-        role: data.admins?.includes(userId) ? 'admin' : 
-              data.moderators?.includes(userId) ? 'moderator' : 'member',
+        role: data.admins?.includes(userId) ? 'admin' :
+          data.moderators?.includes(userId) ? 'moderator' : 'member',
         joinedAt: new Date(),
         isActive: true
       })),
@@ -344,7 +350,7 @@ export class CommunicationService {
   }
 
   static async getConversations(userId: string, filters?: ConversationFilters): Promise<IConversation[]> {
-    let query: any = {
+    const query: any = {
       'participants.userId': userId,
       'participants.isActive': true
     };
@@ -373,7 +379,7 @@ export class CommunicationService {
   }
 
   static async addParticipant(conversationId: string, userId: string, role: string = 'member'): Promise<IConversation> {
-    const conversation = await Conversation.findById(conversationId);
+    const conversation = await Conversation.findOne({ id: conversationId });
     if (!conversation) {
       throw new Error('Conversation not found');
     }
@@ -383,7 +389,7 @@ export class CommunicationService {
   }
 
   static async removeParticipant(conversationId: string, userId: string): Promise<IConversation> {
-    const conversation = await Conversation.findById(conversationId);
+    const conversation = await Conversation.findOne({ id: conversationId });
     if (!conversation) {
       throw new Error('Conversation not found');
     }
@@ -417,7 +423,7 @@ export class CommunicationService {
   }
 
   static async sendEmail(emailId: string): Promise<IEmail> {
-    const email = await Email.findById(emailId);
+    const email = await Email.findOne({ id: emailId });
     if (!email) {
       throw new Error('Email not found');
     }
@@ -507,7 +513,7 @@ export class CommunicationService {
   }
 
   static async getChatRooms(filters?: { type?: string; category?: string; isActive?: boolean }): Promise<IChatRoom[]> {
-    let query: any = {};
+    const query: any = {};
 
     if (filters?.type) {
       query.type = filters.type;
@@ -527,7 +533,7 @@ export class CommunicationService {
   }
 
   static async joinChatRoom(roomId: string, userId: string): Promise<IChatRoom> {
-    const chatRoom = await ChatRoom.findById(roomId);
+    const chatRoom = await ChatRoom.findOne({ id: roomId });
     if (!chatRoom) {
       throw new Error('Chat room not found');
     }
@@ -564,7 +570,7 @@ export class CommunicationService {
   }
 
   static async leaveChatRoom(roomId: string, userId: string): Promise<IChatRoom> {
-    const chatRoom = await ChatRoom.findById(roomId);
+    const chatRoom = await ChatRoom.findOne({ id: roomId });
     if (!chatRoom) {
       throw new Error('Chat room not found');
     }
@@ -617,7 +623,7 @@ export class CommunicationService {
   }
 
   static async getContacts(userId: string, filters?: { isFavorite?: boolean; isBlocked?: boolean; tags?: string[] }): Promise<IContact[]> {
-    let query: any = { userId };
+    const query: any = { userId };
 
     if (filters?.isFavorite !== undefined) {
       query.isFavorite = filters.isFavorite;
@@ -637,7 +643,7 @@ export class CommunicationService {
   }
 
   static async updateContactStatus(contactId: string, status: 'online' | 'offline' | 'away' | 'busy' | 'invisible'): Promise<IContact> {
-    const contact = await Contact.findById(contactId);
+    const contact = await Contact.findOne({ id: contactId });
     if (!contact) {
       throw new Error('Contact not found');
     }
@@ -653,7 +659,7 @@ export class CommunicationService {
   }
 
   static async blockContact(contactId: string, reason?: string): Promise<IContact> {
-    const contact = await Contact.findById(contactId);
+    const contact = await Contact.findOne({ id: contactId });
     if (!contact) {
       throw new Error('Contact not found');
     }
@@ -668,7 +674,7 @@ export class CommunicationService {
   }
 
   static async unblockContact(contactId: string): Promise<IContact> {
-    const contact = await Contact.findById(contactId);
+    const contact = await Contact.findOne({ id: contactId });
     if (!contact) {
       throw new Error('Contact not found');
     }
@@ -684,7 +690,7 @@ export class CommunicationService {
 
   // Search and Analytics
   static async searchMessages(_userId: string, query: string, filters?: MessageFilters): Promise<IMessage[]> {
-    let searchQuery: any = {
+    const searchQuery: any = {
       $or: [
         { content: { $regex: query, $options: 'i' } },
         { senderName: { $regex: query, $options: 'i' } }
@@ -762,7 +768,7 @@ export class CommunicationService {
 
   // Notification helpers
   private static async notifyMessageParticipants(message: IMessage, conversation: IConversation): Promise<void> {
-    const participants = conversation.participants.filter(p => 
+    const participants = conversation.participants.filter(p =>
       p.userId !== message.senderId && p.isActive
     );
 
@@ -786,8 +792,8 @@ export class CommunicationService {
       await NotificationService.createNotification({
         userId: participant.userId,
         title: `Yeni Konuşma`,
-        message: conversation.title ? 
-          `"${conversation.title}" konuşmasına eklendiniz` : 
+        message: conversation.title ?
+          `"${conversation.title}" konuşmasına eklendiniz` :
           'Yeni bir konuşmaya eklendiniz',
         type: 'announcement',
         category: 'social',

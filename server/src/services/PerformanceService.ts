@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import mongoose from 'mongoose';
 import { PerformanceMetric, OptimizationLog, PerformanceConfig } from '../models/Performance';
 import { NotificationService } from './NotificationService';
 import { createReadStream, createWriteStream, existsSync, mkdirSync, readdirSync, statSync } from 'fs';
@@ -336,7 +337,7 @@ export class PerformanceService {
         return this.cache.get(cacheKey);
       }
 
-      const db = require('mongoose').connection.db;
+      const db = mongoose.connection.db;
       const stats = await db.stats();
       
       const metrics = {

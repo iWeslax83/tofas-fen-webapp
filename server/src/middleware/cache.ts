@@ -40,23 +40,23 @@ const isRedisConfigured = Boolean(redisUrl || process.env.REDIS_HOST || process.
 const redis: any = isRedisConfigured
   ? (redisUrl ? new Redis(redisUrl, redisConfig) : new Redis(redisConfig))
   : {
-      get: async (_key: string) => null,
-      setex: async (_key: string, _ttl: number, _val: string) => undefined,
-      keys: async (_pattern: string) => [] as string[],
-      del: async (..._keys: string[]) => 0,
-      info: async () => '',
-      dbsize: async () => 0,
-      on: (_event: string, _cb: (...args: any[]) => void) => undefined,
-      // Enhanced methods for performance
-      mget: async (_keys: string[]) => [],
-      mset: async (_keyValues: Record<string, string>) => undefined,
-      pipeline: () => ({
-        get: () => ({ exec: async () => [] }),
-        setex: () => ({ exec: async () => [] }),
-        del: () => ({ exec: async () => [] }),
-        exec: async () => []
-      })
-    };
+    get: async (_key: string) => null,
+    setex: async (_key: string, _ttl: number, _val: string) => undefined,
+    keys: async (_pattern: string) => [] as string[],
+    del: async (..._keys: string[]) => 0,
+    info: async () => '',
+    dbsize: async () => 0,
+    on: (_event: string, _cb: (...args: any[]) => void) => undefined,
+    // Enhanced methods for performance
+    mget: async (_keys: string[]) => [],
+    mset: async (_keyValues: Record<string, string>) => undefined,
+    pipeline: () => ({
+      get: () => ({ exec: async () => [] }),
+      setex: () => ({ exec: async () => [] }),
+      del: () => ({ exec: async () => [] }),
+      exec: async () => []
+    })
+  };
 
 if (!isRedisConfigured) {
   console.log('ℹ️ Redis caching disabled in development mode. Set NODE_ENV=production and REDIS_URL to enable caching.');
@@ -114,19 +114,19 @@ export const cache = (duration: number = 300) => {
 
       // Create cache key with query parameters
       const cacheKey = `cache:${req.originalUrl}:${JSON.stringify(req.query)}`;
-      
+
       // Try to get from cache
       const cachedData = await redis.get(cacheKey);
-      
+
       if (cachedData) {
         // Cache hit - return cached data
         const parsedData = JSON.parse(cachedData);
-        
+
         // Add cache headers
         res.set('X-Cache', 'HIT');
         res.set('X-Cache-Key', cacheKey);
         res.set('X-Cache-TTL', duration.toString());
-        
+
         return res.json(parsedData);
       }
 
@@ -137,11 +137,11 @@ export const cache = (duration: number = 300) => {
 
       // Override response.json to cache the response
       const originalJson = res.json;
-      res.json = function(data: any) {
+      res.json = function (data: any) {
         // Cache the response data
         redis.setex(cacheKey, duration, JSON.stringify(data))
           .catch((err: unknown) => console.error('Cache set error:', err));
-        
+
         // Call original method
         return originalJson.call(this, data);
       };
@@ -163,7 +163,7 @@ export const invalidateCache = async (pattern: string) => {
       const pipeline = redis.pipeline();
       keys.forEach((key: string) => pipeline.del(key));
       await pipeline.exec();
-      
+
       console.log(`🗑️ Cache invalidated for pattern: ${pattern} (${keys.length} keys)`);
       return keys.length;
     }
@@ -178,7 +178,7 @@ export const invalidateCache = async (pattern: string) => {
 export const sessionCache = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
   try {
     const sessionId = req.sessionID;
-    
+
     if (!sessionId) {
       next();
       return;
@@ -186,12 +186,12 @@ export const sessionCache = async (req: Request, _res: Response, next: NextFunct
 
     const cacheKey = `session:${sessionId}`;
     const cachedSession = await redis.get(cacheKey);
-    
+
     if (cachedSession) {
       // Extend session TTL
       await redis.expire(cacheKey, 3600); // 1 hour
     }
-    
+
     next();
   } catch (error: unknown) {
     console.error('Session cache error:', error);
@@ -230,76 +230,23 @@ export const cacheHelpers = {
     }
   },
 
-  // Enhanced club caching
-  async setClub(clubId: string, clubData: any, duration: number = 1800) {
-    try {
-      const clubKey = `club:${clubId}`;
-      const clubDataKey = `club:${clubId}:data`;
-      const clubMembersKey = `club:${clubId}:members`;
-      
-      const pipeline = redis.pipeline();
-      
-      // Cache club data
-      pipeline.setex(clubDataKey, duration, JSON.stringify(clubData));
-      
-      // Cache club members separately for faster access
-      if (clubData.members) {
-        pipeline.setex(clubMembersKey, duration, JSON.stringify(clubData.members));
-      }
-      
-      // Set club key with TTL
-      pipeline.setex(clubKey, duration, '1');
-      
-      await pipeline.exec();
-      
-      console.log(`💾 Club ${clubId} cached for ${duration}s`);
-      return true;
-    } catch (error: unknown) {
-      console.error('Set club cache error:', error);
-      return false;
-    }
-  },
-
-  // Enhanced club cache invalidation
-  async invalidateClub(clubId: string) {
-    try {
-      const patterns = [
-        `club:${clubId}`,
-        `club:${clubId}:*`,
-        `club:${clubId}:data`,
-        `club:${clubId}:members`
-      ];
-      
-      let totalInvalidated = 0;
-      for (const pattern of patterns) {
-        totalInvalidated += await invalidateCache(pattern);
-      }
-      
-      console.log(`🗑️ Club ${clubId} cache invalidated (${totalInvalidated} keys)`);
-      return totalInvalidated;
-    } catch (error: unknown) {
-      console.error('Invalidate club cache error:', error);
-      return 0;
-    }
-  },
-
   // User cache management
   async setUser(userId: string, userData: any, duration: number = 3600) {
     try {
       const userKey = `user:${userId}`;
       const userProfileKey = `user:${userId}:profile`;
-      
+
       const pipeline = redis.pipeline();
-      
+
       // Cache user profile (without sensitive data)
       const { sifre, resetToken, forgotPasswordToken, ...profileData } = userData;
       pipeline.setex(userProfileKey, duration, JSON.stringify(profileData));
-      
+
       // Set user key with TTL
       pipeline.setex(userKey, duration, '1');
-      
+
       await pipeline.exec();
-      
+
       console.log(`💾 User ${userId} cached for ${duration}s`);
       return true;
     } catch (error: unknown) {
@@ -316,12 +263,12 @@ export const cacheHelpers = {
         `user:${userId}:*`,
         `user:${userId}:profile`
       ];
-      
+
       let totalInvalidated = 0;
       for (const pattern of patterns) {
         totalInvalidated += await invalidateCache(pattern);
       }
-      
+
       console.log(`🗑️ User ${userId} cache invalidated (${totalInvalidated} keys)`);
       return totalInvalidated;
     } catch (error: unknown) {
@@ -334,13 +281,13 @@ export const cacheHelpers = {
   async bulkSet(operations: Array<{ key: string; value: any; ttl: number }>) {
     try {
       const pipeline = redis.pipeline();
-      
+
       operations.forEach(({ key, value, ttl }) => {
         pipeline.setex(key, ttl, JSON.stringify(value));
       });
-      
+
       await pipeline.exec();
-      
+
       console.log(`💾 Bulk cached ${operations.length} items`);
       return true;
     } catch (error: unknown) {
@@ -354,7 +301,7 @@ export const cacheHelpers = {
     try {
       const info = await redis.info();
       const dbsize = await redis.dbsize();
-      
+
       return {
         dbsize,
         info: info.split('\r\n').reduce((acc: any, line: string) => {
@@ -377,17 +324,17 @@ export const cleanupCache = async () => {
   try {
     // Get all cache keys
     const keys = await redis.keys('cache:*');
-    
+
     if (keys.length > 0) {
       // Delete expired cache keys
       const pipeline = redis.pipeline();
       keys.forEach((key: string) => pipeline.del(key));
       await pipeline.exec();
-      
+
       console.log(`🧹 Cleaned up ${keys.length} cache keys`);
       return keys.length;
     }
-    
+
     return 0;
   } catch (error: unknown) {
     console.error('Cache cleanup error:', error);
@@ -399,12 +346,12 @@ export const cleanupCache = async () => {
 export const checkCacheHealth = async () => {
   try {
     const startTime = Date.now();
-    
+
     // Ping Redis
     await redis.ping();
-    
+
     const responseTime = Date.now() - startTime;
-    
+
     return {
       status: 'healthy',
       responseTime,

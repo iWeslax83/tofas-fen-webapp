@@ -9,7 +9,7 @@ const router = Router();
 router.get("/", authenticateJWT, async (req, res) => {
   try {
     const { date, supervisorId } = req.query;
-    let filter: any = {};
+    const filter: any = {};
     
     if (date) {
       filter.date = new Date(date as string);

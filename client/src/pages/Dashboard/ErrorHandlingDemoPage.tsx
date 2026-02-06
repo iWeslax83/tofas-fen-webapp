@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bug, Wifi, Shield, Server, AlertTriangle, RefreshCw, Zap } from 'lucide-react';
-import { useErrorHandler, ErrorType, AppError } from '../../utils/errorHandling';
+import { useErrorHandler, ErrorType, ErrorSeverity, AppError } from '../../utils/errorHandling';
+import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import './ErrorHandlingDemoPage.css';
 
 const ErrorHandlingDemoPage: React.FC = () => {
@@ -20,19 +21,19 @@ const ErrorHandlingDemoPage: React.FC = () => {
 
   const simulateNetworkError = () => {
     const error = new Error('Network Error');
-    (error as Error & { code: string }).code = 'NETWORK_ERROR';
+    (error as any).code = 'NETWORK_ERROR';
     handleError(error, { component: 'ErrorDemo', action: 'networkTest' });
   };
 
   const simulateAuthError = () => {
     const error = new Error('Unauthorized');
-    (error as Error & { response: { status: number; data: { message: string } } }).response = { status: 401, data: { message: 'Oturum süreniz dolmuş' } };
+    (error as any).response = { status: 401, data: { message: 'Oturum süreniz dolmuş' } };
     handleError(error, { component: 'ErrorDemo', action: 'authTest' });
   };
 
   const simulateServerError = () => {
     const error = new Error('Internal Server Error');
-    (error as Error & { response: { status: number; data: { message: string } } }).response = { status: 500, data: { message: 'Sunucu hatası oluştu' } };
+    (error as any).response = { status: 500, data: { message: 'Sunucu hatası oluştu' } };
     handleError(error, { component: 'ErrorDemo', action: 'serverTest' });
   };
 
@@ -73,8 +74,7 @@ const ErrorHandlingDemoPage: React.FC = () => {
     const customError = new AppError(
       'Bu özel bir hata mesajıdır',
       ErrorType.UNKNOWN,
-      undefined,
-      true,
+      ErrorSeverity.MEDIUM,
       { component: 'ErrorDemo', action: 'customTest' }
     );
     handleError(customError, { component: 'ErrorDemo', action: 'customTest' });
@@ -93,15 +93,6 @@ const ErrorHandlingDemoPage: React.FC = () => {
                 Ağ Hatası Simüle Et
               </button>
             </div>
-            <div className="demo-info">
-              <h4>Özellikler:</h4>
-              <ul>
-                <li>Otomatik retry (3 deneme)</li>
-                <li>2 saniye bekleme süresi</li>
-                <li>Kullanıcı dostu mesaj</li>
-                <li>Orta seviye önem</li>
-              </ul>
-            </div>
           </div>
         );
 
@@ -115,15 +106,6 @@ const ErrorHandlingDemoPage: React.FC = () => {
                 <Shield className="icon-small" />
                 Kimlik Doğrulama Hatası Simüle Et
               </button>
-            </div>
-            <div className="demo-info">
-              <h4>Özellikler:</h4>
-              <ul>
-                <li>Retry edilmez</li>
-                <li>Otomatik login sayfasına yönlendirme</li>
-                <li>Yüksek seviye önem</li>
-                <li>Güvenlik odaklı</li>
-              </ul>
             </div>
           </div>
         );
@@ -139,15 +121,6 @@ const ErrorHandlingDemoPage: React.FC = () => {
                 Sunucu Hatası Simüle Et
               </button>
             </div>
-            <div className="demo-info">
-              <h4>Özellikler:</h4>
-              <ul>
-                <li>Sınırlı retry (2 deneme)</li>
-                <li>5 saniye bekleme süresi</li>
-                <li>Yüksek seviye önem</li>
-                <li>Sunucu durumu kontrolü</li>
-              </ul>
-            </div>
           </div>
         );
 
@@ -161,15 +134,6 @@ const ErrorHandlingDemoPage: React.FC = () => {
                 <Bug className="icon-small" />
                 İstemci Hatası Simüle Et
               </button>
-            </div>
-            <div className="demo-info">
-              <h4>Özellikler:</h4>
-              <ul>
-                <li>Sınırlı retry (1 deneme)</li>
-                <li>1 saniye bekleme süresi</li>
-                <li>Orta seviye önem</li>
-                <li>Sayfa yenileme önerisi</li>
-              </ul>
             </div>
           </div>
         );
@@ -185,15 +149,6 @@ const ErrorHandlingDemoPage: React.FC = () => {
                 Doğrulama Hatası Simüle Et
               </button>
             </div>
-            <div className="demo-info">
-              <h4>Özellikler:</h4>
-              <ul>
-                <li>Retry edilmez</li>
-                <li>Düşük seviye önem</li>
-                <li>Kullanıcı girişi düzeltme önerisi</li>
-                <li>Toast notification göstermez</li>
-              </ul>
-            </div>
           </div>
         );
 
@@ -203,8 +158,8 @@ const ErrorHandlingDemoPage: React.FC = () => {
             <h3>Retry Mekanizması</h3>
             <p>Başarısız işlemleri otomatik olarak tekrar deneme mekanizmasını test eder.</p>
             <div className="demo-controls">
-              <button 
-                onClick={simulateRetryOperation} 
+              <button
+                onClick={simulateRetryOperation}
                 className="demo-button"
                 disabled={isLoading}
               >
@@ -215,15 +170,6 @@ const ErrorHandlingDemoPage: React.FC = () => {
                 )}
                 {isLoading ? 'Retry Test Ediliyor...' : 'Retry Mekanizmasını Test Et'}
               </button>
-            </div>
-            <div className="demo-info">
-              <h4>Özellikler:</h4>
-              <ul>
-                <li>Otomatik retry logic</li>
-                <li>Progress göstergesi</li>
-                <li>Exponential backoff</li>
-                <li>Maksimum deneme sayısı</li>
-              </ul>
             </div>
           </div>
         );
@@ -239,45 +185,24 @@ const ErrorHandlingDemoPage: React.FC = () => {
                 Özel Hata Simüle Et
               </button>
             </div>
-            <div className="demo-info">
-              <h4>Özellikler:</h4>
-              <ul>
-                <li>Özel hata sınıfı</li>
-                <li>Detaylı context bilgisi</li>
-                <li>Analytics tracking</li>
-                <li>Geliştirici dostu</li>
-              </ul>
-            </div>
           </div>
         );
-
       default:
         return null;
     }
   };
 
-  return (
-    <div className="admin-panel">
-      {/* Header */}
-      <header className="panel-header">
-        <div className="header-left">
-          <div className="panel-logo">
-            <div className="panel-logo-icon">
-              <span className="demo-icon">🚨</span>
-            </div>
-            <div className="panel-logo-text">
-              <div className="header-text">
-                <h1>Error Handling Demo</h1>
-                <p>Gelişmiş hata yönetimi sistemini test edin</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="header-right">
-        </div>
-      </header>
+  const breadcrumb = [
+    { label: 'Ana Sayfa', path: '/admin' },
+    { label: 'Error Handling Demo' }
+  ];
 
-      <main className="panel-main">
+  return (
+    <ModernDashboardLayout
+      pageTitle="Error Handling Demo"
+      breadcrumb={breadcrumb}
+    >
+      <div className="error-handling-demo-page">
         {/* Navigation */}
         <nav className="demo-nav">
           {sections.map((section) => (
@@ -332,8 +257,8 @@ const ErrorHandlingDemoPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </ModernDashboardLayout>
   );
 };
 

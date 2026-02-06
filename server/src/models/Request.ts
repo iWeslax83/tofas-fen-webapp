@@ -12,21 +12,21 @@ export interface IRequest extends Document {
 
 const requestSchema = new Schema<IRequest>({
   userId: { type: String, required: true },
-  type: { 
-    type: String, 
+  type: {
+    type: String,
     enum: ['class-change', 'room-change', 'club-join', 'permission', 'other'],
     default: 'other'
   },
-  status: { 
-    type: String, 
-    enum: ['pending', 'approved', 'rejected'], 
-    default: 'pending' 
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
   },
   details: { type: Object, required: true },
   adminNote: String,
-}, { 
+}, {
   timestamps: true,
   // Indexes will be created automatically by Mongoose
 });
 
-export const Request = mongoose.model<IRequest>("Request", requestSchema);
+export const Request = mongoose.models.Request || mongoose.model<IRequest>("Request", requestSchema);

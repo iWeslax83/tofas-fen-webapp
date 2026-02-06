@@ -56,7 +56,7 @@ const AdminCarziListPage: React.FC = () => {
       if (response.data.success) {
         setRequests(response.data.requests || []);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading requests:', error);
       toast.error('İzin talepleri yüklenemedi');
     } finally {
@@ -78,9 +78,11 @@ const AdminCarziListPage: React.FC = () => {
         toast.success(approved ? 'İzin talebi onaylandı' : 'İzin talebi reddedildi');
         loadRequests();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error approving request:', error);
-      toast.error(error.response?.data?.error || 'İşlem başarısız');
+      // Attempt to extract server message when available
+      const msg = (error as any)?.response?.data?.error || 'İşlem başarısız';
+      toast.error(msg);
     }
   };
 

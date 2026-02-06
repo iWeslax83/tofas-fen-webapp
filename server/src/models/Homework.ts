@@ -22,11 +22,11 @@ const homeworkSchema = new Schema<IHomework>({
   id: { type: String, required: true, unique: true },
   title: { type: String, required: true },
   description: { type: String, required: true },
-  subject: { 
-    type: String, 
+  subject: {
+    type: String,
     required: true,
     enum: [
-      'Matematik', 'Fizik', 'Kimya', 'Biyoloji', 'İngilizce', 
+      'Matematik', 'Fizik', 'Kimya', 'Biyoloji', 'İngilizce',
       'Türkçe', 'Tarih', 'Coğrafya', 'Din Kültürü', 'Beden Eğitimi',
       'Müzik', 'Görsel Sanatlar', 'Teknoloji ve Tasarım', 'Bilişim Teknolojileri'
     ]
@@ -38,15 +38,15 @@ const homeworkSchema = new Schema<IHomework>({
   dueDate: { type: Date, required: true },
   assignedDate: { type: Date, default: Date.now },
   attachments: [String],
-  status: { 
-    type: String, 
-    enum: ['active', 'completed', 'expired'], 
-    default: 'active' 
+  status: {
+    type: String,
+    enum: ['active', 'completed', 'expired'],
+    default: 'active'
   },
   isPublished: { type: Boolean, default: true }
-}, { 
+}, {
   timestamps: true,
   // Indexes will be created automatically by Mongoose
 });
 
-export const Homework = mongoose.model<IHomework>("Homework", homeworkSchema);
+export const Homework = mongoose.models.Homework || mongoose.model<IHomework>("Homework", homeworkSchema);

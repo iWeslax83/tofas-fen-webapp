@@ -129,6 +129,7 @@ export const Select: React.FC<SelectProps> = ({
       document.addEventListener('keydown', handleEscape);
       return () => document.removeEventListener('keydown', handleEscape);
     }
+    return undefined;
   }, [open]);
 
   return (

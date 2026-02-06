@@ -31,18 +31,18 @@ const scheduleSchema = new Schema<ISchedule>({
   academicYear: { type: String, required: true },
   semester: { type: String, required: true },
   schedule: [{
-    day: { 
-      type: String, 
+    day: {
+      type: String,
       required: true,
       enum: ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma']
     },
     periods: [{
       period: { type: Number, required: true, min: 1, max: 8 },
-      subject: { 
-        type: String, 
+      subject: {
+        type: String,
         required: true,
         enum: [
-          'Matematik', 'Fizik', 'Kimya', 'Biyoloji', 'İngilizce', 
+          'Matematik', 'Fizik', 'Kimya', 'Biyoloji', 'İngilizce',
           'Türkçe', 'Tarih', 'Coğrafya', 'Din Kültürü', 'Beden Eğitimi',
           'Müzik', 'Görsel Sanatlar', 'Teknoloji ve Tasarım', 'Bilişim Teknolojileri'
         ]
@@ -56,9 +56,9 @@ const scheduleSchema = new Schema<ISchedule>({
   }],
   isActive: { type: Boolean, default: true },
   createdBy: { type: String, required: true }
-}, { 
+}, {
   timestamps: true,
   // Indexes will be created automatically by Mongoose
 });
 
-export const Schedule = mongoose.model<ISchedule>("Schedule", scheduleSchema);
+export const Schedule = mongoose.models.Schedule || mongoose.model<ISchedule>("Schedule", scheduleSchema);

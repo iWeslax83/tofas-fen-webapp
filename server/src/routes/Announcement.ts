@@ -40,12 +40,26 @@ router.post("/", authenticateJWT, authorizeRoles(['teacher', 'admin']), validate
   }
 });
 
+// Belirli bir duyuruyu getir
+router.get("/:id", authenticateJWT, async (req: Request, res: Response) => {
+  try {
+    const announcement = await Announcement.findById(req.params.id);
+    if (!announcement) {
+      return res.status(404).json({ error: "Duyuru bulunamadı" });
+    }
+    return res.json(announcement);
+  } catch (error) {
+    console.error("Duyuru getirme hatası:", error);
+    return res.status(500).json({ error: "Sunucu hatası" });
+  }
+});
+
 // Duyuru sil (sadece oluşturan kişi veya admin)
 router.delete("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const announcement = await Announcement.findByIdAndDelete(id);
-    
+
     if (!announcement) {
       return res.status(404).json({ error: "Duyuru bulunamadı" });
     }

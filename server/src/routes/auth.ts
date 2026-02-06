@@ -35,44 +35,44 @@ router.post('/login', (process.env.NODE_ENV === 'production' ? loginLimiter : (_
   const startTime = Date.now();
   try {
     const { id, sifre } = req.body;
-    
+
     // Input validation - boş, null, undefined kontrolü
     if (!id || !sifre) {
       res.status(400).json({ error: 'Kullanıcı adı ve şifre gerekli' });
       return;
     }
-    
+
     // Input validation - whitespace ve uzunluk kontrolü
     if (typeof id !== 'string' || typeof sifre !== 'string') {
       res.status(400).json({ error: 'Kullanıcı adı ve şifre string olmalı' });
       return;
     }
-    
+
     // Whitespace kontrolü
     if (id.trim() === '' || sifre.trim() === '') {
       res.status(400).json({ error: 'Kullanıcı adı ve şifre boş olamaz' });
       return;
     }
-    
+
     // Uzunluk kontrolü
     if (id.length > 100 || sifre.length > 100) {
       res.status(400).json({ error: 'Kullanıcı adı ve şifre çok uzun' });
       return;
     }
-    
+
     // Trim whitespace
     const trimmedId = id.trim();
     const trimmedSifre = sifre.trim();
-    
+
     const user = await User.findOne({ id: trimmedId });
     if (!user) {
       res.status(401).json({ error: 'Geçersiz kullanıcı adı veya şifre' });
       return;
     }
-    
+
     try {
       const isValidPassword = await bcrypt.compare(trimmedSifre, user.sifre || '');
-      
+
       if (!isValidPassword) {
         res.status(401).json({ error: 'Geçersiz kullanıcı adı veya şifre' });
         return;
@@ -89,8 +89,8 @@ router.post('/login', (process.env.NODE_ENV === 'production' ? loginLimiter : (_
       role: user.rol || '',
       email: user.email
     });
-    const refreshToken = generateRefreshToken({ 
-      userId: user.id, 
+    const refreshToken = generateRefreshToken({
+      userId: user.id,
       tokenVersion: user.tokenVersion || 0
     });
 
@@ -123,7 +123,7 @@ router.post('/login', (process.env.NODE_ENV === 'production' ? loginLimiter : (_
       role: user.rol,
       duration: endTime - startTime
     });
-    
+
     res.json(response);
   } catch (error) {
     logger.error('Login error', { error });
@@ -135,7 +135,7 @@ router.post('/login', (process.env.NODE_ENV === 'production' ? loginLimiter : (_
 router.post('/refresh', async (req, res) => {
   try {
     const { refreshToken } = req.body;
-    
+
     if (!refreshToken) {
       res.status(400).json({ error: 'Refresh token required' });
       return;
@@ -165,8 +165,8 @@ router.post('/refresh', async (req, res) => {
       role: user.rol || '',
       email: user.email
     });
-    const newRefreshToken = generateRefreshToken({ 
-      userId: user.id, 
+    const newRefreshToken = generateRefreshToken({
+      userId: user.id,
       tokenVersion: user.tokenVersion || 0
     });
 
@@ -187,13 +187,20 @@ router.post('/logout', async (req, res) => {
   try {
     // JWT tabanlı kimlik doğrulama için token sürümünü artırarak mevcut token'ları geçersiz kıl
     const authHeader = req.headers.authorization;
-    
+
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'M8taRuNgdgKCpGdJJQQdaW78') as any;
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+          logger.error('JWT_SECRET environment variable is not set');
+          // Still return success for logout - user session should be cleared regardless
+          res.json({ success: true, message: 'Başarıyla çıkış yapıldı' });
+          return;
+        }
+        const decoded = jwt.verify(token, jwtSecret) as any;
         const userId = decoded.userId;
-        
+
         if (userId) {
           const user = await User.findOne({ id: userId });
           if (user) {
@@ -207,7 +214,7 @@ router.post('/logout', async (req, res) => {
       }
     }
 
-    res.json({ success: true });
+    res.json({ success: true, message: 'Başarıyla çıkış yapıldı' });
   } catch (error) {
     logger.error('Logout error', { error });
     res.status(500).json({ error: 'Logout failed' });
@@ -218,7 +225,7 @@ router.post('/logout', async (req, res) => {
 router.get('/me', async (req, res) => {
   try {
     let userId = null;
-    
+
     // Check for JWT token
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -269,7 +276,7 @@ router.get('/me', async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     if (!email) {
       res.status(400).json({ error: 'Email gerekli' });
       return;
@@ -277,7 +284,7 @@ router.post('/forgot-password', async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(404).json({ error: 'Bu email adresi ile kayıtlı kullanıcı bulunamadı' });
+      res.status(404).json({ error: 'Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı' });
       return;
     }
 
@@ -310,15 +317,15 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/reset-password', async (req, res) => {
   try {
     const { token, newPassword } = req.body;
-    
+
     if (!token || !newPassword) {
       res.status(400).json({ error: 'Token ve yeni şifre gerekli' });
       return;
     }
 
-    const user = await User.findOne({ 
-      resetToken: token, 
-      resetTokenExpiry: { $gt: new Date() } 
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gt: new Date() }
     });
 
     if (!user) {
@@ -331,6 +338,7 @@ router.post('/reset-password', async (req, res) => {
     user.sifre = hashedPassword;
     user.resetToken = undefined as any;
     user.resetTokenExpiry = undefined as any;
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
     res.json({ success: true, message: 'Şifre başarıyla güncellendi' });
@@ -344,7 +352,7 @@ router.post('/reset-password', async (req, res) => {
 router.post('/register', async (req, res) => {
   try {
     const { id, adSoyad, rol, sifre } = req.body;
-    
+
     if (!id || !adSoyad || !rol || !sifre) {
       res.status(400).json({ error: 'Tüm alanlar gerekli' });
       return;

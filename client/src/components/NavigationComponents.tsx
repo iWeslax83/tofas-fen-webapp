@@ -730,21 +730,25 @@ export const NavigationAnalytics: React.FC = () => {
   });
 
   useEffect(() => {
-    // Track page view
-    setAnalytics(prev => ({
-      ...prev,
-      pageViews: prev.pageViews + 1,
-      userPath: [...prev.userPath, currentPath]
-    }));
+    // Track page view (deferred to avoid synchronous setState in effect)
+    queueMicrotask(() => {
+      setAnalytics(prev => ({
+        ...prev,
+        pageViews: prev.pageViews + 1,
+        userPath: [...prev.userPath, currentPath]
+      }));
+    });
 
     // Track navigation time
     const startTime = Date.now();
     return () => {
       const endTime = Date.now();
-      setAnalytics(prev => ({
-        ...prev,
-        navigationTime: prev.navigationTime + (endTime - startTime)
-      }));
+      queueMicrotask(() => {
+        setAnalytics(prev => ({
+          ...prev,
+          navigationTime: prev.navigationTime + (endTime - startTime)
+        }));
+      });
     };
   }, [currentPath]);
 

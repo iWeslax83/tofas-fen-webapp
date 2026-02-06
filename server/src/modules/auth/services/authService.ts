@@ -111,7 +111,7 @@ export class AuthService {
     // For now, return the token in development
     return {
       success: true,
-      resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined
+      resetToken: ['development', 'test'].includes(process.env.NODE_ENV || '') ? resetToken : undefined
     };
   }
 
@@ -121,20 +121,25 @@ export class AuthService {
   static async resetPassword(token: string, newPassword: string): Promise<void> {
     const user = await User.findOne({
       resetToken: token,
-      resetTokenExpiry: { $gt: new Date() },
       isActive: true
     });
 
     if (!user) {
-      throw AppError.unauthorized('Geçersiz veya süresi dolmuş token');
+      throw AppError.unauthorized('Geçersiz token');
+    }
+
+    if (user.resetTokenExpiry && user.resetTokenExpiry < new Date()) {
+      throw AppError.validation('Geçersiz veya süresi dolmuş token');
     }
 
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 12);
-    
+
     // Update password and clear reset token
     user.sifre = hashedPassword;
-    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    if (user.tokenVersion !== undefined) {
+      user.tokenVersion = (user.tokenVersion || 0) + 1;
+    }
     user.resetToken = undefined as any;
     user.resetTokenExpiry = undefined as any;
     await user.save();
@@ -199,7 +204,7 @@ export class AuthService {
   }> {
     const totalUsers = await User.countDocuments();
     const activeUsers = await User.countDocuments({ isActive: true });
-    
+
     const usersByRole = await User.aggregate([
       { $match: { isActive: true } },
       { $group: { _id: '$rol', count: { $sum: 1 } } }
@@ -221,6 +226,43 @@ export class AuthService {
       activeUsers,
       usersByRole: roleStats,
       recentLogins
+    };
+  }
+
+  /**
+   * Register a new user
+   */
+  static async registerUser(userData: {
+    id: string;
+    adSoyad: string;
+    rol: string;
+    sifre: string;
+    email?: string;
+  }): Promise<any> {
+    // Check if user already exists
+    const existingUser = await User.findOne({ id: userData.id });
+    if (existingUser) {
+      throw AppError.conflict('Bu kullanıcı adı zaten kullanılıyor');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(userData.sifre, 12);
+
+    // Create new user
+    const newUser = new User({
+      ...userData,
+      sifre: hashedPassword,
+      isActive: true,
+      tokenVersion: 0
+    });
+
+    await newUser.save();
+
+    return {
+      id: newUser.id,
+      adSoyad: newUser.adSoyad,
+      rol: newUser.rol,
+      email: newUser.email
     };
   }
 }

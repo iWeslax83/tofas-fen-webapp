@@ -400,7 +400,8 @@ export class CalendarService {
       startDate: { $lte: reminderTime, $gt: now }
     }).populate('attendees.userId', 'adSoyad email');
 
-    for (const event of eventsWithReminders) {
+    for (const eventDoc of eventsWithReminders) {
+      const event = eventDoc as unknown as ICalendarEvent;
       for (const reminder of event.reminders) {
         if (!reminder.sent) {
           const reminderDate = new Date(event.startDate.getTime() - (reminder.minutesBefore * 60 * 1000));
@@ -411,7 +412,7 @@ export class CalendarService {
           }
         }
       }
-      await event.save();
+      await (eventDoc as any).save();
     }
   }
 

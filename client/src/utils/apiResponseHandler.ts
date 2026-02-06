@@ -1,7 +1,7 @@
 import { AxiosResponse } from 'axios';
 
 // Standard API response structure
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data: T;
   message?: string;
@@ -22,7 +22,7 @@ export interface ApiError {
   message: string;
   code?: string;
   status?: number;
-  details?: any;
+  details?: unknown;
 }
 
 // Response extraction utilities
@@ -44,7 +44,7 @@ export class ApiResponseHandler {
    * Extract data with fallback for different response structures
    */
   static extractDataSafe<T>(
-    response: AxiosResponse<ApiResponse<T>> | AxiosResponse<T> | any,
+    response: AxiosResponse<ApiResponse<T>> | AxiosResponse<T> | unknown,
     fallback: T
   ): T {
     try {
@@ -95,7 +95,7 @@ export class ApiResponseHandler {
   /**
    * Check if response is successful
    */
-  static isSuccess(response: AxiosResponse<ApiResponse<any>> | AxiosResponse<any> | any): boolean {
+  static isSuccess(response: AxiosResponse<ApiResponse<unknown>> | AxiosResponse<unknown> | unknown): boolean {
     if (!response) return false;
     
     // Check HTTP status
@@ -104,8 +104,12 @@ export class ApiResponseHandler {
     }
     
     // Check custom success flag
-    if (response.data && typeof response.data === 'object' && 'success' in response.data) {
-      return (response.data as ApiResponse).success === true;
+    if (typeof response === 'object' && response !== null) {
+      const respAny = response as Record<string, unknown>;
+      const respData = respAny.data as Record<string, unknown> | undefined;
+      if (respData && 'success' in respData) {
+        return Boolean((respData as Record<string, unknown>)['success']);
+      }
     }
     
     return true;
@@ -114,36 +118,41 @@ export class ApiResponseHandler {
   /**
    * Extract error message from response
    */
-  static extractError(response: any): string {
+  static extractError(response: unknown): string {
     if (!response) return 'Bilinmeyen hata';
-    
+
+    const respAny = response as Record<string, unknown>;
+
     // Handle axios error response
-    if (response.response?.data) {
-      const errorData = response.response.data;
-      if (typeof errorData === 'string') return errorData;
-      if (errorData.error) return errorData.error;
-      if (errorData.message) return errorData.message;
-      if (errorData.errors && Array.isArray(errorData.errors)) {
-        return errorData.errors.join(', ');
-      }
+    const axiosResp = respAny['response'] as Record<string, unknown> | undefined;
+    const errorData = axiosResp?.['data'] as Record<string, unknown> | string | undefined;
+    if (typeof errorData === 'string') return errorData;
+    if (errorData && typeof errorData === 'object') {
+      const msg = (errorData['error'] as string) || (errorData['message'] as string);
+      if (msg) return msg;
+      const errs = errorData['errors'] as unknown;
+      if (Array.isArray(errs)) return (errs as string[]).join(', ');
     }
-    
+
     // Handle direct error object
-    if (response.error) return response.error;
-    if (response.message) return response.message;
-    
+    const directError = respAny['error'] as string | undefined;
+    if (directError) return directError;
+    const directMessage = respAny['message'] as string | undefined;
+    if (directMessage) return directMessage;
+
     // Handle HTTP status errors
-    if (response.status) {
-      switch (response.status) {
+    const status = respAny['status'] as number | undefined;
+    if (status) {
+      switch (status) {
         case 400: return 'Geçersiz istek';
         case 401: return 'Yetkisiz erişim';
         case 403: return 'Erişim reddedildi';
         case 404: return 'Kaynak bulunamadı';
         case 500: return 'Sunucu hatası';
-        default: return `HTTP ${response.status} hatası`;
+        default: return `HTTP ${status} hatası`;
       }
     }
-    
+
     return 'Bilinmeyen hata';
   }
 
@@ -169,7 +178,7 @@ export class ApiResponseHandler {
       const response = await apiCall;
       const data = this.extractDataSafe(response, fallback);
       return { data, error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage = this.extractError(error);
       return { data: fallback, error: errorMessage };
     }
@@ -186,7 +195,7 @@ export class ApiResponseHandler {
       const response = await apiCall;
       const data = this.extractDataArray(response, fallback);
       return { data, error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage = this.extractError(error);
       return { data: fallback, error: errorMessage };
     }
@@ -194,23 +203,23 @@ export class ApiResponseHandler {
 }
 
 // Convenience functions for common use cases
-export const extractData = <T>(response: any, fallback: T): T => 
+export const extractData = <T>(response: unknown, fallback: T): T => 
   ApiResponseHandler.extractDataSafe(response, fallback);
 
-export const extractDataArray = <T>(response: any, fallback: T[] = []): T[] => 
+export const extractDataArray = <T>(response: unknown, fallback: T[] = []): T[] => 
   ApiResponseHandler.extractDataArray(response, fallback);
 
-export const extractDataItem = <T>(response: any, fallback: T): T => 
+export const extractDataItem = <T>(response: unknown, fallback: T): T => 
   ApiResponseHandler.extractDataItem(response, fallback);
 
-export const isSuccess = (response: any): boolean => 
+export const isSuccess = (response: unknown): boolean => 
   ApiResponseHandler.isSuccess(response);
 
-export const extractError = (response: any): string => 
+export const extractError = (response: unknown): string => 
   ApiResponseHandler.extractError(response);
 
-export const handleResponse = <T>(apiCall: Promise<any>, fallback: T) => 
+export const handleResponse = <T>(apiCall: Promise<AxiosResponse<T>>, fallback: T) => 
   ApiResponseHandler.handleResponse(apiCall, fallback);
 
-export const handleResponseArray = <T>(apiCall: Promise<any>, fallback: T[] = []) => 
+export const handleResponseArray = <T>(apiCall: Promise<AxiosResponse<T[]>>, fallback: T[] = []) => 
   ApiResponseHandler.handleResponseArray(apiCall, fallback);

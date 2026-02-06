@@ -156,6 +156,8 @@ describe('CSRFProtection', () => {
 describe('RateLimiter', () => {
   beforeEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
+    RateLimiter.clearAll()
     vi.clearAllMocks()
   })
 

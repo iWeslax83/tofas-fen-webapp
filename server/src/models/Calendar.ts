@@ -82,25 +82,25 @@ const calendarEventSchema = new Schema<ICalendarEvent>({
   endDate: { type: Date, required: true },
   allDay: { type: Boolean, default: false },
   location: { type: String, trim: true },
-  type: { 
-    type: String, 
+  type: {
+    type: String,
     required: true,
     enum: ['class', 'exam', 'activity', 'meeting', 'holiday', 'personal', 'reminder']
   },
-  priority: { 
-    type: String, 
+  priority: {
+    type: String,
     default: 'medium',
     enum: ['low', 'medium', 'high', 'urgent']
   },
-  status: { 
-    type: String, 
+  status: {
+    type: String,
     default: 'scheduled',
     enum: ['scheduled', 'in-progress', 'completed', 'cancelled']
   },
   color: { type: String, default: '#3B82F6' },
   isRecurring: { type: Boolean, default: false },
   recurringPattern: {
-    frequency: { 
+    frequency: {
       type: String,
       enum: ['daily', 'weekly', 'monthly', 'yearly']
     },
@@ -112,7 +112,7 @@ const calendarEventSchema = new Schema<ICalendarEvent>({
     monthOfYear: { type: Number, min: 1, max: 12 }
   },
   reminders: [{
-    type: { 
+    type: {
       type: String,
       enum: ['email', 'push', 'sms']
     },
@@ -120,12 +120,12 @@ const calendarEventSchema = new Schema<ICalendarEvent>({
     sent: { type: Boolean, default: false }
   }],
   attendees: [{
-    userId: { type: String, required: true },
-    role: { 
+    userId: { type: String, required: true, ref: 'User' },
+    role: {
       type: String,
       enum: ['organizer', 'attendee', 'optional']
     },
-    response: { 
+    response: {
       type: String,
       default: 'pending',
       enum: ['accepted', 'declined', 'pending', 'tentative']
@@ -159,13 +159,13 @@ const calendarSchema = new Schema<ICalendar>({
   ownerId: { type: String, required: true },
   sharedWith: [{
     userId: { type: String, required: true },
-    permission: { 
+    permission: {
       type: String,
       enum: ['read', 'write', 'admin']
     }
   }],
   settings: {
-    defaultView: { 
+    defaultView: {
       type: String,
       default: 'month',
       enum: ['month', 'week', 'day', 'agenda']
@@ -197,16 +197,16 @@ calendarSchema.index({ 'sharedWith.userId': 1 });
 calendarSchema.index({ isPublic: 1, allowedRoles: 1 });
 
 // Instance methods
-calendarEventSchema.methods.isOverlapping = function(otherEvent: ICalendarEvent): boolean {
+calendarEventSchema.methods.isOverlapping = function (otherEvent: ICalendarEvent): boolean {
   return this.startDate < otherEvent.endDate && this.endDate > otherEvent.startDate;
 };
 
-calendarEventSchema.methods.getNextOccurrence = function(): Date | null {
+calendarEventSchema.methods.getNextOccurrence = function (): Date | null {
   if (!this.isRecurring || !this.recurringPattern) return null;
-  
+
   // const now = new Date();
   const lastOccurrence = this.endDate;
-  
+
   switch (this.recurringPattern.frequency) {
     case 'daily':
       return new Date(lastOccurrence.getTime() + (this.recurringPattern.interval * 24 * 60 * 60 * 1000));
@@ -226,7 +226,7 @@ calendarEventSchema.methods.getNextOccurrence = function(): Date | null {
 };
 
 // Static methods
-calendarEventSchema.statics.getEventsForDateRange = function(
+calendarEventSchema.statics.getEventsForDateRange = function (
   calendarId: string,
   startDate: Date,
   endDate: Date,
@@ -237,26 +237,26 @@ calendarEventSchema.statics.getEventsForDateRange = function(
     startDate: { $lte: endDate },
     endDate: { $gte: startDate }
   };
-  
+
   if (userId) {
     query.$or = [
       { createdBy: userId },
       { 'attendees.userId': userId }
     ];
   }
-  
+
   return this.find(query).sort({ startDate: 1 });
 };
 
-calendarEventSchema.statics.getUpcomingReminders = function(minutes: number = 15) {
+calendarEventSchema.statics.getUpcomingReminders = function (minutes: number = 15) {
   const now = new Date();
   const reminderTime = new Date(now.getTime() + (minutes * 60 * 1000));
-  
+
   return this.find({
     'reminders.sent': false,
     startDate: { $lte: reminderTime, $gt: now }
   });
 };
 
-export const CalendarEvent = mongoose.model<ICalendarEvent>('CalendarEvent', calendarEventSchema);
-export const Calendar = mongoose.model<ICalendar>('Calendar', calendarSchema);
+export const CalendarEvent = mongoose.models.CalendarEvent || mongoose.model<ICalendarEvent>('CalendarEvent', calendarEventSchema);
+export const Calendar = mongoose.models.Calendar || mongoose.model<ICalendar>('Calendar', calendarSchema);

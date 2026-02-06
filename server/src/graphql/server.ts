@@ -89,7 +89,6 @@ export function createApolloServer() {
       },
     ],
     introspection: process.env.NODE_ENV !== 'production',
-    playground: process.env.NODE_ENV !== 'production',
   });
 }
 

@@ -32,8 +32,6 @@ const HelpPage = lazy(() => import('../pages/Dashboard/HelpPage'));
 // Dormitory Pages
 const MealListPage = lazy(() => import('../pages/Dashboard/MealListPage'));
 const SupervisorListPage = lazy(() => import('../pages/Dashboard/SupervisorListPage'));
-const MaintenanceRequestPage = lazy(() => import('../pages/Dashboard/MaintenanceRequestPage'));
-const AdminRequestsPage = lazy(() => import('../pages/Dashboard/AdminRequestsPage'));
 
 // Evci Pages
 const StudentEvciPage = lazy(() => import('../pages/Dashboard/StudentEvciPage'));
@@ -52,13 +50,6 @@ const CalendarPage = lazy(() => import('../pages/Dashboard/CalendarPage'));
 // const FileManagementPage = lazy(() => import('../pages/Dashboard/FileManagementPage'));
 const CommunicationPage = lazy(() => import('../pages/Dashboard/CommunicationPage'));
 const PerformancePage = lazy(() => import('../pages/Dashboard/PerformancePage'));
-// const MyStudentsPage = lazy(() => import('../pages/Dashboard/MyStudentsPage'));
-
-// Club Pages
-const JoinClubPage = lazy(() => import('../pages/Dashboard/JoinClubPage'));
-const ClubDetailPage = lazy(() => import('../pages/Dashboard/ClubDetailPage'));
-const AdminClubsPage = lazy(() => import('../pages/Dashboard/AdminClubsPage'));
-const MyClubsPage = lazy(() => import('../pages/Dashboard/MyClubsPage'));
 
 // Demo Pages
 const SkeletonDemoPage = lazy(() => import('../pages/Dashboard/SkeletonDemoPage'));
@@ -158,22 +149,10 @@ export default function AppRoutes() {
         <Route path="/parent/belletmen-listesi" element={<SupervisorListPage />} />
         <Route path="/student/yemek-listesi" element={<MealListPage />} />
         <Route path="/student/belletmen-listesi" element={<SupervisorListPage />} />
-        <Route path="/student/bakim-talepleri" element={<MaintenanceRequestPage />} />
         <Route path="/hizmetli/yemek-listesi" element={<MealListPage />} />
         <Route path="/hizmetli/belletmen-listesi" element={<SupervisorListPage />} />
-        <Route path="/hizmetli/bakim-talepleri" element={<AdminRequestsPage />} />
         <Route path="/admin/yemek-listesi" element={<MealListPage />} />
         <Route path="/admin/belletmen-listesi" element={<SupervisorListPage />} />
-        <Route path="/admin/bakim-talepleri" element={<AdminRequestsPage />} />
-
-        {/* Club Routes */}
-        <Route path="/katil/:clubId" element={<JoinClubPage />} />
-        <Route path="/join/:code" element={<JoinClubPage />} />
-        <Route path="/student/kulup/:clubId" element={<ClubDetailPage />} />
-        <Route path="/admin/kulupler" element={<AdminClubsPage />} />
-        <Route path="/student/kuluplerim" element={<MyClubsPage />} />
-        <Route path="/parent/kuluplerim" element={<MyClubsPage />} />
-
 
         {/* Evci Routes */}
         <Route path="/student/evci" element={<StudentEvciPage />} />

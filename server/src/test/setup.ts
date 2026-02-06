@@ -22,7 +22,7 @@ beforeAll(async () => {
   console.log(`📊 Test database: ${process.env.MONGODB_URI}`);
   console.log(`🔑 JWT secret: ${process.env.JWT_SECRET ? 'Set' : 'Not set'}`);
   console.log(`🗄️ Redis URL: ${process.env.REDIS_URL}`);
-  
+
   try {
     // Connect to test database
     testDbConnection = await mongoose.connect(process.env.MONGODB_URI!, {
@@ -42,7 +42,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   console.log('🧹 Cleaning up test environment...');
-  
+
   try {
     // Clean up test database
     if (testDbConnection) {
@@ -53,18 +53,24 @@ afterAll(async () => {
   } catch (error) {
     console.error('❌ Error cleaning up test database:', error);
   }
-  
+
   // Clean up any global test state
-  global.gc && global.gc();
+  if (global.gc) {
+    global.gc();
+  }
 }, 10000);
 
 // Clean up between tests
 beforeEach(async () => {
   // Clear all collections before each test
-  if (testDbConnection) {
-    const collections = await testDbConnection.connection.db.collections();
-    for (const collection of collections) {
-      await collection.deleteMany({});
+  if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+    try {
+      const collections = await mongoose.connection.db.collections();
+      for (const collection of collections) {
+        await collection.deleteMany({});
+      }
+    } catch (error) {
+      console.warn('⚠️ Clear collections failed:', error);
     }
   }
 });
@@ -118,17 +124,6 @@ global.testUtils = {
     ...overrides
   }),
 
-  // Generate test club data
-  generateTestClub: (overrides = {}) => ({
-    name: 'Test Club',
-    description: 'This is a test club description',
-    category: 'academic',
-    maxMembers: 20,
-    isPublic: true,
-    tags: ['test', 'academic'],
-    ...overrides
-  }),
-
   // Generate test meal list data
   generateTestMealList: (overrides = {}) => ({
     date: new Date().toISOString().split('T')[0],
@@ -160,17 +155,6 @@ global.testUtils = {
         endTime: '16:00'
       }
     ],
-    ...overrides
-  }),
-
-  // Generate test maintenance request data
-  generateTestMaintenanceRequest: (overrides = {}) => ({
-    title: 'Test Maintenance Request',
-    description: 'This is a test maintenance request description',
-    category: 'electrical',
-    priority: 'medium',
-    location: 'Room 101',
-    estimatedCost: 500,
     ...overrides
   }),
 
@@ -255,6 +239,7 @@ global.testUtils = {
 
 // Extend global types
 declare global {
+  // eslint-disable-next-line no-var
   var testUtils: any;
 }
 

@@ -18,7 +18,7 @@ export function initializeTelemetry() {
 
   // Only initialize in production or when explicitly enabled
   const enableTelemetry = process.env.ENABLE_TELEMETRY === 'true' || process.env.NODE_ENV === 'production';
-  
+
   if (!enableTelemetry) {
     logger.info('Telemetry disabled. Set ENABLE_TELEMETRY=true to enable.');
     return;
@@ -27,19 +27,19 @@ export function initializeTelemetry() {
   try {
     // Dynamically require OpenTelemetry packages so missing deps don't crash the app
     // (they are optional for local development)
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const { NodeSDK } = require('@opentelemetry/sdk-node');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const { Resource } = require('@opentelemetry/resources');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const { PrometheusExporter } = require('@opentelemetry/exporter-prometheus');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const { PeriodicExportingMetricReader, ConsoleMetricExporter } = require('@opentelemetry/sdk-metrics');
     const serviceName = process.env.SERVICE_NAME || 'tofas-fen-backend';
     const serviceVersion = process.env.SERVICE_VERSION || '1.0.0';
@@ -62,8 +62,8 @@ export function initializeTelemetry() {
     // Trace exporter (OTLP or Jaeger)
     const traceExporter = process.env.JAEGER_ENDPOINT
       ? new OTLPTraceExporter({
-          url: process.env.JAEGER_ENDPOINT,
-        })
+        url: process.env.JAEGER_ENDPOINT,
+      })
       : new ConsoleMetricExporter(); // Fallback to console
 
     // Create SDK
@@ -104,7 +104,7 @@ export function shutdownTelemetry(): Promise<void> {
           logger.info('Telemetry SDK shut down');
           resolve();
         })
-  .catch((error: any) => {
+        .catch((error: any) => {
           logger.error('Error shutting down telemetry SDK:', error);
           resolve();
         });

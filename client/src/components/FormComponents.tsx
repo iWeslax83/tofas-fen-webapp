@@ -113,12 +113,14 @@ export const FormField = forwardRef<FormFieldRef, FormFieldProps>(({
 
   // Update state when props change
   useEffect(() => {
-    setFieldState(prev => ({
-      ...prev,
-      value: value || '',
-      error: error || '',
-      success: success || ''
-    }));
+    queueMicrotask(() => {
+      setFieldState(prev => ({
+        ...prev,
+        value: value || '',
+        error: error || '',
+        success: success || ''
+      }));
+    });
   }, [value, error, success]);
 
   // Validation function
