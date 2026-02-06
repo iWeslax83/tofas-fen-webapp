@@ -101,7 +101,7 @@ export class CalendarService {
 
   static async getCalendarById(calendarId: string, userId: string, userRole: string): Promise<ICalendar | null> {
     const calendar = await Calendar.findOne({ id: calendarId });
-    
+
     if (!calendar) return null;
 
     // Check access permissions
@@ -114,7 +114,7 @@ export class CalendarService {
 
   static async updateCalendar(calendarId: string, userId: string, updates: any): Promise<ICalendar | null> {
     const calendar = await Calendar.findOne({ id: calendarId });
-    
+
     if (!calendar || calendar.ownerId !== userId) return null;
 
     Object.assign(calendar, updates, { updatedAt: new Date() });
@@ -123,15 +123,15 @@ export class CalendarService {
 
   static async deleteCalendar(calendarId: string, userId: string): Promise<boolean> {
     const calendar = await Calendar.findOne({ id: calendarId });
-    
+
     if (!calendar || calendar.ownerId !== userId) return false;
 
     // Delete all events in this calendar
     await CalendarEvent.deleteMany({ calendarId });
-    
+
     // Delete the calendar
     await Calendar.deleteOne({ id: calendarId });
-    
+
     return true;
   }
 
@@ -140,7 +140,7 @@ export class CalendarService {
     permission: 'read' | 'write' | 'admin';
   }): Promise<boolean> {
     const calendar = await Calendar.findOne({ id: calendarId });
-    
+
     if (!calendar || calendar.ownerId !== ownerId) return false;
 
     // Check if user exists
@@ -262,7 +262,7 @@ export class CalendarService {
     updates: Partial<EventCreateData>
   ): Promise<ICalendarEvent | null> {
     const event = await CalendarEvent.findOne({ id: eventId });
-    
+
     if (!event) return null;
 
     // Check permissions
@@ -290,7 +290,7 @@ export class CalendarService {
 
   static async deleteEvent(eventId: string, userId: string): Promise<boolean> {
     const event = await CalendarEvent.findOne({ id: eventId });
-    
+
     if (!event || event.createdBy !== userId) return false;
 
     // Delete recurring events if this is a recurring event
@@ -317,7 +317,7 @@ export class CalendarService {
     response: 'accepted' | 'declined' | 'tentative'
   ): Promise<boolean> {
     const event = await CalendarEvent.findOne({ id: eventId });
-    
+
     if (!event) return false;
 
     const attendeeIndex = event.attendees.findIndex(a => a.userId === userId);
@@ -339,8 +339,10 @@ export class CalendarService {
     const { frequency, interval, endDate, endAfter } = parentEvent.recurringPattern;
     let currentDate = new Date(parentEvent.startDate);
     let occurrenceCount = 0;
+    const maxOccurrences = endAfter || 365; // Limit to prevent infinite loops
 
-    while (true) {
+    // eslint-disable-next-line no-constant-condition
+    while (occurrenceCount < maxOccurrences) {
       // Calculate next occurrence
       switch (frequency) {
         case 'daily':
@@ -367,7 +369,7 @@ export class CalendarService {
       const newEndDate = new Date(currentDate.getTime() + eventDuration);
 
       const recurringEvent = new CalendarEvent({
-        ...(parentEvent.toObject() as any),
+        ...(parentEvent.toObject() as Record<string, unknown>),
         id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         startDate: newStartDate,
         endDate: newEndDate,
@@ -385,7 +387,7 @@ export class CalendarService {
   private static async updateRecurringEvents(parentEvent: ICalendarEvent): Promise<void> {
     // Delete all existing recurring events
     await CalendarEvent.deleteMany({ parentEventId: parentEvent.id });
-    
+
     // Recreate them with new pattern
     await this.createRecurringEvents(parentEvent);
   }
@@ -405,7 +407,7 @@ export class CalendarService {
       for (const reminder of event.reminders) {
         if (!reminder.sent) {
           const reminderDate = new Date(event.startDate.getTime() - (reminder.minutesBefore * 60 * 1000));
-          
+
           if (reminderDate <= now) {
             await this.sendReminder(event, reminder);
             reminder.sent = true;
@@ -418,7 +420,7 @@ export class CalendarService {
 
   private static async sendReminder(event: ICalendarEvent, reminder: any): Promise<void> {
     const attendees = event.attendees.filter(a => a.response !== 'declined');
-    
+
     for (const attendee of attendees) {
       const user = await User.findOne({ id: attendee.userId });
       if (!user) continue;
@@ -445,7 +447,7 @@ export class CalendarService {
   // Notifications
   private static async notifyEventAttendees(event: ICalendarEvent, action: string): Promise<void> {
     const attendees = event.attendees.filter(a => a.userId !== event.createdBy);
-    
+
     for (const attendee of attendees) {
       const notificationData: any = {
         title: `Etkinlik ${action === 'created' ? 'oluşturuldu' : action === 'updated' ? 'güncellendi' : 'silindi'}`,

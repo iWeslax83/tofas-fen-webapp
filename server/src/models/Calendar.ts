@@ -212,14 +212,16 @@ calendarEventSchema.methods.getNextOccurrence = function (): Date | null {
       return new Date(lastOccurrence.getTime() + (this.recurringPattern.interval * 24 * 60 * 60 * 1000));
     case 'weekly':
       return new Date(lastOccurrence.getTime() + (this.recurringPattern.interval * 7 * 24 * 60 * 60 * 1000));
-    case 'monthly':
+    case 'monthly': {
       const nextMonth = new Date(lastOccurrence);
       nextMonth.setMonth(nextMonth.getMonth() + this.recurringPattern.interval);
       return nextMonth;
-    case 'yearly':
+    }
+    case 'yearly': {
       const nextYear = new Date(lastOccurrence);
       nextYear.setFullYear(nextYear.getFullYear() + this.recurringPattern.interval);
       return nextYear;
+    }
     default:
       return null;
   }

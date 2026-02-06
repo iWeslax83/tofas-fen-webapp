@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '../models';
 import logger from '../utils/logger';
+import rateLimit from 'express-rate-limit';
 
 // Session types are now defined in src/types/express-session.d.ts
 
@@ -171,7 +172,6 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
 
 // Rate limiting helper
 export const createRateLimiter = (windowMs: number, max: number, message: string) => {
-  const rateLimit = require('express-rate-limit');
   return rateLimit({
     windowMs,
     max,

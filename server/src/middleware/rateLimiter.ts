@@ -121,7 +121,7 @@ export const ipLimiter = createRateLimiter({
  */
 export const roleBasedLimiter = (req: Request, res: Response, next: any) => {
   const user = (req as any).user;
-  
+
   if (!user) {
     return ipLimiter(req, res, next);
   }
@@ -163,10 +163,10 @@ export const roleBasedLimiter = (req: Request, res: Response, next: any) => {
 /**
  * Adaptive rate limiter that adjusts based on server load
  */
-export const adaptiveLimiter = (req: Request, res: Response, next: Function) => {
+export const adaptiveLimiter = (req: Request, res: Response, next: (err?: unknown) => void) => {
   // This would integrate with monitoring service to adjust limits
   // based on server CPU, memory, and response times
-  
+
   const baseLimiter = createRateLimiter({
     windowMs: 15 * 60 * 1000,
     max: 100,
