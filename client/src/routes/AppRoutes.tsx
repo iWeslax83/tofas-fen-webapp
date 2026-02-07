@@ -35,9 +35,7 @@ const SupervisorListPage = lazy(() => import('../pages/Dashboard/SupervisorListP
 
 // Evci Pages
 const StudentEvciPage = lazy(() => import('../pages/Dashboard/StudentEvciPage'));
-const StudentCarziPage = lazy(() => import('../pages/Dashboard/StudentCarziPage'));
 const DilekcePage = lazy(() => import('../pages/Dashboard/DilekcePage'));
-const AdminCarziListPage = lazy(() => import('../pages/Dashboard/AdminCarziListPage'));
 const AdminDilekceListPage = lazy(() => import('../pages/Dashboard/AdminDilekceListPage'));
 const ParentEvciPage = lazy(() => import('../pages/Dashboard/ParentEvciPage'));
 const AdminEvciListPage = lazy(() => import('../pages/Dashboard/AdminEvciListPage'));
@@ -156,7 +154,6 @@ export default function AppRoutes() {
 
         {/* Evci Routes */}
         <Route path="/student/evci" element={<StudentEvciPage />} />
-        <Route path="/student/carzi" element={<StudentCarziPage />} />
         <Route path="/parent/evci" element={<ParentEvciPage />} />
 
         {/* Dilekçe Routes */}
@@ -164,7 +161,6 @@ export default function AppRoutes() {
         <Route path="/teacher/dilekce" element={<DilekcePage />} />
         <Route path="/parent/dilekce" element={<DilekcePage />} />
         <Route path="/admin/evci-listesi" element={<AdminEvciListPage />} />
-        <Route path="/admin/carzi-listesi" element={<AdminCarziListPage />} />
         <Route path="/admin/dilekce-listesi" element={<AdminDilekceListPage />} />
 
         {/* Settings and Admin Routes */}

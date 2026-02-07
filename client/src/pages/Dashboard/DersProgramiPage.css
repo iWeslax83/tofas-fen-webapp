@@ -13,8 +13,15 @@
 }
 
 @keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 /* Page Header */
@@ -534,61 +541,61 @@
   .ders-programi-page {
     padding: var(--space-4);
   }
-  
+
   .page-header-content {
-  flex-direction: column;
+    flex-direction: column;
     text-align: center;
   }
-  
+
   .page-title-main {
     font-size: 1.75rem;
   }
-  
+
   .page-actions {
     width: 100%;
     justify-content: center;
   }
-  
+
   .action-button {
     flex: 1;
     justify-content: center;
   }
-  
+
   .class-header {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-4);
   }
-  
+
   .class-info {
     width: 100%;
   }
-  
+
   .class-actions {
     width: 100%;
     justify-content: center;
-}
+  }
 
   .schedule-grid {
     grid-template-columns: 1fr;
     gap: var(--space-6);
     padding: var(--space-8);
   }
-  
+
   .day-column {
     min-height: auto;
   }
-  
+
   .lesson-item {
     padding: var(--space-3);
   }
-  
+
   .time-number {
     width: 28px;
     height: 28px;
     font-size: 0.75rem;
   }
-  
+
   .lesson-name {
     font-size: 0.9rem;
   }
@@ -598,62 +605,62 @@
   .ders-programi-page {
     padding: var(--space-3);
   }
-  
+
   .page-header {
     padding: var(--space-4);
   }
-  
+
   .page-title-main {
     font-size: 1.5rem;
   }
-  
+
   .class-schedule-card {
     margin-bottom: var(--space-4);
   }
-  
+
   .class-header {
     padding: var(--space-4);
   }
-  
+
   .class-title {
     font-size: 1.5rem;
   }
-  
+
   .class-subtitle {
     font-size: 0.875rem;
   }
-  
+
   .schedule-grid {
     padding: var(--space-6);
   }
-  
+
   .day-header {
     padding: var(--space-4);
   }
-  
+
   .day-name {
     font-size: 1.125rem;
   }
-  
+
   .lesson-item {
     padding: var(--space-3);
     gap: var(--space-3);
   }
-  
+
   .time-number {
     width: 24px;
     height: 24px;
     font-size: 0.625rem;
   }
-  
+
   .time-text {
     font-size: 0.5rem;
   }
-  
+
   .lesson-name {
     font-size: 0.875rem;
   }
-  
+
   .action-btn {
     width: 36px;
     height: 36px;
@@ -673,6 +680,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -683,6 +691,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -691,22 +700,23 @@
 
 /* Print Styles */
 @media print {
+
   .page-actions,
   .card-actions,
   .timetable-day-header {
     display: none !important;
   }
-  
+
   .timetable-lessons {
     max-height: none !important;
   }
-  
+
   .content-card {
     box-shadow: none !important;
     border: 1px solid var(--gray-300) !important;
     break-inside: avoid;
   }
-  
+
   .timetable-day {
     break-inside: avoid;
   }

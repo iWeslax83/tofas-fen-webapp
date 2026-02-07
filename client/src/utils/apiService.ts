@@ -4,6 +4,7 @@ import {
   handleResponseArray
 } from './apiResponseHandler';
 import { API_ENDPOINTS } from './apiEndpoints';
+import { User } from '../types/user';
 // Removed unused import
 
 // Standard API service class
@@ -115,7 +116,7 @@ export class UserService {
   }
 
   static async getCurrentUser() {
-    return ApiService.get(API_ENDPOINTS.AUTH.ME);
+    return ApiService.get<User>(API_ENDPOINTS.AUTH.ME);
   }
 
   static async getUsersByRole(role: string) {

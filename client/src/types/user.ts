@@ -11,6 +11,7 @@ export interface User {
   parentId?: string;
   childId?: string[];
   isActive?: boolean;
+  childrenSiniflar?: { sinif: string; sube: string; adSoyad?: string }[];
   createdAt?: string;
   updatedAt?: string;
 }
