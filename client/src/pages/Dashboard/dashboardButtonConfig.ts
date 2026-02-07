@@ -13,6 +13,7 @@ export interface DashboardButton {
   icon?: React.ElementType;
   showForDormitory?: boolean; // Only show for students with pansiyon=true
   actionText?: string; // Custom action text for the button
+  color?: string;
 }
 
 export const dashboardButtons: DashboardButton[] = [

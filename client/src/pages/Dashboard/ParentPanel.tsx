@@ -4,7 +4,7 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import { UserService } from '../../utils/apiService';
 
 const ParentPanel: React.FC = () => {
-  const { user } = useAuthContext();
+  useAuthContext();
 
   const handleAdditionalDataLoad = async (currentUser: any) => {
     try {

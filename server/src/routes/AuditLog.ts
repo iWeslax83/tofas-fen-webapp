@@ -105,7 +105,8 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const userId = (req as any).user?.id || (req as any).user?.userId;
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
     }
 
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;

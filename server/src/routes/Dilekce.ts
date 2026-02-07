@@ -53,18 +53,20 @@ router.post(
     const { type, subject, content, priority, category } = req.body;
 
     if (!type || !subject || !content) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Tür, konu ve içerik gereklidir'
       });
+      return;
     }
 
     const user = (req as any).user;
     if (!user) {
-      return res.status(401).json({ error: 'Kullanıcı bilgisi bulunamadı' });
+      res.status(401).json({ error: 'Kullanıcı bilgisi bulunamadı' });
+      return;
     }
 
     // Get file paths
-    const attachments = (req.files as Express.Multer.File[])?.map(file => 
+    const attachments = (req.files as Express.Multer.File[])?.map(file =>
       `/uploads/dilekce/${file.filename}`
     ) || [];
 
@@ -167,12 +169,14 @@ router.get(
 
     const dilekce = await Dilekce.findById(id);
     if (!dilekce) {
-      return res.status(404).json({ error: 'Dilekçe bulunamadı' });
+      res.status(404).json({ error: 'Dilekçe bulunamadı' });
+      return;
     }
 
     // Check permissions
     if (user.rol !== 'admin' && dilekce.userId !== user.id) {
-      return res.status(403).json({ error: 'Bu dilekçeye erişim yetkiniz yok' });
+      res.status(403).json({ error: 'Bu dilekçeye erişim yetkiniz yok' });
+      return;
     }
 
     res.json({
@@ -194,14 +198,16 @@ router.put(
     const { status, reviewNote, response } = req.body;
 
     if (!status) {
-      return res.status(400).json({ error: 'Durum gereklidir' });
+      res.status(400).json({ error: 'Durum gereklidir' });
+      return;
     }
 
     const admin = (req as any).user;
     const dilekce = await Dilekce.findById(id);
 
     if (!dilekce) {
-      return res.status(404).json({ error: 'Dilekçe bulunamadı' });
+      res.status(404).json({ error: 'Dilekçe bulunamadı' });
+      return;
     }
 
     dilekce.status = status;
@@ -245,15 +251,18 @@ router.put(
     const dilekce = await Dilekce.findById(id);
 
     if (!dilekce) {
-      return res.status(404).json({ error: 'Dilekçe bulunamadı' });
+      res.status(404).json({ error: 'Dilekçe bulunamadı' });
+      return;
     }
 
     if (dilekce.userId !== user.id) {
-      return res.status(403).json({ error: 'Bu dilekçeyi düzenleme yetkiniz yok' });
+      res.status(403).json({ error: 'Bu dilekçeyi düzenleme yetkiniz yok' });
+      return;
     }
 
     if (dilekce.status !== 'pending') {
-      return res.status(400).json({ error: 'Sadece bekleyen dilekçeler düzenlenebilir' });
+      res.status(400).json({ error: 'Sadece bekleyen dilekçeler düzenlenebilir' });
+      return;
     }
 
     if (subject) dilekce.subject = subject;
@@ -290,15 +299,18 @@ router.delete(
     const dilekce = await Dilekce.findById(id);
 
     if (!dilekce) {
-      return res.status(404).json({ error: 'Dilekçe bulunamadı' });
+      res.status(404).json({ error: 'Dilekçe bulunamadı' });
+      return;
     }
 
     if (dilekce.userId !== user.id && user.rol !== 'admin') {
-      return res.status(403).json({ error: 'Bu dilekçeyi silme yetkiniz yok' });
+      res.status(403).json({ error: 'Bu dilekçeyi silme yetkiniz yok' });
+      return;
     }
 
     if (dilekce.status !== 'pending' && user.rol !== 'admin') {
-      return res.status(400).json({ error: 'Sadece bekleyen dilekçeler silinebilir' });
+      res.status(400).json({ error: 'Sadece bekleyen dilekçeler silinebilir' });
+      return;
     }
 
     // Delete attached files

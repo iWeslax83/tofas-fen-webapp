@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, forwardRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Volume2, 
-  VolumeX, 
-  Contrast, 
-  Type, 
-  Move, 
+import {
+  Volume2,
+  VolumeX,
+  Contrast,
+  Type,
+  Move,
   Palette,
   Keyboard,
   X,
@@ -13,9 +13,9 @@ import {
   Accessibility,
   Target
 } from 'lucide-react';
-import { 
-  useAccessibility, 
-  useFocusTrap, 
+import {
+  useAccessibility,
+  useFocusTrap,
   useAnnouncement,
   generateAriaId,
   AccessibilityConfig
@@ -219,17 +219,17 @@ export const AccessibleButton = forwardRef<HTMLButtonElement, AccessibleButtonPr
           <div className="accessible-button__spinner"></div>
         </div>
       )}
-      
+
       {icon && iconPosition === 'left' && (
         <span className="accessible-button__icon accessible-button__icon--left" aria-hidden="true">
           {icon}
         </span>
       )}
-      
+
       <span className="accessible-button__content">
         {children}
       </span>
-      
+
       {icon && iconPosition === 'right' && (
         <span className="accessible-button__icon accessible-button__icon--right" aria-hidden="true">
           {icon}
@@ -254,9 +254,9 @@ export const AccessibleModal: React.FC<AccessibleModalProps> = ({
   className = ''
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const focusTrapRef = useFocusTrap({ 
-    active: isOpen, 
-    onEscape: closeOnEscape ? onClose : () => {} 
+  const focusTrapRef = useFocusTrap({
+    active: isOpen,
+    onEscape: closeOnEscape ? onClose : () => { }
   });
   const announce = useAnnouncement();
 
@@ -327,7 +327,7 @@ export const AccessibleModal: React.FC<AccessibleModalProps> = ({
                 </AccessibleButton>
               )}
             </header>
-            
+
             <div id="modal-content" className="accessible-modal__content">
               {children}
             </div>
@@ -369,7 +369,7 @@ export const AccessibleDropdown: React.FC<AccessibleDropdownProps> = ({
   return (
     <div className={dropdownClasses}>
       <div
-        id={triggerId.current}
+        id={triggerId}
         className="accessible-dropdown__trigger"
         onClick={onToggle}
         onKeyDown={(e) => {
@@ -381,22 +381,22 @@ export const AccessibleDropdown: React.FC<AccessibleDropdownProps> = ({
         role="button"
         aria-haspopup="true"
         aria-expanded={isOpen}
-        aria-controls={dropdownId.current}
+        aria-controls={dropdownId}
         tabIndex={0}
       >
         {trigger}
       </div>
-      
+
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            id={dropdownId.current}
+            id={dropdownId}
             className="accessible-dropdown__content"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             role="menu"
-            aria-labelledby={triggerId.current}
+            aria-labelledby={triggerId}
           >
             {children}
           </motion.div>
@@ -446,14 +446,14 @@ export const AccessibleTooltip: React.FC<AccessibleTooltipProps> = ({
       onMouseLeave={hideTooltip}
       onFocus={showTooltip}
       onBlur={hideTooltip}
-      aria-describedby={tooltipId.current}
+      aria-describedby={tooltipId}
     >
       {children}
-      
+
       <AnimatePresence>
         {isVisible && (
           <motion.div
-            id={tooltipId.current}
+            id={tooltipId}
             className={tooltipClasses}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -528,7 +528,7 @@ export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
             <div className="accessibility-panel__content">
               <section className="accessibility-panel__section">
                 <h3>Görsel Ayarlar</h3>
-                
+
                 <div className="accessibility-panel__option">
                   <AccessibleButton
                     onClick={() => handleToggle('enableHighContrast')}
@@ -568,7 +568,7 @@ export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
 
               <section className="accessibility-panel__section">
                 <h3>Hareket Ayarları</h3>
-                
+
                 <div className="accessibility-panel__option">
                   <AccessibleButton
                     onClick={() => handleToggle('enableReducedMotion')}
@@ -584,7 +584,7 @@ export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
 
               <section className="accessibility-panel__section">
                 <h3>Navigasyon Ayarları</h3>
-                
+
                 <div className="accessibility-panel__option">
                   <AccessibleButton
                     onClick={() => handleToggle('enableKeyboardNavigation')}
@@ -612,7 +612,7 @@ export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
 
               <section className="accessibility-panel__section">
                 <h3>Ekran Okuyucu</h3>
-                
+
                 <div className="accessibility-panel__option">
                   <AccessibleButton
                     onClick={() => handleToggle('enableScreenReader')}
@@ -628,7 +628,7 @@ export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
 
               <section className="accessibility-panel__section">
                 <h3>Dyslexia Desteği</h3>
-                
+
                 <div className="accessibility-panel__option">
                   <AccessibleButton
                     onClick={() => handleToggle('enableDyslexiaSupport')}

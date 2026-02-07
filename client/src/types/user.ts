@@ -28,7 +28,7 @@ export interface LoginRequest {
   sifre: string;
 }
 
-export interface LoginResponse extends UserResponse {}
+export type LoginResponse = UserResponse;
 
 export interface RefreshTokenRequest {
   refreshToken: string;

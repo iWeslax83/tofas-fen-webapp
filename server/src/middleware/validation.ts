@@ -345,53 +345,7 @@ export const validateAnnouncement = [
   validateRequest
 ];
 
-// Enhanced Club validation rules
-export const validateClub = [
-  body('name')
-    .trim()
-    .isLength({ min: 3, max: 100 })
-    .withMessage('Kulüp adı 3-100 karakter arasında olmalıdır')
-    .matches(/^[a-zA-ZğüşıöçĞÜŞİÖÇ\s\d\-_.,!?()]+$/)
-    .withMessage('Kulüp adı sadece harf, rakam ve temel noktalama işaretleri içerebilir'),
 
-  body('description')
-    .trim()
-    .isLength({ min: 10, max: 1000 })
-    .withMessage('Açıklama 10-1000 karakter arasında olmalıdır')
-    .customSanitizer(value => DOMPurify.sanitize(value, {
-      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li']
-    })),
-
-  body('category')
-    .trim()
-    .isIn(['academic', 'sports', 'arts', 'technology', 'social', 'other'])
-    .withMessage('Geçersiz kategori'),
-
-  body('maxMembers')
-    .optional()
-    .isInt({ min: 1, max: 1000 })
-    .withMessage('Maksimum üye sayısı 1-1000 arasında olmalıdır'),
-
-  body('isPublic')
-    .optional()
-    .isBoolean()
-    .withMessage('Genel erişim değeri boolean olmalıdır'),
-
-  body('tags')
-    .optional()
-    .isArray({ max: 10 })
-    .withMessage('En fazla 10 etiket eklenebilir'),
-
-  body('tags.*')
-    .optional()
-    .trim()
-    .isLength({ min: 1, max: 20 })
-    .withMessage('Etiket 1-20 karakter arasında olmalıdır')
-    .matches(/^[a-zA-ZğüşıöçĞÜŞİÖÇ\d\-_]+$/)
-    .withMessage('Etiket sadece harf, rakam, tire ve alt çizgi içerebilir'),
-
-  validateRequest
-];
 
 // Enhanced Meal List validation rules
 export const validateMealList = [

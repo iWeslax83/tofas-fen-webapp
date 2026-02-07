@@ -20,20 +20,23 @@ router.post(
     const { date, startTime, endTime, reason } = req.body;
 
     if (!date || !startTime || !endTime) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Tarih, başlangıç saati ve bitiş saati gereklidir'
       });
+      return;
     }
 
     const user = (req as any).user;
     if (!user || user.rol !== 'student') {
-      return res.status(403).json({ error: 'Sadece öğrenciler çarşı izni talep edebilir' });
+      res.status(403).json({ error: 'Sadece öğrenciler çarşı izni talep edebilir' });
+      return;
     }
 
     // Check if student is in dormitory
     const student = await User.findOne({ id: user.id });
     if (!student || !student.pansiyon) {
-      return res.status(400).json({ error: 'Sadece pansiyon öğrencileri çarşı izni talep edebilir' });
+      res.status(400).json({ error: 'Sadece pansiyon öğrencileri çarşı izni talep edebilir' });
+      return;
     }
 
     // Check if there's already a pending request for this date
@@ -44,7 +47,8 @@ router.post(
     });
 
     if (existingRequest) {
-      return res.status(400).json({ error: 'Bu tarih için zaten bekleyen bir izin talebiniz var' });
+      res.status(400).json({ error: 'Bu tarih için zaten bekleyen bir izin talebiniz var' });
+      return;
     }
 
     const carziRequest = new CarziRequest({
@@ -96,7 +100,8 @@ router.get(
       if (parent && parent.childId && parent.childId.length > 0) {
         query.studentId = { $in: parent.childId };
       } else {
-        return res.json({ success: true, requests: [], pagination: { page: 1, limit: 50, total: 0, pages: 0 } });
+        res.json({ success: true, requests: [], pagination: { page: 1, limit: 50, total: 0, pages: 0 } });
+        return;
       }
     } else if (studentId) {
       // Teachers/admins can filter by student
@@ -148,13 +153,15 @@ router.post(
     const request = await CarziRequest.findById(id);
 
     if (!request) {
-      return res.status(404).json({ error: 'İzin talebi bulunamadı' });
+      res.status(404).json({ error: 'İzin talebi bulunamadı' });
+      return;
     }
 
     // Check if parent is authorized (has this student as child)
     const parentUser = await User.findOne({ id: parent.id });
     if (!parentUser || !parentUser.childId.includes(request.studentId)) {
-      return res.status(403).json({ error: 'Bu öğrencinin velisi değilsiniz' });
+      res.status(403).json({ error: 'Bu öğrencinin velisi değilsiniz' });
+      return;
     }
 
     request.parentApproval = approved ? 'approved' : 'rejected';
@@ -192,12 +199,14 @@ router.post(
     const request = await CarziRequest.findById(id);
 
     if (!request) {
-      return res.status(404).json({ error: 'İzin talebi bulunamadı' });
+      res.status(404).json({ error: 'İzin talebi bulunamadı' });
+      return;
     }
 
     // Check if parent has approved (if required)
     if (request.parentApproval !== 'approved') {
-      return res.status(400).json({ error: 'Veli onayı bekleniyor' });
+      res.status(400).json({ error: 'Veli onayı bekleniyor' });
+      return;
     }
 
     request.status = approved ? 'approved' : 'rejected';
@@ -236,15 +245,18 @@ router.put(
     const request = await CarziRequest.findById(id);
 
     if (!request) {
-      return res.status(404).json({ error: 'İzin talebi bulunamadı' });
+      res.status(404).json({ error: 'İzin talebi bulunamadı' });
+      return;
     }
 
     if (request.studentId !== user.id) {
-      return res.status(403).json({ error: 'Bu izin talebini düzenleme yetkiniz yok' });
+      res.status(403).json({ error: 'Bu izin talebini düzenleme yetkiniz yok' });
+      return;
     }
 
     if (request.status !== 'pending') {
-      return res.status(400).json({ error: 'Sadece bekleyen talepler düzenlenebilir' });
+      res.status(400).json({ error: 'Sadece bekleyen talepler düzenlenebilir' });
+      return;
     }
 
     if (date) request.date = date;
@@ -282,15 +294,18 @@ router.delete(
     const request = await CarziRequest.findById(id);
 
     if (!request) {
-      return res.status(404).json({ error: 'İzin talebi bulunamadı' });
+      res.status(404).json({ error: 'İzin talebi bulunamadı' });
+      return;
     }
 
     if (request.studentId !== user.id) {
-      return res.status(403).json({ error: 'Bu izin talebini silme yetkiniz yok' });
+      res.status(403).json({ error: 'Bu izin talebini silme yetkiniz yok' });
+      return;
     }
 
     if (request.status !== 'pending') {
-      return res.status(400).json({ error: 'Sadece bekleyen talepler silinebilir' });
+      res.status(400).json({ error: 'Sadece bekleyen talepler silinebilir' });
+      return;
     }
 
     await CarziRequest.findByIdAndDelete(id);

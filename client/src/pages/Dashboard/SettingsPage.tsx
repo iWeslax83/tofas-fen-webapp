@@ -10,37 +10,25 @@ type Tab = "Hesap";
 const TABS: Tab[] = ["Hesap"];
 
 export default function SettingsPage() {
-  const { user: authUser, isLoading: authLoading } = useAuthContext();
+  const { user, isLoading } = useAuthContext();
   const [activeTab, setActiveTab] = useState<Tab>("Hesap");
-  const [user, setUser] = useState<{ id: string; adSoyad: string; telefon?: string; rol: string; oda?: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string>("");
   const navigate = useNavigate();
 
-  // Şifre değiştirme kaldırıldı - artık TCKN kullanılıyor
-
+  const userRole = user?.rol || "";
 
   useEffect(() => {
     // Check if user has the correct role
-    if (!authLoading && authUser && !["admin", "teacher", "student", "parent"].includes(authUser.rol || '')) {
-      console.warn(`User role ${authUser.rol || 'undefined'} not allowed for settings page`);
-      navigate(`/${authUser.rol || 'login'}`);
+    if (!isLoading && user && !["admin", "teacher", "student", "parent"].includes(user.rol || '')) {
+      console.warn(`User role ${user.rol || 'undefined'} not allowed for settings page`);
+      navigate(`/${user.rol || 'login'}`);
       return;
     }
 
     // Redirect to login if no user
-    if (!authLoading && !authUser) {
+    if (!isLoading && !user) {
       navigate('/login');
-      return;
     }
-
-    // Use the user data from AuthContext instead of making an API call
-    if (authUser) {
-      setUser(authUser);
-      setUserRole(authUser.rol || "");
-      setLoading(false);
-    }
-  }, [authUser, authLoading]);
+  }, [user, isLoading, navigate]);
 
 
 
@@ -55,7 +43,7 @@ export default function SettingsPage() {
   //   window.location.href = "/login";
   // };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="centered-spinner">
         <div className="spinner"></div>
@@ -91,19 +79,19 @@ export default function SettingsPage() {
     >        <BackButton />
 
       <div className="dashboard-content">
-          <div className="tabs-container">
-            <ul className="tabs-header">
-              {TABS.map((tabName: Tab) => (
-                <li key={tabName} className="tab-item">
-                  <button
-                    onClick={() => setActiveTab(tabName)}
-                    className={`tab-button ${activeTab === tabName ? 'active' : ''}`}
-                  >
-                    {tabName}
-                  </button>
-                </li>
-              ))}
-            </ul>
+        <div className="tabs-container">
+          <ul className="tabs-header">
+            {TABS.map((tabName: Tab) => (
+              <li key={tabName} className="tab-item">
+                <button
+                  onClick={() => setActiveTab(tabName)}
+                  className={`tab-button ${activeTab === tabName ? 'active' : ''}`}
+                >
+                  {tabName}
+                </button>
+              </li>
+            ))}
+          </ul>
 
           {/* Hesap Tab */}
           {activeTab === "Hesap" && (
@@ -113,15 +101,15 @@ export default function SettingsPage() {
                   <User className="h-5 w-5" />
                   Hesap Bilgileri
                 </h3>
-                <div className="info-message" style={{ 
-                  padding: '20px', 
-                  backgroundColor: '#f0f9ff', 
+                <div className="info-message" style={{
+                  padding: '20px',
+                  backgroundColor: '#f0f9ff',
                   borderRadius: '8px',
                   border: '1px solid #bae6fd',
                   marginTop: '20px'
                 }}>
                   <p style={{ margin: 0, color: '#0369a1', fontSize: '14px' }}>
-                    <strong>Bilgi:</strong> Şifre değiştirme özelliği kaldırılmıştır. 
+                    <strong>Bilgi:</strong> Şifre değiştirme özelliği kaldırılmıştır.
                     Sistem artık T.C. Kimlik Numarası (TCKN) ile giriş yapmaktadır.
                   </p>
                 </div>
@@ -162,8 +150,8 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
-          </div>
         </div>
+      </div>
     </ModernDashboardLayout>
   );
 } 

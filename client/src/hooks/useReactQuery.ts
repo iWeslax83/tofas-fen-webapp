@@ -17,21 +17,21 @@ export const queryKeys = {
     me: ['auth', 'me'] as const,
     profile: (userId: string) => ['auth', 'profile', userId] as const,
   },
-  
+
   // Users
   users: {
     all: ['users'] as const,
     list: (filters?: Record<string, unknown>) => ['users', 'list', filters] as const,
     detail: (id: string) => ['users', 'detail', id] as const,
   },
-  
+
   // Announcements
   announcements: {
     all: ['announcements'] as const,
     list: (filters?: Record<string, unknown>) => ['announcements', 'list', filters] as const,
     detail: (id: string) => ['announcements', 'detail', id] as const,
   },
-  
+
   // Homeworks
   homeworks: {
     all: ['homeworks'] as const,
@@ -39,7 +39,7 @@ export const queryKeys = {
     detail: (id: string) => ['homeworks', 'detail', id] as const,
     student: (studentId: string) => ['homeworks', 'student', studentId] as const,
   },
-  
+
   // Notes
   notes: {
     all: ['notes'] as const,
@@ -47,7 +47,7 @@ export const queryKeys = {
     detail: (id: string) => ['notes', 'detail', id] as const,
     student: (studentId: string) => ['notes', 'student', studentId] as const,
   },
-  
+
   // Evci Requests
   evciRequests: {
     all: ['evci-requests'] as const,
@@ -55,27 +55,28 @@ export const queryKeys = {
     detail: (id: string) => ['evci-requests', 'detail', id] as const,
     student: (studentId: string) => ['evci-requests', 'student', studentId] as const,
   },
-  
+
   // Dormitory
   dormitory: {
     meals: (date?: string) => ['dormitory', 'meals', date] as const,
     supervisors: ['dormitory', 'supervisors'] as const,
+    maintenanceRequests: (filters?: Record<string, unknown>) => ['dormitory', 'maintenance-requests', filters] as const,
   },
-  
+
   // Schedule
   schedule: {
     all: ['schedule'] as const,
     class: (classId: string) => ['schedule', 'class', classId] as const,
     teacher: (teacherId: string) => ['schedule', 'teacher', teacherId] as const,
   },
-  
+
   // Files
   files: {
     all: (filters?: Record<string, unknown>) => ['files', filters] as const,
     folders: (parentId?: string) => ['files', 'folders', parentId] as const,
     stats: ['files', 'stats'] as const,
   },
-  
+
   // Analytics
   analytics: {
     dashboard: (role: string) => ['analytics', 'dashboard', role] as const,
@@ -140,12 +141,12 @@ export function useApiMutation<TData, TVariables>(
           queryClient.invalidateQueries({ queryKey });
         });
       }
-      
+
       // Show success toast
       if (options?.showToast !== false) {
         toast.success(options?.successMessage || data.message || 'İşlem başarılı');
       }
-      
+
       // Call custom onSuccess
       options?.onSuccess?.(data, variables);
     },
@@ -154,7 +155,7 @@ export function useApiMutation<TData, TVariables>(
       if (options?.showToast !== false) {
         toast.error(options?.errorMessage || error.message || 'İşlem başarısız');
       }
-      
+
       // Call custom onError
       options?.onError?.(error, variables);
     },

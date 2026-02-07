@@ -27,7 +27,7 @@ export function useAuth(allowedRoles: string[] = []) {
   const { user, isLoading, error, logout: contextLogout } = useAuthContext();
   const [localUser, setLocalUser] = useState<User | null>(null);
   const [localIsLoading, setLocalIsLoading] = useState(true);
-  const [localError, setLocalError] = useState<Error | null>(null);
+  const [localError, setLocalError] = useState<any>(null);
 
   useEffect(() => {
     // Use AuthContext state instead of making separate API calls
@@ -35,7 +35,7 @@ export function useAuth(allowedRoles: string[] = []) {
       if (user) {
         setLocalUser(user);
         setLocalError(null);
-        
+
         // If specific roles are required, check them
         if (allowedRoles.length > 0 && user.rol && !allowedRoles.includes(user.rol)) {
           console.warn(`User role ${user.rol || 'undefined'} not in allowed roles: ${allowedRoles.join(', ')}`);
@@ -45,7 +45,7 @@ export function useAuth(allowedRoles: string[] = []) {
       } else {
         setLocalUser(null);
         setLocalError(error);
-        
+
         // Only redirect to login if not already on login page
         if (!window.location.pathname.includes('login')) {
           navigate("/login", { replace: true });
@@ -67,11 +67,11 @@ export function useAuth(allowedRoles: string[] = []) {
     }
   };
 
-  return { 
-    user: localUser, 
-    logout, 
-    isLoading: localIsLoading, 
-    error: localError 
+  return {
+    user: localUser,
+    logout,
+    isLoading: localIsLoading,
+    error: localError
   };
 }
 

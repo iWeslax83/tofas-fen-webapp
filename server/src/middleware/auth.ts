@@ -30,96 +30,9 @@ export const requireRole = (allowedRoles: string[]) => {
   };
 };
 
-// Club membership middleware
-export const requireClubMembership = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const clubId = req.params.clubId;
-    const user = req.user;
 
-    if (!clubId) {
-      res.status(400).json({ error: 'Kulüp ID gerekli' });
-      return;
-    }
 
-    if (!user) {
-      res.status(401).json({ error: 'Oturum açmanız gerekiyor' });
-      return;
-    }
 
-    // Club'ı veritabanından al
-    const { Club } = await import('../models');
-    const club = await Club.findOne({ id: clubId });
-
-    if (!club) {
-      res.status(404).json({ error: 'Kulüp bulunamadı' });
-      return;
-    }
-
-    // Kullanıcının kulüp üyesi olup olmadığını kontrol et
-    if (!club.members.includes(user.userId)) {
-      res.status(403).json({ error: 'Bu kulübün üyesi değilsiniz' });
-      return;
-    }
-
-    // Club bilgisini request'e ekle
-    (req as any).club = club;
-    next();
-  } catch (error) {
-    logger.error('Club membership middleware error', {
-      error: error instanceof Error ? error.message : String(error),
-      clubId: req.params.clubId,
-      userId: req.user?.userId
-    });
-    res.status(500).json({ error: 'Sunucu hatası' });
-  }
-};
-
-// Club leadership middleware
-export const requireClubLeadership = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const clubId = req.params.clubId;
-    const user = req.user;
-
-    if (!clubId) {
-      res.status(400).json({ error: 'Kulüp ID gerekli' });
-      return;
-    }
-
-    if (!user) {
-      res.status(401).json({ error: 'Oturum açmanız gerekiyor' });
-      return;
-    }
-
-    // Club'ı veritabanından al
-    const { Club } = await import('../models');
-    const club = await Club.findOne({ id: clubId });
-
-    if (!club) {
-      res.status(404).json({ error: 'Kulüp bulunamadı' });
-      return;
-    }
-
-    // Kullanıcının kulüp lideri olup olmadığını kontrol et
-    const userRole = club.roles[user.userId];
-    const isLeader = userRole === 'Başkan' || userRole === 'Ana Başkan';
-
-    if (!isLeader) {
-      res.status(403).json({ error: 'Bu işlem için kulüp lideri olmanız gerekiyor' });
-      return;
-    }
-
-    // Club bilgisini request'e ekle
-    (req as any).club = club;
-    next();
-  } catch (error) {
-    logger.error('Club leadership middleware error', {
-      error: error instanceof Error ? error.message : String(error),
-      clubId: req.params.clubId,
-      userId: req.user?.userId
-    });
-    res.status(500).json({ error: 'Sunucu hatası' });
-  }
-};
 
 // Admin middleware
 export const requireAdmin = requireRole(['admin']);

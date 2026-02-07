@@ -7,27 +7,30 @@ import { useAuth } from "../../hooks/useAuth";
 export default function LoginLogsPage() {
   useAuth(["admin"]);
   // const { user } = useAuthContext(); // Not used
-  const [returnPath, setReturnPath] = useState("/dashboard");
-  const [adSoyad, setAdSoyad] = useState("");
-  const [rol, setRol] = useState("");
+  const [userData] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("activeUser") || "null");
+    } catch {
+      return null;
+    }
+  });
+
+  const [returnPath] = useState(() => userData?.rol ? `/dashboard/${userData.rol}` : "/dashboard");
+  const [adSoyad] = useState(userData?.adSoyad || "");
+  const [rol] = useState(userData?.rol || "");
   const navigate = useNavigate();
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("activeUser") || "null");
     const loginTime = localStorage.getItem("loginTime");
     const now = Date.now();
     const expiry = 24 * 60 * 60 * 1000;
 
-    if (!user?.rol || !loginTime || now - Number(loginTime) > expiry) {
+    if (!userData?.rol || !loginTime || now - Number(loginTime) > expiry) {
       localStorage.removeItem("activeUser");
       localStorage.removeItem("loginTime");
       navigate("/login");
-    } else {
-      setReturnPath(`/dashboard/${user.rol}`);
-      setAdSoyad(user.adSoyad || "");
-      setRol(user.rol);
     }
-  }, [navigate]);
+  }, [navigate, userData]);
 
   return (
     <div className="login-logs-page">

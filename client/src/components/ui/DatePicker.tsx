@@ -54,10 +54,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const [currentMonth, setCurrentMonth] = useState<Date>(value || defaultValue || new Date());
 
   useEffect(() => {
-    if (value) {
+    if (value && (!currentMonth || !isSameDay(value, currentMonth))) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentMonth(value);
     }
-  }, [value]);
+  }, [value, currentMonth]);
 
   const handleDateSelect = (date: Date) => {
     if (isDateDisabled(date)) return;

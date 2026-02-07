@@ -53,7 +53,7 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
         try {
           // Call additional data loader if provided
           if (onAdditionalDataLoad) {
-            await onAdditionalDataLoad(user);
+            await onAdditionalDataLoad(user as unknown as Record<string, unknown>);
           }
 
           // Filter buttons for the role
@@ -119,15 +119,15 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
             <div className="welcome-text">
               <h2>Hoş Geldiniz, {user.adSoyad}!</h2>
               <p>{customWelcomeContent || `${role.charAt(0).toUpperCase() + role.slice(1)} paneline hoş geldiniz.`}</p>
-              {additionalUserData.sinif && (
+              {!!additionalUserData.sinif && (
                 <p className="class-info">
-                  <strong>Sınıf:</strong> {additionalUserData.sinif}
-                  {additionalUserData.sube && ` - ${additionalUserData.sube}`}
+                  <strong>Sınıf:</strong> {additionalUserData.sinif as React.ReactNode}
+                  {!!additionalUserData.sube && ` - ${additionalUserData.sube as React.ReactNode}`}
                 </p>
               )}
-              {additionalUserData.pansiyon && (
+              {!!additionalUserData.pansiyon && (
                 <p className="dormitory-info">
-                  <strong>Pansiyon:</strong> {additionalUserData.oda || 'Atanmış'}
+                  <strong>Pansiyon:</strong> {(additionalUserData.oda as React.ReactNode) || 'Atanmış'}
                 </p>
               )}
             </div>

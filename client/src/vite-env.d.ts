@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 interface ImportMetaEnv {
   readonly NODE_ENV: string
   // more env variables...

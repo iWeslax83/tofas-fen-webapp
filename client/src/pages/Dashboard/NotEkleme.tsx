@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NotesService } from '../../utils/apiService';
 import { toast } from 'react-hot-toast';
-import { Upload, Plus, BookOpen } from 'lucide-react'; // ArrowLeft removed
+import { Upload, Plus } from 'lucide-react'; // ArrowLeft removed
 import { useAuthContext } from '../../contexts/AuthContext';
 import { UserRole } from '../../@types';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
