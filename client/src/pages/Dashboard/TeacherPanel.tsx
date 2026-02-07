@@ -3,7 +3,7 @@ import DashboardPanel from '../../components/DashboardPanel';
 import { useAuthContext } from '../../contexts/AuthContext';
 
 const TeacherPanel: React.FC = () => {
-  const { user } = useAuthContext();
+  useAuthContext();
 
   return (
     <DashboardPanel

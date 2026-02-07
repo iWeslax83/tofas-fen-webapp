@@ -10,7 +10,6 @@ import Announcement from '../../models/Announcement';
 import { Homework } from '../../models/Homework';
 import Note from '../../models/Note';
 import { EvciRequest } from '../../models/EvciRequest';
-import { Club } from '../../models/Club';
 
 // DataLoaders for batch loading
 export const createUserLoader = () => {

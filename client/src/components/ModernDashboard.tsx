@@ -113,7 +113,7 @@ const ModernDashboard: React.FC = () => {
         recentActivities: 15
       });
     }
-  }, [authUser]); // Remove handleError dependency to prevent infinite loop
+  }, [authUser, handleApiError]); // Removed handleError dependency to prevent infinite loop - Re-added as it's needed for memoization consistency
 
   // Get role-specific buttons
   const getRoleButtons = () => {
@@ -228,9 +228,13 @@ const ModernDashboard: React.FC = () => {
       return;
     }
 
-    fetchUserData();
-    fetchStats();
-    setIsLoading(false);
+    const initialize = async () => {
+      await fetchUserData();
+      await fetchStats();
+      setIsLoading(false);
+    };
+
+    initialize();
   }, [authUser, authLoading, navigate, fetchUserData, fetchStats]);
 
   if (isLoading || authLoading) {

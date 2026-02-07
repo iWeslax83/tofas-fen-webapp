@@ -43,25 +43,6 @@ function getFriday(d: Date): Date {
   return friday;
 }
 
-// Cumartesi günü talepleri sıfırlama fonksiyonu
-function _resetWeeklyRequests() {
-  const today = new Date();
-  const dayOfWeek = today.getDay(); // 0 = Pazar, 6 = Cumartesi
-  
-  // Eğer bugün cumartesi ise (6) ve saat 12:00'dan sonra ise
-  if (dayOfWeek === 6 && today.getHours() >= 12) {
-    const lastReset = localStorage.getItem('lastWeeklyReset');
-    const todayStr = today.toDateString();
-    
-    // Eğer bugün henüz sıfırlanmamışsa
-    if (lastReset !== todayStr) {
-      // Evci taleplerini sıfırla
-      localStorage.setItem("evciRequests", "[]");
-      localStorage.setItem('lastWeeklyReset', todayStr);
-      // Weekly evci requests reset on Saturday at 12:00
-    }
-  }
-}
 
 const StudentEvciPage = () => {
   const { user: authUser } = useAuth(["student"]);
@@ -71,8 +52,8 @@ const StudentEvciPage = () => {
 
   const [requests, setRequests] = useState<EvciTalep[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<Partial<EvciTalep & { startTime?: string; endTime?: string }>>({ 
-    willGo: true 
+  const [form, setForm] = useState<Partial<EvciTalep & { startTime?: string; endTime?: string }>>({
+    willGo: true
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -81,7 +62,7 @@ const StudentEvciPage = () => {
   useEffect(() => {
     const fetchRequests = async () => {
       if (!authUser) return;
-      
+
       try {
         setLoading(true);
         const { data, error } = await EvciService.getEvciRequestsByStudent(authUser.id);
@@ -98,7 +79,7 @@ const StudentEvciPage = () => {
         setLoading(false);
       }
     };
-    
+
     fetchRequests();
   }, [authUser]);
 
@@ -116,7 +97,7 @@ const StudentEvciPage = () => {
   // Yeni talep açılmadan önce hafta içi zaten talep var mı kontrolü
   const handleNew = () => {
     if (!authUser) return;
-    
+
     const mon = getMonday(new Date());
     const fri = getFriday(new Date());
     const thisWeek = requests.filter((r) => {
@@ -169,13 +150,13 @@ const StudentEvciPage = () => {
   // Gönderme / Güncelleme
   const handleSubmit = async () => {
     if (!authUser) return;
-    
+
     const vErr = validate();
     if (Object.keys(vErr).length) {
       setErrors(vErr);
       return;
     }
-    
+
     // Combine date and time for start and end
     const startDateTime =
       form.startDate && form.startTime
@@ -286,8 +267,8 @@ const StudentEvciPage = () => {
             <div className="error-message">
               <h2>Hata Oluştu</h2>
               <p>{error}</p>
-              <button 
-                onClick={() => window.location.reload()} 
+              <button
+                onClick={() => window.location.reload()}
                 className="btn btn-primary"
               >
                 Yeniden Dene
@@ -331,7 +312,7 @@ const StudentEvciPage = () => {
     >
       <div className="evci-page">
         <BackButton />
-        
+
         {toastMessage && (
           <div className="toast-container">
             <div className="toast">{toastMessage}</div>
@@ -371,7 +352,7 @@ const StudentEvciPage = () => {
                       <Calendar size={20} />
                     </div>
                     <div className="card-actions">
-                      <button 
+                      <button
                         onClick={() => handleEdit(i)}
                         className="action-button edit-button"
                         title="Düzenle"
@@ -422,7 +403,7 @@ const StudentEvciPage = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <h3 className="modal-title">Evci Talebi</h3>
-                <button 
+                <button
                   type="button"
                   onClick={() => setModalOpen(false)}
                   className="modal-close"
@@ -433,7 +414,7 @@ const StudentEvciPage = () => {
                   </svg>
                 </button>
               </div>
-              
+
               <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="modal-body">
                 <div className="form-group checkbox-group">
                   <label className="checkbox-label">
@@ -445,7 +426,7 @@ const StudentEvciPage = () => {
                     <span>Evciye Gitmeyeceğim</span>
                   </label>
                 </div>
-                
+
                 {form.willGo && (
                   <>
                     <div className="form-row">
@@ -471,7 +452,7 @@ const StudentEvciPage = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="form-row">
                       <div className="form-group">
                         <label className="form-label">Bitiş Tarihi</label>
@@ -495,7 +476,7 @@ const StudentEvciPage = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="form-group">
                       <label className="form-label">Yer</label>
                       <input
@@ -511,7 +492,7 @@ const StudentEvciPage = () => {
                     </div>
                   </>
                 )}
-                
+
                 <div className="form-actions">
                   <button
                     type="button"

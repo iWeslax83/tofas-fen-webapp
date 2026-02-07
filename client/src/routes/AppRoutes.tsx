@@ -60,18 +60,13 @@ const AccessibilityDemoPage = lazy(() => import('../pages/Dashboard/Accessibilit
 
 // Root redirect component - Optimized to prevent unnecessary renders
 function RootRedirect() {
+  const hasNavigated = React.useRef(false);
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
-  const hasNavigated = React.useRef(false);
-
-  // Show loading while checking auth
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
 
   // Use useEffect to handle navigation after render - only once
   React.useEffect(() => {
-    if (hasNavigated.current) return; // Prevent multiple navigations
+    if (isLoading || hasNavigated.current) return;
 
     if (user?.rol) {
       // If user is logged in, redirect to their dashboard
@@ -82,7 +77,12 @@ function RootRedirect() {
       hasNavigated.current = true;
       navigate('/login', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, isLoading]);
+
+  // Show loading while checking auth
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   return <LoadingSpinner />;
 }

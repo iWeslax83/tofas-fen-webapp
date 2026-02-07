@@ -19,7 +19,7 @@ export const useRenderPerformance = (componentName: string) => {
 
     return () => {
       const renderTime = performance.now() - renderStart.current;
-      
+
       if (renderTime > 16) { // More than one frame (60fps)
         console.warn(`[Performance] ${componentName} render took ${renderTime.toFixed(2)}ms (render #${renderCount.current})`);
       }
@@ -37,7 +37,7 @@ export const useDebounce = <T extends (...args: unknown[]) => unknown>(
   const timeoutRef = useRef<number | undefined>(undefined);
 
   return useCallback(
-    ((...args: Parameters<T>) => {
+    (...args: Parameters<T>) => {
       if (timeoutRef.current !== undefined) {
         clearTimeout(timeoutRef.current);
       }
@@ -46,9 +46,9 @@ export const useDebounce = <T extends (...args: unknown[]) => unknown>(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (callback as any)(...args);
       }, delay);
-    }) as T,
+    },
     [callback, delay]
-  );
+  ) as unknown as T;
 };
 
 /**
@@ -61,17 +61,17 @@ export const useThrottle = <T extends (...args: unknown[]) => unknown>(
   const lastCallRef = useRef<number>(0);
 
   return useCallback(
-    ((...args: Parameters<T>) => {
+    (...args: Parameters<T>) => {
       const now = Date.now();
-      
+
       if (now - lastCallRef.current >= delay) {
         lastCallRef.current = now;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (callback as any)(...args);
       }
-    }) as T,
+    },
     [callback, delay]
-  );
+  ) as unknown as T;
 };
 
 /**
@@ -83,9 +83,11 @@ export const useMemoizedCallback = <T extends (...args: any[]) => any>(
 ): T => {
   // Use useCallback with provided deps to produce a stable memoized function
   // This avoids reading/updating refs during render and preserves behavior
+
   return useCallback((...args: Parameters<T>) => {
     // Call the latest callback according to deps
-    return callback(...(args as any));
+    return callback(...args);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps) as T;
 };
 
@@ -101,7 +103,7 @@ export const usePerformanceMetrics = () => {
     showLoading: boolean = false
   ): Promise<T> => {
     const startTime = performance.now();
-    
+
     if (showLoading) {
       setGlobalLoading(true, `Loading ${name}...`);
     }
@@ -122,7 +124,7 @@ export const usePerformanceMetrics = () => {
     } catch (error) {
       const endTime = performance.now();
       const duration = endTime - startTime;
-      
+
       safeConsoleError(`[Performance] ${name} failed after ${duration.toFixed(2)}ms:`, error);
       throw error;
     } finally {
@@ -137,7 +139,7 @@ export const usePerformanceMetrics = () => {
     syncFn: () => T
   ): T => {
     const startTime = performance.now();
-    
+
     try {
       const result = syncFn();
       const endTime = performance.now();
@@ -151,7 +153,7 @@ export const usePerformanceMetrics = () => {
     } catch (error) {
       const endTime = performance.now();
       const duration = endTime - startTime;
-      
+
       safeConsoleError(`[Performance] ${name} failed after ${duration.toFixed(2)}ms:`, error);
       throw error;
     }

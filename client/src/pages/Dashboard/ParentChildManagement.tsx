@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Users, 
-  UserPlus, 
-  Search, 
+import {
+  Users,
+  UserPlus,
+  Search,
   Link,
   Unlink,
   AlertTriangle,
@@ -11,7 +11,6 @@ import {
   XCircle
 } from 'lucide-react';
 import { SecureAPI } from '../../utils/api';
-import { useAuthContext } from '../../contexts/AuthContext';
 
 interface User {
   id: string;
@@ -32,7 +31,6 @@ interface ParentChildLink {
 }
 
 export default function ParentChildManagement() {
-  const { } = useAuthContext();
   const [, setUsers] = useState<User[]>([]);
   const [parents, setParents] = useState<User[]>([]);
   const [students, setStudents] = useState<User[]>([]);
@@ -116,7 +114,7 @@ export default function ParentChildManagement() {
       setSelectedParent('');
       setSelectedChild('');
       setShowLinkForm(false);
-      
+
       // Refresh data
       setTimeout(() => {
         fetchData();
@@ -141,7 +139,7 @@ export default function ParentChildManagement() {
       });
 
       setSuccessMessage('Veli-öğrenci bağlantısı kaldırıldı');
-      
+
       // Refresh data
       setTimeout(() => {
         fetchData();
@@ -257,7 +255,7 @@ export default function ParentChildManagement() {
               Mevcut Bağlantılar ({filteredLinkedPairs.length})
             </h2>
           </div>
-          
+
           <div className="p-6">
             {filteredLinkedPairs.length === 0 ? (
               <div className="text-center py-12">
@@ -288,20 +286,20 @@ export default function ParentChildManagement() {
                         <Unlink className="h-4 w-4" />
                       </button>
                     </div>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <div className="text-xs font-medium text-gray-500 mb-1">Veli</div>
                         <div className="text-sm font-semibold text-gray-900">{pair.parentName}</div>
                         <div className="text-xs text-gray-500">ID: {pair.parentId}</div>
                       </div>
-                      
+
                       <div className="flex items-center justify-center">
                         <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                           <Link className="h-3 w-3 text-blue-600" />
                         </div>
                       </div>
-                      
+
                       <div>
                         <div className="text-xs font-medium text-gray-500 mb-1">Öğrenci</div>
                         <div className="text-sm font-semibold text-gray-900">{pair.childName}</div>
@@ -359,7 +357,7 @@ export default function ParentChildManagement() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl p-6 w-full max-w-md">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Yeni Veli-Öğrenci Bağlantısı</h2>
-              
+
               <div className="parent-child-form-list">
                 {/* Parent Selection */}
                 <div>

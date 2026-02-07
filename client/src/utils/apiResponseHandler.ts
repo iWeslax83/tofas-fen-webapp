@@ -35,7 +35,7 @@ export class ApiResponseHandler {
     if (response.data && typeof response.data === 'object' && 'data' in response.data) {
       return (response.data as ApiResponse<T>).data;
     }
-    
+
     // Handle direct data structure (response.data)
     return response.data as T;
   }
@@ -49,20 +49,21 @@ export class ApiResponseHandler {
   ): T {
     try {
       if (!response) return fallback;
-      
+
       // Handle axios response
-      if (response.data !== undefined) {
-        return this.extractData(response);
+      if (response && typeof response === 'object' && 'data' in response) {
+        return this.extractData(response as AxiosResponse<ApiResponse<T>>);
       }
-      
+
       // Handle direct data
       if (response && typeof response === 'object') {
-        if ('data' in response) {
-          return response.data;
+        const respObj = response as Record<string, unknown>;
+        if ('data' in respObj) {
+          return respObj.data as T;
         }
-        return response;
+        return response as T;
       }
-      
+
       return fallback;
     } catch (error) {
       console.warn('Failed to extract data from response:', error);
@@ -97,12 +98,15 @@ export class ApiResponseHandler {
    */
   static isSuccess(response: AxiosResponse<ApiResponse<unknown>> | AxiosResponse<unknown> | unknown): boolean {
     if (!response) return false;
-    
+
     // Check HTTP status
-    if (response.status && (response.status < 200 || response.status >= 300)) {
-      return false;
+    if (typeof response === 'object' && response !== null && 'status' in response) {
+      const status = (response as { status: number }).status;
+      if (status < 200 || status >= 300) {
+        return false;
+      }
     }
-    
+
     // Check custom success flag
     if (typeof response === 'object' && response !== null) {
       const respAny = response as Record<string, unknown>;
@@ -111,7 +115,7 @@ export class ApiResponseHandler {
         return Boolean((respData as Record<string, unknown>)['success']);
       }
     }
-    
+
     return true;
   }
 
@@ -203,23 +207,23 @@ export class ApiResponseHandler {
 }
 
 // Convenience functions for common use cases
-export const extractData = <T>(response: unknown, fallback: T): T => 
+export const extractData = <T>(response: unknown, fallback: T): T =>
   ApiResponseHandler.extractDataSafe(response, fallback);
 
-export const extractDataArray = <T>(response: unknown, fallback: T[] = []): T[] => 
+export const extractDataArray = <T>(response: unknown, fallback: T[] = []): T[] =>
   ApiResponseHandler.extractDataArray(response, fallback);
 
-export const extractDataItem = <T>(response: unknown, fallback: T): T => 
+export const extractDataItem = <T>(response: unknown, fallback: T): T =>
   ApiResponseHandler.extractDataItem(response, fallback);
 
-export const isSuccess = (response: unknown): boolean => 
+export const isSuccess = (response: unknown): boolean =>
   ApiResponseHandler.isSuccess(response);
 
-export const extractError = (response: unknown): string => 
+export const extractError = (response: unknown): string =>
   ApiResponseHandler.extractError(response);
 
-export const handleResponse = <T>(apiCall: Promise<AxiosResponse<T>>, fallback: T) => 
+export const handleResponse = <T>(apiCall: Promise<AxiosResponse<T>>, fallback: T) =>
   ApiResponseHandler.handleResponse(apiCall, fallback);
 
-export const handleResponseArray = <T>(apiCall: Promise<AxiosResponse<T[]>>, fallback: T[] = []) => 
+export const handleResponseArray = <T>(apiCall: Promise<AxiosResponse<T[]>>, fallback: T[] = []) =>
   ApiResponseHandler.handleResponseArray(apiCall, fallback);

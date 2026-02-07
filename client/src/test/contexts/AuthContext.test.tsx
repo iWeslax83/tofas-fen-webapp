@@ -171,7 +171,7 @@ describe('AuthContext', () => {
         <AuthProvider>{children}</AuthProvider>
       );
 
-      const { } = renderHook(() => useAuthContext(), { wrapper });
+      renderHook(() => useAuthContext(), { wrapper });
 
       await act(async () => {
         await new Promise(resolve => setTimeout(resolve, 50));

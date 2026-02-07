@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { SecureAPI } from '../utils/api';
-import { AppError, ErrorType, ErrorSeverity } from '../utils/AppError';
+import { AppError, ErrorType, ErrorSeverity, ErrorContext } from '../utils/AppError';
 import { User } from '../types/user';
 import { TokenManager } from '../utils/security';
 import { AxiosResponse } from 'axios';
@@ -68,21 +68,22 @@ export const useAuthStore = create<AuthStore>()(
             error: null
           });
         } catch (error) {
-            const mapToAppError = (err: unknown): AppError => {
+          const mapToAppError = (err: unknown): AppError => {
             if (err instanceof AppError) return err;
 
             const errObj = err as unknown as Record<string, unknown>;
             const resp = errObj['response'] as Record<string, unknown> | undefined;
             const respData = resp?.['data'] as Record<string, unknown> | undefined;
-            const messageFromResp = respData ? ( (typeof respData['message'] === 'string' ? respData['message'] : (typeof respData['error'] === 'string' ? respData['error'] : undefined)) ) : undefined;
+            const messageFromResp = respData ? ((typeof respData['message'] === 'string' ? respData['message'] : (typeof respData['error'] === 'string' ? respData['error'] : undefined))) : undefined;
             const status = resp?.['status'] as number | undefined;
 
-            const context = {
-              statusCode: status,
-              response: respData,
-              url: errObj['config'] ? (errObj['config'] as Record<string, unknown>)['url'] : undefined,
-              method: errObj['config'] ? (errObj['config'] as Record<string, unknown>)['method'] : undefined
-            };
+            const config = errObj['config'] as Record<string, unknown> | undefined;
+            const context: Partial<ErrorContext> = {};
+
+            if (status !== undefined) context.statusCode = status;
+            if (respData !== undefined) context.response = respData;
+            if (typeof config?.['url'] === 'string') context.url = config['url'];
+            if (typeof config?.['method'] === 'string') context.method = config['method'];
 
             if (status === 400) return AppError.validation(messageFromResp || 'İstek doğrulama hatası', context);
             if (status === 401) return AppError.unauthorized(messageFromResp || 'Yetkilendirme hatası', context);

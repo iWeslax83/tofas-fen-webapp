@@ -694,4 +694,35 @@ export class PerformanceService {
   }
 }
 
+// Dormitory service
+export class DormitoryService {
+  static async getMeals(params?: Record<string, string | number>) {
+    return ApiService.getArray(API_ENDPOINTS.DORMITORY.MEALS.BASE, { params });
+  }
+
+  static async createMeal(formData: FormData) {
+    return ApiService.upload(API_ENDPOINTS.DORMITORY.MEALS.CREATE, formData);
+  }
+
+  static async downloadMeal(id: string) {
+    return SecureAPI.get(API_ENDPOINTS.DORMITORY.MEALS.DOWNLOAD(id), { responseType: 'blob' });
+  }
+
+  static async getSupervisors(params?: Record<string, string | number>) {
+    return ApiService.getArray(API_ENDPOINTS.DORMITORY.SUPERVISORS.BASE, { params });
+  }
+
+  static async createSupervisor(formData: FormData) {
+    return ApiService.upload(API_ENDPOINTS.DORMITORY.SUPERVISORS.CREATE, formData);
+  }
+
+  static async downloadSupervisor(id: string) {
+    return SecureAPI.get(API_ENDPOINTS.DORMITORY.SUPERVISORS.DOWNLOAD(id), { responseType: 'blob' });
+  }
+
+  static async deleteSupervisor(id: string) {
+    return ApiService.delete(API_ENDPOINTS.DORMITORY.SUPERVISORS.DELETE(id));
+  }
+}
+
 // All services are already exported individually above

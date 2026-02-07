@@ -85,63 +85,69 @@ export const Fullscreen: Story = {
 
 export const WithoutCloseButton: Story = {
   render: () => {
-    const [open, setOpen] = useState(false);
-    return (
-      <>
-        <Button onClick={() => setOpen(true)}>Dialog Aç</Button>
-        <Dialog open={open} onOpenChange={setOpen} showCloseButton={false}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Kapat Butonu Yok</DialogTitle>
-              <DialogDescription>
-                Bu dialog'da kapat butonu yok. Sadece overlay'e tıklayarak veya ESC tuşu ile kapatabilirsiniz.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogBody>
-              <p>Dialog içeriği</p>
-            </DialogBody>
-            <DialogFooter>
-              <Button onClick={() => setOpen(false)}>Kapat</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </>
-    );
+    const DialogWrapper = () => {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <Button onClick={() => setOpen(true)}>Dialog Aç</Button>
+          <Dialog open={open} onOpenChange={setOpen} showCloseButton={false}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Kapat Butonu Yok</DialogTitle>
+                <DialogDescription>
+                  Bu dialog'da kapat butonu yok. Sadece overlay'e tıklayarak veya ESC tuşu ile kapatabilirsiniz.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogBody>
+                <p>Dialog içeriği</p>
+              </DialogBody>
+              <DialogFooter>
+                <Button onClick={() => setOpen(false)}>Kapat</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
+      );
+    };
+    return <DialogWrapper />;
   },
 };
 
 export const ScrollableContent: Story = {
   render: () => {
-    const [open, setOpen] = useState(false);
-    return (
-      <>
-        <Button onClick={() => setOpen(true)}>Uzun İçerikli Dialog</Button>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Uzun İçerik</DialogTitle>
-              <DialogDescription>
-                Bu dialog scrollable içerik içerir.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogBody scrollable>
-              {Array.from({ length: 50 }, (_, i) => (
-                <p key={i}>
-                  Paragraf {i + 1}: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                </p>
-              ))}
-            </DialogBody>
-            <DialogFooter>
-              <Button variant="secondary" onClick={() => setOpen(false)}>
-                İptal
-              </Button>
-              <Button onClick={() => setOpen(false)}>Onayla</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </>
-    );
+    const DialogWrapper = () => {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <Button onClick={() => setOpen(true)}>Uzun İçerikli Dialog</Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Uzun İçerik</DialogTitle>
+                <DialogDescription>
+                  Bu dialog scrollable içerik içerir.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogBody scrollable>
+                {Array.from({ length: 50 }, (_, i) => (
+                  <p key={i}>
+                    Paragraf {i + 1}: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                    Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                  </p>
+                ))}
+              </DialogBody>
+              <DialogFooter>
+                <Button variant="secondary" onClick={() => setOpen(false)}>
+                  İptal
+                </Button>
+                <Button onClick={() => setOpen(false)}>Onayla</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
+      );
+    };
+    return <DialogWrapper />;
   },
 };
 

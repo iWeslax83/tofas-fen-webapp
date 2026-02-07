@@ -109,7 +109,7 @@ const createSecureApiClient = (): AxiosInstance => {
         } else {
           try {
             normalized.message = JSON.stringify(err as object);
-          } catch (_) {
+          } catch (_err) {
             normalized.message = String(err);
           }
         }
@@ -301,12 +301,7 @@ export class SecureAPI {
   }
 
   static async getCurrentUser() {
-    try {
-      const response = await apiClient.get('/api/auth/me');
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    return apiClient.get('/api/auth/me');
   }
 
   // User management methods
