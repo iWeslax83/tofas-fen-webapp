@@ -45,7 +45,7 @@ const AuditLogSchema = new Schema<IAuditLog>({
     type: String,
     required: true,
     enum: [
-      'user', 'note', 'evci_request', 'carzi_request', 'dilekce',
+      'user', 'note', 'evci_request', 'dilekce',
       'dormitory', 'attendance', 'homework', 'announcement',
       'club', 'schedule', 'maintenance_request', 'system'
     ],

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { SecureAPI } from "../../utils/api";
+import { UserService } from "../../utils/apiService";
+import { User } from "../../types/user";
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 
 import './DersProgramiPage.css';
@@ -26,16 +27,7 @@ interface ClassSchedule {
   [key: string]: DaySchedule;
 }
 
-interface User {
-  id: string;
-  adSoyad: string;
-  email: string;
-  rol: string;
-  sinif?: string;
-  sube?: string;
-  childId?: string | string[];
-  childrenSiniflar?: { sinif: string; sube: string }[];
-}
+// Local interface removed in favor of global User type
 
 interface Schedule {
   [key: string]: ClassSchedule;
@@ -73,12 +65,12 @@ export default function DersProgramiPage() {
     try {
       setLoading(true);
       console.log('🔍 Fetching user data for ders programı...');
-      const res = await SecureAPI.get('/api/auth/me');
-      console.log('📡 API Response:', res);
+      const { data: userData, error: userError } = await UserService.getCurrentUser();
+      console.log('📡 User Data:', userData);
 
-      const userData = res as User;
-      if (!userData || !["admin", "teacher", "student", "parent"].includes(userData.rol)) {
-        setError("Bu sayfaya erişim yetkiniz bulunmuyor.");
+      if (userError || !userData || !["admin", "teacher", "student", "parent"].includes(userData.rol)) {
+        setError(userError || "Bu sayfaya erişim yetkiniz bulunmuyor.");
+        setLoading(false);
         return;
       }
 
@@ -96,11 +88,11 @@ export default function DersProgramiPage() {
 
       // For parents, show their children's classes
       if (userData.rol === "parent" && userData.childrenSiniflar) {
-        userData.childrenSiniflar.forEach((child: { sinif: string; sube: string }) => {
+        userData.childrenSiniflar.forEach((child) => {
           allClasses.push({
             sinif: child.sinif,
             sube: child.sube,
-            label: `${String(child.sinif)}/${String(child.sube)} - ${(child as any).adSoyad || 'Çocuk'}`
+            label: `${String(child.sinif)}/${String(child.sube)} - ${child.adSoyad || 'Çocuk'}`
           });
         });
       }

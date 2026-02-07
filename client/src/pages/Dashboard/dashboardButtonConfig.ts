@@ -1,5 +1,5 @@
 // Central config for dashboard panel buttons, routes, roles, and permissions
-import { BookOpen, ClipboardList, Utensils, FileText, ShoppingBag, Wrench } from 'lucide-react';
+import { BookOpen, ClipboardList, Utensils, FileText, Wrench } from 'lucide-react';
 
 export type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli';
 
@@ -66,16 +66,6 @@ export const dashboardButtons: DashboardButton[] = [
     icon: ClipboardList,
     actionText: 'Bilgilerimi Gör',
   },
-  {
-    key: 'student-carzi',
-    title: 'Çarşı İzni',
-    description: 'Çarşı izni talep et ve takip et',
-    route: '/student/carzi',
-    roles: ['student'],
-    showForDormitory: true,
-    icon: ShoppingBag,
-    actionText: 'İzin Talep Et',
-  },
 
   // Dormitory related buttons (only for students with pansiyon=true)
   {
@@ -87,16 +77,6 @@ export const dashboardButtons: DashboardButton[] = [
     showForDormitory: true,
     icon: Utensils,
     actionText: 'Menüyü Gör',
-  },
-  {
-    key: 'student-supervisor-list',
-    title: 'Belletmen Listesi',
-    description: 'Pansiyon belletmenlerini görüntüle',
-    route: '/student/belletmen-listesi',
-    roles: ['student'],
-    showForDormitory: true,
-    icon: Utensils,
-    actionText: 'Listeyi Gör',
   },
 
   // TEACHER PRIORITY BUTTONS
@@ -244,15 +224,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/admin/evci-listesi',
     roles: ['admin'],
     icon: ClipboardList,
-    actionText: 'Listeyi Yönet',
-  },
-  {
-    key: 'admin-carzi-list',
-    title: 'Çarşı İzni Listesi',
-    description: 'Çarşı izni taleplerini yönet',
-    route: '/admin/carzi-listesi',
-    roles: ['admin'],
-    icon: ShoppingBag,
     actionText: 'Listeyi Yönet',
   },
   {

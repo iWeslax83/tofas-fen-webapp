@@ -54,7 +54,6 @@ import communicationRoutes from './routes/Communication';
 import performanceRoutes from './routes/Performance';
 import auditLogRoutes from './routes/AuditLog';
 // import attendanceRoutes from './routes/Attendance';
-import carziRequestRoutes from './routes/CarziRequest';
 import dilekceRoutes from './routes/Dilekce';
 import { connectDB } from "./db";
 import dashboardRoutes from './routes/Dashboard';
@@ -410,7 +409,6 @@ app.use('/api/communication', communicationRoutes);
 app.use('/api/performance', performanceRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 // app.use('/api/attendance', attendanceRoutes);
-app.use('/api/carzi-requests', carziRequestRoutes);
 app.use('/api/dilekce', dilekceRoutes);
 
 // Dashboard stats endpoint - now active
