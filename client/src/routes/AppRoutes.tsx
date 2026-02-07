@@ -41,7 +41,7 @@ const ParentEvciPage = lazy(() => import('../pages/Dashboard/ParentEvciPage'));
 const AdminEvciListPage = lazy(() => import('../pages/Dashboard/AdminEvciListPage'));
 
 // Settings and Admin Pages
-const SettingsPage = lazy(() => import('../pages/Dashboard/SettingsPage'));
+// const SettingsPage = lazy(() => import('../pages/Dashboard/SettingsPage'));
 const SenkronizasyonPage = lazy(() => import('../pages/Dashboard/SenkronizasyonPage'));
 // const ReportManagement = lazy(() => import('../pages/Dashboard/ReportManagement'));
 const CalendarPage = lazy(() => import('../pages/Dashboard/CalendarPage'));
@@ -164,7 +164,6 @@ export default function AppRoutes() {
         <Route path="/admin/dilekce-listesi" element={<AdminDilekceListPage />} />
 
         {/* Settings and Admin Routes */}
-        <Route path="/ayarlar" element={<SettingsPage />} />
         <Route path="/admin/senkronizasyon" element={<SenkronizasyonPage />} />
         <Route path="/admin/senkronizasyon" element={<SenkronizasyonPage />} />
         {/* <Route path="/admin/reports" element={<ReportManagement />} /> */}
