@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Home, 
-  Settings, 
+import {
+  Home,
   LogOut,
   Menu,
   X
@@ -53,7 +52,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
   return (
     <div className="modern-dashboard">
       {/* Mobile Menu Button */}
-      <button 
+      <button
         className="mobile-menu-button"
         onClick={() => setSidebarOpen(!sidebarOpen)}
       >
@@ -96,10 +95,6 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
 
             <div className="nav-section">
               <h3>Sistem</h3>
-              <Link to="/ayarlar" className="nav-item">
-                <Settings className="nav-icon" />
-                <span>Ayarlar</span>
-              </Link>
               <button onClick={logout} className="nav-item logout">
                 <LogOut className="nav-icon" />
                 <span>Çıkış Yap</span>

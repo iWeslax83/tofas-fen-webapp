@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   GraduationCap,
   Home,
-  Settings,
   LogOut,
   Bell,
   Search,
@@ -139,7 +138,6 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
       // dosyalar: 'Dosyalar',
       iletisim: 'İletişim',
       performans: 'Performans',
-      ayarlar: 'Ayarlar',
       yardim: 'Yardım',
       help: 'Yardım'
     };
@@ -173,7 +171,6 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
       // dosyalar: Folder,
       iletisim: MessageSquare,
       performans: Activity,
-      ayarlar: Settings,
       yardim: HelpCircle,
       help: HelpCircle
     };
@@ -285,7 +282,7 @@ export const EnhancedSidebar: React.FC = () => {
       activities: Award,
       dormitory: Shield,
       admin: Crown,
-      tools: Settings,
+      tools: Wrench,
       other: Star
     };
     return icons[category] || Star;
@@ -458,9 +455,6 @@ export const EnhancedSidebar: React.FC = () => {
         </div>
 
         <div className="footer-actions">
-          <Link to="/ayarlar" className="footer-action">
-            <Settings className="action-icon" />
-          </Link>
           <Link to="/yardim" className="footer-action">
             <HelpCircle className="action-icon" />
           </Link>
