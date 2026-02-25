@@ -4,7 +4,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { ArrowLeft, Home, Calendar, MapPin, Clock, Edit, Trash2, Plus } from 'lucide-react';
 import 'react-toastify/dist/ReactToastify.css';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-import BackButton from '../../components/BackButton';
+
 import { EvciService } from '../../utils/apiService';
 import { toast } from 'sonner';
 import './StudentEvciPage.css';
@@ -244,7 +244,6 @@ const StudentEvciPage = () => {
         breadcrumb={breadcrumb}
       >
         <div className="evci-page">
-          <BackButton />
           <div className="loading-container">
             <div className="loading-spinner"></div>
             <p>Yükleniyor...</p>
@@ -262,7 +261,6 @@ const StudentEvciPage = () => {
         breadcrumb={breadcrumb}
       >
         <div className="evci-page">
-          <BackButton />
           <div className="error-container">
             <div className="error-message">
               <h2>Hata Oluştu</h2>
@@ -288,7 +286,6 @@ const StudentEvciPage = () => {
         breadcrumb={breadcrumb}
       >
         <div className="evci-page">
-          <BackButton />
           <div className="empty-state">
             <div className="empty-icon">
               <Home size={80} />
@@ -311,14 +308,12 @@ const StudentEvciPage = () => {
       breadcrumb={breadcrumb}
     >
       <div className="evci-page">
-        <BackButton />
 
         {toastMessage && (
           <div className="toast-container">
             <div className="toast">{toastMessage}</div>
           </div>
         )}
-
         <div className="page-header">
           <div className="page-header-content">
             <div className="page-title-section">
@@ -328,14 +323,13 @@ const StudentEvciPage = () => {
             <button
               onClick={handleNew}
               className="btn btn-primary"
-              style={{ fontSize: '1.125rem', padding: '16px 32px', minHeight: '56px' }}
+              style={{ fontSize: '1.125rem', padding: '10px 20px', minHeight: '50px' }}
             >
               <Plus size={24} />
               Yeni Evci Talebi
             </button>
           </div>
         </div>
-
         <div className="requests-container">
           {requests.length === 0 ? (
             <div className="empty-state">

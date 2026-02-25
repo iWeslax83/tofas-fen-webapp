@@ -2,6 +2,7 @@ import React from 'react';
 import DashboardPanel from '../../components/DashboardPanel';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { UserService } from '../../utils/apiService';
+import './ParentPanel.css';
 
 const ParentPanel: React.FC = () => {
   useAuthContext();

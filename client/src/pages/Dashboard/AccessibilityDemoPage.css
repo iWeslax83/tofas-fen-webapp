@@ -43,7 +43,7 @@
 /* Accessibility Demo Page */
 .accessibility-demo-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #6B0000 50%, #8B0000 75%, #1a1a1a 100%);
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #374151 50%, #4B5563 75%, #1a1a1a 100%);
   background-size: 400% 400%;
   animation: gradientShift 20s ease infinite;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

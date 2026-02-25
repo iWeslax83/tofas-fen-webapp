@@ -22,20 +22,27 @@ export class AuthService {
       throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
     }
 
-    // Check password - artık TCKN kullanılıyor
-    // Önce TCKN kontrolü yap, yoksa eski şifre sistemine geri dön (geriye dönük uyumluluk)
-    if (user.tckn) {
-      // TCKN ile giriş
-      if (user.tckn !== password) {
-        throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
+    // Check password: prefer bcrypt hashed `sifre` if present, fall back to TCKN
+    let authenticated = false;
+
+    if (user.sifre) {
+      try {
+        authenticated = await bcrypt.compare(password, user.sifre);
+      } catch (e) {
+        // If bcrypt fails for any reason, ensure we still try TCKN fallback below
+        authenticated = false;
       }
-    } else if (user.sifre) {
-      // Eski sistem: bcrypt ile şifre kontrolü (geriye dönük uyumluluk)
-      if (!(await bcrypt.compare(password, user.sifre))) {
-        throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
+    }
+
+    // Fallback to TCKN (plain equality) if bcrypt didn't authenticate
+    if (!authenticated && user.tckn) {
+      if (String(user.tckn).trim() === String(password).trim()) {
+        authenticated = true;
       }
-    } else {
-      throw AppError.unauthorized('Kullanıcı şifresi tanımlanmamış');
+    }
+
+    if (!authenticated) {
+      throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
     }
 
     // Update last login

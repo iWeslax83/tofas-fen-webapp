@@ -56,7 +56,9 @@ export const useAuthStore = create<AuthStore>()(
             ...(userData.sinif && { sinif: String(userData.sinif) }),
             ...(userData.sube && { sube: String(userData.sube) }),
             ...(userData.oda && { oda: String(userData.oda) }),
-            pansiyon: Boolean(userData.pansiyon)
+            pansiyon: Boolean(userData.pansiyon),
+            ...(userData.childrenSiniflar && { childrenSiniflar: userData.childrenSiniflar }),
+            ...(userData.childId && { childId: userData.childId })
           };
 
           // Tokens are handled by SecureAPI.login internally if present
@@ -184,7 +186,9 @@ export const useAuthStore = create<AuthStore>()(
                   ...(userData.sinif && { sinif: String(userData.sinif) }),
                   ...(userData.sube && { sube: String(userData.sube) }),
                   ...(userData.oda && { oda: String(userData.oda) }),
-                  pansiyon: Boolean(userData.pansiyon)
+                pansiyon: Boolean(userData.pansiyon),
+                ...(userData.childrenSiniflar && { childrenSiniflar: userData.childrenSiniflar }),
+                ...(userData.childId && { childId: userData.childId })
                 };
 
                 set({ user, isAuthenticated: true, isLoading: false });
@@ -209,7 +213,9 @@ export const useAuthStore = create<AuthStore>()(
                 ...(userData.sinif && { sinif: String(userData.sinif) }),
                 ...(userData.sube && { sube: String(userData.sube) }),
                 ...(userData.oda && { oda: String(userData.oda) }),
-                pansiyon: Boolean(userData.pansiyon)
+                pansiyon: Boolean(userData.pansiyon),
+                ...(userData.childrenSiniflar && { childrenSiniflar: userData.childrenSiniflar }),
+                ...(userData.childId && { childId: userData.childId })
               };
 
               set({ user, isAuthenticated: true, isLoading: false });

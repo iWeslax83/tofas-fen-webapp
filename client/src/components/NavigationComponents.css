@@ -160,11 +160,11 @@
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, var(--primary-red-lighter), rgba(220, 38, 38, 0.1));
+  background: linear-gradient(135deg, var(--primary-red-lighter), rgba(55, 65, 81, 0.1));
   color: var(--primary-red);
   font-weight: 600;
   border-left: 3px solid var(--primary-red);
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
+  box-shadow: 0 2px 8px rgba(55, 65, 81, 0.15);
 }
 
 .nav-item.active .nav-icon {
@@ -401,10 +401,10 @@
 
 .breadcrumb-current {
   color: var(--primary-red);
-  background: linear-gradient(135deg, var(--primary-red-lighter), rgba(220, 38, 38, 0.1));
+  background: linear-gradient(135deg, var(--primary-red-lighter), rgba(55, 65, 81, 0.1));
   font-weight: 600;
   border: 1px solid var(--primary-red);
-  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+  box-shadow: 0 2px 4px rgba(55, 65, 81, 0.2);
 }
 
 .breadcrumb-current .breadcrumb-icon {
@@ -630,9 +630,9 @@
 
 .mobile-nav-item.active {
   color: var(--primary-red);
-  background: linear-gradient(135deg, var(--primary-red-lighter), rgba(220, 38, 38, 0.1));
+  background: linear-gradient(135deg, var(--primary-red-lighter), rgba(55, 65, 81, 0.1));
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
+  box-shadow: 0 2px 8px rgba(55, 65, 81, 0.15);
   border-top: 2px solid var(--primary-red);
 }
 

@@ -5,6 +5,9 @@ export interface IAnnouncement extends Document {
   content: string;
   author: string;
   date: string;
+  targetRoles?: string[];
+  targetClasses?: string[];
+  priority?: 'low' | 'medium' | 'high';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +32,19 @@ const announcementSchema = new Schema<IAnnouncement>({
     type: String,
     required: true,
     default: () => new Date().toISOString()
+  },
+  targetRoles: {
+    type: [String],
+    default: []
+  },
+  targetClasses: {
+    type: [String],
+    default: []
+  },
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high'],
+    default: 'medium'
   }
 }, {
   timestamps: true

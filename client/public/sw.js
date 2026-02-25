@@ -46,7 +46,7 @@ self.addEventListener('install', (event) => {
         '/index.html',
         '/manifest.webmanifest',
       ]).catch((error) => {
-        console.error('[SW] Cache install error:', error);
+        console.error('[SW] Cachekullanmış yükleme hatası:', error);
       });
     })
   );
@@ -226,8 +226,8 @@ async function handleStaticRequest(request) {
     }
     return response;
   } catch (error) {
-    console.error('[SW] Failed to fetch static asset:', request.url, error);
-    return new Response('Asset not available offline', { status: 503 });
+    console.error('[SW] Statik varlık geçtiği başarısız:', request.url, error);
+    return new Response('Varlık çevriyim modda kullanılamadı', { status: 503 });
   }
 }
 

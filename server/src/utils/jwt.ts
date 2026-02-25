@@ -18,15 +18,15 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
-  throw new Error('JWT_SECRET and JWT_REFRESH_SECRET environment variables are required');
+  throw new Error('JWT_SECRET ve JWT_REFRESH_SECRET çevre değişkenleri gereklidir');
 }
 
 if (JWT_SECRET.length < 32) {
-  throw new Error('JWT_SECRET must be at least 32 characters long');
+  throw new Error('JWT_SECRET en az 32 karakter uzunluğunda olmalıdır');
 }
 
 if (JWT_REFRESH_SECRET.length < 32) {
-  throw new Error('JWT_REFRESH_SECRET must be at least 32 characters long');
+  throw new Error('JWT_REFRESH_SECRET en az 32 karakter uzunluğunda olmalıdır');
 }
 
 export interface JWTPayload {

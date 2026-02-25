@@ -4,9 +4,9 @@ export interface IEvciRequest extends Document {
   studentId: string;
   studentName?: string;
   willGo: boolean;
-  startDate: string;
-  endDate: string;
-  destination: string;
+  startDate?: string;
+  endDate?: string;
+  destination?: string;
   status?: 'pending' | 'approved' | 'rejected';
   adminNote?: string;
   approvedBy?: string;
@@ -19,9 +19,9 @@ const evciRequestSchema = new Schema<IEvciRequest>({
   studentId: { type: String, required: true },
   studentName: { type: String },
   willGo: { type: Boolean, required: true, default: true },
-  startDate: { type: String, required: true },
-  endDate: { type: String, required: true },
-  destination: { type: String, required: true },
+  startDate: { type: String, required: false },
+  endDate: { type: String, required: false },
+  destination: { type: String, required: false },
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],

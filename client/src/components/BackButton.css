@@ -3,19 +3,19 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  background: var(--primary-red-lighter);
+  background: var(--gray-100);
   /* backdrop-filter: blur(20px); */
-  border: 2px solid rgba(220, 20, 60, 0.1);
-  color: #DC143C;
+  border: 2px solid var(--gray-200);
+  color: var(--gray-700);
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 12px 20px;
   border-radius: 16px;
   text-decoration: none;
   box-shadow: 
-    0 8px 30px rgba(220, 20, 60, 0.08),
-    0 3px 15px rgba(220, 20, 60, 0.04),
-    inset 0 1px 0 var(--primary-red-10);
+    0 8px 30px rgba(0, 0, 0, 0.05),
+    0 3px 15px rgba(0, 0, 0, 0.02),
+    inset 0 1px 0 var(--gray-50);
   position: relative;
   overflow: hidden;
   max-width: 280px;
@@ -34,7 +34,7 @@
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: linear-gradient(45deg, #DC143C, #8B0000, #DC143C, #8B0000);
+  background: linear-gradient(45deg, var(--gray-400), var(--gray-500), var(--gray-400), var(--gray-500));
   background-size: 400% 400%;
   border-radius: 18px;
   opacity: 0;
@@ -44,7 +44,7 @@
 }
 
 .back-button:hover::before {
-  opacity: 0.3;
+  opacity: 0.2;
 }
 
 @keyframes gradientShift {
@@ -63,9 +63,9 @@
   height: 100%;
   background: linear-gradient(90deg, 
     transparent,
-    var(--primary-red-20),
-    var(--primary-red-50),
-    var(--primary-red-20),
+    var(--gray-200),
+    var(--gray-300),
+    var(--gray-200),
     transparent
   );
   transition: left 0.6s ease;
@@ -90,7 +90,7 @@
   left: 50%;
   width: 0;
   height: 0;
-  background: radial-gradient(circle, rgba(220, 20, 60, 0.2) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(107, 114, 128, 0.2) 0%, transparent 70%);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: all 0.4s ease;
@@ -115,7 +115,7 @@
 
 .back-button__text {
   font-weight: 600;
-  color: #DC143C;
+  color: var(--gray-700);
   transition: color 0.3s ease;
 }
 
@@ -134,7 +134,7 @@
   left: 50%;
   width: 0;
   height: 0;
-  background: radial-gradient(circle, rgba(220, 20, 60, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(107, 114, 128, 0.1) 0%, transparent 70%);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: all 0.4s ease;
@@ -150,14 +150,15 @@
 .back-button:hover {
   transform: translateY(-2px);
   box-shadow: 
-    0 12px 40px rgba(220, 20, 60, 0.15),
-    0 6px 20px rgba(220, 20, 60, 0.08),
-    inset 0 1px 0 var(--primary-red-30);
-  border-color: rgba(220, 20, 60, 0.2);
+    0 12px 40px rgba(0, 0, 0, 0.08),
+    0 6px 20px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 var(--gray-100);
+  border-color: var(--gray-300);
+  background: var(--gray-50);
 }
 
 .back-button:hover .back-button__text {
-  color: #8B0000;
+  color: var(--gray-900);
 }
 
 .back-button:hover .back-button__subtitle {
@@ -174,10 +175,10 @@
 .back-button:focus {
   outline: none;
   box-shadow: 
-    0 8px 30px rgba(220, 20, 60, 0.08),
-    0 3px 15px rgba(220, 20, 60, 0.04),
-    inset 0 1px 0 var(--primary-red-10),
-    0 0 0 3px rgba(220, 20, 60, 0.2);
+    0 8px 30px rgba(0, 0, 0, 0.05),
+    0 3px 15px rgba(0, 0, 0, 0.02),
+    inset 0 1px 0 var(--gray-50),
+    0 0 0 3px var(--gray-200);
 }
 
 /* Size variants */
@@ -208,15 +209,15 @@
 /* Variant styles */
 .back-button--minimal {
   background: transparent;
-  border: 2px solid rgba(220, 20, 60, 0.2);
+  border: 2px solid var(--gray-300);
   box-shadow: none;
   backdrop-filter: none;
 }
 
 .back-button--minimal:hover {
-  background: rgba(220, 20, 60, 0.05);
-  border-color: rgba(220, 20, 60, 0.3);
-  box-shadow: 0 4px 20px rgba(220, 20, 60, 0.1);
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .back-button--floating {
@@ -228,7 +229,8 @@
     0 8px 30px rgba(0, 0, 0, 0.12),
     0 3px 15px rgba(0, 0, 0, 0.08);
   border: none;
-  background: var(--primary-red-lighter);
+  background: var(--white);
+  border: 2px solid var(--gray-200);
 }
 
 .back-button--floating:hover {
@@ -249,9 +251,9 @@
 .back-button:disabled:hover {
   transform: none;
   box-shadow: 
-    0 8px 30px rgba(220, 20, 60, 0.08),
-    0 3px 15px rgba(220, 20, 60, 0.04),
-    inset 0 1px 0 var(--primary-red-10);
+    0 8px 30px rgba(0, 0, 0, 0.05),
+    0 3px 15px rgba(0, 0, 0, 0.02),
+    inset 0 1px 0 var(--gray-50);
 }
 
 /* Responsive design */
@@ -305,25 +307,25 @@
 @media (prefers-color-scheme: dark) {
   .back-button {
     background: rgba(30, 30, 30, 0.95);
-    color: #FF6B6B;
-    border-color: rgba(255, 107, 107, 0.2);
+    color: var(--gray-300);
+    border-color: rgba(107, 114, 128, 0.2);
   }
   
   .back-button__text {
-    color: #FF6B6B;
+    color: var(--gray-300);
   }
   
   .back-button:hover .back-button__text {
-    color: #FF8E8E;
+    color: var(--gray-100);
   }
   
   .back-button--minimal {
     background: transparent;
-    border-color: rgba(255, 107, 107, 0.3);
+    border-color: rgba(107, 114, 128, 0.3);
   }
   
   .back-button--minimal:hover {
-    background: rgba(255, 107, 107, 0.1);
+    background: rgba(107, 114, 128, 0.1);
   }
   
   .back-button--floating {

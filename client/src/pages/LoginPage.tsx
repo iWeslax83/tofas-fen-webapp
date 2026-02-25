@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthActions, useUser } from '../stores/authStore';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { AppError } from '../utils/AppError';
 import './LoginPage.css';
 
 export default function LoginPage() {
@@ -57,26 +58,56 @@ export default function LoginPage() {
 
       // The redirect will be handled by useEffect when user state updates
     } catch (error: unknown) {
-      // Prefer structured API message when available, otherwise fallback to error.message
-      // Prefer structured API message when available
-      const apiError = (error as any)?.response?.data;
-      // Server sends { success: false, error: { message: "..." } }
-      // So/ we should check apiError.error.message first
-      let apiMessage = apiError?.error?.message || apiError?.message || apiError?.error;
-
-      // If the message is an object (e.g. validation errors), stringify it or extract the first error
-      if (typeof apiMessage === 'object' && apiMessage !== null) {
-        try {
-          // If it has a 'message' property or similar, try to use valid string
-          // Otherwise json stringify
-          apiMessage = JSON.stringify(apiMessage);
-        } catch (e) {
-          apiMessage = 'Beklenmeyen hata formatı';
+      let errorMessage = 'Giriş başarısız. Lütfen kullanıcı ID ve şifrenizi kontrol edin.';
+      
+      try {
+        // Check if it's an AppError instance
+        if (error instanceof AppError) {
+          errorMessage = error.getUserMessage() || error.message || errorMessage;
         }
+        // Check if it's a regular Error instance
+        else if (error instanceof Error) {
+          errorMessage = error.message || errorMessage;
+        }
+        // Try to extract error message from API response
+        else {
+          const apiError = (error as any)?.response?.data;
+          
+          if (apiError) {
+            // Check various possible error message locations
+            if (typeof apiError === 'string') {
+              errorMessage = apiError;
+            } else if (apiError?.error?.message && typeof apiError.error.message === 'string') {
+              errorMessage = apiError.error.message;
+            } else if (apiError?.message && typeof apiError.message === 'string') {
+              errorMessage = apiError.message;
+            } else if (apiError?.error && typeof apiError.error === 'string') {
+              errorMessage = apiError.error;
+            } else if (Array.isArray(apiError?.errors) && apiError.errors.length > 0) {
+              // Handle validation errors array
+              const firstError = apiError.errors[0];
+              if (typeof firstError === 'string') {
+                errorMessage = firstError;
+              } else if (firstError?.message && typeof firstError.message === 'string') {
+                errorMessage = firstError.message;
+              }
+            }
+          } else if ((error as any)?.message && typeof (error as any).message === 'string') {
+            errorMessage = (error as any).message;
+          }
+        }
+      } catch (e) {
+        // If error parsing fails, use default message
+        errorMessage = 'Giriş başarısız. Lütfen kullanıcı ID ve şifrenizi kontrol edin.';
       }
 
-      const errorMessage = (typeof apiMessage === 'string' ? apiMessage : undefined) || (error as any)?.message || 'Giriş başarısız';
-      const shortMessage = typeof errorMessage === 'string' && errorMessage.length > 300 ? `${errorMessage.slice(0, 300)}...` : String(errorMessage);
+      // Ensure errorMessage is always a string (final safety check)
+      if (typeof errorMessage !== 'string' || errorMessage.trim() === '') {
+        errorMessage = 'Giriş başarısız. Lütfen kullanıcı ID ve şifrenizi kontrol edin.';
+      }
+
+      // Limit message length
+      const shortMessage = errorMessage.length > 300 ? `${errorMessage.slice(0, 300)}...` : errorMessage;
 
       setError(shortMessage);
       toast.error(shortMessage);

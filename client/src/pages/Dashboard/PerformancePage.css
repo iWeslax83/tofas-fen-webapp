@@ -7,7 +7,7 @@
   max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #6B0000 50%, #8B0000 75%, #1a1a1a 100%);
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #374151 50%, #4B5563 75%, #1a1a1a 100%);
   background-size: 400% 400%;
   animation: gradientShift 20s ease infinite;
   color: var(--text-primary);
@@ -267,7 +267,7 @@
 
 .control-buttons {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
 }
 
@@ -534,7 +534,7 @@
 
 .status-dot.green { background: #10b981; }
 .status-dot.yellow { background: #f59e0b; }
-.status-dot.red { background: #ef4444; }
+.status-dot.red { background: var(--gray-500); }
 .status-dot.blue { background: #3b82f6; }
 .status-dot.gray { background: #6b7280; }
 

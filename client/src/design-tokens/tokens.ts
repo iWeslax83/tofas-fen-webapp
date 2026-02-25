@@ -6,10 +6,10 @@
 export const tokens = {
   colors: {
     primary: {
-      red: '#8B4A5A',
-      redDark: '#6B3A4A',
-      redLight: '#A56A7A',
-      redLighter: '#F8F4F5',
+      red: '#374151', // Gray 700
+      redDark: '#111827', // Gray 900
+      redLight: '#9CA3AF', // Gray 400
+      redLighter: '#F3F4F6', // Gray 100
     },
     secondary: {
       blue: '#1E40AF',
@@ -35,7 +35,7 @@ export const tokens = {
     },
   },
   gradients: {
-    primary: 'linear-gradient(135deg, #6B3A4A 0%, #8B4A5A 100%)',
+    primary: 'linear-gradient(135deg, #111827 0%, #374151 100%)',
     secondary: 'linear-gradient(135deg, #1E40AF 0%, #7C3AED 100%)',
     success: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
     warning: 'linear-gradient(135deg, #EA580C 0%, #D97706 100%)',

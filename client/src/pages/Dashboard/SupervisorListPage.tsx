@@ -3,7 +3,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { DormitoryService } from "../../utils/apiService";
 import { toast } from "react-toastify";
 import { FileText, Loader2, RefreshCw, Upload, Calendar, Download, Trash2 } from 'lucide-react';
-import BackButton from "../../components/BackButton";
+
 import ModernDashboardLayout from "../../components/ModernDashboardLayout";
 import './SupervisorListPage.css';
 
@@ -49,9 +49,9 @@ export default function SupervisorListPage() {
       if (selectedMonth) params.append("month", selectedMonth);
       if (selectedYear) params.append("year", selectedYear.toString());
 
-      const { data, error } = await DormitoryService.getSupervisors({ 
-        month: selectedMonth, 
-        year: selectedYear 
+      const { data, error } = await DormitoryService.getSupervisors({
+        month: selectedMonth,
+        year: selectedYear
       });
       if (error) {
         setError(error);
@@ -137,7 +137,7 @@ export default function SupervisorListPage() {
       }
     }
   };
-  
+
   const handleRefresh = () => {
     setIsRefreshing(true);
     fetchSupervisorLists();
@@ -189,29 +189,30 @@ export default function SupervisorListPage() {
         { label: 'Belletmen Listesi' }
       ]}
     >
-      <div className="welcome-section">
-        <BackButton />
-        <div className="welcome-card">
-          <div className="welcome-content">
-            <div className="welcome-text">
-              <h2>Belletmen Listesi</h2>
-              <p>Pansiyon belletmen listelerini görüntüleyin ve yönetin</p>
+      <div className="supervisor-list-page">
+        <div className="page-header">
+          <div className="page-header-content">
+            <div className="page-title-section">
+              <FileText className="page-icon" />
+              <div className="title-wrapper">
+                <h1 className="page-title-main">Belletmen Listesi</h1>
+                <p className="page-subtitle">Pansiyon belletmen listelerini görüntüleyin ve yönetin</p>
+              </div>
             </div>
-            <div className="welcome-actions">
+            <div className="header-actions">
               <button
                 onClick={handleRefresh}
-                className="btn-blue"
+                className="btn btn-primary"
                 disabled={isRefreshing}
               >
-                <RefreshCw className={`icon ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`icon ${isRefreshing ? 'animate-spin' : ''}`} size={18} />
                 <span>Yenile</span>
               </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="dashboard-content">
+        <div className="dashboard-content">
           {/* Filter Section */}
           <div className="filters-section">
             <h3 className="filters-title">Filtreler</h3>
@@ -239,7 +240,7 @@ export default function SupervisorListPage() {
                   <option value="12">Aralık</option>
                 </select>
               </div>
-              
+
               <div className="form-group">
                 <label htmlFor="year-filter" className="form-label">Yıl:</label>
                 <select
@@ -253,7 +254,7 @@ export default function SupervisorListPage() {
                   ))}
                 </select>
               </div>
-              
+
               <div className="filter-actions">
                 <button
                   onClick={handleRefresh}
@@ -299,7 +300,7 @@ export default function SupervisorListPage() {
                     <option value="12">Aralık</option>
                   </select>
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="year-upload" className="form-label">Yıl:</label>
                   <select
@@ -314,7 +315,7 @@ export default function SupervisorListPage() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="file-upload" className="form-label">Dosya:</label>
                   <div className="file-input-container">
@@ -327,12 +328,12 @@ export default function SupervisorListPage() {
                       required
                     />
                     <label htmlFor="file-upload" className="file-input-label">
-                                        <Upload className="icon-small" />
-                  Dosya Seç
+                      <Upload className="icon-small" />
+                      Dosya Seç
                     </label>
                   </div>
                 </div>
-                
+
                 <button
                   type="submit"
                   className="upload-button"
@@ -345,8 +346,8 @@ export default function SupervisorListPage() {
                     </>
                   ) : (
                     <>
-                                        <Upload className="icon-small" />
-                  Belletmen Listesi Yükle
+                      <Upload className="icon-small" />
+                      Belletmen Listesi Yükle
                     </>
                   )}
                 </button>
@@ -354,70 +355,71 @@ export default function SupervisorListPage() {
             </div>
           )}
 
-        <div className="supervisor-lists-section">
-          <h3 className="section-title">
-            <FileText className="icon-medium" />
-            Mevcut Belletmen Listeleri
-          </h3>
-          
-          {supervisorLists.length === 0 ? (
-            <div className="empty-state">
-              <FileText className="empty-icon" />
-              <h3>Henüz belletmen listesi yok</h3>
-              <p>Belletmen listeleri burada görünecektir.</p>
-            </div>
-          ) : (
-            <div className="dashboard-grid">
-              {supervisorLists.map((list) => (
-                <div key={list._id} className="dashboard-card">
-                  <div className="card-header">
-                    <div className="card-icon">
-                      <FileText className="icon" />
-                    </div>
-                    <div className="card-badge">
-                      <span>{getMonthName(list.month)} {list.year}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="card-content">
-                    <h3 className="card-title">
-                      {getMonthName(list.month)} {list.year}
-                    </h3>
-                    <p className="card-subtitle">
-                      Yüklenen: {formatDate(list.uploadedAt)}
-                    </p>
-                    <div className="card-meta">
-                      <div className="meta-item">
-                        <Calendar className="meta-icon" />
-                        <span>Yükleyen: {list.uploadedBy}</span>
+          <div className="supervisor-lists-section">
+            <h3 className="section-title">
+              <FileText className="icon-medium" />
+              Mevcut Belletmen Listeleri
+            </h3>
+
+            {supervisorLists.length === 0 ? (
+              <div className="empty-state">
+                <FileText className="empty-icon" />
+                <h3>Henüz belletmen listesi yok</h3>
+                <p>Belletmen listeleri burada görünecektir.</p>
+              </div>
+            ) : (
+              <div className="dashboard-grid">
+                {supervisorLists.map((list) => (
+                  <div key={list._id} className="dashboard-card">
+                    <div className="card-header">
+                      <div className="card-icon">
+                        <FileText className="icon" />
+                      </div>
+                      <div className="card-badge">
+                        <span>{getMonthName(list.month)} {list.year}</span>
                       </div>
                     </div>
-                    
-                    <div className="card-footer">
-                      <button
-                        onClick={() => handleDownload(list._id, list.month, list.year)}
-                        className="btn-blue"
-                        title="İndir"
-                      >
-                        <Download className="icon" />
-                        <span>İndir</span>
-                      </button>
-                      {isAdminOrHizmetli && (
+
+                    <div className="card-content">
+                      <h3 className="card-title">
+                        {getMonthName(list.month)} {list.year}
+                      </h3>
+                      <p className="card-subtitle">
+                        Yüklenen: {formatDate(list.uploadedAt)}
+                      </p>
+                      <div className="card-meta">
+                        <div className="meta-item">
+                          <Calendar className="meta-icon" />
+                          <span>Yükleyen: {list.uploadedBy}</span>
+                        </div>
+                      </div>
+
+                      <div className="card-footer">
                         <button
-                          onClick={() => handleDelete(list._id)}
-                          className="btn-red"
-                          title="Sil"
+                          onClick={() => handleDownload(list._id, list.month, list.year)}
+                          className="btn-blue"
+                          title="İndir"
                         >
-                          <Trash2 className="icon" />
-                          <span>Sil</span>
+                          <Download className="icon" />
+                          <span>İndir</span>
                         </button>
-                      )}
+                        {isAdminOrHizmetli && (
+                          <button
+                            onClick={() => handleDelete(list._id)}
+                            className="btn-red"
+                            title="Sil"
+                          >
+                            <Trash2 className="icon" />
+                            <span>Sil</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </ModernDashboardLayout>

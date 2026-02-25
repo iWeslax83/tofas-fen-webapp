@@ -132,17 +132,62 @@ export class ApiResponseHandler {
     const errorData = axiosResp?.['data'] as Record<string, unknown> | string | undefined;
     if (typeof errorData === 'string') return errorData;
     if (errorData && typeof errorData === 'object') {
-      const msg = (errorData['error'] as string) || (errorData['message'] as string);
-      if (msg) return msg;
-      const errs = errorData['errors'] as unknown;
-      if (Array.isArray(errs)) return (errs as string[]).join(', ');
+      const errObj = errorData as Record<string, unknown>;
+
+      // Many APIs wrap error details under "error"
+      const nestedError = errObj['error'];
+      if (typeof nestedError === 'string') {
+        return nestedError;
+      }
+      if (nestedError && typeof nestedError === 'object') {
+        const nestedObj = nestedError as Record<string, unknown>;
+        const nestedMsg = nestedObj['message'];
+        if (typeof nestedMsg === 'string' && nestedMsg.trim().length > 0) {
+          return nestedMsg;
+        }
+      }
+
+      // Direct message on root
+      const directMsg = errObj['message'];
+      if (typeof directMsg === 'string' && directMsg.trim().length > 0) {
+        return directMsg;
+      }
+
+      // Aggregated errors array
+      const errs = errObj['errors'] as unknown;
+      if (Array.isArray(errs)) {
+        const joined = (errs as unknown[])
+          .map((e) => {
+            if (typeof e === 'string') return e;
+            if (e && typeof e === 'object' && 'message' in (e as Record<string, unknown>)) {
+              const m = (e as Record<string, unknown>)['message'];
+              return typeof m === 'string' ? m : '';
+            }
+            return '';
+          })
+          .filter(Boolean)
+          .join(', ');
+        if (joined) return joined;
+      }
     }
 
     // Handle direct error object
-    const directError = respAny['error'] as string | undefined;
-    if (directError) return directError;
-    const directMessage = respAny['message'] as string | undefined;
-    if (directMessage) return directMessage;
+    const directError = respAny['error'];
+    if (typeof directError === 'string' && directError.trim().length > 0) {
+      return directError;
+    }
+    if (directError && typeof directError === 'object') {
+      const directErrObj = directError as Record<string, unknown>;
+      const directErrMsg = directErrObj['message'];
+      if (typeof directErrMsg === 'string' && directErrMsg.trim().length > 0) {
+        return directErrMsg;
+      }
+    }
+
+    const directMessage = respAny['message'];
+    if (typeof directMessage === 'string' && directMessage.trim().length > 0) {
+      return directMessage;
+    }
 
     // Handle HTTP status errors
     const status = respAny['status'] as number | undefined;

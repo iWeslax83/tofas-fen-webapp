@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Home, Plus, Trash2, Calendar, MapPin, User, Filter } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-import BackButton from '../../components/BackButton';
+
 import './AdminEvciListPage.css';
 
 interface EvciTalep {
@@ -90,7 +90,7 @@ export default function AdminEvciListPage() {
           endDate: newReq.endDate,
           destination: newReq.destination,
         });
-        
+
         if (error) {
           toast.error(error);
         } else {
@@ -115,7 +115,7 @@ export default function AdminEvciListPage() {
     if (window.confirm("Bu talebi silmek istediğinize emin misiniz?")) {
       try {
         const { error } = await EvciService.deleteEvciRequest(id);
-        
+
         if (error) {
           toast.error(error);
         } else {
@@ -173,7 +173,6 @@ export default function AdminEvciListPage() {
         breadcrumb={breadcrumb}
       >
         <div className="admin-evci-page">
-          <BackButton />
           <div className="loading-container">
             <div className="loading-spinner"></div>
             <p>Veriler yükleniyor...</p>
@@ -189,8 +188,7 @@ export default function AdminEvciListPage() {
       breadcrumb={breadcrumb}
     >
       <div className="admin-evci-page">
-        <BackButton />
-        
+
         <div className="page-header">
           <div className="page-header-content">
             <div className="page-title-section">
@@ -224,7 +222,7 @@ export default function AdminEvciListPage() {
               ))}
             </select>
           </div>
-          
+
           <div className="filter-group">
             <Filter className="filter-icon" />
             <label className="filter-label">Oda:</label>
@@ -259,7 +257,7 @@ export default function AdminEvciListPage() {
                   className="form-control"
                 />
               </div>
-              
+
               <div className="form-group">
                 <label className="form-label">Öğrenci Adı</label>
                 <input
@@ -270,7 +268,7 @@ export default function AdminEvciListPage() {
                   className="form-control"
                 />
               </div>
-              
+
               <div className="form-group">
                 <label className="form-label">Başlangıç Tarihi</label>
                 <input
@@ -280,7 +278,7 @@ export default function AdminEvciListPage() {
                   className="form-control"
                 />
               </div>
-              
+
               <div className="form-group">
                 <label className="form-label">Bitiş Tarihi</label>
                 <input
@@ -290,7 +288,7 @@ export default function AdminEvciListPage() {
                   className="form-control"
                 />
               </div>
-              
+
               <div className="form-group">
                 <label className="form-label">Gideceği Yer</label>
                 <input
@@ -301,7 +299,7 @@ export default function AdminEvciListPage() {
                   className="form-control"
                 />
               </div>
-              
+
               <div className="form-group">
                 <label className="form-label">Durum</label>
                 <select
@@ -314,7 +312,7 @@ export default function AdminEvciListPage() {
                 </select>
               </div>
             </div>
-            
+
             <div className="form-actions">
               <button
                 onClick={resetForm}

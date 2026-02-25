@@ -261,7 +261,7 @@ export const useImageOptimization = () => {
           newSet.delete(src);
           return newSet;
         });
-        reject(new Error(`Failed to load image: ${src}`));
+        reject(new Error(`Resim yüklenemedi: ${src}`));
       };
       img.src = src;
     });

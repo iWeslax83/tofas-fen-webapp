@@ -95,7 +95,7 @@ export function useApiQuery<T>(
     queryFn: async () => {
       const response = await queryFn();
       if (!response.success) {
-        throw new Error(response.error || 'API request failed');
+        throw new Error(response.error || 'API isteği başarısız');
       }
       return response;
     },
@@ -130,7 +130,7 @@ export function useApiMutation<TData, TVariables>(
     mutationFn: async (variables: TVariables) => {
       const response = await mutationFn(variables);
       if (!response.success) {
-        throw new Error(response.error || 'Mutation failed');
+        throw new Error(response.error || 'İşlem başarısız oldu');
       }
       return response;
     },
