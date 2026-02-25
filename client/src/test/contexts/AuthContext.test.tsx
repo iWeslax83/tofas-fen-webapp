@@ -22,7 +22,7 @@ describe('AuthContext', () => {
     it('should throw error when used outside provider', () => {
       expect(() => {
         renderHook(() => useAuthContext());
-      }).toThrow('AuthContext must be used within AuthProvider');
+      }).toThrow('AuthContext, AuthProvider içinde kullanılmalıdır');
     });
   });
 

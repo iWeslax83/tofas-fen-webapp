@@ -81,7 +81,7 @@ describe('Load Tests', () => {
           .send({
             title: `Load Test Announcement ${i}`,
             content: `This is load test announcement ${i}`,
-            priority: 'normal',
+            priority: 'medium',
             targetRoles: ['student']
           });
       });
