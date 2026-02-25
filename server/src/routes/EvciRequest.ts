@@ -1,7 +1,7 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { EvciRequest, IEvciRequest } from "../models/EvciRequest";
 import { authenticateJWT, authorizeRoles } from "../utils/jwt";
-import { validateEvciRequest } from "../middleware/validation";
+import { getParentChildIds, verifyParentChildAccess } from "../middleware/parentChildAccess";
 const router = Router();
 
 // Tüm evci taleplerini getir (admin)
@@ -10,16 +10,65 @@ router.get("/", authenticateJWT, authorizeRoles(['admin', 'teacher']), async (re
   res.json(all);
 });
 
-// Belirli bir öğrencinin evci talepleri
-router.get("/student/:studentId", authenticateJWT, async (req, res) => {
+// Belirli bir öğrencinin evci talepleri - ownership check
+router.get("/student/:studentId", authenticateJWT, verifyParentChildAccess('params.studentId'), async (req, res) => {
   const list = await EvciRequest.find({ studentId: req.params.studentId });
   res.json(list);
 });
 
 // Yeni evci talebi oluştur
-router.post("/", authenticateJWT, authorizeRoles(['student', 'parent']), async (req, res) => {
+router.post("/", authenticateJWT, authorizeRoles(['student', 'parent']), async (req: Request, res: Response) => {
   try {
     const { studentId, willGo, startDate, endDate, destination } = req.body;
+    
+    // Zorunlu alanları kontrol et
+    if (!studentId) {
+      return res.status(400).json({ error: 'Öğrenci ID zorunludur' });
+    }
+
+    // Ownership validation: students can only create for themselves, parents only for linked children
+    const role = req.user?.role;
+    const userId = req.user?.userId;
+    if (role === 'student' && studentId !== userId) {
+      return res.status(403).json({ error: 'Sadece kendi adınıza evci talebi oluşturabilirsiniz' });
+    }
+    if (role === 'parent') {
+      const childIds = await getParentChildIds(userId!);
+      if (!childIds.includes(studentId)) {
+        return res.status(403).json({ error: 'Bu öğrenci için evci talebi oluşturma yetkiniz yok' });
+      }
+    }
+
+    if (willGo === undefined || willGo === null) {
+      return res.status(400).json({ error: 'willGo alanı zorunludur' });
+    }
+    
+    // willGo true ise tarih ve yer gerekli
+    if (willGo === true) {
+      if (!startDate) {
+        return res.status(400).json({ error: 'Başlangıç tarihi zorunludur' });
+      }
+      if (!endDate) {
+        return res.status(400).json({ error: 'Bitiş tarihi zorunludur' });
+      }
+      if (!destination) {
+        return res.status(400).json({ error: 'Gidilecek yer zorunludur' });
+      }
+      
+      // Tarihleri doğrula
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (isNaN(start.getTime())) {
+        return res.status(400).json({ error: 'Geçersiz başlangıç tarihi' });
+      }
+      if (isNaN(end.getTime())) {
+        return res.status(400).json({ error: 'Geçersiz bitiş tarihi' });
+      }
+      if (end <= start) {
+        return res.status(400).json({ error: 'Bitiş tarihi başlangıç tarihinden sonra olmalıdır' });
+      }
+    }
     
     // Öğrenci adını al
     const { User } = await import('../models/User');
@@ -29,10 +78,10 @@ router.post("/", authenticateJWT, authorizeRoles(['student', 'parent']), async (
     const newReq = new EvciRequest({ 
       studentId, 
       studentName,
-      willGo, 
-      startDate, 
-      endDate, 
-      destination 
+      willGo: willGo === true || willGo === 'true', 
+      startDate: startDate || null, 
+      endDate: endDate || null, 
+      destination: destination || null 
     });
     await newReq.save();
     res.status(201).json(newReq);

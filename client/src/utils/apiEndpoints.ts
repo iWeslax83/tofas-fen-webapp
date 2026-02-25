@@ -27,6 +27,8 @@ export const API_ENDPOINTS = {
       LINK: '/api/user/parent-child-link',
       UNLINK: '/api/user/parent-child-link',
     },
+    BULK_IMPORT: '/api/user/bulk-import',
+    BULK_PARENT_CHILD_LINK: '/api/user/bulk-parent-child-link',
   },
 
   // Notes and grades endpoints

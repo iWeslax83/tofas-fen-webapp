@@ -3,6 +3,8 @@ import { Schedule, ISchedule } from "../models/Schedule";
 import { authenticateJWT, authorizeRoles } from "../utils/jwt";
 import { validateRequest } from "../middleware/validation";
 import { body } from "express-validator";
+import { User } from "../models";
+import { getParentChildIds } from "../middleware/parentChildAccess";
 
 const router = Router();
 
@@ -74,12 +76,13 @@ const validateSchedule = [
 ];
 
 // Tüm ders programlarını getir (filtreleme ile)
+// Students see only their own class schedule, parents see children's class schedules
 router.get("/", authenticateJWT, async (req, res) => {
   try {
-    const { 
-      classLevel, 
-      classSection, 
-      academicYear, 
+    const {
+      classLevel,
+      classSection,
+      academicYear,
       semester,
       isActive,
       page = 1,
@@ -87,9 +90,33 @@ router.get("/", authenticateJWT, async (req, res) => {
     } = req.query;
 
     const filter: any = {};
-    
-    if (classLevel) filter.classLevel = classLevel;
-    if (classSection) filter.classSection = classSection;
+    const role = req.user?.role;
+    const userId = req.user?.userId;
+
+    // Role-based class filtering
+    if (role === 'student') {
+      const student = await User.findOne({ id: userId }).select('sinif sube').lean() as any;
+      if (student?.sinif) {
+        filter.classLevel = student.sinif;
+        if (student.sube) filter.classSection = student.sube;
+      }
+    } else if (role === 'parent') {
+      const childIds = await getParentChildIds(userId!);
+      if (childIds.length === 0) {
+        res.json({ schedules: [], pagination: { page: 1, limit: Number(limit), total: 0, pages: 0 } });
+        return;
+      }
+      const children = await User.find({ id: { $in: childIds } }).select('sinif sube').lean() as any[];
+      const levels = children.map((c: any) => c.sinif).filter(Boolean);
+      if (levels.length > 0) {
+        filter.classLevel = { $in: [...new Set(levels)] };
+      }
+    } else {
+      // Teacher/Admin - allow query param filtering
+      if (classLevel) filter.classLevel = classLevel;
+      if (classSection) filter.classSection = classSection;
+    }
+
     if (academicYear) filter.academicYear = academicYear;
     if (semester) filter.semester = semester;
     if (isActive !== undefined) filter.isActive = isActive === 'true';
