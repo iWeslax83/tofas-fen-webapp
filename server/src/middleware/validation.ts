@@ -306,7 +306,7 @@ export const validateAnnouncement = [
 
   body('priority')
     .optional()
-    .isIn(['low', 'normal', 'high', 'urgent'])
+    .isIn(['low', 'medium', 'high', 'urgent'])
     .withMessage('Geçersiz öncelik seviyesi'),
 
   body('targetRoles')

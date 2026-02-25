@@ -32,7 +32,7 @@ describe('Announcements API Tests', () => {
         {
           title: 'Test Announcement 1',
           content: 'Content 1',
-          priority: 'normal',
+          priority: 'medium',
           targetRoles: ['student'],
           targetClasses: ['10'],
           date: new Date().toISOString()
@@ -110,7 +110,7 @@ describe('Announcements API Tests', () => {
       const announcementData = {
         title: 'New Announcement',
         content: 'This is a new announcement',
-        priority: 'normal',
+        priority: 'medium',
         targetRoles: ['student'],
         targetClasses: ['10'],
       };
@@ -162,7 +162,7 @@ describe('Announcements API Tests', () => {
       const announcement = new Announcement({
         title: 'Test Announcement',
         content: 'Test content',
-        priority: 'normal',
+        priority: 'medium',
         targetRoles: ['student'],
         targetClasses: ['10'],
       });
@@ -195,7 +195,7 @@ describe('Announcements API Tests', () => {
       const announcement = new Announcement({
         title: 'To Delete',
         content: 'This will be deleted',
-        priority: 'normal',
+        priority: 'medium',
         targetRoles: ['student'],
         targetClasses: ['10'],
       });
