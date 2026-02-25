@@ -3,10 +3,13 @@ import Note, { INote } from "../models/Note";
 import { ExcelImportService } from "../services/excelImportService";
 import { Request, Response } from "express";
 import { authenticateJWT, authorizeRoles } from "../utils/jwt";
+import { User } from "../models";
+import { getParentChildIds, verifyParentChildAccess } from "../middleware/parentChildAccess";
 
 const router = Router();
 
 // Tüm notları getir (filtreleme ile) - requires authentication
+// Students see only their own notes, parents see only linked children's notes
 router.get("/", authenticateJWT, async (req: Request, res: Response) => {
   try {
     const {
@@ -20,8 +23,24 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
     } = req.query;
 
     const filter: any = { isActive: true };
+    const role = req.user?.role;
+    const userId = req.user?.userId;
 
-    if (studentId) filter.studentId = studentId;
+    // Role-based filtering - enforce server-side data access control
+    if (role === 'student') {
+      filter.studentId = userId;
+    } else if (role === 'parent') {
+      const childIds = await getParentChildIds(userId!);
+      if (childIds.length === 0) {
+        res.json([]);
+        return;
+      }
+      filter.studentId = { $in: childIds };
+    } else {
+      // Teacher/Admin - allow query param filtering
+      if (studentId) filter.studentId = studentId;
+    }
+
     if (lesson) filter.lesson = lesson;
     if (semester) filter.semester = semester;
     if (academicYear) filter.academicYear = academicYear;
@@ -40,8 +59,8 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
   }
 });
 
-// Belirli bir öğrencinin notlarını getir - requires authentication
-router.get("/student/:studentId", authenticateJWT, async (req: Request, res: Response) => {
+// Belirli bir öğrencinin notlarını getir - requires authentication + ownership check
+router.get("/student/:studentId", authenticateJWT, verifyParentChildAccess('params.studentId'), async (req: Request, res: Response) => {
   try {
     const { studentId } = req.params;
     const { semester, academicYear } = req.query;

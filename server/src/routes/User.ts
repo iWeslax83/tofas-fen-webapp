@@ -3,6 +3,16 @@ import { Request, Response } from "express";
 import { User } from "../models";
 import bcrypt from "bcryptjs";
 import { authenticateJWT, authorizeRoles } from "../utils/jwt";
+import multer from "multer";
+import {
+  parseUserFile,
+  validateUserRows,
+  bulkCreateUsers,
+  parseParentChildFile,
+  bulkLinkParentChild
+} from "../services/bulkImportService";
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const router = Router();
 
@@ -74,6 +84,11 @@ router.post("/parent-child-link", authenticateJWT, async (req, res) => {
     parent.childId.push(childId);
     await parent.save();
   }
+  // Also update the student's parentId for bidirectional link
+  if (child.parentId !== parentId) {
+    child.parentId = parentId;
+    await child.save();
+  }
   res.json({ success: true });
 });
 
@@ -90,6 +105,94 @@ router.get("/parent/:parentId/children", authenticateJWT, async (req, res) => {
 });
 
 // Şifre değiştirme endpoint'i kaldırıldı - artık TCKN kullanılıyor ve değiştirilemez
+
+// Bulk import users - admin only
+router.post("/bulk-import", authenticateJWT, authorizeRoles(['admin']), upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Dosya yüklenmedi' });
+    }
+
+    const rows = parseUserFile(req.file.buffer, req.file.originalname);
+    if (rows.length === 0) {
+      return res.status(400).json({ error: 'Dosyada kullanıcı verisi bulunamadı' });
+    }
+
+    const validation = validateUserRows(rows);
+
+    // Preview mode - return parsed data without importing
+    if (req.query.preview === 'true') {
+      return res.json({
+        preview: true,
+        total: rows.length,
+        valid: validation.valid.length,
+        errors: validation.errors,
+        duplicates: validation.duplicates,
+        rows: validation.valid.map(r => ({
+          id: r.id,
+          adSoyad: r.adSoyad,
+          rol: r.rol,
+          sinif: r.sinif,
+          sube: r.sube,
+        })),
+      });
+    }
+
+    if (validation.valid.length === 0) {
+      return res.status(400).json({
+        error: 'Geçerli kullanıcı bulunamadı',
+        validationErrors: validation.errors,
+        duplicates: validation.duplicates,
+      });
+    }
+
+    const result = await bulkCreateUsers(validation.valid);
+
+    res.json({
+      imported: result.imported,
+      failed: result.failed,
+      duplicates: [...validation.duplicates, ...result.duplicates],
+      validationErrors: validation.errors,
+      importErrors: result.errors,
+    });
+  } catch (error) {
+    console.error('Bulk import error:', error);
+    res.status(500).json({ error: 'Toplu kullanıcı aktarımı sırasında hata oluştu' });
+  }
+});
+
+// Bulk parent-child link - admin only
+router.post("/bulk-parent-child-link", authenticateJWT, authorizeRoles(['admin']), upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Dosya yüklenmedi' });
+    }
+
+    const links = parseParentChildFile(req.file.buffer, req.file.originalname);
+    if (links.length === 0) {
+      return res.status(400).json({ error: 'Dosyada eşleştirme verisi bulunamadı' });
+    }
+
+    // Preview mode
+    if (req.query.preview === 'true') {
+      return res.json({
+        preview: true,
+        total: links.length,
+        links: links.slice(0, 100), // Show first 100 for preview
+      });
+    }
+
+    const result = await bulkLinkParentChild(links);
+
+    res.json({
+      linked: result.linked,
+      errors: result.errors,
+    });
+  } catch (error) {
+    console.error('Bulk parent-child link error:', error);
+    res.status(500).json({ error: 'Toplu eşleştirme sırasında hata oluştu' });
+  }
+});
 
 // Update user - RESTful alias
 router.put("/:userId", authenticateJWT, async (req, res) => {

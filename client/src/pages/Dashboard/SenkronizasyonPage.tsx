@@ -1,10 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, X, Save } from 'lucide-react';
+import { Users, Plus, X, Save, Upload, FileSpreadsheet, Link2 } from 'lucide-react';
 import { UserService } from '../../utils/apiService';
 import { useAuthContext } from "../../contexts/AuthContext";
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-import BackButton from '../../components/BackButton';
+
 import './SenkronizasyonPage.css';
 
 interface UserType {
@@ -71,6 +71,24 @@ export default function SenkronizasyonPage() {
   // Student search and filter states
   const [studentSearch, setStudentSearch] = useState('');
   const [studentClassFilter, setStudentClassFilter] = useState('');
+
+  // Bulk import states
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [bulkPreview, setBulkPreview] = useState<any>(null);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkResult, setBulkResult] = useState<any>(null);
+  const [bulkError, setBulkError] = useState('');
+  const bulkFileRef = useRef<HTMLInputElement>(null);
+
+  // Bulk parent-child link states
+  const [showBulkLink, setShowBulkLink] = useState(false);
+  const [linkFile, setLinkFile] = useState<File | null>(null);
+  const [linkPreview, setLinkPreview] = useState<any>(null);
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkResult, setLinkResult] = useState<any>(null);
+  const [linkError, setLinkError] = useState('');
+  const linkFileRef = useRef<HTMLInputElement>(null);
 
   // Only allow admins
   useEffect(() => {
@@ -247,6 +265,105 @@ export default function SenkronizasyonPage() {
     setEditError('');
   };
 
+  // Bulk import handlers
+  const handleBulkPreview = async () => {
+    if (!bulkFile) return;
+    setBulkLoading(true);
+    setBulkError('');
+    setBulkPreview(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', bulkFile);
+      const { data, error } = await UserService.bulkImportUsers(formData, true);
+      if (error) {
+        setBulkError(error);
+      } else {
+        setBulkPreview(data);
+      }
+    } catch {
+      setBulkError('Önizleme sırasında hata oluştu');
+    }
+    setBulkLoading(false);
+  };
+
+  const handleBulkImport = async () => {
+    if (!bulkFile) return;
+    setBulkLoading(true);
+    setBulkError('');
+    setBulkResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', bulkFile);
+      const { data, error } = await UserService.bulkImportUsers(formData, false);
+      if (error) {
+        setBulkError(error);
+      } else {
+        setBulkResult(data);
+        fetchUsers(); // Refresh user list
+      }
+    } catch {
+      setBulkError('Aktarım sırasında hata oluştu');
+    }
+    setBulkLoading(false);
+  };
+
+  const handleBulkLinkPreview = async () => {
+    if (!linkFile) return;
+    setLinkLoading(true);
+    setLinkError('');
+    setLinkPreview(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', linkFile);
+      const { data, error } = await UserService.bulkLinkParentChild(formData, true);
+      if (error) {
+        setLinkError(error);
+      } else {
+        setLinkPreview(data);
+      }
+    } catch {
+      setLinkError('Önizleme sırasında hata oluştu');
+    }
+    setLinkLoading(false);
+  };
+
+  const handleBulkLink = async () => {
+    if (!linkFile) return;
+    setLinkLoading(true);
+    setLinkError('');
+    setLinkResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', linkFile);
+      const { data, error } = await UserService.bulkLinkParentChild(formData, false);
+      if (error) {
+        setLinkError(error);
+      } else {
+        setLinkResult(data);
+        fetchUsers(); // Refresh user list
+      }
+    } catch {
+      setLinkError('Eşleştirme sırasında hata oluştu');
+    }
+    setLinkLoading(false);
+  };
+
+  const resetBulkImport = () => {
+    setBulkFile(null);
+    setBulkPreview(null);
+    setBulkResult(null);
+    setBulkError('');
+    if (bulkFileRef.current) bulkFileRef.current.value = '';
+  };
+
+  const resetBulkLink = () => {
+    setLinkFile(null);
+    setLinkPreview(null);
+    setLinkResult(null);
+    setLinkError('');
+    if (linkFileRef.current) linkFileRef.current.value = '';
+  };
+
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${user?.rol || 'admin'}` },
     { label: 'Senkronizasyon Yönetimi' }
@@ -258,7 +375,6 @@ export default function SenkronizasyonPage() {
       breadcrumb={breadcrumb}
     >
       <div className="senkronizasyon-page">
-        <BackButton />
         <div className="content-section">
           <div className="filter-bar">
             <select
@@ -287,6 +403,161 @@ export default function SenkronizasyonPage() {
               Yeni Kullanıcı Ekle
             </button>
           </div>
+
+          {/* Bulk Actions Bar */}
+          <div className="bulk-actions-bar">
+            <button
+              className={`btn ${showBulkImport ? 'btn-secondary' : 'btn-success'}`}
+              onClick={() => { setShowBulkImport(!showBulkImport); setShowBulkLink(false); }}
+            >
+              <FileSpreadsheet size={16} />
+              Toplu Kullanıcı Aktar
+            </button>
+            <button
+              className={`btn ${showBulkLink ? 'btn-secondary' : 'btn-warning'}`}
+              onClick={() => { setShowBulkLink(!showBulkLink); setShowBulkImport(false); }}
+            >
+              <Link2 size={16} />
+              Toplu Veli-Öğrenci Eşleştir
+            </button>
+          </div>
+
+          {/* Bulk User Import Panel */}
+          {showBulkImport && (
+            <div className="bulk-import-panel">
+              <h3 className="bulk-panel-title">
+                <Upload size={20} />
+                Toplu Kullanıcı Aktarımı
+              </h3>
+              <p className="bulk-panel-desc">
+                Excel (.xlsx) veya CSV dosyası yükleyin. Beklenen sütunlar: id, adSoyad, rol, sinif, sube, sifre (opsiyonel: parentId, oda, pansiyon, tckn)
+              </p>
+
+              <div className="bulk-file-row">
+                <input
+                  ref={bulkFileRef}
+                  type="file"
+                  accept=".xlsx,.csv,.xls"
+                  onChange={e => { setBulkFile(e.target.files?.[0] || null); setBulkPreview(null); setBulkResult(null); setBulkError(''); }}
+                  className="form-input bulk-file-input"
+                />
+                <button className="btn btn-secondary" onClick={handleBulkPreview} disabled={!bulkFile || bulkLoading}>
+                  Önizle
+                </button>
+                <button className="btn btn-success" onClick={handleBulkImport} disabled={!bulkFile || bulkLoading}>
+                  {bulkLoading ? 'İşleniyor...' : 'Aktar'}
+                </button>
+                <button className="btn btn-secondary" onClick={() => { resetBulkImport(); setShowBulkImport(false); }}>
+                  <X size={14} /> Kapat
+                </button>
+              </div>
+
+              {bulkError && <div className="bulk-error">{bulkError}</div>}
+
+              {bulkPreview && (
+                <div className="result-section">
+                  <h4>Önizleme: {bulkPreview.valid} geçerli / {bulkPreview.total} toplam</h4>
+                  {bulkPreview.errors?.length > 0 && (
+                    <div className="bulk-error">
+                      {bulkPreview.errors.length} hata: {bulkPreview.errors.slice(0, 5).map((e: any) => `Satır ${e.row}: ${e.message}`).join('; ')}
+                      {bulkPreview.errors.length > 5 && ` ...ve ${bulkPreview.errors.length - 5} daha`}
+                    </div>
+                  )}
+                  {bulkPreview.rows?.length > 0 && (
+                    <div className="preview-table-wrapper">
+                      <table className="preview-table">
+                        <thead>
+                          <tr><th>ID</th><th>Ad Soyad</th><th>Rol</th><th>Sınıf</th><th>Şube</th></tr>
+                        </thead>
+                        <tbody>
+                          {bulkPreview.rows.slice(0, 20).map((r: any, i: number) => (
+                            <tr key={i}><td>{r.id}</td><td>{r.adSoyad}</td><td>{r.rol}</td><td>{r.sinif || '-'}</td><td>{r.sube || '-'}</td></tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {bulkPreview.rows.length > 20 && <p className="preview-more">...ve {bulkPreview.rows.length - 20} satır daha</p>}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {bulkResult && (
+                <div className="result-section">
+                  <h4>Aktarım Sonucu</h4>
+                  <p className="bulk-success">{bulkResult.imported} kullanıcı başarıyla eklendi.</p>
+                  {bulkResult.failed > 0 && <p className="bulk-error">{bulkResult.failed} kullanıcı eklenemedi.</p>}
+                  {bulkResult.duplicates?.length > 0 && <p className="bulk-warning">Tekrarlanan ID'ler: {bulkResult.duplicates.join(', ')}</p>}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Bulk Parent-Child Link Panel */}
+          {showBulkLink && (
+            <div className="bulk-import-panel">
+              <h3 className="bulk-panel-title">
+                <Link2 size={20} />
+                Toplu Veli-Öğrenci Eşleştirme
+              </h3>
+              <p className="bulk-panel-desc">
+                CSV veya Excel dosyası yükleyin. Beklenen sütunlar: parentId, childId
+              </p>
+
+              <div className="bulk-file-row">
+                <input
+                  ref={linkFileRef}
+                  type="file"
+                  accept=".xlsx,.csv,.xls"
+                  onChange={e => { setLinkFile(e.target.files?.[0] || null); setLinkPreview(null); setLinkResult(null); setLinkError(''); }}
+                  className="form-input bulk-file-input"
+                />
+                <button className="btn btn-secondary" onClick={handleBulkLinkPreview} disabled={!linkFile || linkLoading}>
+                  Önizle
+                </button>
+                <button className="btn btn-warning" onClick={handleBulkLink} disabled={!linkFile || linkLoading}>
+                  {linkLoading ? 'İşleniyor...' : 'Eşleştir'}
+                </button>
+                <button className="btn btn-secondary" onClick={() => { resetBulkLink(); setShowBulkLink(false); }}>
+                  <X size={14} /> Kapat
+                </button>
+              </div>
+
+              {linkError && <div className="bulk-error">{linkError}</div>}
+
+              {linkPreview && (
+                <div className="result-section">
+                  <h4>Önizleme: {linkPreview.total} eşleştirme bulundu</h4>
+                  {linkPreview.links?.length > 0 && (
+                    <div className="preview-table-wrapper">
+                      <table className="preview-table">
+                        <thead>
+                          <tr><th>Veli ID</th><th>Öğrenci ID</th></tr>
+                        </thead>
+                        <tbody>
+                          {linkPreview.links.slice(0, 20).map((l: any, i: number) => (
+                            <tr key={i}><td>{l.parentId}</td><td>{l.childId}</td></tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {linkPreview.links.length > 20 && <p className="preview-more">...ve {linkPreview.links.length - 20} eşleştirme daha</p>}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {linkResult && (
+                <div className="result-section">
+                  <h4>Eşleştirme Sonucu</h4>
+                  <p className="bulk-success">{linkResult.linked} eşleştirme başarıyla yapıldı.</p>
+                  {linkResult.errors?.length > 0 && (
+                    <div className="bulk-error">
+                      {linkResult.errors.length} hata: {linkResult.errors.slice(0, 5).map((e: any) => `${e.parentId}-${e.childId}: ${e.message}`).join('; ')}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {loading ? (
             <div className="loading-container">
@@ -670,7 +941,7 @@ export default function SenkronizasyonPage() {
                       </div>
                       {editForm.pansiyon && (
                         <div className="form-group">
-                          <label className="form-label">Oda <span style={{ color: 'red' }}>*</span></label>
+                          <label className="form-label">Oda <span style={{ color: 'var(--gray-600)' }}>*</span></label>
                           <input
                             type="text"
                             className="form-input"

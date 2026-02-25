@@ -164,6 +164,20 @@ export class UserService {
       data: { parentId, childId }
     });
   }
+
+  static async bulkImportUsers(formData: FormData, preview = false) {
+    const endpoint = preview
+      ? `${API_ENDPOINTS.USER.BULK_IMPORT}?preview=true`
+      : API_ENDPOINTS.USER.BULK_IMPORT;
+    return ApiService.upload(endpoint, formData);
+  }
+
+  static async bulkLinkParentChild(formData: FormData, preview = false) {
+    const endpoint = preview
+      ? `${API_ENDPOINTS.USER.BULK_PARENT_CHILD_LINK}?preview=true`
+      : API_ENDPOINTS.USER.BULK_PARENT_CHILD_LINK;
+    return ApiService.upload(endpoint, formData);
+  }
 }
 
 // Notes service
@@ -208,7 +222,16 @@ export class NotesService {
 // Homework service
 export class HomeworkService {
   static async getHomeworks() {
-    return ApiService.getArray(API_ENDPOINTS.HOMEWORKS.BASE);
+    const result = await ApiService.get<{ homeworks: any[]; pagination?: any }>(API_ENDPOINTS.HOMEWORKS.BASE);
+    // Handle nested response structure
+    if (result.data && 'homeworks' in result.data) {
+      return { data: result.data.homeworks, error: result.error };
+    }
+    // Handle array response
+    if (Array.isArray(result.data)) {
+      return { data: result.data, error: result.error };
+    }
+    return { data: [], error: result.error || 'Invalid response format' };
   }
 
   static async createHomework(homeworkData: { title: string; description: string; dueDate: string | Date; class?: string; section?: string; subject?: string }) {
@@ -223,12 +246,42 @@ export class HomeworkService {
     return ApiService.delete(API_ENDPOINTS.HOMEWORKS.DELETE(id));
   }
 
-  static async getHomeworksByStudent(studentId: string) {
-    return ApiService.getArray(API_ENDPOINTS.HOMEWORKS.GET_BY_STUDENT(studentId));
+  static async getHomeworksByStudent(studentId: string, classLevel?: string) {
+    const base = API_ENDPOINTS.HOMEWORKS.GET_BY_STUDENT(studentId);
+    const endpoint = classLevel ? `${base}?classLevel=${encodeURIComponent(classLevel)}` : base;
+    const result = await ApiService.get<{ homeworks: any[]; pagination?: any }>(endpoint);
+
+    // Backend bu endpoint için { homeworks: [...], pagination? } döndürüyor.
+    // Diğer ödev metodlarıyla aynı deseni koruyarak "homeworks" alanını ayıklıyoruz.
+    if (result.data && 'homeworks' in result.data) {
+      return { data: result.data.homeworks, error: result.error };
+    }
+
+    // Eğer doğrudan dizi dönerse (geri uyumluluk)
+    if (Array.isArray(result.data)) {
+      return { data: result.data, error: result.error };
+    }
+
+    return { data: [], error: result.error || 'Invalid response format' };
   }
 
   static async getHomeworksByTeacher(teacherId: string) {
     return ApiService.getArray(API_ENDPOINTS.HOMEWORKS.GET_BY_TEACHER(teacherId));
+  }
+
+  static async getHomeworksByClassLevels(classLevels: string[]) {
+    const classLevelsParam = classLevels.join(',');
+    const endpoint = `${API_ENDPOINTS.HOMEWORKS.BASE}?classLevels=${encodeURIComponent(classLevelsParam)}`;
+    const result = await ApiService.get<{ homeworks: any[]; pagination?: any }>(endpoint);
+    // Handle nested response structure
+    if (result.data && 'homeworks' in result.data) {
+      return { data: result.data.homeworks, error: result.error };
+    }
+    // Handle array response
+    if (Array.isArray(result.data)) {
+      return { data: result.data, error: result.error };
+    }
+    return { data: [], error: result.error || 'Invalid response format' };
   }
 }
 
