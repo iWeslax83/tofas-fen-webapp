@@ -1,6 +1,7 @@
 import React from 'react';
 import DashboardPanel from '../../components/DashboardPanel';
 import { useAuthContext } from '../../contexts/AuthContext';
+import './StudentPanel.css';
 
 const StudentPanel: React.FC = () => {
   const { user } = useAuthContext();

@@ -59,7 +59,7 @@ export function useAuth(allowedRoles: string[] = []) {
     try {
       await SecureAPI.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('\u00c7\u0131k\u0131\u015f i\u015flemi ba\u015far\u0131s\u0131z:', error);
     } finally {
       // Use context logout to clear user data and redirect to login
       contextLogout();

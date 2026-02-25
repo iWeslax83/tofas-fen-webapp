@@ -1,5 +1,6 @@
 import React from 'react';
 import DashboardPanel from '../../components/DashboardPanel';
+import './HizmetliPanel.css';
 
 const HizmetliPanel: React.FC = () => {
   return (

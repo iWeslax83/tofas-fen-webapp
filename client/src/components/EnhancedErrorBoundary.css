@@ -3,11 +3,11 @@
 :root {
   --error-low: #f59e0b;
   --error-medium: #dc2626;
-  --error-high: #b91c1c;
-  --error-critical: #7f1d1d;
+  --error-high: #374151;
+  --error-critical: #1F2937;
   --error-bg: var(--primary-red-lighter);
-  --error-border: rgba(139, 0, 0, 0.1);
-  --error-shadow: rgba(139, 0, 0, 0.1);
+  --error-border: rgba(55, 65, 81, 0.1);
+  --error-shadow: rgba(55, 65, 81, 0.1);
 }
 
 .enhanced-error-boundary {
@@ -41,7 +41,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--error-color) 0%, rgba(139, 0, 0, 0.8) 100%);
+  background: linear-gradient(90deg, var(--error-color) 0%, rgba(55, 65, 81, 0.8) 100%);
 }
 
 /* Error Header */
@@ -58,7 +58,7 @@
   display: inline-block;
   padding: 16px;
   border-radius: 50%;
-  background: rgba(139, 0, 0, 0.05);
+  background: rgba(55, 65, 81, 0.05);
   color: var(--error-color);
 }
 
@@ -102,11 +102,11 @@
 }
 
 .error-info {
-  background: rgba(139, 0, 0, 0.02);
+  background: rgba(55, 65, 81, 0.02);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 20px;
-  border: 1px solid rgba(139, 0, 0, 0.05);
+  border: 1px solid rgba(55, 65, 81, 0.05);
 }
 
 .error-type,
@@ -116,7 +116,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(139, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(55, 65, 81, 0.05);
 }
 
 .error-type:last-child,
@@ -141,15 +141,15 @@
 
 /* Error Stack */
 .error-stack {
-  background: rgba(139, 0, 0, 0.02);
+  background: rgba(55, 65, 81, 0.02);
   border-radius: 12px;
-  border: 1px solid rgba(139, 0, 0, 0.05);
+  border: 1px solid rgba(55, 65, 81, 0.05);
   overflow: hidden;
 }
 
 .error-stack summary {
   padding: 16px 20px;
-  background: rgba(139, 0, 0, 0.05);
+  background: rgba(55, 65, 81, 0.05);
   cursor: pointer;
   font-weight: 600;
   color: #374151;
@@ -158,7 +158,7 @@
 }
 
 .error-stack summary:hover {
-  background: rgba(139, 0, 0, 0.08);
+  background: rgba(55, 65, 81, 0.08);
 }
 
 .error-stack-content {
@@ -205,25 +205,25 @@
 }
 
 .error-action.primary {
-  background: linear-gradient(135deg, var(--error-color) 0%, rgba(139, 0, 0, 0.8) 100%);
+  background: linear-gradient(135deg, var(--error-color) 0%, rgba(55, 65, 81, 0.8) 100%);
   color: white;
-  box-shadow: 0 4px 16px rgba(139, 0, 0, 0.2);
+  box-shadow: 0 4px 16px rgba(55, 65, 81, 0.2);
 }
 
 .error-action.primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(139, 0, 0, 0.3);
+  box-shadow: 0 6px 20px rgba(55, 65, 81, 0.3);
 }
 
 .error-action.secondary {
-  background: rgba(139, 0, 0, 0.05);
+  background: rgba(55, 65, 81, 0.05);
   color: #374151;
-  border: 2px solid rgba(139, 0, 0, 0.1);
+  border: 2px solid rgba(55, 65, 81, 0.1);
 }
 
 .error-action.secondary:hover:not(:disabled) {
-  background: rgba(139, 0, 0, 0.1);
-  border-color: rgba(139, 0, 0, 0.2);
+  background: rgba(55, 65, 81, 0.1);
+  border-color: rgba(55, 65, 81, 0.2);
   transform: translateY(-1px);
 }
 
@@ -246,9 +246,9 @@
   justify-content: center;
   gap: 8px;
   padding: 16px;
-  background: rgba(139, 0, 0, 0.02);
+  background: rgba(55, 65, 81, 0.02);
   border-radius: 12px;
-  border: 1px solid rgba(139, 0, 0, 0.05);
+  border: 1px solid rgba(55, 65, 81, 0.05);
   font-size: 14px;
   color: #6b7280;
 }
@@ -261,7 +261,7 @@
 }
 
 .error-help a:hover {
-  color: rgba(139, 0, 0, 0.8);
+  color: rgba(55, 65, 81, 0.8);
   text-decoration: underline;
 }
 
@@ -351,7 +351,7 @@
   
   .error-container {
     background: rgba(31, 41, 55, 0.95);
-    border-color: rgba(139, 0, 0, 0.2);
+    border-color: rgba(55, 65, 81, 0.2);
   }
   
   .error-title {
@@ -363,8 +363,8 @@
   }
   
   .error-info {
-    background: rgba(139, 0, 0, 0.1);
-    border-color: rgba(139, 0, 0, 0.2);
+    background: rgba(55, 65, 81, 0.1);
+    border-color: rgba(55, 65, 81, 0.2);
   }
   
   .error-label {
@@ -372,17 +372,17 @@
   }
   
   .error-stack {
-    background: rgba(139, 0, 0, 0.1);
-    border-color: rgba(139, 0, 0, 0.2);
+    background: rgba(55, 65, 81, 0.1);
+    border-color: rgba(55, 65, 81, 0.2);
   }
   
   .error-stack summary {
-    background: rgba(139, 0, 0, 0.15);
+    background: rgba(55, 65, 81, 0.15);
     color: #e5e7eb;
   }
   
   .error-stack summary:hover {
-    background: rgba(139, 0, 0, 0.2);
+    background: rgba(55, 65, 81, 0.2);
   }
   
   .error-stack-content pre {
@@ -391,19 +391,19 @@
   }
   
   .error-action.secondary {
-    background: rgba(139, 0, 0, 0.15);
+    background: rgba(55, 65, 81, 0.15);
     color: #e5e7eb;
-    border-color: rgba(139, 0, 0, 0.2);
+    border-color: rgba(55, 65, 81, 0.2);
   }
   
   .error-action.secondary:hover:not(:disabled) {
-    background: rgba(139, 0, 0, 0.2);
-    border-color: rgba(139, 0, 0, 0.3);
+    background: rgba(55, 65, 81, 0.2);
+    border-color: rgba(55, 65, 81, 0.3);
   }
   
   .error-help {
-    background: rgba(139, 0, 0, 0.1);
-    border-color: rgba(139, 0, 0, 0.2);
+    background: rgba(55, 65, 81, 0.1);
+    border-color: rgba(55, 65, 81, 0.2);
     color: #d1d5db;
   }
 }

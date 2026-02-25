@@ -220,13 +220,13 @@ export default function ParentChildManagement() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center gap-3"
+            className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 flex items-center gap-3"
           >
-            <AlertTriangle className="h-5 w-5 text-red-600" />
-            <span className="text-red-800">{error}</span>
+            <AlertTriangle className="h-5 w-5 text-gray-600" />
+            <span className="text-gray-800">{error}</span>
             <button
               onClick={() => setError(null)}
-              className="ml-auto text-red-600 hover:text-red-800"
+              className="ml-auto text-gray-600 hover:text-gray-800"
             >
               <XCircle className="h-4 w-4" />
             </button>
@@ -280,7 +280,7 @@ export default function ParentChildManagement() {
                       <button
                         onClick={() => handleUnlinkParentChild(pair.parentId, pair.childId)}
                         disabled={processing}
-                        className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
                         title="Bağlantıyı kaldır"
                       >
                         <Unlink className="h-4 w-4" />

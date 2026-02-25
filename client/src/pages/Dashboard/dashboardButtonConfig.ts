@@ -1,5 +1,5 @@
 // Central config for dashboard panel buttons, routes, roles, and permissions
-import { BookOpen, ClipboardList, Utensils, FileText, Wrench } from 'lucide-react';
+import { BookOpen, ClipboardList, Utensils, Wrench, House, MessageSquareWarning, Megaphone, NotebookText } from 'lucide-react';
 
 export type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli';
 
@@ -19,7 +19,15 @@ export interface DashboardButton {
 export const dashboardButtons: DashboardButton[] = [
   // STUDENT PRIORITY BUTTONS (Most Important First)
   // STUDENT PRIORITY BUTTONS (Most Important First)
-
+    {
+    key: 'student-assignments',
+    title: 'Ödevler',
+    description: 'Ödev oluştur ve yönet',
+    route: '/student/odevler',
+    roles: ['student'],
+    icon: NotebookText,
+    actionText: 'Ödevleri Gör',
+  },
   {
     key: 'lesson-schedule-student',
     title: 'Ders Programı',
@@ -30,31 +38,13 @@ export const dashboardButtons: DashboardButton[] = [
     actionText: 'Programı Gör',
   },
   {
-    key: 'grades-student',
-    title: 'Notlarım',
-    description: 'Notlarını görüntüle',
-    route: '/student/notlar',
-    roles: ['student'],
-    icon: BookOpen,
-    actionText: 'Notlarımı Gör',
-  },
-  {
     key: 'announcements-student',
     title: 'Duyurular',
     description: 'Tüm duyuruları görüntüle',
     route: '/student/duyurular',
     roles: ['student'],
-    icon: ClipboardList,
+    icon: Megaphone,
     actionText: 'Duyuruları Gör',
-  },
-  {
-    key: 'dilekce-student',
-    title: 'Dilekçe',
-    description: 'Dilekçe oluştur ve takip et',
-    route: '/student/dilekce',
-    roles: ['student'],
-    icon: FileText,
-    actionText: 'Dilekçe Oluştur',
   },
   {
     key: 'student-evci',
@@ -63,10 +53,27 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/student/evci',
     roles: ['student'],
     showForDormitory: true,
-    icon: ClipboardList,
+    icon: House,
     actionText: 'Bilgilerimi Gör',
   },
-
+  {
+    key: 'dilekce-student',
+    title: 'Dilekçe',
+    description: 'Dilekçe oluştur ve takip et',
+    route: '/student/dilekce',
+    roles: ['student'],
+    icon: MessageSquareWarning,
+    actionText: 'Dilekçe Oluştur',
+  },
+  {
+    key: 'grades-student',
+    title: 'Notlarım',
+    description: 'Notlarını görüntüle',
+    route: '/student/notlar',
+    roles: ['student'],
+    icon: BookOpen,
+    actionText: 'Notlarımı Gör',
+  },
   // Dormitory related buttons (only for students with pansiyon=true)
   {
     key: 'student-meal-list',
@@ -87,7 +94,7 @@ export const dashboardButtons: DashboardButton[] = [
     description: 'Ödev oluştur ve yönet',
     route: '/teacher/odevler',
     roles: ['teacher'],
-    icon: BookOpen,
+    icon: NotebookText,
     actionText: 'Ödevleri Yönet',
   },
   {
@@ -115,7 +122,7 @@ export const dashboardButtons: DashboardButton[] = [
     description: 'Duyuruları yönet ve yayınla',
     route: '/teacher/duyurular',
     roles: ['teacher'],
-    icon: ClipboardList,
+    icon: Megaphone,
     actionText: 'Duyuruları Yönet',
   },
   {
@@ -124,7 +131,7 @@ export const dashboardButtons: DashboardButton[] = [
     description: 'Dilekçe oluştur ve takip et',
     route: '/teacher/dilekce',
     roles: ['teacher'],
-    icon: FileText,
+    icon: MessageSquareWarning,
     actionText: 'Dilekçe Oluştur',
   },
 
@@ -135,7 +142,7 @@ export const dashboardButtons: DashboardButton[] = [
     description: 'Çocuğunun ödevlerini takip et',
     route: '/parent/odevler',
     roles: ['parent'],
-    icon: ClipboardList,
+    icon: NotebookText,
     actionText: 'Ödevleri Takip Et',
   },
   {
@@ -157,12 +164,21 @@ export const dashboardButtons: DashboardButton[] = [
     actionText: 'Notları Gör',
   },
   {
+    key: 'parent-evci',
+    title: 'Evci Bilgileri',
+    description: 'Çocuğunun evci bilgilerini görüntüle',
+    route: '/parent/evci',
+    roles: ['parent'],
+    icon: House,
+    actionText: 'Bilgileri Gör',
+  },
+  {
     key: 'announcements-parent',
     title: 'Duyurular',
     description: 'Tüm duyuruları görüntüle',
     route: '/parent/duyurular',
     roles: ['parent'],
-    icon: ClipboardList,
+    icon: Megaphone,
     actionText: 'Duyuruları Gör',
   },
   {
@@ -171,18 +187,10 @@ export const dashboardButtons: DashboardButton[] = [
     description: 'Dilekçe oluştur ve takip et',
     route: '/parent/dilekce',
     roles: ['parent'],
-    icon: FileText,
+    icon: MessageSquareWarning,
     actionText: 'Dilekçe Oluştur',
   },
-  {
-    key: 'parent-evci',
-    title: 'Evci Bilgileri',
-    description: 'Çocuğunun evci bilgilerini görüntüle',
-    route: '/parent/evci',
-    roles: ['parent'],
-    icon: ClipboardList,
-    actionText: 'Bilgileri Gör',
-  },
+
 
   // Admin & Hizmetli
   {
@@ -192,7 +200,7 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/admin/yemek-listesi',
     roles: ['admin', 'hizmetli'],
     crudRoles: ['admin', 'hizmetli'],
-    icon: BookOpen,
+    icon: Utensils,
     actionText: 'Menüyü Yönet',
   },
   // Belletmen Listesi (separate for admin and hizmetli)
@@ -223,7 +231,7 @@ export const dashboardButtons: DashboardButton[] = [
     description: 'Evci öğrencileri yönet',
     route: '/admin/evci-listesi',
     roles: ['admin'],
-    icon: ClipboardList,
+    icon: House,
     actionText: 'Listeyi Yönet',
   },
   {
@@ -232,7 +240,7 @@ export const dashboardButtons: DashboardButton[] = [
     description: 'Dilekçeleri incele ve yönet',
     route: '/admin/dilekce-listesi',
     roles: ['admin'],
-    icon: FileText,
+    icon: MessageSquareWarning,
     actionText: 'Dilekçeleri Yönet',
   },
   {
@@ -241,7 +249,7 @@ export const dashboardButtons: DashboardButton[] = [
     description: 'Tüm ödevleri görüntüle',
     route: '/admin/odevler',
     roles: ['admin'],
-    icon: ClipboardList,
+    icon: NotebookText,
     actionText: 'Ödevleri Gör',
   },
   {
@@ -250,7 +258,7 @@ export const dashboardButtons: DashboardButton[] = [
     description: 'Tüm duyuruları görüntüle',
     route: '/admin/duyurular',
     roles: ['admin'],
-    icon: ClipboardList,
+    icon: Megaphone,
     actionText: 'Duyuruları Gör',
   },
   {

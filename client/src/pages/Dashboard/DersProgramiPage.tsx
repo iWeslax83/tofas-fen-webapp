@@ -154,7 +154,6 @@ export default function DersProgramiPage() {
         <div className="page-header-content">
           <div className="page-title-section">
             <BookOpen className="page-icon" />
-            <Skeleton style={{ width: '200px', height: '32px' }} />
           </div>
         </div>
       </div>
@@ -212,7 +211,7 @@ export default function DersProgramiPage() {
             <div className="page-header-content">
               <div className="page-title-section">
                 <BookOpen className="page-icon" />
-                <h2 className="page-title-main">Ders Programı</h2>
+                <h1 className="page-title-main">Ders Programı</h1>
               </div>
             </div>
           </div>

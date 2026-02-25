@@ -94,12 +94,12 @@ const createSecureApiClient = (): AxiosInstance => {
 
       // Normalize error into a consistent shape for consumers
       const normalizeApiError = (err: unknown): ApiError => {
-        const normalized = new Error('Unknown API error') as ApiError;
+        const normalized = new Error('Bilinmeyen hata') as ApiError;
 
         // Axios errors
         if (axios.isAxiosError(err)) {
           const axErr = err as any;
-          normalized.message = axErr.message || 'API request failed';
+          normalized.message = axErr.message || 'API isteği başarısız';
           normalized.code = axErr.code || undefined;
           if (axErr.response) {
             normalized.response = { status: axErr.response.status, data: axErr.response.data };
@@ -184,13 +184,13 @@ const createSecureApiClient = (): AxiosInstance => {
         if (retryCount < maxRetries) {
           originalRequest._retryCount = retryCount + 1;
           const retryAfter = error.response.data?.retryAfter || Math.pow(2, retryCount);
-          console.warn(`Rate limited. Retry ${retryCount + 1}/${maxRetries} after ${retryAfter} seconds...`);
+          console.warn(`Çok fazla istek. ${retryCount + 1}/${maxRetries} yeniden deneme ${retryAfter} saniye sonra...`);
 
           // Exponential backoff
           await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
           return client(originalRequest);
         } else {
-          console.error('Max retries exceeded for rate limited request');
+          console.error('Oran limiti için maksimum yeniden deneme aşıldı');
           return Promise.reject(apiError);
         }
       }
@@ -253,33 +253,33 @@ export class SecureAPI {
       }
     } catch (error: unknown) {
 
-      // Use the existing error handling infrastructure
+      // Normalize and extract a human-friendly message
       const { extractError } = await import('./apiResponseHandler');
       const errorMessage = extractError(error);
 
-      // Check if the API response contains a specific error message
-      const apiError = error as ApiError;
-      if (apiError.response?.data?.error || apiError.response?.data?.message) {
-        const apiErrorMessage = apiError.response.data.error || apiError.response.data.message;
+      const apiError = error as ApiError & { response?: any };
+      const respData = apiError.response?.data;
+
+      // Prefer explicit message locations, and handle nested `error: { message: '...' }`
+      let apiErrorMessage: string | undefined;
+      if (respData) {
+        if (typeof respData.error === 'string') apiErrorMessage = respData.error;
+        else if (respData.error && typeof respData.error === 'object' && typeof respData.error.message === 'string') apiErrorMessage = respData.error.message;
+        else if (typeof respData.message === 'string') apiErrorMessage = respData.message;
+        else if (Array.isArray(respData.errors) && respData.errors.length > 0) apiErrorMessage = respData.errors.map((e: any) => (typeof e === 'string' ? e : e?.message)).filter(Boolean).join(', ');
+      }
+
+      if (apiErrorMessage) {
         throw new Error(apiErrorMessage);
       }
 
-      // Provide more specific error messages based on error type
+      // Handle common HTTP-based issues
       if (apiError.response?.status === 401) {
-        // Check if it's actually an authentication failure or something else
-        if (apiError.response?.data?.error === 'Invalid credentials' ||
-          apiError.response?.data?.message === 'Invalid credentials' ||
-          apiError.response?.data?.error === 'Invalid username or password' ||
-          apiError.response?.data?.message === 'Invalid username or password') {
-          throw new Error('Kullanıcı adı veya şifre hatalı');
-        } else {
-          // Generic 401 error - could be token issues, etc.
-          throw new Error(errorMessage || 'Yetkilendirme hatası. Lütfen tekrar deneyin.');
-        }
+        throw new Error(errorMessage || 'Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
       } else if (apiError.response?.status === 429) {
-        throw new Error('Çok fazla giriş denemesi. Lütfen daha sonra tekrar deneyin.');
+        throw new Error('Çok fazla deneme yapılmıştır. Lütfen daha sonra tekrar deneyin.');
       } else if (apiError.response?.status && apiError.response.status >= 500) {
-        throw new Error('Sunucu hatası. Lütfen daha sonra tekrar deneyin.');
+        throw new Error('Sunucu hatasından kaynaklandı. Lütfen daha sonra tekrar deneyin.');
       } else if (apiError.code === 'NETWORK_ERROR' || apiError.message?.includes('Network Error')) {
         throw new Error('Bağlantı hatası. İnternet bağlantınızı kontrol edin.');
       } else if (errorMessage && errorMessage !== 'Bilinmeyen hata') {
@@ -309,7 +309,7 @@ export class SecureAPI {
     // Use userId from data if provided, otherwise this will need to be handled by caller
     const userId = data.userId;
     if (!userId) {
-      throw new Error('userId is required for profile update');
+      throw new Error('Profil güncellemesi için kullanıcı ID gereklidir');
     }
     const { userId: _, ...updateData } = data;
     return apiClient.put(`/api/user/${userId}/update`, updateData);

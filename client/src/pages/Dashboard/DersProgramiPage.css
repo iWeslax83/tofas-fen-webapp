@@ -6,11 +6,10 @@
 /* Page Container */
 .ders-programi-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #6B0000 50%, #8B0000 75%, #1a1a1a 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 20s ease infinite;
+  background: transparent;
   padding: var(--space-6);
 }
+
 
 @keyframes gradientShift {
 
@@ -34,6 +33,7 @@
   border: 1px solid var(--gray-200);
   position: relative;
   overflow: hidden;
+  max-width: 1080px;
 }
 
 .page-header::before {
@@ -43,14 +43,14 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
 }
 
 .page-header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-6);
+  gap: var(--space-10);
 }
 
 .page-title-section {
@@ -62,8 +62,8 @@
 .page-icon {
   width: 48px;
   height: 48px;
-  color: var(--primary-red);
-  background: var(--primary-red-lighter);
+  color: var(--gray-700);
+  background: var(--gray-100);
   padding: var(--space-3);
   border-radius: var(--radius-xl);
 }
@@ -74,10 +74,6 @@
   font-weight: 700;
   color: var(--gray-900);
   margin: 0;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .page-actions {
@@ -110,7 +106,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, var(--primary-red-10), transparent);
+  background: linear-gradient(90deg, transparent, var(--gray-200), transparent);
   transition: left 0.5s;
 }
 
@@ -119,7 +115,7 @@
 }
 
 .print-button {
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
   color: var(--white);
   box-shadow: var(--shadow-md);
 }
@@ -132,7 +128,7 @@
 
 /* Ders Programı Container */
 .ders-programi-container {
-  width: 100%;
+  width: 90%;
 }
 
 .timetable-grid {
@@ -159,13 +155,13 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
 }
 
 .class-schedule-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-xl);
-  border-color: var(--primary-red-light);
+  border-color: var(--gray-400);
 }
 
 /* Class Header */
@@ -174,7 +170,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-6);
-  background: linear-gradient(135deg, var(--primary-red-lighter) 0%, var(--white) 100%);
+  background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
   border-bottom: 1px solid var(--gray-200);
 }
 
@@ -191,7 +187,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--primary-red);
+  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
   color: var(--white);
   box-shadow: var(--shadow-md);
 }
@@ -212,11 +208,11 @@
 
 .class-subtitle {
   font-size: 1rem;
-  color: var(--primary-red);
+  color: var(--gray-700);
   font-weight: 600;
   margin: 0;
   padding: var(--space-1) var(--space-3);
-  background: var(--white);
+  background: var(--gray-100);
   border-radius: var(--radius-lg);
   display: inline-block;
   box-shadow: var(--shadow-sm);
@@ -241,7 +237,7 @@
 }
 
 .print-btn {
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
   color: var(--white);
 }
 
@@ -274,11 +270,11 @@
 .day-column:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
-  border-color: var(--primary-red-light);
+  border-color: var(--gray-400);
 }
 
 .day-header {
-  background: var(--primary-red);
+  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
   color: var(--white);
   padding: var(--space-5);
   text-align: center;
@@ -326,7 +322,7 @@
 }
 
 .lesson-item:hover {
-  background: var(--primary-red-lighter);
+  background: var(--gray-100);
   transform: translateX(4px);
 }
 
@@ -345,7 +341,7 @@
   width: 32px;
   height: 32px;
   border-radius: var(--radius-lg);
-  background: var(--primary-red);
+  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
   color: var(--white);
   display: flex;
   align-items: center;
@@ -392,7 +388,7 @@
 }
 
 .update-info svg {
-  color: var(--primary-red);
+  color: var(--gray-600);
 }
 
 /* Empty State */
@@ -429,26 +425,6 @@
   color: var(--gray-600);
   margin: 0;
   line-height: 1.5;
-}
-
-/* Loading States */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  text-align: center;
-}
-
-.loading-spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid var(--gray-200);
-  border-top: 4px solid var(--primary-red);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: var(--space-4);
 }
 
 /* @keyframes spin moved to theme.css */
@@ -506,7 +482,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, var(--primary-red-10), transparent);
+  background: linear-gradient(90deg, transparent, var(--gray-200), transparent);
   transition: left 0.5s;
 }
 
@@ -515,7 +491,7 @@
 }
 
 .btn-primary {
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
   color: var(--white);
   box-shadow: var(--shadow-md);
 }
@@ -720,4 +696,5 @@
   .timetable-day {
     break-inside: avoid;
   }
+
 }

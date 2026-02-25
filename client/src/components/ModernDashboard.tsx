@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Users,
-  GraduationCap
+  GraduationCap,
+  House
 } from 'lucide-react';
 import { useUser, useIsLoading } from '../stores/authStore';
 import { SecureAPI } from '../utils/api';
@@ -259,8 +260,9 @@ const ModernDashboard: React.FC = () => {
 
   return (
     <ModernDashboardLayout pageTitle="Panel">
-      {/* Welcome Section */}
-      <section className="welcome-section">
+      <div className="modern-dashboard-home">
+        {/* Welcome Section */}
+        <section className="welcome-section">
         <div className="welcome-card">
           <div className="welcome-content">
             <div className="welcome-text">
@@ -277,21 +279,23 @@ const ModernDashboard: React.FC = () => {
               </p>
               <div className="welcome-badges">
                 <span className="badge role-badge">
-                  {userData.rol === 'admin' ? 'Yönetici' :
-                    userData.rol === 'teacher' ? 'Öğretmen' :
-                      userData.rol === 'student' ? 'Öğrenci' :
-                        userData.rol === 'parent' ? 'Veli' :
-                          userData.rol === 'hizmetli' ? 'Hizmetli' : 'Kullanıcı'}
+                  <GraduationCap className="badge-icon" />
+
+                  {userData.rol === 'admin' ? 'YÖNETİCİ' :
+                    userData.rol === 'teacher' ? 'ÖĞRETMEN' :
+                      userData.rol === 'student' ? 'ÖĞRENCİ' :
+                        userData.rol === 'parent' ? 'VELİ' :
+                          userData.rol === 'hizmetli' ? 'HİZMETLİ' : 'KULLANICI'}
                 </span>
                 {userData.rol === 'student' && userData.sinif && userData.sube && (
-                  <span className="badge class-badge">
-                    <GraduationCap className="badge-icon" />
+                  <span className="badge role-badge">
+                    <Users className="badge-icon" />
                     {userData.sinif}/{userData.sube}
                   </span>
                 )}
                 {userData.rol === 'student' && (
-                  <span className="badge class-badge">
-                    <Users className="badge-icon" />
+                  <span className="badge role-badge">
+                    <House className="badge-icon" />
                     {userData.pansiyon === true ? 'Yatılı' : 'Gündüzlü'}
                   </span>
                 )}
@@ -304,15 +308,11 @@ const ModernDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-      </section>
-      {/* Dashboard Grid */}
-      <section className="dashboard-grid-section">
-        <div className="section-header">
-          <h2>Hızlı İşlemler</h2>
-          <p>En sık kullandığınız özelliklere hızlı erişim</p>
-        </div>
+        </section>
+        {/* Dashboard Grid */}
+        <section className="dashboard-grid-section">
 
-        <div className="dashboard-grid">
+          <div className="dashboard-grid">
           {roleButtons.map((button) => (
             <div
               key={button.key}
@@ -331,14 +331,12 @@ const ModernDashboard: React.FC = () => {
                   onMouseEnter={(e) => {
                     const target = e.currentTarget;
                     target.style.transform = 'translateY(-4px)';
-                    target.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.12)';
-                    target.style.borderTop = `4px solid ${getHoverBorderColor(button.color || 'default')}`;
+                    target.style.boxShadow = `0 12px 24px rgba(0, 0, 0, 0.12), inset 0 3px 0 0 ${getHoverBorderColor(button.color || 'default')}`;
                   }}
                   onMouseLeave={(e) => {
                     const target = e.currentTarget;
                     target.style.transform = 'translateY(0)';
-                    target.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.08)';
-                    target.style.borderTop = `2px solid ${getCardBorderColor(button.color || 'default')}`;
+                    target.style.boxShadow = `0 8px 32px ${getCardShadowColor()}`;
                   }}
                 >
                   <div className="card-header">
@@ -366,7 +364,8 @@ const ModernDashboard: React.FC = () => {
           ))}
         </div>
 
-      </section>
+        </section>
+      </div>
     </ModernDashboardLayout>
   );
 };

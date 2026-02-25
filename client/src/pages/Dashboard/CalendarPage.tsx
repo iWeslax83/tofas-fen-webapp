@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Calendar as CalendarIcon, 
-  Plus, 
-  ChevronLeft, 
+import {
+  Calendar as CalendarIcon,
+  Plus,
+  ChevronLeft,
   ChevronRight,
   Clock,
   MapPin,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { SecureAPI } from '../../utils/api';
-import BackButton from '../../components/BackButton';
+
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import './CalendarPage.css';
 
@@ -129,7 +129,7 @@ export default function CalendarPage() {
       const calendarsResponse = await SecureAPI.get('/api/calendar/calendars');
       const calendarsData = (calendarsResponse as { data: Calendar[] }).data;
       setCalendars(calendarsData);
-      
+
       // Set visible calendars to all calendars initially
       const allCalendarIds = new Set(calendarsData.map((cal: Calendar) => cal.id));
       setVisibleCalendars(allCalendarIds as Set<string>);
@@ -212,10 +212,10 @@ export default function CalendarPage() {
 
   // Event filtering
   const filteredEvents = events.filter(event => {
-    const matchesSearch = !filters.search || 
+    const matchesSearch = !filters.search ||
       event.title.toLowerCase().includes(filters.search.toLowerCase()) ||
       event.description?.toLowerCase().includes(filters.search.toLowerCase());
-    
+
     const matchesType = !filters.type || event.type === filters.type;
     const matchesPriority = !filters.priority || event.priority === filters.priority;
     const matchesCalendar = !filters.calendarId || event.calendarId === filters.calendarId;
@@ -260,7 +260,7 @@ export default function CalendarPage() {
             const dayEvents = getEventsForDay(date);
             const isCurrentMonth = date.getMonth() === currentDate.getMonth();
             const isToday = date.toDateString() === new Date().toDateString();
-            
+
             return (
               <motion.div
                 key={index}
@@ -304,7 +304,7 @@ export default function CalendarPage() {
   const WeekView = () => {
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-    
+
     const days = [];
     for (let i = 0; i < 7; i++) {
       const date = new Date(startOfWeek);
@@ -373,11 +373,11 @@ export default function CalendarPage() {
     return (
       <div className="calendar-day-view">
         <div className="calendar-day-header">
-          <h2>{currentDate.toLocaleDateString('tr-TR', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+          <h2>{currentDate.toLocaleDateString('tr-TR', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
           })}</h2>
         </div>
         <div className="calendar-day-events">
@@ -511,7 +511,6 @@ export default function CalendarPage() {
       ]}
     >
       <div className="welcome-section">
-        <BackButton />
         <div className="welcome-card">
           <div className="welcome-content">
             <div className="welcome-text">
@@ -550,7 +549,7 @@ export default function CalendarPage() {
                   <span className="calendar-current-date">{formatDate(currentDate)}</span>
                 </div>
               </div>
-              
+
               <div className="calendar-header-right">
                 <div className="calendar-view-buttons">
                   {(['month', 'week', 'day', 'agenda'] as ViewType[]).map(view => (
@@ -569,58 +568,58 @@ export default function CalendarPage() {
               </div>
             </div>
 
-        {/* Filters */}
-        <div className="calendar-filters">
-          <div className="calendar-filters-left">
-            <div className="calendar-search">
-              <Search className="calendar-search-icon" />
-              <input
-                type="text"
-                placeholder="Etkinlik ara..."
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                className="calendar-search-input"
-              />
+            {/* Filters */}
+            <div className="calendar-filters">
+              <div className="calendar-filters-left">
+                <div className="calendar-search">
+                  <Search className="calendar-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Etkinlik ara..."
+                    value={filters.search}
+                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                    className="calendar-search-input"
+                  />
+                </div>
+
+                <select
+                  value={filters.type}
+                  onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                  className="calendar-filter-select"
+                >
+                  <option value="">Tüm Türler</option>
+                  <option value="class">Ders</option>
+                  <option value="exam">Sınav</option>
+                  <option value="activity">Etkinlik</option>
+                  <option value="meeting">Toplantı</option>
+                  <option value="holiday">Tatil</option>
+                  <option value="personal">Kişisel</option>
+                  <option value="reminder">Hatırlatma</option>
+                </select>
+
+                <select
+                  value={filters.priority}
+                  onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+                  className="calendar-filter-select"
+                >
+                  <option value="">Tüm Öncelikler</option>
+                  <option value="low">Düşük</option>
+                  <option value="medium">Orta</option>
+                  <option value="high">Yüksek</option>
+                  <option value="urgent">Acil</option>
+                </select>
+              </div>
+
+              <div className="calendar-filters-right">
+                <button
+                  onClick={() => setShowCalendarModal(true)}
+                  className="calendar-settings-button"
+                >
+                  <Settings className="icon-small" />
+                  Takvimler
+                </button>
+              </div>
             </div>
-            
-            <select
-              value={filters.type}
-              onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-              className="calendar-filter-select"
-            >
-              <option value="">Tüm Türler</option>
-              <option value="class">Ders</option>
-              <option value="exam">Sınav</option>
-              <option value="activity">Etkinlik</option>
-              <option value="meeting">Toplantı</option>
-              <option value="holiday">Tatil</option>
-              <option value="personal">Kişisel</option>
-              <option value="reminder">Hatırlatma</option>
-            </select>
-            
-            <select
-              value={filters.priority}
-              onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-              className="calendar-filter-select"
-            >
-              <option value="">Tüm Öncelikler</option>
-              <option value="low">Düşük</option>
-              <option value="medium">Orta</option>
-              <option value="high">Yüksek</option>
-              <option value="urgent">Acil</option>
-            </select>
-          </div>
-          
-          <div className="calendar-filters-right">
-            <button
-              onClick={() => setShowCalendarModal(true)}
-              className="calendar-settings-button"
-            >
-              <Settings className="icon-small" />
-              Takvimler
-            </button>
-          </div>
-        </div>
 
             {/* Calendar View */}
             <div className="calendar-view">

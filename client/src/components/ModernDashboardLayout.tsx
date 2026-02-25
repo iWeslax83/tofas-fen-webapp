@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import {
   Home,
   LogOut,
@@ -26,14 +26,10 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
   customHeaderActions
 }) => {
   const { user, logout } = useAuthContext();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 1024);
 
   if (!user) {
-    return (
-      <div className="centered-spinner">
-        <div className="spinner"></div>
-      </div>
-    );
+    return <Navigate to="/login" replace />;
   }
 
   // getRoleDisplayName function removed as not used
@@ -48,6 +44,12 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
   };
 
   const roleButtons = getRoleBasedButtons();
+
+  const closeSidebarOnMobile = () => {
+    if (window.innerWidth <= 1024) {
+      setSidebarOpen(false);
+    }
+  };
 
   return (
     <div className="modern-dashboard">
@@ -64,7 +66,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
         <aside className={`modern-sidebar ${sidebarOpen ? 'open' : ''}`}>
           <div className="sidebar-header">
             <div className="sidebar-logo">
-              <img src="/tofaslogo.png" alt="Tofaş Fen Lisesi" className="logo-image" />
+              <img src="/tofaslogo.png" alt="Tofaş Fen Lisesi" className="logo-image" width="100" height="100" />
               <div className="logo-text">
                 <h2>Tofaş Fen</h2>
                 <span>Lisesi</span>
@@ -75,7 +77,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
           <nav className="sidebar-nav">
             <div className="nav-section">
               <h3>Ana Menü</h3>
-              <Link to={`/${user?.rol || 'student'}`} className="nav-item">
+              <Link to={`/${user?.rol || 'student'}`} className="nav-item" onClick={closeSidebarOnMobile}>
                 <Home className="nav-icon" />
                 <span>Ana Sayfa</span>
               </Link>
@@ -86,7 +88,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
             <div className="nav-section">
               <h3>Hızlı Erişim</h3>
               {roleButtons.map((button) => (
-                <Link key={button.key} to={button.route} className="nav-item">
+                <Link key={button.key} to={button.route} className="nav-item" onClick={closeSidebarOnMobile}>
                   {button.icon && <button.icon className="nav-icon" />}
                   <span>{button.title}</span>
                 </Link>
@@ -102,6 +104,11 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
             </div>
           </nav>
         </aside>
+      )}
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay-mobile" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Main Content */}

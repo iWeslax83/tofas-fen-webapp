@@ -83,7 +83,11 @@ router.post('/login', (process.env.NODE_ENV === 'production' ? loginLimiter : (_
       return;
     }
 
-    // Generate JWT tokens
+    // Increment token version to invalidate old tokens
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await user.save();
+
+    // Generate JWT tokens (after incrementing tokenVersion so refresh token matches)
     const accessToken = generateAccessToken({
       userId: user.id,
       role: user.rol || '',
@@ -91,14 +95,8 @@ router.post('/login', (process.env.NODE_ENV === 'production' ? loginLimiter : (_
     });
     const refreshToken = generateRefreshToken({
       userId: user.id,
-      tokenVersion: user.tokenVersion || 0
+      tokenVersion: user.tokenVersion
     });
-
-    // JWT tabanlı kimlik doğrulama kullanıldığı için session yönetimi kaldırıldı
-
-    // Increment token version to invalidate old tokens
-    user.tokenVersion = (user.tokenVersion || 0) + 1;
-    await user.save();
 
     const response = {
       user: {
@@ -116,6 +114,20 @@ router.post('/login', (process.env.NODE_ENV === 'production' ? loginLimiter : (_
       expiresIn: 900, // 15 minutes
       refreshExpiresIn: 604800 // 7 days
     };
+
+    // For parents, fetch children's class levels
+    if (user.rol === 'parent' && user.childId && user.childId.length > 0) {
+      const children = await User.find({ id: { $in: user.childId } }).select('sinif sube adSoyad').lean();
+      const childrenSiniflar = children
+        .map(child => ({
+          sinif: child.sinif,
+          sube: child.sube,
+          adSoyad: child.adSoyad
+        }))
+        .filter((child) => child.sinif); // Remove entries without sinif
+      (response.user as any).childrenSiniflar = childrenSiniflar;
+      (response.user as any).childId = user.childId;
+    }
 
     const endTime = Date.now();
     logger.info('User logged in successfully', {
@@ -255,7 +267,7 @@ router.get('/me', async (req, res) => {
       return;
     }
 
-    const response = {
+    const response: any = {
       id: user.id,
       adSoyad: user.adSoyad,
       rol: user.rol,
@@ -265,6 +277,21 @@ router.get('/me', async (req, res) => {
       pansiyon: user.pansiyon,
       email: user.email
     };
+
+    // For parents, fetch children's class levels
+    if (user.rol === 'parent' && user.childId && user.childId.length > 0) {
+      const children = await User.find({ id: { $in: user.childId } }).select('sinif sube adSoyad').lean();
+      const childrenSiniflar = children
+        .map(child => ({
+          sinif: child.sinif,
+          sube: child.sube,
+          adSoyad: child.adSoyad
+        }))
+        .filter((child) => child.sinif); // Remove entries without sinif
+      response.childrenSiniflar = childrenSiniflar;
+      response.childId = user.childId;
+    }
+
     res.json(response);
   } catch (error) {
     logger.error('ME endpoint error', { error });

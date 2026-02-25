@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { FileText, Filter, Search } from 'lucide-react';
+import { FileText, Filter, Search, User, Mail, Calendar, Tag } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-import BackButton from '../../components/BackButton';
+import './AdminDilekceListPage.css';
+
 import axios from 'axios';
 
 interface Dilekce {
@@ -94,8 +95,8 @@ const AdminDilekceListPage: React.FC = () => {
     if (filterStatus !== 'all' && dilekce.status !== filterStatus) return false;
     if (filterType !== 'all' && dilekce.type !== filterType) return false;
     if (filterPriority !== 'all' && dilekce.priority !== filterPriority) return false;
-    if (searchTerm && !dilekce.subject.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !dilekce.userName.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    if (searchTerm && !dilekce.subject.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !dilekce.userName.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     return true;
   });
 
@@ -104,13 +105,13 @@ const AdminDilekceListPage: React.FC = () => {
       pending: { bg: '#dbeafe', color: '#1e40af', label: 'Beklemede' },
       in_review: { bg: '#fef3c7', color: '#92400e', label: 'İnceleniyor' },
       approved: { bg: '#d1fae5', color: '#065f46', label: 'Onaylandı' },
-      rejected: { bg: '#fee2e2', color: '#991b1b', label: 'Reddedildi' },
+      rejected: { bg: '#f3f4f6', color: '#6b7280', label: 'Reddedildi' },
       completed: { bg: '#d1fae5', color: '#065f46', label: 'Tamamlandı' }
     };
 
     const config = statusConfig[dilekce.status] || statusConfig.pending;
     return (
-      <span style={{
+      <span className="badge" style={{
         padding: '4px 12px',
         backgroundColor: config.bg,
         color: config.color,
@@ -127,7 +128,7 @@ const AdminDilekceListPage: React.FC = () => {
     const priorityConfig: Record<string, { bg: string; color: string; label: string }> = {
       low: { bg: '#f3f4f6', color: '#6b7280', label: 'Düşük' },
       medium: { bg: '#fef3c7', color: '#92400e', label: 'Orta' },
-      high: { bg: '#fee2e2', color: '#991b1b', label: 'Yüksek' }
+      high: { bg: '#fef3c7', color: '#92400e', label: 'Yüksek' }
     };
 
     const config = priorityConfig[priority] || priorityConfig.medium;
@@ -148,8 +149,11 @@ const AdminDilekceListPage: React.FC = () => {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Dilekçe Yönetimi" breadcrumb={[{ label: 'Ana Sayfa', path: '/admin' }, { label: 'Dilekçe Yönetimi' }]}>
-        <div className="centered-spinner">
-          <div className="spinner"></div>
+        <div className="admin-dilekce-page">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Dilekçeler yükleniyor...</p>
+          </div>
         </div>
       </ModernDashboardLayout>
     );
@@ -163,30 +167,37 @@ const AdminDilekceListPage: React.FC = () => {
         { label: 'Dilekçe Yönetimi' }
       ]}
     >
-      <BackButton />
-      
-      <div className="dashboard-content" style={{ padding: '20px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '20px' }}>Dilekçe Yönetimi</h2>
+      <div className="admin-dilekce-page">
+        <div className="page-header">
+          <div className="page-header-content">
+            <div className="page-title-section">
+              <FileText className="page-icon" />
+              <h1 className="page-title-main">Dilekçe Yönetimi</h1>
+            </div>
+          </div>
+        </div>
 
         {/* Filters */}
-        <div style={{ marginBottom: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Search className="w-4 h-4 text-gray-500" />
+        <div className="filter-section">
+          <div className="filter-group">
+            <Search className="filter-icon" />
             <input
               type="text"
               placeholder="Konu veya kullanıcı ara..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', width: '250px' }}
+              className="filter-input"
+              style={{ width: '250px' }}
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Filter className="w-4 h-4 text-gray-500" />
+          <div className="filter-group">
+            <Filter className="filter-icon" />
+            <label className="filter-label">Durum:</label>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }}
+              className="filter-select"
             >
               <option value="all">Tüm Durumlar</option>
               <option value="pending">Beklemede</option>
@@ -197,247 +208,200 @@ const AdminDilekceListPage: React.FC = () => {
             </select>
           </div>
 
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-          >
-            <option value="all">Tüm Türler</option>
-            <option value="izin">İzin</option>
-            <option value="rapor">Rapor</option>
-            <option value="nakil">Nakil</option>
-            <option value="diger">Diğer</option>
-          </select>
+          <div className="filter-group">
+            <Filter className="filter-icon" />
+            <label className="filter-label">Tür:</label>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">Tüm Türler</option>
+              <option value="izin">İzin</option>
+              <option value="rapor">Rapor</option>
+              <option value="nakil">Nakil</option>
+              <option value="diger">Diğer</option>
+            </select>
+          </div>
 
-          <select
-            value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value)}
-            style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-          >
-            <option value="all">Tüm Öncelikler</option>
-            <option value="low">Düşük</option>
-            <option value="medium">Orta</option>
-            <option value="high">Yüksek</option>
-          </select>
+          <div className="filter-group">
+            <Filter className="filter-icon" />
+            <label className="filter-label">Öncelik:</label>
+            <select
+              value={filterPriority}
+              onChange={(e) => setFilterPriority(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">Tüm Öncelikler</option>
+              <option value="low">Düşük</option>
+              <option value="medium">Orta</option>
+              <option value="high">Yüksek</option>
+            </select>
+          </div>
         </div>
 
-        {filteredDilekceler.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-            <FileText className="w-12 h-12" style={{ margin: '0 auto 10px', color: '#9ca3af' }} />
-            <p style={{ color: '#6b7280', fontSize: '16px' }}>Dilekçe bulunamadı</p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            {filteredDilekceler.map(dilekce => (
-              <div
-                key={dilekce._id}
-                style={{
-                  padding: '20px',
-                  backgroundColor: '#fff',
-                  borderRadius: '8px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  border: '1px solid #e5e7eb'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '15px' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                      <h3 style={{ fontSize: '18px', fontWeight: '600', margin: 0 }}>{dilekce.subject}</h3>
-                      {getPriorityBadge(dilekce.priority)}
+        <div className="requests-container">
+          {filteredDilekceler.length === 0 ? (
+            <div className="empty-state">
+              <FileText className="empty-icon" />
+              <h3>Dilekçe bulunamadı</h3>
+              <p>Filtrelenen kriterlere uygun dilekçe başvurusu bulunamadı.</p>
+            </div>
+          ) : (
+            <div className="requests-grid">
+              {filteredDilekceler.map(dilekce => (
+                <div key={dilekce._id} className="request-card">
+                  <div className="card-header">
+                    <div className="card-header-left">
+                      <h3 className="card-title">
+                        {dilekce.subject}
+                        {getPriorityBadge(dilekce.priority)}
+                      </h3>
                     </div>
-                    <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '10px' }}>
-                      <strong>Gönderen:</strong> {dilekce.userName} ({dilekce.userRole === 'student' ? 'Öğrenci' : dilekce.userRole === 'teacher' ? 'Öğretmen' : 'Veli'})
-                    </p>
-                    <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '10px' }}>
-                      <strong>Tür:</strong> {dilekce.type === 'izin' ? 'İzin' : dilekce.type === 'rapor' ? 'Rapor' : dilekce.type === 'nakil' ? 'Nakil' : 'Diğer'}
-                      {dilekce.category && ` - ${dilekce.category}`}
-                    </p>
-                    <p style={{ fontSize: '14px', color: '#374151', lineHeight: '1.6', marginBottom: '10px', maxHeight: '100px', overflow: 'auto' }}>
-                      {dilekce.content}
-                    </p>
-                    {dilekce.attachments && dilekce.attachments.length > 0 && (
-                      <div style={{ marginTop: '10px' }}>
-                        <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '5px' }}>Ek Dosyalar:</p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                          {dilekce.attachments.map((file, index) => (
-                            <a
-                              key={index}
-                              href={file}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                padding: '4px 8px',
-                                backgroundColor: '#f3f4f6',
-                                borderRadius: '4px',
-                                fontSize: '12px',
-                                color: '#3b82f6',
-                                textDecoration: 'none'
-                              }}
-                            >
-                              <FileText className="w-3 h-3" />
-                              Dosya {index + 1}
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '10px' }}>
-                      {new Date(dilekce.createdAt).toLocaleDateString('tr-TR', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
+                    <div className="card-header-right">
+                      {getStatusBadge(dilekce)}
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end', gap: '10px' }}>
-                    {getStatusBadge(dilekce)}
-                    {dilekce.status === 'pending' && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '120px' }}>
-                        <button
-                          onClick={() => {
-                            const note = window.prompt('İnceleme notu (opsiyonel):');
-                            handleStatusUpdate(dilekce._id, 'in_review', note || undefined);
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#f59e0b',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            fontWeight: '500'
-                          }}
-                        >
-                          İncelemeye Al
-                        </button>
-                        <button
-                          onClick={() => {
-                            const note = window.prompt('Onay notu (opsiyonel):');
-                            handleStatusUpdate(dilekce._id, 'approved', note || undefined);
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#10b981',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            fontWeight: '500'
-                          }}
-                        >
-                          Onayla
-                        </button>
-                        <button
-                          onClick={() => {
-                            const note = window.prompt('Red nedeni (opsiyonel):');
-                            handleStatusUpdate(dilekce._id, 'rejected', note || undefined);
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#ef4444',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            fontWeight: '500'
-                          }}
-                        >
-                          Reddet
-                        </button>
+
+                  <div className="card-content">
+                    <div className="request-info">
+                      <div className="info-item">
+                        <User className="info-icon" />
+                        <span className="info-label">Gönderen:</span>
+                        <span className="info-value">
+                          {dilekce.userName} ({dilekce.userRole === 'student' ? 'Öğrenci' : dilekce.userRole === 'teacher' ? 'Öğretmen' : 'Veli'})
+                        </span>
+                      </div>
+                      <div className="info-item">
+                        <Tag className="info-icon" />
+                        <span className="info-label">Tür:</span>
+                        <span className="info-value">
+                          {dilekce.type === 'izin' ? 'İzin' : dilekce.type === 'rapor' ? 'Rapor' : dilekce.type === 'nakil' ? 'Nakil' : 'Diğer'}
+                          {dilekce.category && ` - ${dilekce.category}`}
+                        </span>
+                      </div>
+                      <div className="info-item">
+                        <Calendar className="info-icon" />
+                        <span className="info-label">Tarih:</span>
+                        <span className="info-value">
+                          {new Date(dilekce.createdAt).toLocaleDateString('tr-TR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="content-box">
+                      {dilekce.content}
+                    </div>
+
+                    {dilekce.attachments && dilekce.attachments.length > 0 && (
+                      <div className="attachment-list">
+                        {dilekce.attachments.map((file, index) => (
+                          <a
+                            key={index}
+                            href={file}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="attachment-link"
+                          >
+                            <Mail className="w-3 h-3" />
+                            Dosya {index + 1}
+                          </a>
+                        ))}
                       </div>
                     )}
-                    {dilekce.status === 'in_review' && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '120px' }}>
+
+                    {dilekce.reviewNote && (
+                      <div className="note-box">
+                        <strong>İnceleme Notu:</strong> {dilekce.reviewNote}
+                      </div>
+                    )}
+
+                    {dilekce.response && (
+                      <div className="response-box">
+                        <strong>Yanıt:</strong> {dilekce.response}
+                      </div>
+                    )}
+
+                    <div className="action-buttons">
+                      {dilekce.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => {
+                              const note = window.prompt('İnceleme notu (opsiyonel):');
+                              handleStatusUpdate(dilekce._id, 'in_review', note || undefined);
+                            }}
+                            className="btn btn-warning"
+                          >
+                            İncelemeye Al
+                          </button>
+                          <button
+                            onClick={() => {
+                              const note = window.prompt('Onay notu (opsiyonel):');
+                              handleStatusUpdate(dilekce._id, 'approved', note || undefined);
+                            }}
+                            className="btn btn-success"
+                          >
+                            Onayla
+                          </button>
+                          <button
+                            onClick={() => {
+                              const note = window.prompt('Red nedeni (opsiyonel):');
+                              handleStatusUpdate(dilekce._id, 'rejected', note || undefined);
+                            }}
+                            className="btn btn-danger"
+                          >
+                            Reddet
+                          </button>
+                        </>
+                      )}
+                      {dilekce.status === 'in_review' && (
+                        <>
+                          <button
+                            onClick={() => {
+                              const response = window.prompt('Yanıt (opsiyonel):');
+                              handleStatusUpdate(dilekce._id, 'completed', undefined, response || undefined);
+                            }}
+                            className="btn btn-success"
+                          >
+                            Tamamla
+                          </button>
+                          <button
+                            onClick={() => {
+                              const note = window.prompt('Red nedeni (opsiyonel):');
+                              handleStatusUpdate(dilekce._id, 'rejected', note || undefined);
+                            }}
+                            className="btn btn-danger"
+                          >
+                            Reddet
+                          </button>
+                        </>
+                      )}
+                      {dilekce.status === 'approved' && (
                         <button
                           onClick={() => {
-                            const response = window.prompt('Yanıt (opsiyonel):');
-                            handleStatusUpdate(dilekce._id, 'completed', undefined, response || undefined);
+                            const response = window.prompt('Yanıt:');
+                            if (response) {
+                              handleStatusUpdate(dilekce._id, 'completed', undefined, response || undefined);
+                            }
                           }}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#10b981',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            fontWeight: '500'
-                          }}
+                          className="btn btn-success"
                         >
                           Tamamla
                         </button>
-                        <button
-                          onClick={() => {
-                            const note = window.prompt('Red nedeni (opsiyonel):');
-                            handleStatusUpdate(dilekce._id, 'rejected', note || undefined);
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#ef4444',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            fontWeight: '500'
-                          }}
-                        >
-                          Reddet
-                        </button>
-                      </div>
-                    )}
-                    {dilekce.status === 'approved' && (
-                      <button
-                        onClick={() => {
-                          const response = window.prompt('Yanıt:');
-                          if (response) {
-                            handleStatusUpdate(dilekce._id, 'completed', undefined, response || undefined);
-                          }
-                        }}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: '#10b981',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          fontWeight: '500'
-                        }}
-                      >
-                        Tamamla
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
-
-                {dilekce.reviewNote && (
-                  <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f3f4f6', borderRadius: '6px' }}>
-                    <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>
-                      <strong>İnceleme Notu:</strong> {dilekce.reviewNote}
-                    </p>
-                  </div>
-                )}
-
-                {dilekce.response && (
-                  <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f0f9ff', borderRadius: '6px' }}>
-                    <p style={{ fontSize: '12px', color: '#0369a1', margin: 0 }}>
-                      <strong>Yanıt:</strong> {dilekce.response}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </ModernDashboardLayout>
   );

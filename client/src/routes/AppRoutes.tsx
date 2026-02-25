@@ -110,8 +110,7 @@ export default function AppRoutes() {
         <Route path="/admin/odevler" element={<OdevlerPage />} />
         <Route path="/teacher/odevler" element={<OdevlerPage />} />
         <Route path="/parent/odevler" element={<OdevlerPage />} />
-        <Route path="/parent/odevler" element={<OdevlerPage />} />
-        {/* <Route path="/student/odevler" element={<OdevlerPage />} /> */}
+        <Route path="/student/odevler" element={<OdevlerPage />} />
 
         <Route path="/teacher/ders-programi" element={<DersProgramiPage />} />
         <Route path="/parent/ders-programi" element={<DersProgramiPage />} />

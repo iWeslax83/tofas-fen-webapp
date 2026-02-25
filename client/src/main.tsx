@@ -67,7 +67,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
         });
       })
       .catch((error) => {
-        console.error('[SW] Service Worker registration failed:', error);
+        console.error('[SW] Service Worker kaydı başarısız:', error);
       });
   });
 }

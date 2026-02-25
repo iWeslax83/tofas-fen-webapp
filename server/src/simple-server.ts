@@ -13,7 +13,7 @@ import { securityHeaders } from './middleware/security';
 // import { cacheMiddleware } from './middleware/cache';
 // import { performanceMiddleware } from './middleware/performance';
 // import { monitoringMiddleware } from './middleware/monitoring';
-// import { v1Routes } from './routes/v1';
+import { v1Routes } from './routes/v1';
 // import { seedDatabase } from './seed/seedDatabase';
 // import { startScheduledTasks } from './services/scheduledTasks';
 
@@ -41,7 +41,7 @@ app.use(compression());
 const limiter = rateLimit({
   windowMs: config.RATE_LIMIT_WINDOW_MS,
   max: config.RATE_LIMIT_MAX_REQUESTS,
-  message: { error: 'Too many requests from this IP, please try again later.' },
+  message: { error: 'Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -66,31 +66,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Health check
 // app.get('/health', healthCheck);
 
-// API routes with versioning
-// app.use('/api/v1', v1Routes);
-
-// Legacy API routes for backward compatibility
-// app.use('/api/auth', v1Routes);
-// app.use('/api/users', v1Routes);
-// app.use('/api/notes', v1Routes);
-// app.use('/api/announcements', v1Routes);
-// app.use('/api/homeworks', v1Routes);
-// app.use('/api/schedules', v1Routes);
-// app.use('/api/clubs', v1Routes);
-// app.use('/api/notifications', v1Routes);
-// app.use('/api/requests', v1Routes);
-// app.use('/api/meal-lists', v1Routes);
-// app.use('/api/supervisor-lists', v1Routes);
-// app.use('/api/maintenance-requests', v1Routes);
-// app.use('/api/evci-requests', v1Routes);
-// app.use('/api/analytics', v1Routes);
-// app.use('/api/reports', v1Routes);
-// app.use('/api/calendars', v1Routes);
-// app.use('/api/files', v1Routes);
-// app.use('/api/communication', v1Routes);
-// app.use('/api/performance', v1Routes);
-// app.use('/api/monitoring', v1Routes);
-// app.use('/api/dashboard', v1Routes);
+// API routes
+app.use('/api', v1Routes);
 
 // Error handling
 app.use(globalErrorHandler);
@@ -122,26 +99,26 @@ const startServer = async () => {
       console.log(`💾 Database: ${config.MONGODB_URI}`);
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error('❌ Sunucu başlatılamadı:', error);
     process.exit(1);
   }
 };
 
-// Handle uncaught exceptions
+// Yakalanamayan istisnaları yönet
 process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
+  console.error('❌ Yakalanamayan İstisnai:', error);
   process.exit(1);
 });
 
-// Handle unhandled promise rejections
+// Yönetilmeyen promise reddemelerini yönet
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('❌ Yönetilmeyen Reddedilme:', promise, 'neden:', reason);
   process.exit(1);
 });
 
-// Graceful shutdown
+// Nazik kapat
 process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully');
+  console.log('🛑 SIGTERM alındı, detaylı şekilde kapatılıyor');
   process.exit(0);
 });
 

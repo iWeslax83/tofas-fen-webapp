@@ -2,16 +2,16 @@
 import { useState } from 'react';
 import { useAuthContext } from '../../contexts/AuthContext';
 // import NotificationBell from '../../components/NotificationBell'; // Not used
-import BackButton from '../../components/BackButton';
+
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-import { 
-  HelpCircle, 
-  BookOpen, 
-  Users, 
-  Settings, 
-  MessageCircle, 
-  Phone, 
-  Mail, 
+import {
+  HelpCircle,
+  BookOpen,
+  Users,
+  Settings,
+  MessageCircle,
+  Phone,
+  Mail,
   FileText,
   ChevronDown,
   ChevronUp,
@@ -107,7 +107,7 @@ export default function HelpPage() {
   const filteredFAQs = faqData.filter(faq => {
     const matchesCategory = selectedCategory === 'all' || faq.category === selectedCategory;
     const matchesSearch = faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         faq.answer.toLowerCase().includes(searchTerm.toLowerCase());
+      faq.answer.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -141,7 +141,6 @@ export default function HelpPage() {
       ]}
     >
       <div className="welcome-section">
-        <BackButton />
         <div className="welcome-card">
           <div className="welcome-content">
             <div className="welcome-text">
@@ -176,7 +175,7 @@ export default function HelpPage() {
               <span>Kategoriler</span>
             </h2>
             <div className="help-categories-grid">
-              <div 
+              <div
                 className={`category-card ${selectedCategory === 'all' ? 'active' : ''}`}
                 onClick={() => setSelectedCategory('all')}
               >
@@ -187,7 +186,7 @@ export default function HelpPage() {
               {categories.map((category) => {
                 const IconComponent = category.icon;
                 return (
-                  <div 
+                  <div
                     key={category.key}
                     className={`category-card ${selectedCategory === category.key ? 'active' : ''}`}
                     onClick={() => setSelectedCategory(category.key)}
@@ -207,7 +206,7 @@ export default function HelpPage() {
               <MessageCircle />
               <span>Sık Sorulan Sorular ({filteredFAQs.length})</span>
             </h2>
-            
+
             <div className="faq-list">
               {filteredFAQs.map((faq) => (
                 <div
@@ -225,7 +224,7 @@ export default function HelpPage() {
                       <ChevronDown className="faq-arrow" />
                     )}
                   </button>
-                  
+
                   {expandedItems.has(faq.id) && (
                     <div className="faq-answer">
                       <p className="faq-answer-text">{faq.answer}</p>
@@ -242,7 +241,7 @@ export default function HelpPage() {
               <Phone />
               <span>İletişim Bilgileri</span>
             </h2>
-            
+
             <div className="contact-info">
               {contactInfo.map((contact) => (
                 <div key={contact.title} className="contact-item">

@@ -42,21 +42,21 @@ export class AppError extends Error {
   /**
    * Create an authentication error
    */
-  static unauthorized(message: string = 'Unauthorized', path?: string, method?: string, userId?: string): AppError {
+  static unauthorized(message: string = 'Yetkisiz erişim', path?: string, method?: string, userId?: string): AppError {
     return new AppError(message, 401, true, path, method, userId);
   }
 
   /**
    * Create an authorization error
    */
-  static forbidden(message: string = 'Forbidden', path?: string, method?: string, userId?: string): AppError {
+  static forbidden(message: string = 'Erişim yasaklı', path?: string, method?: string, userId?: string): AppError {
     return new AppError(message, 403, true, path, method, userId);
   }
 
   /**
    * Create a not found error
    */
-  static notFound(message: string = 'Resource not found', path?: string, method?: string, userId?: string): AppError {
+  static notFound(message: string = 'Kaynak bulunamadı', path?: string, method?: string, userId?: string): AppError {
     return new AppError(message, 404, true, path, method, userId);
   }
 
@@ -70,21 +70,21 @@ export class AppError extends Error {
   /**
    * Create a rate limit error
    */
-  static tooManyRequests(message: string = 'Too many requests', path?: string, method?: string, userId?: string): AppError {
+  static tooManyRequests(message: string = 'Çok fazla istek', path?: string, method?: string, userId?: string): AppError {
     return new AppError(message, 429, true, path, method, userId);
   }
 
   /**
    * Create an internal server error
    */
-  static internal(message: string = 'Internal server error', path?: string, method?: string, userId?: string): AppError {
+  static internal(message: string = 'Sunucu dahili hatası', path?: string, method?: string, userId?: string): AppError {
     return new AppError(message, 500, true, path, method, userId);
   }
 
   /**
    * Create a service unavailable error
    */
-  static serviceUnavailable(message: string = 'Service unavailable', path?: string, method?: string, userId?: string): AppError {
+  static serviceUnavailable(message: string = 'Hizmet külünü bulunmayan', path?: string, method?: string, userId?: string): AppError {
     return new AppError(message, 503, true, path, method, userId);
   }
 

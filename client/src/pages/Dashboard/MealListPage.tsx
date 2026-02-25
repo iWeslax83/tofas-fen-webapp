@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
-import { Calendar, Download, FileText, Loader2, RefreshCw, Upload } from 'lucide-react'; // ArrowLeft removed
+import { Utensils, Calendar, Download, FileText, Loader2, RefreshCw, Upload } from 'lucide-react'; // ArrowLeft removed
 import { useAuthContext } from "../../contexts/AuthContext";
 import { DormitoryService } from "../../utils/apiService";
 import { toast } from "sonner";
 // import { Link } from "react-router-dom"; // Not used
-import BackButton from "../../components/BackButton";
+
 import ModernDashboardLayout from "../../components/ModernDashboardLayout";
 // import { 
 //   SkeletonTable, // Not used
@@ -36,7 +36,7 @@ export default function MealListPage() {
   const [uploading, setUploading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [userRole, setUserRole] = useState<string>("");
-  
+
   const isAdmin = userRole === "admin";
   const isHizmetli = userRole === "hizmetli";
   const isAdminOrHizmetli = isAdmin || isHizmetli;
@@ -51,14 +51,14 @@ export default function MealListPage() {
   // Fetch meal lists with retry mechanism
   const fetchMealLists = useCallback(async (retryCount = 0) => {
     const maxRetries = 3;
-    
+
     try {
       setError(null);
-      const { data, error } = await DormitoryService.getMeals({ 
-        month: selectedMonth, 
-        year: selectedYear 
+      const { data, error } = await DormitoryService.getMeals({
+        month: selectedMonth,
+        year: selectedYear
       });
-      
+
       if (error) {
         if (retryCount < maxRetries) {
           console.log(`Retrying meal list fetch (${retryCount + 1}/${maxRetries})...`);
@@ -71,20 +71,20 @@ export default function MealListPage() {
       }
     } catch (err: unknown) {
       console.error('Error fetching meal lists:', err);
-      
+
       if ((err as any)?.response?.status === 429 && retryCount < maxRetries) {
         const retryAfter = (err as any)?.response?.data?.retryAfter || Math.pow(2, retryCount);
         console.log(`Rate limited. Retrying after ${retryAfter} seconds...`);
         setTimeout(() => fetchMealLists(retryCount + 1), retryAfter * 1000);
         return;
       }
-      
+
       if (retryCount < maxRetries) {
         console.log(`Retrying meal list fetch due to error (${retryCount + 1}/${maxRetries})...`);
         setTimeout(() => fetchMealLists(retryCount + 1), Math.pow(2, retryCount) * 1000);
         return;
       }
-      
+
       setError('Yemek listeleri yüklenirken bir hata oluştu.');
       toast.error('Yemek listeleri yüklenirken bir hata oluştu.');
     } finally {
@@ -137,9 +137,9 @@ export default function MealListPage() {
       setUploading(false);
     }
   };
-  
+
   // Skeleton component for meal list - removed as not used
-  
+
   const handleDownload = async (id: string) => {
     try {
       const response = await DormitoryService.downloadMeal(id);
@@ -199,8 +199,8 @@ export default function MealListPage() {
       >
         <div className="error-message">
           <p>{error}</p>
-          <button 
-            className="btn-blue" 
+          <button
+            className="btn-blue"
             onClick={handleRefresh}
             disabled={isRefreshing}
           >
@@ -215,22 +215,26 @@ export default function MealListPage() {
       </ModernDashboardLayout>
     );
   }
+  const breadcrumb = [
+    { label: 'Ana Sayfa', path: `/${user?.rol || 'student'}` },
+    { label: 'Yemek Listesi' }
+  ];
+
 
   return (
     <ModernDashboardLayout
       pageTitle="Yemek Listesi"
-      breadcrumb={[
-        { label: 'Ana Sayfa', path: '/admin' },
-        { label: 'Yemek Listesi' }
-      ]}
+      breadcrumb={breadcrumb}
     >
-      <div className="welcome-section">
-        <BackButton />
-        <div className="welcome-card">
-          <div className="welcome-content">
-            <div className="welcome-text">
-              <h2>Yemek Listesi</h2>
-              <p>Pansiyon yemek listelerini görüntüleyin ve yönetin</p>
+      <div className="meal-list-page">
+        <div className="page-header">
+          <div className="page-header-content">
+            <div className="page-title-section">
+              <Utensils className="page-icon" />
+              <div className="title-wrapper">
+                <h1 className="page-title-main">Yemek Listesi</h1>
+                <p className="page-subtitle">Pansiyon yemek listelerini görüntüleyin ve yönetin</p>
+              </div>
             </div>
             <div className="welcome-actions">
               <button
@@ -244,11 +248,13 @@ export default function MealListPage() {
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="dashboard-content">
+        <div className="dashboard-content">
           <div className="filters-section">
-            <h3 className="filters-title">Filtreler</h3>
+            <h3 className="filters-title">
+              <Calendar className="icon-small" />
+              Filtreler
+            </h3>
             <form className="filters-form">
               <div className="form-group">
                 <label htmlFor="month-filter" className="form-label">Ay:</label>
@@ -273,7 +279,7 @@ export default function MealListPage() {
                   <option value="12">Aralık</option>
                 </select>
               </div>
-              
+
               <div className="form-group">
                 <label htmlFor="year-filter" className="form-label">Yıl:</label>
                 <select
@@ -287,160 +293,160 @@ export default function MealListPage() {
                   ))}
                 </select>
               </div>
-              
-              <div className="filter-actions">
-                <button
-                  onClick={handleRefresh}
-                  className="refresh-button"
-                  disabled={isRefreshing}
-                >
-                  <RefreshCw className={`icon-small ${isRefreshing ? 'animate-spin' : ''}`} />
-                  Yenile
-                </button>
-              </div>
-            </form>
-          </div>
 
-        {isAdminOrHizmetli && (
-          <div className="upload-section">
-            <h3 className="upload-title">
-                              <Upload className="icon-medium" />
-              Yeni Yemek Listesi Yükle
-            </h3>
-            <form onSubmit={handleFileUpload} className="upload-form">
-              <div className="form-group">
-                <label htmlFor="month-upload" className="form-label">Ay:</label>
-                <select
-                  id="month-upload"
-                  value={uploadMonth}
-                  onChange={(e) => setUploadMonth(e.target.value)}
-                  className="form-select"
-                  required
-                >
-                  <option value="">Ay Seçin</option>
-                  <option value="01">Ocak</option>
-                  <option value="02">Şubat</option>
-                  <option value="03">Mart</option>
-                  <option value="04">Nisan</option>
-                  <option value="05">Mayıs</option>
-                  <option value="06">Haziran</option>
-                  <option value="07">Temmuz</option>
-                  <option value="08">Ağustos</option>
-                  <option value="09">Eylül</option>
-                  <option value="10">Ekim</option>
-                  <option value="11">Kasım</option>
-                  <option value="12">Aralık</option>
-                </select>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="year-upload" className="form-label">Yıl:</label>
-                <select
-                  id="year-upload"
-                  value={uploadYear}
-                  onChange={(e) => setUploadYear(Number(e.target.value))}
-                  className="form-select"
-                  required
-                >
-                  {Array.from({ length: 3 }, (_, i) => new Date().getFullYear() + i).map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="file-upload" className="form-label">Dosya:</label>
-                <div className="file-input-container">
-                  <input
-                    id="file-upload"
-                    type="file"
-                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                    className="file-input"
-                    accept=".pdf,.doc,.docx"
-                    required
-                  />
-                  <label htmlFor="file-upload" className="file-input-label">
-                                      <Upload className="icon-small" />
-                  Dosya Seç
-                  </label>
-                </div>
-              </div>
-              
               <button
-                type="submit"
-                className="upload-button"
-                disabled={uploading}
+                type="button"
+                onClick={handleRefresh}
+                className="refresh-button"
+                disabled={isRefreshing}
               >
-                {uploading ? (
-                  <>
-                                      <Loader2 className="icon-small animate-spin" />
-                  Yükleniyor...
-                  </>
-                ) : (
-                  <>
-                                      <Upload className="icon-small" />
-                  Yemek Listesi Yükle
-                  </>
-                )}
+                <RefreshCw className={`icon-small ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>Filtrele</span>
               </button>
             </form>
           </div>
-        )}
 
-        <div className="meal-lists-section">
-          <h3 className="section-title">
-            <FileText className="icon-medium" />
-            Mevcut Yemek Listeleri
-          </h3>
-          
-          {mealLists.length === 0 ? (
-            <div className="empty-state">
-              <FileText className="empty-icon" />
-              <h3>Henüz yemek listesi yok</h3>
-              <p>Yemek listeleri burada görünecektir.</p>
-            </div>
-          ) : (
-            <div className="dashboard-grid">
-              {mealLists.map((mealList) => (
-                <div key={mealList._id} className="dashboard-card">
-                  <div className="card-header">
-                    <div className="card-icon">
-                      <FileText className="icon" />
-                    </div>
-                    <div className="card-badge">
-                      <span>{getMonthName(mealList.month)} {mealList.year}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="card-content">
-                    <h3 className="card-title">
-                      {getMonthName(mealList.month)} {mealList.year}
-                    </h3>
-                    <p className="card-subtitle">
-                      Yüklenen: {formatDate(mealList.uploadedAt)}
-                    </p>
-                    <div className="card-meta">
-                      <div className="meta-item">
-                        <Calendar className="meta-icon" />
-                        <span>Yükleyen: {mealList.uploadedBy}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="card-footer">
-                      <button
-                        onClick={() => handleDownload(mealList._id)}
-                        className="btn-blue"
-                        title="İndir"
-                      >
-                        <Download className="icon" />
-                        <span>İndir</span>
-                      </button>
-                    </div>
+          {isAdminOrHizmetli && (
+            <div className="upload-section">
+              <h3 className="upload-title">
+                <Upload className="icon-medium" />
+                Yeni Yemek Listesi Yükle
+              </h3>
+              <form onSubmit={handleFileUpload} className="upload-form">
+                <div className="form-group">
+                  <label htmlFor="month-upload" className="form-label">Ay:</label>
+                  <select
+                    id="month-upload"
+                    value={uploadMonth}
+                    onChange={(e) => setUploadMonth(e.target.value)}
+                    className="form-select"
+                    required
+                  >
+                    <option value="">Ay Seçin</option>
+                    <option value="01">Ocak</option>
+                    <option value="02">Şubat</option>
+                    <option value="03">Mart</option>
+                    <option value="04">Nisan</option>
+                    <option value="05">Mayıs</option>
+                    <option value="06">Haziran</option>
+                    <option value="07">Temmuz</option>
+                    <option value="08">Ağustos</option>
+                    <option value="09">Eylül</option>
+                    <option value="10">Ekim</option>
+                    <option value="11">Kasım</option>
+                    <option value="12">Aralık</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="year-upload" className="form-label">Yıl:</label>
+                  <select
+                    id="year-upload"
+                    value={uploadYear}
+                    onChange={(e) => setUploadYear(Number(e.target.value))}
+                    className="form-select"
+                    required
+                  >
+                    {Array.from({ length: 3 }, (_, i) => new Date().getFullYear() + i).map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="file-upload" className="form-label">Dosya:</label>
+                  <div className="file-input-container">
+                    <input
+                      id="file-upload"
+                      type="file"
+                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                      className="file-input"
+                      accept=".pdf,.doc,.docx"
+                      required
+                    />
+                    <label htmlFor="file-upload" className="file-input-label">
+                      <Upload className="icon-small" />
+                      {selectedFile ? selectedFile.name : 'Dosya Seç'}
+                    </label>
                   </div>
                 </div>
-              ))}
+
+                <button
+                  type="submit"
+                  className="upload-button"
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="icon-small animate-spin" />
+                      Yükleniyor...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="icon-small" />
+                      Yükle
+                    </>
+                  )}
+                </button>
+              </form>
             </div>
           )}
+
+          <div className="meal-lists-section">
+            {mealLists.length === 0 ? (
+              <div className="empty-state">
+                <FileText className="empty-icon" />
+                <h3>Henüz yemek listesi yok</h3>
+                <p>Yemek listeleri burada görünecektir.</p>
+              </div>
+            ) : (
+              <div className="dashboard-grid">
+                {mealLists.map((mealList) => (
+                  <div key={mealList._id} className="dashboard-card">
+                    <div className="card-header">
+                      <div className="card-icon">
+                        <FileText className="icon" size={24} />
+                      </div>
+                      <div className="card-badge">
+                        <span>{getMonthName(mealList.month)} {mealList.year}</span>
+                      </div>
+                    </div>
+
+                    <div className="card-content">
+                      <h3 className="card-title">
+                        {getMonthName(mealList.month)} {mealList.year} Yemek Listesi
+                      </h3>
+                      <p className="card-subtitle">
+                        Pansiyon yemek listesi belgesi
+                      </p>
+
+                      <div className="card-meta">
+                        <div className="meta-item">
+                          <Calendar className="meta-icon" />
+                          <span>Yükleme: {formatDate(mealList.uploadedAt)}</span>
+                        </div>
+                        <div className="meta-item">
+                          <FileText className="meta-icon" />
+                          <span>Gönderen: {mealList.uploadedBy}</span>
+                        </div>
+                      </div>
+
+                      <div className="card-footer">
+                        <button
+                          onClick={() => handleDownload(mealList._id)}
+                          className="btn-blue"
+                          title="İndir"
+                        >
+                          <Download className="icon" />
+                          <span>Listeyi İndir</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </ModernDashboardLayout>

@@ -5,6 +5,7 @@ import fs from 'fs';
 import { authenticateJWT } from '../utils/jwt';
 import { requireRole } from '../middleware/auth';
 import { Dilekce } from '../models/Dilekce';
+import { User } from '../models/User';
 import { AuditLogService } from '../services/auditLogService';
 import { asyncHandler } from '../middleware/errorHandler';
 
@@ -59,9 +60,16 @@ router.post(
       return;
     }
 
-    const user = (req as any).user;
+    const user = req.user;
     if (!user) {
       res.status(401).json({ error: 'Kullanıcı bilgisi bulunamadı' });
+      return;
+    }
+
+    // Load full user info to get name and role
+    const dbUser = await User.findOne({ id: user.userId }).lean();
+    if (!dbUser) {
+      res.status(401).json({ error: 'Kullanıcı bulunamadı' });
       return;
     }
 
@@ -71,9 +79,10 @@ router.post(
     ) || [];
 
     const dilekce = new Dilekce({
-      userId: user.id,
-      userName: user.adSoyad,
-      userRole: user.rol,
+      userId: user.userId,
+      // Tip denetiminde esneklik için any cast kullanıyoruz
+      userName: (dbUser as any).adSoyad,
+      userRole: (dbUser as any).rol,
       type,
       subject,
       content,
@@ -112,18 +121,44 @@ router.get(
       status,
       priority,
       page = '1',
-      limit = '50'
+      limit = '50',
+      includeChildren
     } = req.query;
 
-    const user = (req as any).user;
+    const authUser = (req as any).user as {
+      userId: string;
+      rol: 'student' | 'teacher' | 'parent' | 'admin' | string;
+    };
+
     const query: any = {};
 
     // Role-based filtering
-    if (user.rol === 'student' || user.rol === 'teacher' || user.rol === 'parent') {
-      // Users can only see their own dilekçe
-      query.userId = user.id;
+    if (authUser.rol === 'student' || authUser.rol === 'teacher') {
+      // Students and teachers can only see their own dilekçeler
+      query.userId = authUser.userId;
+    } else if (authUser.rol === 'parent') {
+      // Parents can see their own dilekçeler, optionally including their children
+      const parentId = authUser.userId;
+
+      if (includeChildren === 'true') {
+        const children = await User.find({
+          parentId,
+          rol: 'student',
+          isActive: true
+        })
+          .select('id')
+          .lean() as any[];
+
+        const childIds = children.map((child) => child.id);
+
+        // Include both parent's and children's dilekçeler
+        query.userId = { $in: [parentId, ...childIds] };
+      } else {
+        // Default: only parent's own dilekçeler
+        query.userId = parentId;
+      }
     } else if (userId) {
-      // Admins can filter by user
+      // Admins (and other privileged roles) can filter by arbitrary user
       query.userId = userId;
     }
 

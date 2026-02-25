@@ -118,7 +118,7 @@ jobs:
               const totalKB = (totalSize / 1024).toFixed(2);
               console.log(\`Total bundle size: \${totalKB} KB\`);
               if (totalSize > 500 * 1024) {
-                console.error('ERROR: Bundle size exceeds 500KB limit!');
+                console.error('HATA: Bundle boyutu 500KB sınırını aşıyor!');
                 process.exit(1);
               }
             }
