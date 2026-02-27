@@ -1,6 +1,15 @@
-import React, { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import React, { lazy, Suspense, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../stores/authStore';
+
+// Scroll to top on route changes
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 
 // Loading component for Suspense
 const LoadingSpinner = () => (
@@ -41,7 +50,7 @@ const ParentEvciPage = lazy(() => import('../pages/Dashboard/ParentEvciPage'));
 const AdminEvciListPage = lazy(() => import('../pages/Dashboard/AdminEvciListPage'));
 
 // Settings and Admin Pages
-// const SettingsPage = lazy(() => import('../pages/Dashboard/SettingsPage'));
+const SettingsPage = lazy(() => import('../pages/Dashboard/SettingsPage'));
 const SenkronizasyonPage = lazy(() => import('../pages/Dashboard/SenkronizasyonPage'));
 // const ReportManagement = lazy(() => import('../pages/Dashboard/ReportManagement'));
 const CalendarPage = lazy(() => import('../pages/Dashboard/CalendarPage'));
@@ -56,54 +65,42 @@ const FormUXDemoPage = lazy(() => import('../pages/Dashboard/FormUXDemoPage'));
 const NavigationDemoPage = lazy(() => import('../pages/Dashboard/NavigationDemoPage'));
 const AccessibilityDemoPage = lazy(() => import('../pages/Dashboard/AccessibilityDemoPage'));
 
-// Root redirect component - Optimized to prevent unnecessary renders
+// Root redirect component
 function RootRedirect() {
-  const hasNavigated = React.useRef(false);
-  const navigate = useNavigate();
   const { user, isLoading } = useAuth();
 
-  // Use useEffect to handle navigation after render - only once
-  React.useEffect(() => {
-    if (isLoading || hasNavigated.current) return;
-
-    if (user?.rol) {
-      // If user is logged in, redirect to their dashboard
-      hasNavigated.current = true;
-      navigate(`/${user.rol}`, { replace: true });
-    } else {
-      // If not logged in, redirect to login
-      hasNavigated.current = true;
-      navigate('/login', { replace: true });
-    }
-  }, [user, navigate, isLoading]);
-
-  // Show loading while checking auth
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  return <LoadingSpinner />;
+  if (user?.rol) {
+    return <Navigate to={`/${user.rol}`} replace />;
+  }
+
+  return <Navigate to="/login" replace />;
 }
 
 export default function AppRoutes() {
   return (
-    <Suspense fallback={<LoadingSpinner />}>
-      <Routes>
+    <>
+      <ScrollToTop />
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
         {/* Root and Auth Routes */}
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Main Dashboard Routes */}
-        <Route path="/admin" element={<ModernDashboard />} />
+        <Route path="/admin" element={<ModernDashboard key="admin" />} />
         <Route path="/dashboard/admin" element={<Navigate to="/admin" replace />} />
-        <Route path="/teacher" element={<ModernDashboard />} />
+        <Route path="/teacher" element={<ModernDashboard key="teacher" />} />
         <Route path="/dashboard/teacher" element={<Navigate to="/teacher" replace />} />
-        <Route path="/parent" element={<ModernDashboard />} />
+        <Route path="/parent" element={<ModernDashboard key="parent" />} />
         <Route path="/dashboard/parent" element={<Navigate to="/parent" replace />} />
-        <Route path="/student" element={<ModernDashboard />} />
+        <Route path="/student" element={<ModernDashboard key="student" />} />
         <Route path="/dashboard/student" element={<Navigate to="/student" replace />} />
-        <Route path="/hizmetli" element={<ModernDashboard />} />
+        <Route path="/hizmetli" element={<ModernDashboard key="hizmetli" />} />
         <Route path="/dashboard/hizmetli" element={<Navigate to="/hizmetli" replace />} />
 
         {/* Academic Routes */}
@@ -121,8 +118,6 @@ export default function AppRoutes() {
         <Route path="/teacher/notlar" element={<NotlarPage />} />
 
         <Route path="/admin/file-import" element={<NotEkleme />} />
-        <Route path="/teacher/file-import" element={<NotEkleme />} />
-
         <Route path="/teacher/file-import" element={<NotEkleme />} />
 
         {/* <Route path="/teacher/ogrencilerim" element={<MyStudentsPage />} /> */}
@@ -164,7 +159,6 @@ export default function AppRoutes() {
 
         {/* Settings and Admin Routes */}
         <Route path="/admin/senkronizasyon" element={<SenkronizasyonPage />} />
-        <Route path="/admin/senkronizasyon" element={<SenkronizasyonPage />} />
         {/* <Route path="/admin/reports" element={<ReportManagement />} /> */}
         {/* <Route path="/teacher/reports" element={<ReportManagement />} /> */}
 
@@ -196,6 +190,13 @@ export default function AppRoutes() {
         <Route path="/student/performans" element={<PerformancePage />} />
         <Route path="/parent/performans" element={<PerformancePage />} />
         <Route path="/hizmetli/performans" element={<PerformancePage />} />
+
+        {/* Settings Routes */}
+        <Route path="/admin/ayarlar" element={<SettingsPage />} />
+        <Route path="/teacher/ayarlar" element={<SettingsPage />} />
+        <Route path="/student/ayarlar" element={<SettingsPage />} />
+        <Route path="/parent/ayarlar" element={<SettingsPage />} />
+        <Route path="/hizmetli/ayarlar" element={<SettingsPage />} />
 
         {/* Demo Routes */}
         <Route path="/admin/skeleton-demo" element={<SkeletonDemoPage />} />
@@ -230,7 +231,8 @@ export default function AppRoutes() {
 
         {/* 404 Route */}
         <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </Suspense>
+        </Routes>
+      </Suspense>
+    </>
   );
 }
