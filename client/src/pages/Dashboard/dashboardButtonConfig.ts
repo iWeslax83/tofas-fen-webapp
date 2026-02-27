@@ -1,5 +1,5 @@
 // Central config for dashboard panel buttons, routes, roles, and permissions
-import { BookOpen, ClipboardList, Utensils, Wrench, House, MessageSquareWarning, Megaphone, NotebookText } from 'lucide-react';
+import { BookOpen, ClipboardList, Utensils, Wrench, House, MessageSquareWarning, Megaphone, NotebookText, Settings } from 'lucide-react';
 
 export type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli';
 
@@ -273,4 +273,51 @@ export const dashboardButtons: DashboardButton[] = [
   // Analytics ve Raporlama - REMOVED
 
   // Dosya Yönetimi Sistemi (Sadece Admin) - REMOVED
+
+  // Settings - All roles
+  {
+    key: 'settings-student',
+    title: 'Ayarlar',
+    description: 'Profil ve uygulama ayarları',
+    route: '/student/ayarlar',
+    roles: ['student'],
+    icon: Settings,
+    actionText: 'Ayarları Aç',
+  },
+  {
+    key: 'settings-teacher',
+    title: 'Ayarlar',
+    description: 'Profil ve uygulama ayarları',
+    route: '/teacher/ayarlar',
+    roles: ['teacher'],
+    icon: Settings,
+    actionText: 'Ayarları Aç',
+  },
+  {
+    key: 'settings-parent',
+    title: 'Ayarlar',
+    description: 'Profil ve uygulama ayarları',
+    route: '/parent/ayarlar',
+    roles: ['parent'],
+    icon: Settings,
+    actionText: 'Ayarları Aç',
+  },
+  {
+    key: 'settings-admin',
+    title: 'Ayarlar',
+    description: 'Profil ve uygulama ayarları',
+    route: '/admin/ayarlar',
+    roles: ['admin'],
+    icon: Settings,
+    actionText: 'Ayarları Aç',
+  },
+  {
+    key: 'settings-hizmetli',
+    title: 'Ayarlar',
+    description: 'Profil ve uygulama ayarları',
+    route: '/hizmetli/ayarlar',
+    roles: ['hizmetli'],
+    icon: Settings,
+    actionText: 'Ayarları Aç',
+  },
 ];

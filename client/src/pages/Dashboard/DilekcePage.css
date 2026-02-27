@@ -27,7 +27,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+        background: #0f766e;
     }
 
     .page-header-content {
@@ -79,7 +79,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+        background: #0f766e;
     }
 
     .form-header {
@@ -238,7 +238,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+        background: #0f766e;
     }
 
     .request-card:hover {
@@ -293,7 +293,7 @@
         font-weight: 600;
         color: var(--gray-700);
         font-size: 0.875rem;
-        min-width: 60px;
+        min-width: auto;
     }
 
     .info-value {
@@ -423,7 +423,7 @@
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+        background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
         color: var(--white);
         box-shadow: var(--shadow-sm);
     }

@@ -1,0 +1,221 @@
+/* SettingsPage Styles */
+
+@import url('../../styles/theme.css');
+
+.settings-page {
+  min-height: 100vh;
+  background: transparent;
+  padding: var(--space-6);
+  max-width: 800px;
+}
+
+.settings-page .page-header {
+  background: var(--white);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--gray-200);
+  position: relative;
+  overflow: hidden;
+}
+
+.settings-page .page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #0f766e;
+}
+
+.settings-page .page-header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.settings-page .page-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--gray-700);
+  background: var(--gray-100);
+  padding: var(--space-3);
+  border-radius: var(--radius-xl);
+}
+
+.settings-page .page-title-main {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+/* Settings Sections */
+.settings-section {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+}
+
+.settings-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0 0 var(--space-4) 0;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--gray-100);
+}
+
+/* Profile Info Grid */
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.profile-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.profile-info-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.profile-info-value {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  padding: var(--space-3) var(--space-4);
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+}
+
+/* Settings Row */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) 0;
+}
+
+.settings-row + .settings-row {
+  border-top: 1px solid var(--gray-100);
+}
+
+.settings-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-row-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--gray-800);
+}
+
+.settings-row-desc {
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--gray-300);
+  border-radius: 24px;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--white);
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #0f766e;
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+}
+
+/* Logout Button */
+.settings-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-logout-btn:hover {
+  background: #fecaca;
+  border-color: #fca5a5;
+}
+
+/* App Version */
+.app-version {
+  margin-top: var(--space-4);
+  font-size: 0.8125rem;
+  color: var(--gray-400);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .settings-page {
+    padding: var(--space-4);
+  }
+
+  .profile-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-page .page-title-main {
+    font-size: 1.5rem;
+  }
+}

@@ -7,7 +7,8 @@ import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import './DersProgramiPage.css';
 import {
   BookOpen,
-  Clock
+  Clock,
+  ChevronDown
 } from 'lucide-react';
 import scheduleData from './DersProgramlari.json';
 import { toast } from 'sonner';
@@ -46,7 +47,7 @@ export default function DersProgramiPage() {
   const [classes, setClasses] = useState<{ sinif: string; sube: string; label: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({}); // Not used
+  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
 
   // Safely access the schedule data with type checking
   const getClassSchedule = (sinif: string, sube: string): DaySchedule | null => {
@@ -130,16 +131,12 @@ export default function DersProgramiPage() {
     }
   }, [authUser, fetchUserData]);
 
-  // const toggleDay = (day: string) => { // Not used
-  //   setExpandedDays(prev => ({
-  //     ...prev,
-  //     [day]: !prev[day]
-  //   }));
-  // };
-
-  // const handlePrint = () => { // Not used
-  //   window.print();
-  // };
+  const toggleDay = (day: string) => {
+    setExpandedDays(prev => ({
+      ...prev,
+      [day]: !prev[day]
+    }));
+  };
 
 
   const breadcrumb = [
@@ -247,25 +244,31 @@ export default function DersProgramiPage() {
                         {getDayNames().map(day => {
                           if (!schedule[day]) return null;
                           const lessons = schedule[day] || [];
+                          const isExpanded = !!expandedDays[day];
                           return (
-                            <div key={day} className="day-column">
-                              <div className="day-header">
-                                <h4 className="day-name">{day}</h4>
-                                <span className="lesson-count">{lessons.length} ders</span>
+                            <div key={day} className={`day-column ${isExpanded ? 'expanded' : ''}`}>
+                              <div className="day-header" onClick={() => toggleDay(day)}>
+                                <div className="day-header-content">
+                                  <h4 className="day-name">{day}</h4>
+                                  <span className="lesson-count">{lessons.length} ders</span>
+                                </div>
+                                <ChevronDown size={20} className={`day-chevron ${isExpanded ? 'rotated' : ''}`} />
                               </div>
-                              <div className="lessons-list">
-                                {lessons.map((lesson: string, i: number) => (
-                                  <div key={i} className="lesson-item">
-                                    <div className="lesson-time">
-                                      <span className="time-number">{i + 1}</span>
-                                      <span className="time-text">Ders</span>
+                              {isExpanded && (
+                                <div className="lessons-list">
+                                  {lessons.map((lesson: string, i: number) => (
+                                    <div key={i} className="lesson-item">
+                                      <div className="lesson-time">
+                                        <span className="time-number">{i + 1}</span>
+                                        <span className="time-text">Ders</span>
+                                      </div>
+                                      <div className="lesson-content">
+                                        <span className="lesson-name">{lesson}</span>
+                                      </div>
                                     </div>
-                                    <div className="lesson-content">
-                                      <span className="lesson-name">{lesson}</span>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           );
                         })}

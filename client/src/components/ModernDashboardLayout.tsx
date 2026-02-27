@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import {
   Home,
-  LogOut,
+  Settings,
   Menu,
   X
 } from 'lucide-react';
@@ -25,7 +25,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
   showSidebar = true,
   customHeaderActions
 }) => {
-  const { user, logout } = useAuthContext();
+  const { user } = useAuthContext();
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 1024);
 
   if (!user) {
@@ -66,10 +66,10 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
         <aside className={`modern-sidebar ${sidebarOpen ? 'open' : ''}`}>
           <div className="sidebar-header">
             <div className="sidebar-logo">
-              <img src="/tofaslogo.png" alt="Tofaş Fen Lisesi" className="logo-image" width="100" height="100" />
+              <img src="/tofaslogo.png" alt="Tofaş Fen Lisesi" className="logo-image" width="36" height="36" />
               <div className="logo-text">
-                <h2>Tofaş Fen</h2>
-                <span>Lisesi</span>
+                <h2>Tofaş Fen Lisesi</h2>
+                <span>Bilgi Sistemi</span>
               </div>
             </div>
           </div>
@@ -97,10 +97,10 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
 
             <div className="nav-section">
               <h3>Sistem</h3>
-              <button onClick={logout} className="nav-item logout">
-                <LogOut className="nav-icon" />
-                <span>Çıkış Yap</span>
-              </button>
+              <Link to={`/${user.rol}/ayarlar`} className="nav-item" onClick={closeSidebarOnMobile}>
+                <Settings className="nav-icon" />
+                <span>Ayarlar</span>
+              </Link>
             </div>
           </nav>
         </aside>

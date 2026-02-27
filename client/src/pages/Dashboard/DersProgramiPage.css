@@ -43,7 +43,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+  background: #0f766e;
 }
 
 .page-header-content {
@@ -115,7 +115,7 @@
 }
 
 .print-button {
-  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
   color: var(--white);
   box-shadow: var(--shadow-md);
 }
@@ -155,7 +155,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+  background: #0f766e;
 }
 
 .class-schedule-card:hover {
@@ -187,7 +187,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
   color: var(--white);
   box-shadow: var(--shadow-md);
 }
@@ -237,7 +237,7 @@
 }
 
 .print-btn {
-  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
   color: var(--white);
 }
 
@@ -274,23 +274,35 @@
 }
 
 .day-header {
-  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
   color: var(--white);
   padding: var(--space-5);
-  text-align: center;
   position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  transition: opacity 0.15s ease;
 }
 
-.day-header::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 3px;
-  background: var(--white);
-  border-radius: var(--radius-sm);
+.day-header:hover {
+  opacity: 0.92;
+}
+
+.day-header-content {
+  text-align: center;
+  flex: 1;
+}
+
+.day-chevron {
+  color: var(--white);
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.day-chevron.rotated {
+  transform: rotate(180deg);
 }
 
 .day-name {
@@ -341,7 +353,7 @@
   width: 32px;
   height: 32px;
   border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
   color: var(--white);
   display: flex;
   align-items: center;
@@ -491,7 +503,7 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
   color: var(--white);
   box-shadow: var(--shadow-md);
 }

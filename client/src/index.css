@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=optional');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&subset=latin,latin-ext&display=swap');
 @import url('./styles/theme.css');
 @import url('./styles/welcome-badges-override.css');
 
@@ -12,90 +12,13 @@
   animation: float-logo 3.5s ease-in-out infinite;
 }
 
-@keyframes blob1 {
-
-  0%,
-  100% {
-    transform: scale(1) translateY(0);
-  }
-
-  50% {
-    transform: scale(1.2) translateY(-20px);
-  }
-}
-
-@keyframes blob2 {
-
-  0%,
-  100% {
-    transform: scale(1) translateY(0);
-  }
-
-  50% {
-    transform: scale(1.15) translateY(30px);
-  }
-}
-
-@keyframes blob3 {
-
-  0%,
-  100% {
-    transform: scale(1) translateX(0);
-  }
-
-  50% {
-    transform: scale(1.1) translateX(40px);
-  }
-}
-
-.animate-blob1 {
-  animation: blob1 12s ease-in-out infinite;
-}
-
-.animate-blob2 {
-  animation: blob2 14s ease-in-out infinite;
-}
-
-.animate-blob3 {
-  animation: blob3 16s ease-in-out infinite;
-}
-
-.lux-shadow {
-  box-shadow: 0 8px 48px 0 rgba(80, 40, 120, 0.12), 0 1.5px 8px 0 rgba(31, 41, 55, 0.10);
-}
-
-.border-glow {
-  box-shadow: 0 0 0 4px rgba(55, 65, 81, 0.15), 0 8px 32px 0 rgba(31, 41, 55, 0.13);
-}
-
-/* Premium button animated glowing border */
-@keyframes premium-btn-glow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(55, 65, 81, 0.15), 0 8px 32px 0 rgba(31, 41, 55, 0.13);
-  }
-
-  50% {
-    box-shadow: 0 0 16px 4px rgba(55, 65, 81, 0.25), 0 16px 48px 0 rgba(31, 41, 55, 0.18);
-  }
-}
-
-.animate-premium-btn {
-  animation: premium-btn-glow 2.4s ease-in-out infinite;
-}
-
 /* Error Pages */
 .not-found-page {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #1f2937 50%, var(--primary-red-dark) 75%, #1a1a1a 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 20s ease infinite;
+  background: #f8fafc;
 }
-
-/* gradientShift moved to theme.css */
 
 .error-card {
   max-width: 600px;
@@ -147,23 +70,14 @@
 .student-panel {
   min-height: 100vh;
   width: 100%;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #1f2937 50%, var(--primary-red-dark) 75%, #1a1a1a 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 20s ease infinite;
+  background: #f8fafc;
   display: flex;
   flex-direction: column;
   position: relative;
 }
 
 .student-panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(26, 26, 26, 0.7);
-  z-index: 0;
+  display: none;
 }
 
 .panel-header {
@@ -296,15 +210,14 @@
 }
 
 .dashboard-button {
-  background: rgba(26, 26, 26, 0.7);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(55, 65, 81, 0.3);
-  border-radius: 16px;
+  background: #FFFFFF;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
   padding: 2rem;
   text-decoration: none;
-  color: #f0f0f0;
+  color: #0f172a;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
 }
@@ -314,18 +227,17 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
+  width: 4px;
   height: 100%;
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.2) 0%, rgba(31, 41, 55, 0.3) 100%);
+  background: #0f766e;
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
 .dashboard-button:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(55, 65, 81, 0.4);
-  border-color: var(--primary-red-dark);
-  background: rgba(26, 26, 26, 0.85);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
 }
 
 .dashboard-button:hover::before {
@@ -395,23 +307,14 @@
 .admin-panel {
   min-height: 100vh;
   width: 100%;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #1f2937 50%, var(--primary-red-dark) 75%, #1a1a1a 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 20s ease infinite;
+  background: #f8fafc;
   display: flex;
   flex-direction: column;
   position: relative;
 }
 
 .admin-panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(26, 26, 26, 0.7);
-  z-index: 0;
+  display: none;
 }
 
 .admin-header {
@@ -2116,18 +2019,14 @@
 }
 
 .admin-panel .dashboard-card {
-  background: rgba(26, 26, 26, 0.7);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  box-shadow:
-    0 4px 6px rgba(0, 0, 0, 0.3),
-    0 10px 15px rgba(0, 0, 0, 0.2),
-    0 20px 25px rgba(55, 65, 81, 0.3);
-  border: 2px solid rgba(55, 65, 81, 0.3);
+  background: #FFFFFF;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
   padding: 28px;
   text-decoration: none;
-  color: #f0f0f0;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  color: #0f172a;
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
   min-height: 140px;
@@ -2180,30 +2079,27 @@
   }
 }
 
-/* Material Design 3 Elevation on Hover */
+/* Hover */
 .admin-panel .dashboard-card:hover {
-  background: rgba(26, 26, 26, 0.85);
-  box-shadow:
-    0 8px 12px rgba(55, 65, 81, 0.3),
-    0 20px 30px rgba(55, 65, 81, 0.4),
-    0 40px 50px rgba(55, 65, 81, 0.5);
-  border-color: var(--primary-red-dark);
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
 }
 
-/* Glassmorphism Shimmer Effect */
 .admin-panel .dashboard-card::before {
   content: '';
   position: absolute;
   top: 0;
-  left: -100%;
-  width: 100%;
+  left: 0;
+  width: 4px;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(55, 65, 81, 0.05), transparent);
-  transition: left 0.8s;
+  background: #0f766e;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .admin-panel .dashboard-card:hover::before {
-  left: 100%;
+  opacity: 1;
 }
 
 /* Panel Card Styles handled by centralized patterns in theme.css */
@@ -2875,18 +2771,14 @@
 }
 
 .parent-panel .dashboard-card {
-  background: rgba(26, 26, 26, 0.7);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  box-shadow:
-    0 4px 6px rgba(0, 0, 0, 0.3),
-    0 10px 15px rgba(0, 0, 0, 0.2),
-    0 20px 25px rgba(55, 65, 81, 0.3);
-  border: 2px solid rgba(55, 65, 81, 0.3);
+  background: #FFFFFF;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
   padding: 28px;
   text-decoration: none;
-  color: #f0f0f0;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  color: #0f172a;
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
   min-height: 140px;
@@ -2915,31 +2807,27 @@
   animation-delay: 1.8s;
 }
 
-/* Material Design 3 Elevation on Hover */
+/* Hover */
 .parent-panel .dashboard-card:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow:
-    0 8px 12px rgba(55, 65, 81, 0.3),
-    0 20px 30px rgba(55, 65, 81, 0.4),
-    0 40px 50px rgba(55, 65, 81, 0.5);
-  border-color: var(--primary-red-dark);
-  background: rgba(26, 26, 26, 0.85);
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
 }
 
-/* Glassmorphism Shimmer Effect */
 .parent-panel .dashboard-card::before {
   content: '';
   position: absolute;
   top: 0;
-  left: -100%;
-  width: 100%;
+  left: 0;
+  width: 4px;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(55, 65, 81, 0.05), transparent);
-  transition: left 0.8s;
+  background: #0f766e;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .parent-panel .dashboard-card:hover::before {
-  left: 100%;
+  opacity: 1;
 }
 
 /* Card Layout */
