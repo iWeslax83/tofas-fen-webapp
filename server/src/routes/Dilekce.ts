@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
+import fs from 'fs/promises';
+import fsSync from 'fs';
 import { authenticateJWT } from '../utils/jwt';
 import { requireRole } from '../middleware/auth';
 import { Dilekce } from '../models/Dilekce';
@@ -15,8 +16,8 @@ const router = Router();
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = path.join(__dirname, '../../uploads/dilekce');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    if (!fsSync.existsSync(uploadDir)) {
+      fsSync.mkdirSync(uploadDir, { recursive: true });
     }
     cb(null, uploadDir);
   },
@@ -350,14 +351,16 @@ router.delete(
       return;
     }
 
-    // Delete attached files
+    // Delete attached files (async to avoid blocking event loop)
     if (dilekce.attachments && dilekce.attachments.length > 0) {
-      dilekce.attachments.forEach(filePath => {
+      await Promise.all(dilekce.attachments.map(async (filePath: string) => {
         const fullPath = path.join(__dirname, '../../', filePath);
-        if (fs.existsSync(fullPath)) {
-          fs.unlinkSync(fullPath);
+        try {
+          await fs.unlink(fullPath);
+        } catch {
+          // File may already be deleted, ignore
         }
-      });
+      }));
     }
 
     await Dilekce.findByIdAndDelete(id);

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import {
   Home,
@@ -51,16 +51,14 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
 
   // getRoleDisplayName function removed as not used
 
-  const getRoleBasedButtons = () => {
+  const roleButtons = useMemo(() => {
     const role = user?.rol || 'student';
     return dashboardButtons.filter(btn => {
       if (!btn.roles.includes(role)) return false;
       if (btn.showForDormitory && !user?.pansiyon) return false;
       return true;
     });
-  };
-
-  const roleButtons = getRoleBasedButtons();
+  }, [user?.rol, user?.pansiyon]);
 
   const closeSidebarOnMobile = () => {
     if (window.innerWidth <= 1024) {

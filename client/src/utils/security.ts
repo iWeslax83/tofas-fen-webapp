@@ -182,7 +182,9 @@ export class CSRFProtection {
   }
 
   static generateToken(): string {
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    const token = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
     this.setToken(token);
     return token;
   }

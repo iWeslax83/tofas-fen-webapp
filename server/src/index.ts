@@ -283,7 +283,8 @@ const corsOptions = {
     ];
 
     // Development'ta localhost origin'lerine izin ver, production'da sadece whitelist
-    if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+    // GÜVENLİK: NODE_ENV yoksa production gibi davran (restrictive default)
+    if (process.env.NODE_ENV === 'development') {
       // Development: localhost/127.0.0.1 origin'leri veya whitelist'teki origin'ler
       // GÜVENLİK: startsWith yerine URL parse kullanarak subdomain bypass önlenir
       let isLocalOrigin = false;
@@ -483,7 +484,7 @@ const MAGIC_BYTES: Record<string, Buffer[]> = {
 
 function validateMagicBytes(filePath: string, ext: string): boolean {
   const signatures = MAGIC_BYTES[ext];
-  if (!signatures) return true; // Bilinmeyen uzantılar için atla
+  if (!signatures) return false; // Bilinmeyen uzantılar reddedilir (whitelist yaklaşımı)
 
   try {
     const fd = fs.openSync(filePath, 'r');

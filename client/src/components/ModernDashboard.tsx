@@ -28,18 +28,8 @@ interface UserData {
   sonGiris?: string | undefined;
 }
 
-interface DashboardStats {
-  totalStudents?: number;
-  totalTeachers?: number;
-  totalParents?: number;
-  activeClubs?: number;
-  upcomingEvents?: number;
-  recentActivities?: number;
-}
-
 const ModernDashboard: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [, setStats] = useState<DashboardStats>({});
   const lastFetchTime = useRef<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -100,20 +90,10 @@ const ModernDashboard: React.FC = () => {
     lastFetchTime.current = now;
 
     try {
-      const response = await SecureAPI.get('/api/dashboard/stats');
-      setStats((response as { data: { data: DashboardStats } }).data.data);
+      await SecureAPI.get('/api/dashboard/stats');
     } catch (error) {
       safeConsoleError('Error fetching stats:', error);
       handleApiError(error, 'İstatistikler alınırken hata oluştu');
-      // Set default stats
-      setStats({
-        totalStudents: 1250,
-        totalTeachers: 85,
-        totalParents: 2400,
-        activeClubs: 12,
-        upcomingEvents: 8,
-        recentActivities: 15
-      });
     }
   }, [authUser, handleApiError]); // Removed handleError dependency to prevent infinite loop - Re-added as it's needed for memoization consistency
 

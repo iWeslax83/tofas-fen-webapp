@@ -3,7 +3,7 @@ import request from 'supertest'
 import express from 'express'
 import bcrypt from 'bcryptjs'
 import { User } from '../../models/User'
-import authRoutes from '../auth'
+import authRoutes from '../../modules/auth/routes/authRoutes'
 
 vi.mock('../../models/User')
 vi.mock('bcryptjs')

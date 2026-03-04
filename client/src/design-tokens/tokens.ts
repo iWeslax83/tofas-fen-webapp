@@ -6,10 +6,10 @@
 export const tokens = {
   colors: {
     primary: {
-      red: '#0f766e', // Teal 700
-      redDark: '#115e59', // Teal 800
-      redLight: '#14b8a6', // Teal 400
-      redLighter: '#ccfbf1', // Teal 50
+      main: '#0f766e', // Teal 700
+      dark: '#115e59', // Teal 800
+      light: '#14b8a6', // Teal 400
+      lighter: '#ccfbf1', // Teal 50
     },
     secondary: {
       blue: '#1E40AF',
