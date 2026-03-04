@@ -106,8 +106,16 @@ router.get("/role/:role", authenticateJWT, async (req: Request, res: Response) =
       ? { $and: [roleFilter, classFilter] }
       : roleFilter;
 
-    const announcements = await Announcement.find(mongoFilter).sort({ date: -1 });
-    return res.json(announcements);
+    const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 100);
+    const skip = (page - 1) * limit;
+
+    const [announcements, total] = await Promise.all([
+      Announcement.find(mongoFilter).sort({ date: -1 }).skip(skip).limit(limit),
+      Announcement.countDocuments(mongoFilter),
+    ]);
+
+    return res.json({ data: announcements, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
   } catch (error) {
     logger.error('Rol bazli duyuru getirme hatasi', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: "Sunucu hatası" });

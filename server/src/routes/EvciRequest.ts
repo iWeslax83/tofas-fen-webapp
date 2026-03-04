@@ -317,7 +317,7 @@ router.post("/bulk-status", authenticateJWT, authorizeRoles(['admin']), async (r
       publishEvent(eventType, {
         studentId: evciReq.studentId,
         studentName: evciReq.studentName,
-      }, evciReq.studentId).catch(() => {});
+      }, evciReq.studentId).catch((err: unknown) => logger.error('Async side-effect failed', { error: err instanceof Error ? err.message : err }));
 
       // Push notification to student
       const bulkPushTitle = status === 'approved' ? 'Evci Talebi Onaylandı' : 'Evci Talebi Reddedildi';
@@ -328,7 +328,7 @@ router.post("/bulk-status", authenticateJWT, authorizeRoles(['admin']), async (r
         title: bulkPushTitle,
         body: bulkPushBody,
         url: '/student/evci',
-      }).catch(() => {});
+      }).catch((err: unknown) => logger.error('Async side-effect failed', { error: err instanceof Error ? err.message : err }));
     }
 
     res.json({ modifiedCount: result.modifiedCount });
@@ -439,8 +439,13 @@ router.get("/parent/:parentId", authenticateJWT, async (req: Request, res: Respo
 
 // Belirli bir öğrencinin evci talepleri - ownership check
 router.get("/student/:studentId", authenticateJWT, verifyParentChildAccess('params.studentId'), async (req, res) => {
-  const list = await EvciRequest.find({ studentId: req.params.studentId }).sort({ createdAt: -1 });
-  res.json(list);
+  try {
+    const list = await EvciRequest.find({ studentId: req.params.studentId }).sort({ createdAt: -1 });
+    res.json(list);
+  } catch (error) {
+    logger.error('Error fetching student evci requests', { error: error instanceof Error ? error.message : error });
+    res.status(500).json({ error: 'Öğrenci evci talepleri alınamadı' });
+  }
 });
 
 // POST / — Yeni evci talebi oluştur
@@ -548,7 +553,7 @@ router.post("/", authenticateJWT, authorizeRoles(['student', 'parent', 'admin'])
         studentId,
         studentName,
         parentIds,
-      }, userId).catch(() => {});
+      }, userId).catch((err: unknown) => logger.error('Async side-effect failed', { error: err instanceof Error ? err.message : err }));
 
       // Push notifications to parents
       for (const parent of parents) {
@@ -556,7 +561,7 @@ router.post("/", authenticateJWT, authorizeRoles(['student', 'parent', 'admin'])
           title: 'Yeni Evci Talebi',
           body: `${studentName} yeni bir evci talebi oluşturdu. Onayınız bekleniyor.`,
           url: '/parent/evci',
-        }).catch(() => {});
+        }).catch((err: unknown) => logger.error('Async side-effect failed', { error: err instanceof Error ? err.message : err }));
       }
     } catch (notifError) {
       logger.error('Error sending parent notifications', { error: notifError instanceof Error ? notifError.message : notifError });
@@ -619,7 +624,7 @@ router.patch("/:id/admin-approval", authenticateJWT, authorizeRoles(['admin']), 
     publishEvent(eventType, {
       studentId: evciReq.studentId,
       studentName: evciReq.studentName,
-    }, evciReq.studentId).catch(() => {});
+    }, evciReq.studentId).catch((err: unknown) => logger.error('Async side-effect failed', { error: err instanceof Error ? err.message : err }));
 
     const pushTitle = action === 'approve' ? 'Evci Talebi Onaylandı' : 'Evci Talebi Reddedildi';
     const pushBody = action === 'approve'
@@ -629,7 +634,7 @@ router.patch("/:id/admin-approval", authenticateJWT, authorizeRoles(['admin']), 
       title: pushTitle,
       body: pushBody,
       url: '/student/evci',
-    }).catch(() => {});
+    }).catch((err: unknown) => logger.error('Async side-effect failed', { error: err instanceof Error ? err.message : err }));
 
     // Audit log
     AuditLogService.log(req, action === 'approve' ? 'approve' : 'reject', 'evci_request', {
@@ -722,7 +727,7 @@ router.patch("/:id/parent-approval", authenticateJWT, authorizeRoles(['parent'])
       publishEvent(eventType, {
         studentId: evciReq.studentId,
         studentName: evciReq.studentName,
-      }, evciReq.studentId).catch(() => {});
+      }, evciReq.studentId).catch((err: unknown) => logger.error('Async side-effect failed', { error: err instanceof Error ? err.message : err }));
 
       // Push notification to student
       const pushTitle = action === 'approve' ? 'Evci Talebi Onaylandı' : 'Evci Talebi Reddedildi';
@@ -733,7 +738,7 @@ router.patch("/:id/parent-approval", authenticateJWT, authorizeRoles(['parent'])
         title: pushTitle,
         body: pushBody,
         url: '/student/evci',
-      }).catch(() => {});
+      }).catch((err: unknown) => logger.error('Async side-effect failed', { error: err instanceof Error ? err.message : err }));
     } catch (notifError) {
       logger.error('Error sending student notification', { error: notifError instanceof Error ? notifError.message : notifError });
     }

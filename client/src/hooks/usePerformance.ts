@@ -310,7 +310,7 @@ export const useMemoryMonitor = () => {
     };
 
     updateMemoryInfo();
-    const interval = setInterval(updateMemoryInfo, 5000); // Check every 5 seconds
+    const interval = setInterval(updateMemoryInfo, 60000); // Check every 60 seconds
 
     return () => clearInterval(interval);
   }, []);

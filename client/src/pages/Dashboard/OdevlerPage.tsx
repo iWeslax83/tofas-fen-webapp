@@ -104,27 +104,22 @@ export default function OdevlerPage() {
     if (selectedSubject !== "Tümü" && hw.subject !== selectedSubject) return false;
     if (user?.rol === "student") {
       // Öğrencinin sınıf bilgisinden sadece seviye (9,10,11,12) alınır
-      const raw = (user as any).sinif || (user as any).grade;
+      const raw = user.sinif;
       const studentClassLevel = raw ? String(raw).replace(/[^0-9]/g, "") : "";
       if (!studentClassLevel) return false;
       return hw.classLevel === studentClassLevel || hw.grade === studentClassLevel;
     }
-    if (user?.rol === "parent" && (user as any).childId) {
-      if (!(user as any).childrenSiniflar) {
+    if (user?.rol === "parent" && user.childId) {
+      if (!user.childrenSiniflar) {
         return false;
       }
-      const childrenSiniflar = (user as any).childrenSiniflar || [];
+      const childrenSiniflar = user.childrenSiniflar || [];
       // Çocukların sınıf bilgisinden sadece seviye (9,10,11,12) çıkar
       const childClasses = childrenSiniflar
-        .map((child: any) => {
-          // If child is an object with sinif property, extract it
-          if (typeof child === 'object' && child.sinif) {
-            return String(child.sinif).replace(/[^0-9]/g, "");
-          }
-          // Otherwise assume it's just a string
-          return String(child).replace(/[^0-9]/g, "");
+        .map((child) => {
+          return child.sinif ? String(child.sinif).replace(/[^0-9]/g, "") : "";
         })
-        .filter((sinif: any) => sinif);
+        .filter((sinif) => sinif);
       return childClasses.includes(hw.classLevel) || childClasses.includes(hw.grade);
     }
     return true;
