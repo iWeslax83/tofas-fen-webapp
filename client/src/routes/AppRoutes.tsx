@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../stores/authStore';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 // Scroll to top on route changes
 function ScrollToTop() {
@@ -25,8 +26,6 @@ const NotFoundPage = lazy(() => import('../pages/Dashboard/NotFoundPage'));
 
 // Auth Pages
 const LoginPage = lazy(() => import('../pages/LoginPage'));
-const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
-
 // Academic Pages
 const OdevlerPage = lazy(() => import('../pages/Dashboard/OdevlerPage'));
 const DersProgramiPage = lazy(() => import('../pages/Dashboard/DersProgramiPage'));
@@ -48,6 +47,7 @@ const DilekcePage = lazy(() => import('../pages/Dashboard/DilekcePage'));
 const AdminDilekceListPage = lazy(() => import('../pages/Dashboard/AdminDilekceListPage'));
 const ParentEvciPage = lazy(() => import('../pages/Dashboard/ParentEvciPage'));
 const AdminEvciListPage = lazy(() => import('../pages/Dashboard/AdminEvciListPage'));
+const EvciStatsPage = lazy(() => import('../pages/Dashboard/EvciStatsPage'));
 
 // Settings and Admin Pages
 const SettingsPage = lazy(() => import('../pages/Dashboard/SettingsPage'));
@@ -89,7 +89,6 @@ export default function AppRoutes() {
         {/* Root and Auth Routes */}
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Main Dashboard Routes */}
         <Route path="/admin" element={<ModernDashboard key="admin" />} />
@@ -117,8 +116,8 @@ export default function AppRoutes() {
         <Route path="/parent/notlar" element={<NotlarPage />} />
         <Route path="/teacher/notlar" element={<NotlarPage />} />
 
-        <Route path="/admin/file-import" element={<NotEkleme />} />
-        <Route path="/teacher/file-import" element={<NotEkleme />} />
+        <Route path="/admin/file-import" element={<ProtectedRoute allowedRoles={['admin']}><NotEkleme /></ProtectedRoute>} />
+        <Route path="/teacher/file-import" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><NotEkleme /></ProtectedRoute>} />
 
         {/* <Route path="/teacher/ogrencilerim" element={<MyStudentsPage />} /> */}
         {/* <Route path="/teacher/yoklama" element={<YoklamaPage />} /> */}
@@ -154,11 +153,14 @@ export default function AppRoutes() {
         <Route path="/student/dilekce" element={<DilekcePage />} />
         <Route path="/teacher/dilekce" element={<DilekcePage />} />
         <Route path="/parent/dilekce" element={<DilekcePage />} />
-        <Route path="/admin/evci-listesi" element={<AdminEvciListPage />} />
-        <Route path="/admin/dilekce-listesi" element={<AdminDilekceListPage />} />
+        <Route path="/admin/evci-listesi" element={<ProtectedRoute allowedRoles={['admin']}><AdminEvciListPage /></ProtectedRoute>} />
+        <Route path="/admin/evci-istatistik" element={<ProtectedRoute allowedRoles={['admin']}><EvciStatsPage /></ProtectedRoute>} />
+        <Route path="/teacher/evci-istatistik" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><EvciStatsPage /></ProtectedRoute>} />
+        <Route path="/teacher/evci-listesi" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><AdminEvciListPage /></ProtectedRoute>} />
+        <Route path="/admin/dilekce-listesi" element={<ProtectedRoute allowedRoles={['admin']}><AdminDilekceListPage /></ProtectedRoute>} />
 
         {/* Settings and Admin Routes */}
-        <Route path="/admin/senkronizasyon" element={<SenkronizasyonPage />} />
+        <Route path="/admin/senkronizasyon" element={<ProtectedRoute allowedRoles={['admin']}><SenkronizasyonPage /></ProtectedRoute>} />
         {/* <Route path="/admin/reports" element={<ReportManagement />} /> */}
         {/* <Route path="/teacher/reports" element={<ReportManagement />} /> */}
 

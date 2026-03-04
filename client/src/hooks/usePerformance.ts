@@ -223,11 +223,16 @@ export const useImageOptimization = () => {
       }
 
       if (loadingImagesRef.current.has(src)) {
-        // Wait for existing load to complete
+        // Wait for existing load to complete with timeout
+        let attempts = 0;
+        const maxAttempts = 100; // 10 second timeout
         const checkLoaded = () => {
           if (loadedImagesRef.current.has(src)) {
             resolve();
+          } else if (!loadingImagesRef.current.has(src) || attempts >= maxAttempts) {
+            reject(new Error(`Image load timeout or failed: ${src}`));
           } else {
+            attempts++;
             setTimeout(checkLoaded, 100);
           }
         };

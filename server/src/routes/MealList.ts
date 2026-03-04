@@ -2,6 +2,7 @@ import { Router } from "express";
 import { MealList, IMealList } from "../models/MealList";
 import { authenticateJWT, authorizeRoles } from "../utils/jwt";
 import { validateMealList } from "../middleware/validation";
+import logger from "../utils/logger";
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.get("/", authenticateJWT, async (req, res) => {
     const meals = await MealList.find(filter).sort({ date: -1 });
     res.json(meals);
   } catch (error) {
-    console.error("Yemek listesi getirme hatası:", error);
+    logger.error('Yemek listesi getirme hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -35,7 +36,7 @@ router.get("/:id", authenticateJWT, async (req, res) => {
     }
     res.json(meal);
   } catch (error) {
-    console.error("Yemek listesi getirme hatası:", error);
+    logger.error('Yemek listesi getirme hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -47,7 +48,7 @@ router.post("/", authenticateJWT, authorizeRoles(['admin', 'kitchen_staff']), va
     await meal.save();
     res.status(201).json(meal);
   } catch (error) {
-    console.error("Yemek listesi oluşturma hatası:", error);
+    logger.error('Yemek listesi olusturma hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -55,13 +56,13 @@ router.post("/", authenticateJWT, authorizeRoles(['admin', 'kitchen_staff']), va
 // Yemek listesini güncelle (sadece admin ve yemekhane personeli)
 router.put("/:id", authenticateJWT, authorizeRoles(['admin', 'kitchen_staff']), validateMealList, async (req, res) => {
   try {
-    const meal = await MealList.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const meal = await MealList.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
     if (!meal) {
       return res.status(404).json({ error: "Yemek listesi bulunamadı" });
     }
     res.json(meal);
   } catch (error) {
-    console.error("Yemek listesi güncelleme hatası:", error);
+    logger.error('Yemek listesi guncelleme hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -75,7 +76,7 @@ router.delete("/:id", authenticateJWT, authorizeRoles(['admin']), async (req, re
     }
     res.json({ success: true, message: "Yemek listesi silindi" });
   } catch (error) {
-    console.error("Yemek listesi silme hatası:", error);
+    logger.error('Yemek listesi silme hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });

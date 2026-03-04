@@ -43,9 +43,7 @@
 /* Accessibility Demo Page */
 .accessibility-demo-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #374151 50%, #4B5563 75%, #1a1a1a 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 20s ease infinite;
+  background: #f8fafc;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   color: #333;
@@ -880,15 +878,15 @@
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .accessibility-demo-page {
-    background: #1a1a1a;
-    color: #ffffff;
+    background: #f8fafc;
+    color: #0f172a;
   }
-  
+
   .demo-content {
-    background: #2d2d2d;
-    color: #ffffff;
+    background: #FFFFFF;
+    color: #0f172a;
   }
-  
+
   .demo-component-group,
   .demo-testing__tool,
   .demo-settings__current,
@@ -896,23 +894,23 @@
   .demo-settings__info,
   .demo-stat,
   .demo-overview__features {
-    background: #333333;
-    border-color: #404040;
-    color: #ffffff;
+    background: #FFFFFF;
+    border-color: #e2e8f0;
+    color: #0f172a;
   }
-  
+
   .demo-features__list li,
   .demo-dropdown__item,
   .demo-testing__shortcuts li,
   .demo-setting__item,
   .demo-settings__info-content li {
-    background: #404040;
-    border-color: #555555;
-    color: #ffffff;
+    background: #FFFFFF;
+    border-color: #e2e8f0;
+    color: #0f172a;
   }
-  
+
   .demo-features__list li:hover,
   .demo-dropdown__item:hover {
-    background: #555555;
+    background: #f1f5f9;
   }
 }

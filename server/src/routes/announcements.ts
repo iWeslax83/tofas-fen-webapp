@@ -1,22 +1,33 @@
 import { Router } from "express";
 import { Request, Response } from "express";
 import Announcement from "../models/Announcement";
+import { authenticateJWT, authorizeRoles } from "../utils/jwt";
+import logger from "../utils/logger";
 
 const router = Router();
 
-// Tüm duyuruları getir
-router.get("/", async (_req: Request, res: Response) => {
+// Tüm duyuruları getir - requires authentication, pagination destekli
+router.get("/", authenticateJWT, async (_req: Request, res: Response) => {
   try {
-    const announcements = await Announcement.find().sort({ date: -1 });
-    return res.json(announcements);
+    const { page = '1', limit = '50' } = _req.query as { page?: string; limit?: string };
+    const pageNum = parseInt(page);
+    const limitNum = Math.min(parseInt(limit), 100);
+    const skip = (pageNum - 1) * limitNum;
+
+    const [announcements, total] = await Promise.all([
+      Announcement.find().sort({ date: -1 }).skip(skip).limit(limitNum),
+      Announcement.countDocuments()
+    ]);
+
+    return res.json({ data: announcements, pagination: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) } });
   } catch (error) {
-    console.error("Duyuru getirme hatası:", error);
+    logger.error('Duyuru getirme hatasi', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: "Sunucu hatası" });
   }
 });
 
-// Duyuru oluştur
-router.post("/", async (req: Request, res: Response) => {
+// Duyuru oluştur - requires teacher/admin
+router.post("/", authenticateJWT, authorizeRoles(['teacher', 'admin']), async (req: Request, res: Response) => {
   try {
     const { title, content, author } = req.body;
     if (!title || !content) {
@@ -33,13 +44,13 @@ router.post("/", async (req: Request, res: Response) => {
     await announcement.save();
     return res.status(201).json(announcement);
   } catch (error) {
-    console.error("Duyuru oluşturma hatası:", error);
+    logger.error('Duyuru olusturma hatasi', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: "Sunucu hatası" });
   }
 });
 
-// Duyuru sil
-router.delete("/:id", async (req: Request, res: Response) => {
+// Duyuru sil - requires teacher/admin
+router.delete("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const announcement = await Announcement.findByIdAndDelete(id);
@@ -50,7 +61,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
     return res.json({ success: true, message: "Duyuru silindi" });
   } catch (error) {
-    console.error("Duyuru silme hatası:", error);
+    logger.error('Duyuru silme hatasi', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: "Sunucu hatası" });
   }
 });

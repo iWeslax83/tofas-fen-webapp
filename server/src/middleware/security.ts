@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { validationResult } from 'express-validator';
 import DOMPurify from 'isomorphic-dompurify';
+import logger from '../utils/logger';
 
 // Enhanced security middleware for comprehensive protection
 
@@ -276,7 +277,7 @@ export const enhancedValidation = (_req: Request, res: Response, next: NextFunct
 
   if (!errors.isEmpty()) {
     // Log validation errors for security monitoring
-    console.warn('Validation failed:', {
+    logger.warn('Validation failed', {
       ip: _req.ip,
       userAgent: _req.get('User-Agent'),
       path: _req.path,
@@ -341,7 +342,7 @@ export const auditLog = (req: Request, res: Response, next: NextFunction) => {
     userRole: (req as any).user?.rol || 'anonymous'
   };
 
-  console.log('🔒 Security Audit:', requestLog);
+  logger.info('Security Audit', requestLog);
 
   // Override response.json to log response
   const originalJson = res.json;
@@ -355,9 +356,9 @@ export const auditLog = (req: Request, res: Response, next: NextFunction) => {
 
     // Log security-relevant responses
     if (res.statusCode >= 400) {
-      console.warn('⚠️ Security Warning:', responseLog);
+      logger.warn('Security Warning', responseLog);
     } else {
-      console.log('✅ Security Audit:', responseLog);
+      logger.info('Security Audit', responseLog);
     }
 
     return originalJson.call(this, data);
@@ -394,7 +395,7 @@ export const ipRestriction = (allowedIPs?: string[], blockedIPs?: string[]) => {
 
     // Check blacklist first
     if (blockedIPs && clientIP && blockedIPs.includes(clientIP)) {
-      console.warn(`🚫 Blocked IP access attempt: ${clientIP}`);
+      logger.warn('Blocked IP access attempt', { ip: clientIP });
       return res.status(403).json({
         error: 'Access denied',
         message: 'Your IP address is not allowed to access this resource'
@@ -403,7 +404,7 @@ export const ipRestriction = (allowedIPs?: string[], blockedIPs?: string[]) => {
 
     // Check whitelist if specified
     if (allowedIPs && clientIP && !allowedIPs.includes(clientIP)) {
-      console.warn(`🚫 Unauthorized IP access attempt: ${clientIP}`);
+      logger.warn('Unauthorized IP access attempt', { ip: clientIP });
       return res.status(403).json({
         error: 'Access denied',
         message: 'Your IP address is not authorized to access this resource'
@@ -423,7 +424,7 @@ export const sessionSecurity = (req: Request, _res: Response, next: NextFunction
   if ((req as any).user && req.session && req.session.regenerate) {
     req.session.regenerate((err: any) => {
       if (err) {
-        console.error('Session regeneration error:', err);
+        logger.error('Session regeneration error', { error: err instanceof Error ? err.message : err });
       }
     });
   }

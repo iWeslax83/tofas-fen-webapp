@@ -5,11 +5,11 @@
 
 /* Login-specific variables (using theme variables) */
 :root {
-  --login-primary: var(--gray-800);
-  --login-primary-dark: var(--gray-900);
-  --login-primary-light: var(--gray-600);
-  --login-primary-lighter: var(--gray-100);
-  --login-gradient: linear-gradient(135deg, var(--gray-700) 0%, var(--gray-900) 100%);
+  --login-primary: #0f766e;
+  --login-primary-dark: #115e59;
+  --login-primary-light: #14b8a6;
+  --login-primary-lighter: #ccfbf1;
+  --login-gradient: linear-gradient(135deg, #115e59 0%, #0f766e 100%);
   --login-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   --login-shadow-lg: 0 30px 60px rgba(0, 0, 0, 0.15);
 }
@@ -55,11 +55,7 @@
 
 /* Background Blobs */
 .login-blob {
-  position: absolute;
-  border-radius: 50%;
-  background: var(--login-gradient);
-  opacity: 0.1;
-  animation: float 6s ease-in-out infinite;
+  display: none;
 }
 
 .login-blob-1 {
@@ -171,13 +167,9 @@
   font-family: 'Inter', sans-serif;
   font-size: 2rem;
   font-weight: 700;
-  color: #111827;
+  color: #939393;
   text-align: center;
   margin: 0 0 0.5rem 0;
-  background: var(--login-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .login-subtitle {
@@ -224,15 +216,15 @@
 }
 
 .login-input:focus {
-  border-color: var(--gray-500);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
   color: var(--gray-900);
   background: var(--white);
   outline: none;
 }
 
 .login-input:focus-visible {
-  outline: 2px solid var(--gray-500);
+  outline: 2px solid #0f766e;
   outline-offset: 2px;
 }
 
@@ -301,13 +293,13 @@
 
 .password-toggle:focus,
 .login-password-toggle:focus {
-  outline: 2px solid #8B4A5A;
+  outline: 2px solid #0f766e;
   outline-offset: 2px;
 }
 
 .password-toggle:focus-visible,
 .login-password-toggle:focus-visible {
-  outline: 2px solid #8B4A5A;
+  outline: 2px solid #0f766e;
   outline-offset: 2px;
 }
 
@@ -358,14 +350,10 @@
 }
 
 /* Submit Button */
-/* Submit Button */
 .login-submit-button,
 .login-button {
-  /* Using a solid, deep dark gray/black */
-  background-color: #253c606d !important;
+  background-color: #0f766e !important;
   background-image: none !important;
-  /* Forces any gradients away */
-
   color: #FFFFFF !important;
   border: none;
   padding: 1rem 1.5rem;
@@ -374,26 +362,22 @@
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out, transform 0.2s ease;
-
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   min-height: 48px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Hover state: It only gets DARKER, never brighter */
 .login-submit-button:hover,
 .login-button:hover {
-  background-color: #111827 !important;
-  /* Pure dark charcoal/black */
+  background-color: #115e59 !important;
   background-image: none !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 12px rgba(15, 118, 110, 0.3);
 }
 
-/* Hard-kill any pseudo-elements that could cause a flash */
 .login-submit-button::before,
 .login-button::before,
 .login-submit-button::after,
@@ -498,7 +482,7 @@
 
   .login-input {
     padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-    font-size: 0.9rem;
+    font-size: 16px;
   }
 
   .input-icon,
@@ -536,6 +520,198 @@
     width: 80px;
     height: 80px;
   }
+}
+
+@media (max-width: 375px) {
+  .login-bg {
+    padding: 0.5rem;
+  }
+
+  .login-card,
+  .login-container {
+    padding: 0.875rem;
+    margin: 0.25rem;
+    border-radius: 1rem;
+  }
+
+  .login-title {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .login-subtitle {
+    font-size: 0.8125rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .login-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .login-logo-container {
+    margin-bottom: 1rem;
+  }
+
+  .login-logo {
+    width: 52px;
+    height: 52px;
+  }
+
+  .login-form {
+    gap: 1rem;
+  }
+
+  .login-form-group {
+    margin-bottom: 0.5rem;
+  }
+
+  .login-input {
+    font-size: 16px;
+    padding: 0.625rem 0.625rem 0.625rem 2.25rem;
+  }
+
+  .login-button {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    min-height: 44px;
+  }
+
+  .login-footer {
+    margin-top: 1rem;
+    padding: var(--space-2);
+  }
+
+  .login-footer-text {
+    font-size: 0.75rem;
+  }
+}
+
+/* 2FA Info Section */
+.login-2fa-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+  border: 1px solid #99f6e4;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  color: #2e2e2e;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.login-2fa-info p {
+  margin: 0;
+}
+
+.login-2fa-info svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* 2FA Code Input */
+.login-2fa-code-input {
+  text-align: center;
+  letter-spacing: 8px;
+  font-size: 1.5rem !important;
+  font-weight: 600;
+  padding-left: 1rem !important;
+}
+
+/* Remember Device Checkbox */
+.login-remember-device {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.login-remember-device input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #0f766e;
+  cursor: pointer;
+}
+
+.login-checkbox-label {
+  user-select: none;
+}
+
+/* Back/Cancel Button */
+.login-back-button {
+  background: transparent;
+  color: #475569;
+  border: 1.5px solid #d1d5db;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: center;
+}
+
+.login-back-button:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+/* #14: 2FA Countdown Timer */
+.login-2fa-countdown {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #475569;
+  padding: 0.5rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.login-2fa-countdown strong {
+  font-variant-numeric: tabular-nums;
+  color: #0f766e;
+}
+
+.login-2fa-expired {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.login-2fa-expired strong {
+  color: #dc2626;
+}
+
+/* #13: Resend Code Button */
+.login-resend-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: transparent;
+  color: #0f766e;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: center;
+}
+
+.login-resend-button:hover:not(:disabled) {
+  background: #f0fdfa;
+  color: #115e59;
+}
+
+.login-resend-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Animations handled by theme.css */

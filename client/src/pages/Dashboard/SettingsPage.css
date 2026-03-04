@@ -48,6 +48,7 @@
 .settings-page .page-title-main {
   font-size: 2rem;
   font-weight: 700;
+  font-style: normal;
   color: var(--gray-900);
   margin: 0;
 }
@@ -102,6 +103,238 @@
   border: 1px solid var(--gray-200);
 }
 
+/* Email Edit */
+.email-edit-item {
+  grid-column: 1 / -1;
+}
+
+.email-edit-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.email-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.email-input-icon {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-400);
+  pointer-events: none;
+}
+
+.email-edit-input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4) var(--space-3) calc(var(--space-3) + 24px);
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  transition: border-color 0.2s ease;
+}
+
+.email-edit-input:focus {
+  outline: none;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+}
+
+.email-edit-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.email-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  background: #0f766e;
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.email-save-btn:hover:not(:disabled) {
+  background: #0d6b63;
+}
+
+.email-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Email Verification */
+.email-verification-section {
+  margin-top: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.verification-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.verification-icon.unverified {
+  color: #f59e0b;
+}
+
+.verification-icon.verified {
+  color: #16a34a;
+}
+
+.verification-text {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #f59e0b;
+}
+
+.verification-text.verified {
+  color: #16a34a;
+}
+
+.btn-send-verification {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 6px 12px;
+  background: #0f766e;
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-send-verification:hover:not(:disabled) {
+  background: #0d6b63;
+}
+
+.btn-send-verification:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.verification-code-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.verification-code-input {
+  width: 100px;
+  padding: 6px 10px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-align: center;
+  color: var(--gray-800);
+  background: var(--gray-50);
+}
+
+.verification-code-input:focus {
+  outline: none;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+}
+
+.btn-verify-code {
+  padding: 6px 12px;
+  background: #0f766e;
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-verify-code:hover:not(:disabled) {
+  background: #0d6b63;
+}
+
+.btn-verify-code:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-resend-code {
+  padding: 6px 10px;
+  background: none;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-resend-code:hover:not(:disabled) {
+  border-color: var(--gray-400);
+  color: var(--gray-800);
+}
+
+.btn-resend-code:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Theme Selector */
+.theme-selector {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.theme-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3);
+  background: var(--gray-50);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--gray-600);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.theme-option:hover {
+  border-color: var(--gray-400);
+  background: var(--gray-100);
+}
+
+.theme-option.active {
+  border-color: #0f766e;
+  background: rgba(15, 118, 110, 0.08);
+  color: #0f766e;
+}
+
 /* Settings Row */
 .settings-row {
   display: flex;
@@ -118,6 +351,21 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.settings-row-label-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.settings-row-icon {
+  color: var(--gray-400);
+  flex-shrink: 0;
+}
+
+.settings-row-icon.active {
+  color: #0f766e;
 }
 
 .settings-row-label {
@@ -177,6 +425,12 @@
   transform: translateX(20px);
 }
 
+.toggle-slider.disabled {
+  background-color: var(--gray-200);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 /* Logout Button */
 .settings-logout-btn {
   display: inline-flex;
@@ -217,5 +471,57 @@
 
   .settings-page .page-title-main {
     font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-page {
+    padding: var(--space-3);
+  }
+
+  .settings-page .page-header {
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .settings-page .page-title-main {
+    font-size: 1.25rem;
+  }
+
+  .settings-page .page-icon {
+    width: 40px;
+    height: 40px;
+    padding: var(--space-2);
+  }
+
+  .settings-section {
+    padding: var(--space-4);
+    margin-bottom: var(--space-3);
+  }
+
+  .settings-section-title {
+    font-size: 1rem;
+  }
+
+  .settings-row {
+    gap: var(--space-3);
+  }
+
+  .settings-row-label {
+    font-size: 0.875rem;
+  }
+
+  .settings-row-desc {
+    font-size: 0.75rem;
+  }
+
+  .profile-info-value {
+    font-size: 0.875rem;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .settings-logout-btn {
+    font-size: 0.875rem;
+    padding: var(--space-2) var(--space-4);
   }
 }

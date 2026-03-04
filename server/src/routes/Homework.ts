@@ -2,27 +2,59 @@ import { Router } from "express";
 import { Homework, IHomework } from "../models/Homework";
 import { authenticateJWT, authorizeRoles } from "../utils/jwt";
 import { validateHomework } from "../middleware/validation";
+import { User } from "../models";
+import { getParentChildIds } from "../middleware/parentChildAccess";
+import logger from "../utils/logger";
 
 const router = Router();
 
-// Tüm ödevleri getir (filtreleme ile)
+// Tüm ödevleri getir (filtreleme ile) - rol bazlı erişim
 router.get("/", authenticateJWT, async (req, res) => {
   try {
-    const { 
-      subject, 
-      classLevel, 
-      classSection, 
-      teacherId, 
+    const {
+      subject,
+      classLevel,
+      classSection,
+      teacherId,
       status,
       page = 1,
       limit = 20
     } = req.query;
 
     const filter: any = {};
-    
+    const role = req.user?.role;
+    const userId = req.user?.userId;
+
+    // Rol bazlı filtreleme
+    if (role === 'student') {
+      // Öğrenci sadece kendi sınıfının ödevlerini görebilir
+      const student = await User.findOne({ id: userId }).select('sinif sube').lean() as any;
+      if (student?.sinif) {
+        filter.classLevel = student.sinif;
+        if (student.sube) filter.classSection = student.sube;
+      }
+    } else if (role === 'parent') {
+      // Veli sadece çocuklarının sınıflarının ödevlerini görebilir
+      const childIds = await getParentChildIds(userId!);
+      if (childIds.length === 0) {
+        return res.json({ homeworks: [], pagination: { page: 1, limit: Number(limit), total: 0, pages: 0 } });
+      }
+      const children = await User.find({ id: { $in: childIds } }).select('sinif sube').lean() as any[];
+      const levels = [...new Set(children.map((c: any) => c.sinif).filter(Boolean))];
+      const sections = [...new Set(children.map((c: any) => c.sube).filter(Boolean))];
+      if (levels.length > 0) filter.classLevel = { $in: levels };
+      if (sections.length > 0) filter.classSection = { $in: sections };
+    } else if (role === 'teacher') {
+      // Öğretmen kendi ödevlerini veya query param ile filtre uygulayabilir
+      if (!classLevel && !classSection && !teacherId) {
+        filter.teacherId = userId;
+      }
+    }
+    // Admin: tüm filtreleri query param ile uygulayabilir
+
     if (subject) filter.subject = subject;
-    if (classLevel) filter.classLevel = classLevel;
-    if (classSection) filter.classSection = classSection;
+    if (classLevel && !filter.classLevel) filter.classLevel = classLevel;
+    if (classSection && !filter.classSection) filter.classSection = classSection;
     if (teacherId) filter.teacherId = teacherId;
     if (status) filter.status = status;
 
@@ -55,7 +87,7 @@ router.get("/", authenticateJWT, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Homework fetch error:', error);
+    logger.error('Homework fetch error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödevler getirilirken hata oluştu' });
   }
 });
@@ -83,7 +115,7 @@ router.get("/:id", authenticateJWT, async (req, res) => {
 
     res.json(formattedHomework);
   } catch (error) {
-    console.error('Homework fetch error:', error);
+    logger.error('Homework fetch error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödev getirilirken hata oluştu' });
   }
 });
@@ -122,7 +154,7 @@ router.post("/", authenticateJWT, authorizeRoles(['teacher', 'admin']), validate
     
     res.status(201).json(formattedHomework);
   } catch (error) {
-    console.error('Homework creation error:', error);
+    logger.error('Homework creation error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödev oluşturulurken hata oluştu' });
   }
 });
@@ -161,7 +193,7 @@ router.post("/create", authenticateJWT, authorizeRoles(['teacher', 'admin']), va
     
     res.status(201).json(formattedHomework);
   } catch (error) {
-    console.error('Homework creation error:', error);
+    logger.error('Homework creation error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödev oluşturulurken hata oluştu' });
   }
 });
@@ -180,14 +212,21 @@ router.put("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), valida
       return res.status(403).json({ error: 'Bu ödevi güncelleme yetkiniz yok' });
     }
 
+    // Field whitelisting — sadece izin verilen alanlar güncellenir
+    const { title, description, subject, assignedDate, dueDate, attachments, classLevel, classSection } = req.body;
+    const updateFields: any = { updatedAt: new Date() };
+    if (title !== undefined) updateFields.title = title;
+    if (description !== undefined) updateFields.description = description;
+    if (subject !== undefined) updateFields.subject = subject;
+    if (assignedDate !== undefined) updateFields.assignedDate = new Date(assignedDate);
+    if (dueDate !== undefined) updateFields.dueDate = new Date(dueDate);
+    if (attachments !== undefined) updateFields.attachments = attachments;
+    if (classLevel !== undefined) updateFields.classLevel = classLevel;
+    if (classSection !== undefined) updateFields.classSection = classSection;
+
     const updatedHomework = await Homework.findOneAndUpdate(
       { id: req.params.id },
-      { 
-        ...req.body, 
-        assignedDate: req.body.assignedDate ? new Date(req.body.assignedDate) : undefined,
-        dueDate: req.body.dueDate ? new Date(req.body.dueDate) : undefined,
-        updatedAt: new Date() 
-      },
+      updateFields,
       { new: true }
     );
 
@@ -206,7 +245,7 @@ router.put("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), valida
 
     res.json(formattedHomework);
   } catch (error) {
-    console.error('Homework update error:', error);
+    logger.error('Homework update error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödev güncellenirken hata oluştu' });
   }
 });
@@ -244,7 +283,7 @@ router.delete("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), asy
     // Align with tests and REST best practices: 204 No Content on successful delete
     res.status(204).send();
   } catch (error) {
-    console.error('Homework deletion error:', error);
+    logger.error('Homework deletion error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödev silinirken hata oluştu' });
   }
 });
@@ -270,7 +309,7 @@ router.patch("/:id/status", authenticateJWT, authorizeRoles(['admin']), async (r
 
     res.json(updatedHomework);
   } catch (error) {
-    console.error('Homework status update error:', error);
+    logger.error('Homework status update error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödev durumu güncellenirken hata oluştu' });
   }
 });

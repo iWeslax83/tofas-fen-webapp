@@ -3,6 +3,7 @@ import { CalendarService, CalendarFilters } from '../services/CalendarService';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import { validateRequest } from '../middleware/validation';
 import { body, query } from 'express-validator';
+import logger from '../utils/logger';
 
 const router = Router();
 
@@ -149,7 +150,7 @@ router.get('/calendars', authenticateJWT, async (req: any, res: any) => {
     const calendars = await CalendarService.getUserCalendars((req as any).user?.userId, (req as any).user?.role);
     return res.json(calendars);
   } catch (error) {
-    console.error('Calendar fetch error:', error);
+    logger.error('Calendar fetch error', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: 'Takvimler getirilirken hata oluştu' });
   }
 });
@@ -165,7 +166,7 @@ router.get('/calendars/:id', authenticateJWT, async (req: any, res: any) => {
 
     return res.json(calendar);
   } catch (error) {
-    console.error('Calendar fetch error:', error);
+    logger.error('Calendar fetch error', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: 'Takvim getirilirken hata oluştu' });
   }
 });
@@ -176,7 +177,7 @@ router.post('/calendars', authenticateJWT, validateCalendarCreate, async (req: a
     const calendar = await CalendarService.createCalendar((req as any).user?.userId, req.body);
     return res.status(201).json(calendar);
   } catch (error) {
-    console.error('Calendar creation error:', error);
+    logger.error('Calendar creation error', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: 'Takvim oluşturulurken hata oluştu' });
   }
 });
@@ -192,7 +193,7 @@ router.put('/calendars/:id', authenticateJWT, validateCalendarCreate, async (req
 
     return res.json(calendar);
   } catch (error) {
-    console.error('Calendar update error:', error);
+    logger.error('Calendar update error', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: 'Takvim güncellenirken hata oluştu' });
   }
 });
@@ -208,7 +209,7 @@ router.delete('/calendars/:id', authenticateJWT, async (req: any, res: any) => {
 
     return res.status(204).end();
   } catch (error) {
-    console.error('Calendar deletion error:', error);
+    logger.error('Calendar deletion error', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: 'Takvim silinirken hata oluştu' });
   }
 });
@@ -232,7 +233,7 @@ router.post('/calendars/:id/share', authenticateJWT, [
 
     res.json({ message: 'Takvim başarıyla paylaşıldı' });
   } catch (error) {
-    console.error('Calendar share error:', error);
+    logger.error('Calendar share error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Takvim paylaşılırken hata oluştu' });
   }
 });
@@ -264,7 +265,7 @@ router.get('/events', authenticateJWT, [
     const events = await CalendarService.getEvents((req as any).user?.userId, (req as any).user?.role, filters);
     res.json(events);
   } catch (error) {
-    console.error('Events fetch error:', error);
+    logger.error('Events fetch error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Etkinlikler getirilirken hata oluştu' });
   }
 });
@@ -280,7 +281,7 @@ router.get('/events/:id', authenticateJWT, async (req: any, res: any) => {
 
     return res.json(event);
   } catch (error) {
-    console.error('Event fetch error:', error);
+    logger.error('Event fetch error', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: 'Etkinlik getirilirken hata oluştu' });
   }
 });
@@ -291,7 +292,7 @@ router.post('/events', authenticateJWT, validateEventCreate, async (req: any, re
     const event = await CalendarService.createEvent((req as any).user?.userId, req.body);
     return res.status(201).json(event);
   } catch (error: any) {
-    console.error('Event creation error:', error);
+    logger.error('Event creation error', { error: error instanceof Error ? error.message : error });
     if (error.message.includes('Calendar access denied')) {
       return res.status(403).json({ error: 'Takvim erişim izniniz yok' });
     } else if (error.message.includes('Event overlaps')) {
@@ -313,7 +314,7 @@ router.put('/events/:id', authenticateJWT, validateEventCreate, async (req: any,
 
     return res.json(event);
   } catch (error) {
-    console.error('Event update error:', error);
+    logger.error('Event update error', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: 'Etkinlik güncellenirken hata oluştu' });
   }
 });
@@ -329,7 +330,7 @@ router.delete('/events/:id', authenticateJWT, async (req: any, res: any) => {
 
     return res.status(204).end();
   } catch (error) {
-    console.error('Event deletion error:', error);
+    logger.error('Event deletion error', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: 'Etkinlik silinirken hata oluştu' });
   }
 });
@@ -352,7 +353,7 @@ router.post('/events/:id/respond', authenticateJWT, [
 
     res.json({ message: 'Yanıtınız kaydedildi' });
   } catch (error) {
-    console.error('Event response error:', error);
+    logger.error('Event response error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Yanıt kaydedilirken hata oluştu' });
   }
 });
@@ -365,7 +366,7 @@ router.get('/stats', authenticateJWT, async (req: any, res: any) => {
     const stats = await CalendarService.getCalendarStats((req as any).user?.userId, (req as any).user?.role);
     return res.json(stats);
   } catch (error) {
-    console.error('Calendar stats error:', error);
+    logger.error('Calendar stats error', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: 'İstatistikler getirilirken hata oluştu' });
   }
 });
@@ -378,7 +379,7 @@ router.post('/reminders/process', authenticateJWT, authorizeRoles(['admin']), as
     await CalendarService.processReminders();
     return res.json({ message: 'Hatırlatmalar işlendi' });
   } catch (error) {
-    console.error('Reminder processing error:', error);
+    logger.error('Reminder processing error', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({ error: 'Hatırlatmalar işlenirken hata oluştu' });
   }
 });
@@ -421,7 +422,7 @@ router.get('/export/:calendarId', authenticateJWT, [
       format: format
     });
   } catch (error) {
-    console.error('Calendar export error:', error);
+    logger.error('Calendar export error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Takvim dışa aktarılırken hata oluştu' });
   }
 });
@@ -449,7 +450,7 @@ router.post('/import/:calendarId', authenticateJWT, [
         });
         importedEvents.push(event);
       } catch (error) {
-        console.error('Event import error:', error);
+        logger.error('Event import error', { error: error instanceof Error ? error.message : error });
         // Continue with other events
       }
     }
@@ -460,7 +461,7 @@ router.post('/import/:calendarId', authenticateJWT, [
       totalEvents: events.length
     });
   } catch (error) {
-    console.error('Calendar import error:', error);
+    logger.error('Calendar import error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Takvim içe aktarılırken hata oluştu' });
   }
 });

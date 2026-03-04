@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import { User } from '../models';
+import logger from '../utils/logger';
 
 export interface ExcelNoteData {
   studentId: string;
@@ -46,7 +47,7 @@ export class ExcelImportService {
       
       return notes;
     } catch (error) {
-      console.error('Excel parse error:', error);
+      logger.error('Excel parse error', { error: error instanceof Error ? error.message : error });
       throw new Error('Excel dosyası okunamadı');
     }
   }
@@ -85,7 +86,7 @@ export class ExcelImportService {
       
       return notes;
     } catch (error) {
-      console.error('CSV parse error:', error);
+      logger.error('CSV parse error', { error: error instanceof Error ? error.message : error });
       throw new Error('CSV dosyası okunamadı');
     }
   }

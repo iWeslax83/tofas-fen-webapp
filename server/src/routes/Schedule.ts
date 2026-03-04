@@ -5,6 +5,7 @@ import { validateRequest } from "../middleware/validation";
 import { body } from "express-validator";
 import { User } from "../models";
 import { getParentChildIds } from "../middleware/parentChildAccess";
+import logger from "../utils/logger";
 
 const router = Router();
 
@@ -141,7 +142,7 @@ router.get("/", authenticateJWT, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Schedule fetch error:', error);
+    logger.error('Schedule fetch error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ders programları getirilirken hata oluştu' });
   }
 });
@@ -150,23 +151,43 @@ router.get("/", authenticateJWT, async (req, res) => {
 router.get("/:id", authenticateJWT, async (req, res) => {
   try {
     const schedule = await Schedule.findOne({ id: req.params.id });
-    
+
     if (!schedule) {
       return res.status(404).json({ error: 'Ders programı bulunamadı' });
     }
 
     res.json(schedule);
   } catch (error) {
-    console.error('Schedule fetch error:', error);
+    logger.error('Schedule fetch error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ders programı getirilirken hata oluştu' });
   }
 });
 
-// Sınıf ve şubeye göre ders programını getir
+// Sınıf ve şubeye göre ders programını getir - rol bazlı erişim kontrolü
 router.get("/class/:classLevel/:classSection", authenticateJWT, async (req, res) => {
   try {
     const { classLevel, classSection } = req.params;
     const { academicYear, semester } = req.query;
+    const role = req.user?.role;
+    const userId = req.user?.userId;
+
+    // Öğrenci: sadece kendi sınıfını görebilir
+    if (role === 'student') {
+      const student = await User.findOne({ id: userId }).select('sinif sube').lean() as any;
+      if (!student || student.sinif !== classLevel || student.sube !== classSection) {
+        return res.status(403).json({ error: 'Sadece kendi sınıfınızın programını görebilirsiniz' });
+      }
+    }
+
+    // Veli: sadece çocuklarının sınıfını görebilir
+    if (role === 'parent') {
+      const childIds = await getParentChildIds(userId!);
+      const children = await User.find({ id: { $in: childIds } }).select('sinif sube').lean() as any[];
+      const hasAccess = children.some((c: any) => c.sinif === classLevel && c.sube === classSection);
+      if (!hasAccess) {
+        return res.status(403).json({ error: 'Sadece çocuğunuzun sınıfının programını görebilirsiniz' });
+      }
+    }
 
     const filter: any = {
       classLevel,
@@ -182,14 +203,14 @@ router.get("/class/:classLevel/:classSection", authenticateJWT, async (req, res)
       .lean();
 
     if (!schedule) {
-      return res.status(404).json({ 
-        error: 'Bu sınıf için aktif ders programı bulunamadı' 
+      return res.status(404).json({
+        error: 'Bu sınıf için aktif ders programı bulunamadı'
       });
     }
 
     res.json(schedule);
   } catch (error) {
-    console.error('Class schedule fetch error:', error);
+    logger.error('Class schedule fetch error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Sınıf ders programı getirilirken hata oluştu' });
   }
 });
@@ -228,7 +249,7 @@ router.post("/", authenticateJWT, authorizeRoles(['admin']), validateSchedule, a
     const savedSchedule = await newSchedule.save();
     res.status(201).json(savedSchedule);
   } catch (error) {
-    console.error('Schedule creation error:', error);
+    logger.error('Schedule creation error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ders programı oluşturulurken hata oluştu' });
   }
 });
@@ -250,7 +271,7 @@ router.put("/:id", authenticateJWT, authorizeRoles(['admin']), validateSchedule,
 
     res.json(updatedSchedule);
   } catch (error) {
-    console.error('Schedule update error:', error);
+    logger.error('Schedule update error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ders programı güncellenirken hata oluştu' });
   }
 });
@@ -276,7 +297,7 @@ router.patch("/:id/status", authenticateJWT, authorizeRoles(['admin']), async (r
 
     res.json(updatedSchedule);
   } catch (error) {
-    console.error('Schedule status update error:', error);
+    logger.error('Schedule status update error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ders programı durumu güncellenirken hata oluştu' });
   }
 });
@@ -293,7 +314,7 @@ router.delete("/:id", authenticateJWT, authorizeRoles(['admin']), async (req, re
     await Schedule.findOneAndDelete({ id: req.params.id });
     res.status(204).end();
   } catch (error) {
-    console.error('Schedule deletion error:', error);
+    logger.error('Schedule deletion error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ders programı silinirken hata oluştu' });
   }
 });

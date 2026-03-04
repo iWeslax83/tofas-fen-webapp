@@ -146,12 +146,12 @@ export class UserService {
 
   // Şifre değiştirme fonksiyonu kaldırıldı - artık TCKN kullanılıyor
 
-  static async sendEmailVerification(userId: string, email: string) {
-    return ApiService.post(`${API_ENDPOINTS.USER.EMAIL}/send-code`, { userId, email });
+  static async sendEmailVerification() {
+    return ApiService.post('/api/auth/send-verification');
   }
 
-  static async verifyEmailCode(userId: string, code: string) {
-    return ApiService.post(`${API_ENDPOINTS.USER.EMAIL}/verify-code`, { userId, code });
+  static async verifyEmailCode(code: string) {
+    return ApiService.post('/api/auth/verify-email', { code });
   }
 
 
@@ -206,16 +206,12 @@ export class NotesService {
     return ApiService.get(API_ENDPOINTS.NOTES.STATS);
   }
 
-  static async getImportFormats() {
-    return ApiService.get(API_ENDPOINTS.NOTES.IMPORT.FORMATS);
+  static async importNotesExcel(formData: FormData) {
+    return ApiService.upload(API_ENDPOINTS.NOTES.IMPORT.EXCEL, formData);
   }
 
-  static async importNotesFile(formData: FormData) {
-    return ApiService.upload(API_ENDPOINTS.NOTES.IMPORT.FILE, formData);
-  }
-
-  static async downloadTemplate() {
-    return ApiService.get(API_ENDPOINTS.NOTES.TEMPLATE.DOWNLOAD);
+  static async getTemplates() {
+    return ApiService.get(API_ENDPOINTS.NOTES.TEMPLATES);
   }
 }
 
@@ -246,13 +242,14 @@ export class HomeworkService {
     return ApiService.delete(API_ENDPOINTS.HOMEWORKS.DELETE(id));
   }
 
-  static async getHomeworksByStudent(studentId: string, classLevel?: string) {
-    const base = API_ENDPOINTS.HOMEWORKS.GET_BY_STUDENT(studentId);
-    const endpoint = classLevel ? `${base}?classLevel=${encodeURIComponent(classLevel)}` : base;
+  static async getHomeworksByStudent(classLevel?: string) {
+    const params = new URLSearchParams();
+    if (classLevel) params.append('classLevel', classLevel);
+    const query = params.toString();
+    const endpoint = query ? `${API_ENDPOINTS.HOMEWORKS.BASE}?${query}` : API_ENDPOINTS.HOMEWORKS.BASE;
     const result = await ApiService.get<{ homeworks: any[]; pagination?: any }>(endpoint);
 
     // Backend bu endpoint için { homeworks: [...], pagination? } döndürüyor.
-    // Diğer ödev metodlarıyla aynı deseni koruyarak "homeworks" alanını ayıklıyoruz.
     if (result.data && 'homeworks' in result.data) {
       return { data: result.data.homeworks, error: result.error };
     }
@@ -330,9 +327,7 @@ export class ScheduleService {
     return ApiService.getArray(API_ENDPOINTS.SCHEDULE.GET_BY_CLASS(classLevel, section));
   }
 
-  static async getScheduleByTeacher(teacherId: string) {
-    return ApiService.getArray(API_ENDPOINTS.SCHEDULE.GET_BY_TEACHER(teacherId));
-  }
+  // Schedule uses role-based filtering on GET / — teacher schedules are auto-filtered by the server
 }
 
 // Calendar service
@@ -410,8 +405,13 @@ export class CalendarService {
 
 // Evci service
 export class EvciService {
-  static async getEvciRequests() {
-    return ApiService.getArray(API_ENDPOINTS.EVCI.BASE);
+  static async getEvciRequests(page?: number, limit?: number) {
+    const params = new URLSearchParams();
+    if (page) params.append('page', String(page));
+    if (limit) params.append('limit', String(limit));
+    const query = params.toString();
+    const endpoint = query ? `${API_ENDPOINTS.EVCI.BASE}?${query}` : API_ENDPOINTS.EVCI.BASE;
+    return ApiService.get(endpoint);
   }
 
   static async createEvciRequest(evciData: Record<string, unknown>) {
@@ -431,7 +431,44 @@ export class EvciService {
   }
 
   static async getEvciRequestsByParent(parentId: string) {
-    return ApiService.getArray(API_ENDPOINTS.EVCI.GET_BY_PARENT(parentId));
+    return ApiService.get(API_ENDPOINTS.EVCI.GET_BY_PARENT(parentId));
+  }
+
+  static async approveEvciRequest(id: string) {
+    return ApiService.patch(API_ENDPOINTS.EVCI.PARENT_APPROVAL(id), { action: 'approve' });
+  }
+
+  static async rejectEvciRequest(id: string, reason?: string) {
+    return ApiService.patch(API_ENDPOINTS.EVCI.PARENT_APPROVAL(id), { action: 'reject', reason });
+  }
+
+  static async adminApproveEvciRequest(id: string, action: 'approve' | 'reject', adminNote?: string) {
+    return ApiService.patch(API_ENDPOINTS.EVCI.ADMIN_APPROVAL(id), { action, adminNote });
+  }
+
+  static async getSubmissionWindow() {
+    return ApiService.get(API_ENDPOINTS.EVCI.SUBMISSION_WINDOW);
+  }
+
+  static async getEvciStats(weeks?: number) {
+    const endpoint = weeks
+      ? `${API_ENDPOINTS.EVCI.STATS}?weeks=${weeks}`
+      : API_ENDPOINTS.EVCI.STATS;
+    return ApiService.get(endpoint);
+  }
+
+  static async bulkUpdateStatus(ids: string[], status: string, adminNote?: string) {
+    return ApiService.post(API_ENDPOINTS.EVCI.BULK_STATUS, { ids, status, adminNote });
+  }
+
+  static async exportEvciRequests(format: string, weekOf?: string) {
+    const params = new URLSearchParams({ format });
+    if (weekOf) params.append('weekOf', weekOf);
+    return SecureAPI.get(`${API_ENDPOINTS.EVCI.EXPORT}?${params.toString()}`, { responseType: 'blob' });
+  }
+
+  static async setWindowOverride(weekOf: string, isOpen: boolean, reason: string) {
+    return ApiService.post(API_ENDPOINTS.EVCI.WINDOW_OVERRIDE, { weekOf, isOpen, reason });
   }
 }
 

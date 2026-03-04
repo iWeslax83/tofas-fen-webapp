@@ -307,9 +307,7 @@ export default function OdevlerPage() {
                     const response = await fetch('/api/upload', {
                       method: 'POST',
                       body: uploadFormData,
-                      headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                      }
+                      credentials: 'include',
                     });
 
                     if (response.ok) {

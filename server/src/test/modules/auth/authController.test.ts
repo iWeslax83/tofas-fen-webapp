@@ -96,30 +96,4 @@ describe('AuthController', () => {
     });
   });
 
-  describe('forgotPassword', () => {
-    it('should request password reset successfully', async () => {
-      (AuthService.requestPasswordReset as any).mockResolvedValue({ success: true, resetToken: 'token' });
-      mockRequest.body = { email: 'john@example.com' };
-
-      await AuthController.forgotPassword(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(AuthService.requestPasswordReset).toHaveBeenCalledWith('john@example.com');
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
-    });
-  });
-
-  describe('resetPassword', () => {
-    it('should reset password successfully', async () => {
-      (AuthService.resetPassword as any).mockResolvedValue(undefined);
-      mockRequest.body = { token: 'validToken', newPassword: 'newPassword123' };
-
-      await AuthController.resetPassword(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(AuthService.resetPassword).toHaveBeenCalledWith('validToken', 'newPassword123');
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        success: true,
-        message: 'Şifre başarıyla güncellendi'
-      });
-    });
-  });
 });

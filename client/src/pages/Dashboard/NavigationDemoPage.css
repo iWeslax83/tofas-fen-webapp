@@ -3,19 +3,12 @@
 /* Import theme variables */
 @import url('../../styles/theme.css');
 
-/* Reset and Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Reset and Base Styles are in App.css - do not duplicate here */
 
 /* Navigation Demo Page */
 .navigation-demo-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #374151 50%, #4B5563 75%, #1a1a1a 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 20s ease infinite;
+  background: #f8fafc;
   font-family: var(--font-sans);
 }
 
@@ -29,9 +22,7 @@
   margin-left: 0;
   padding-top: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #374151 50%, #4B5563 75%, #1a1a1a 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 20s ease infinite;
+  background: #f8fafc;
 }
 
 .demo-container {
@@ -1144,17 +1135,17 @@
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   :root {
-    --white: #1F2937;
-    --gray-50: #111827;
-    --gray-100: #374151;
-    --gray-200: #4B5563;
-    --gray-300: #6B7280;
-    --gray-400: #9CA3AF;
-    --gray-500: #D1D5DB;
-    --gray-600: #E5E7EB;
-    --gray-700: #F3F4F6;
-    --gray-800: #F9FAFB;
-    --gray-900: #FFFFFF;
+    --white: #FFFFFF;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #64748b;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
   }
 }
 

@@ -46,6 +46,8 @@ export const queryKeys = {
     list: (filters?: Record<string, unknown>) => ['notes', 'list', filters] as const,
     detail: (id: string) => ['notes', 'detail', id] as const,
     student: (studentId: string) => ['notes', 'student', studentId] as const,
+    stats: (filters?: Record<string, unknown>) => ['notes', 'stats', filters] as const,
+    studentStats: (studentId: string) => ['notes', 'studentStats', studentId] as const,
   },
 
   // Evci Requests

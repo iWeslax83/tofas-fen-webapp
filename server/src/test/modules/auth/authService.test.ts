@@ -102,66 +102,6 @@ describe('AuthService', () => {
   });
 
 
-  describe('requestPasswordReset', () => {
-    it('should request password reset for existing user', async () => {
-      const mockUser = {
-        id: 'user123',
-        email: 'john@example.com',
-        isActive: true,
-        save: vi.fn()
-      };
-
-      (User.findOne as any).mockResolvedValue(mockUser);
-
-      const result = await AuthService.requestPasswordReset('john@example.com');
-
-      expect(User.findOne).toHaveBeenCalledWith({ email: 'john@example.com', isActive: true });
-      expect(mockUser.save).toHaveBeenCalled();
-      expect(result.success).toBe(true);
-      expect(result.resetToken).toBeDefined();
-    });
-
-    it('should return success for non-existing user', async () => {
-      (User.findOne as any).mockResolvedValue(null);
-
-      const result = await AuthService.requestPasswordReset('nonexistent@example.com');
-
-      expect(result.success).toBe(true);
-      expect(result.resetToken).toBeUndefined();
-    });
-  });
-
-  describe('resetPassword', () => {
-    it('should reset password with valid token', async () => {
-      const mockUser = {
-        id: 'user123',
-        resetToken: 'validToken',
-        resetTokenExpiry: new Date(Date.now() + 3600000), // 1 hour from now
-        isActive: true,
-        tokenVersion: 0,
-        save: vi.fn()
-      };
-
-      (User.findOne as any).mockResolvedValue(mockUser);
-      (bcrypt.hash as any).mockResolvedValue('newHashedPassword');
-
-      await AuthService.resetPassword('validToken', 'newPassword123');
-
-      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword123', 12);
-      expect(mockUser.tokenVersion).toBe(1);
-      expect(mockUser.resetToken).toBeUndefined();
-      expect(mockUser.resetTokenExpiry).toBeUndefined();
-      expect(mockUser.save).toHaveBeenCalled();
-    });
-
-    it('should throw unauthorized error for invalid token', async () => {
-      (User.findOne as any).mockResolvedValue(null);
-
-      await expect(AuthService.resetPassword('invalidToken', 'newPassword123'))
-        .rejects.toThrow(AppError);
-    });
-  });
-
   describe('validatePasswordStrength', () => {
     it('should validate strong password', () => {
       const result = AuthService.validatePasswordStrength('Password123');

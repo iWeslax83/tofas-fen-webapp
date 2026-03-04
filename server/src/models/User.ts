@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import logger from '../utils/logger';
 
 export interface IUser extends Document {
   id: string;
@@ -11,14 +12,19 @@ export interface IUser extends Document {
   oda?: string;
   email?: string;
   emailVerified: boolean;
+  emailVerificationCode?: string;
+  emailVerificationExpiry?: Date;
   parentId?: string;
   pansiyon: boolean;
   childId: string[];
   tokenVersion: number;
-  resetToken?: string;
-  resetTokenExpiry?: Date;
-  forgotPasswordToken?: string;
-  forgotPasswordExpires?: Date;
+  twoFactorEnabled: boolean;
+  twoFactorCode?: string;
+  twoFactorExpiry?: Date;
+  twoFactorAttempts: number;
+  trustedDevices?: string[];
+  failedLoginAttempts: number;
+  lockUntil?: Date;
   lastLogin?: Date;
   loginCount: number;
   isActive: boolean;
@@ -95,6 +101,12 @@ const UserSchema = new Schema<IUser>({
     default: false,
     index: true // For verification status queries
   },
+  emailVerificationCode: {
+    type: String,
+  },
+  emailVerificationExpiry: {
+    type: Date,
+  },
   parentId: {
     type: String,
     index: true // For parent-child relationship queries
@@ -113,14 +125,13 @@ const UserSchema = new Schema<IUser>({
     default: 0,
     index: true // For token invalidation
   },
-  resetToken: String,
-  resetTokenExpiry: {
-    type: Date,
-  },
-  forgotPasswordToken: String,
-  forgotPasswordExpires: {
-    type: Date,
-  },
+  twoFactorEnabled: { type: Boolean, default: false },
+  twoFactorCode: String,
+  twoFactorExpiry: Date,
+  twoFactorAttempts: { type: Number, default: 0 },
+  trustedDevices: [{ type: String }],
+  failedLoginAttempts: { type: Number, default: 0 },
+  lockUntil: Date,
   lastLogin: {
     type: Date,
     index: true // For user activity tracking
@@ -149,8 +160,6 @@ UserSchema.index({ oda: 1, isActive: 1 }); // Room-based queries
 UserSchema.index({ lastLogin: -1, isActive: 1 }); // Recent activity queries
 UserSchema.index({ createdAt: -1, isActive: 1 }); // New user queries
 UserSchema.index({ tokenVersion: 1, isActive: 1 }); // Token invalidation queries
-UserSchema.index({ resetToken: 1, resetTokenExpiry: 1 }); // Password reset queries
-UserSchema.index({ forgotPasswordToken: 1, forgotPasswordExpires: 1 }); // Forgot password queries
 
 // Text search index for name searches
 
@@ -168,10 +177,6 @@ UserSchema.index({
   },
   name: 'user_text_search'
 });
-
-// TTL index for automatic cleanup of expired tokens
-UserSchema.index({ resetTokenExpiry: 1 }, { expireAfterSeconds: 0 });
-UserSchema.index({ forgotPasswordExpires: 1 }, { expireAfterSeconds: 0 });
 
 // Removed partial indexes - they're covered by compound indexes above
 
@@ -292,9 +297,9 @@ UserSchema.statics.getClassDistribution = function () {
 // Ensure indexes are created
 UserSchema.on('index', function (error) {
   if (error) {
-    console.error('User index creation error:', error);
+    logger.error('User index creation error', { error: error instanceof Error ? error.message : error });
   } else {
-    console.log('✅ User indexes created successfully');
+    logger.info('User indexes created successfully');
   }
 });
 

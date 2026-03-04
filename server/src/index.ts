@@ -14,6 +14,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import compression from "compression";
 import cookieParser from "cookie-parser";
+import morgan from "morgan";
 
 // Middleware imports
 import {
@@ -28,8 +29,9 @@ import {
 import { globalErrorHandler } from './middleware/errorHandler';
 
 // Monitoring ve logging imports
-import logger from './utils/logger';
+import logger, { morganStream } from './utils/logger';
 import monitoringService from './utils/monitoring';
+import { validateConfig } from './config/environment';
 
 // Modular routes
 import authRoutes from './modules/auth/routes/authRoutes';
@@ -55,25 +57,45 @@ import performanceRoutes from './routes/Performance';
 import auditLogRoutes from './routes/AuditLog';
 // import attendanceRoutes from './routes/Attendance';
 import dilekceRoutes from './routes/Dilekce';
+import pushSubscriptionRoutes from './routes/PushSubscription';
 import { connectDB } from "./db";
 import dashboardRoutes from './routes/Dashboard';
 import { sendMail } from "./mailService";
 import { setupSwagger } from './utils/swagger';
 import { initializeWebSocket } from './utils/websocket';
+import { SchedulerService } from './services/SchedulerService';
+import { migrateEvciRequests } from './models/EvciRequest';
 
 const app = express();
+
+// Konfigürasyon doğrulama (startup'ta hataları yakala)
+validateConfig();
+
+// HTTP request logging (Morgan -> Winston)
+app.use(morgan('combined', { stream: morganStream }));
 
 // Güvenlik middleware'leri
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'", process.env.FRONTEND_URL || "http://localhost:5173"],
+      frameAncestors: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
     },
   },
   crossOriginEmbedderPolicy: false,
+  // Clickjacking koruması
+  frameguard: { action: 'deny' },
+  // MIME-type sniffing koruması
+  noSniff: true,
+  // XSS filtresi
+  xssFilter: true,
 }));
 
 // Rate limiting - API isteklerini sınırla (env ile yapılandırılabilir)
@@ -207,9 +229,22 @@ const storage = multer.diskStorage({
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    // GÜVENLİK: Sadece dosya adının son kısmını al (directory traversal önlemi)
+    const safeOriginalName = path.basename(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(safeOriginalName));
   }
 });
+
+// GÜVENLİK: İzin verilen dosya uzantıları ve MIME tipleri whitelist
+const ALLOWED_FILE_TYPES: Record<string, string[]> = {
+  '.jpg': ['image/jpeg'],
+  '.jpeg': ['image/jpeg'],
+  '.png': ['image/png'],
+  '.gif': ['image/gif'],
+  '.webp': ['image/webp'],
+  '.mp4': ['video/mp4'],
+  '.webm': ['video/webm'],
+};
 
 const upload = multer({
   storage: storage,
@@ -217,12 +252,20 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
   fileFilter: (_req, file, cb) => {
-    // Sadece resim ve video dosyalarına izin ver
-    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Sadece resim ve video dosyaları yüklenebilir!'));
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedMimes = ALLOWED_FILE_TYPES[ext];
+
+    // Uzantı whitelist kontrolü
+    if (!allowedMimes) {
+      return cb(new Error(`İzin verilmeyen dosya uzantısı: ${ext}. İzin verilenler: ${Object.keys(ALLOWED_FILE_TYPES).join(', ')}`));
     }
+
+    // MIME tipi ve uzantı eşleşme kontrolü (spoofing önlemi)
+    if (!allowedMimes.includes(file.mimetype)) {
+      return cb(new Error(`Dosya uzantısı (${ext}) ile MIME tipi (${file.mimetype}) eşleşmiyor`));
+    }
+
+    cb(null, true);
   }
 });
 
@@ -241,8 +284,18 @@ const corsOptions = {
 
     // Development'ta localhost origin'lerine izin ver, production'da sadece whitelist
     if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
-      // Development: localhost origin'leri veya whitelist'teki origin'ler
-      if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || allowedOrigins.includes(origin)) {
+      // Development: localhost/127.0.0.1 origin'leri veya whitelist'teki origin'ler
+      // GÜVENLİK: startsWith yerine URL parse kullanarak subdomain bypass önlenir
+      let isLocalOrigin = false;
+      if (origin) {
+        try {
+          const url = new URL(origin);
+          isLocalOrigin = (url.hostname === 'localhost' || url.hostname === '127.0.0.1') && url.protocol === 'http:';
+        } catch {
+          isLocalOrigin = false;
+        }
+      }
+      if (!origin || isLocalOrigin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error('CORS policy: Origin not allowed in development'));
@@ -410,16 +463,53 @@ app.use('/api/performance', performanceRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 // app.use('/api/attendance', attendanceRoutes);
 app.use('/api/dilekce', dilekceRoutes);
+app.use('/api/push', pushSubscriptionRoutes);
 
 // Dashboard stats endpoint - now active
 app.use('/api/dashboard', dashboardRoutes);
 
 // Dosya yükleme endpoint'i
+// GÜVENLİK: Magic byte doğrulaması - dosya içeriğinin gerçekten iddia edilen türde olduğunu kontrol eder
+const MAGIC_BYTES: Record<string, Buffer[]> = {
+  '.jpg': [Buffer.from([0xFF, 0xD8, 0xFF])],
+  '.jpeg': [Buffer.from([0xFF, 0xD8, 0xFF])],
+  '.png': [Buffer.from([0x89, 0x50, 0x4E, 0x47])],
+  '.gif': [Buffer.from([0x47, 0x49, 0x46, 0x38])],
+  '.webp': [Buffer.from([0x52, 0x49, 0x46, 0x46])], // RIFF header
+  '.pdf': [Buffer.from([0x25, 0x50, 0x44, 0x46])], // %PDF
+  '.doc': [Buffer.from([0xD0, 0xCF, 0x11, 0xE0])], // OLE2
+  '.docx': [Buffer.from([0x50, 0x4B, 0x03, 0x04])], // ZIP (OOXML)
+};
+
+function validateMagicBytes(filePath: string, ext: string): boolean {
+  const signatures = MAGIC_BYTES[ext];
+  if (!signatures) return true; // Bilinmeyen uzantılar için atla
+
+  try {
+    const fd = fs.openSync(filePath, 'r');
+    const buffer = Buffer.alloc(8);
+    fs.readSync(fd, buffer, 0, 8, 0);
+    fs.closeSync(fd);
+
+    return signatures.some(sig => buffer.subarray(0, sig.length).equals(sig));
+  } catch {
+    return false;
+  }
+}
+
 app.post('/api/upload', upload.single('file'), (req: express.Request, res: express.Response) => {
   try {
     const file = (req as express.Request & { file?: Express.Multer.File }).file;
     if (!file) {
       return res.status(400).json({ error: 'Dosya yüklenmedi' });
+    }
+
+    // Magic byte doğrulaması
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!validateMagicBytes(file.path, ext)) {
+      // Sahte dosyayı sil
+      fs.unlinkSync(file.path);
+      return res.status(400).json({ error: 'Dosya içeriği, dosya uzantısı ile uyuşmuyor. Dosya reddedildi.' });
     }
 
     // Dosya URL'ini döndür
@@ -467,16 +557,7 @@ app.get("/", (_req: express.Request, res: express.Response) => {
   res.send("Backend çalışıyor!");
 });
 
-app.post("/api/test-mail", async (req: express.Request, res: express.Response) => {
-  const { to, subject, text } = req.body;
-  try {
-    const info = await sendMail(to, subject, text);
-    res.json({ success: true, info });
-  } catch (error) {
-    const errMsg = error instanceof Error ? error.message : String(error);
-    res.status(500).json({ success: false, error: errMsg });
-  }
-});
+// test-mail endpoint removed for security — was an unauthenticated email relay
 
 // Setup Swagger documentation
 setupSwagger(app);
@@ -539,6 +620,15 @@ if (process.env.NODE_ENV !== 'test') {
         const { initializeEventDrivenWebSocket } = await import('./utils/websocket-enhanced');
         initializeEventDrivenWebSocket();
         logger.info(`Event-driven architecture enabled`);
+
+        // Migrate existing evci requests (one-time, idempotent)
+        migrateEvciRequests()
+          .then(() => logger.info('EvciRequest migration completed'))
+          .catch((err) => logger.error('EvciRequest migration failed', { error: err.message }));
+
+        // Initialize scheduler for cron jobs (evci reminders etc.)
+        SchedulerService.initialize();
+        logger.info(`Scheduler service initialized`);
       });
     })
     .catch((err) => {

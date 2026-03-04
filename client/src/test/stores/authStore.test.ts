@@ -7,7 +7,8 @@ import { AppError, ErrorSeverity } from '../../utils/AppError';
 vi.mock('../../utils/api', () => ({
   SecureAPI: {
     login: vi.fn(),
-    get: vi.fn()
+    get: vi.fn(),
+    getCurrentUser: vi.fn()
   }
 }));
 
@@ -66,6 +67,7 @@ describe('AuthStore', () => {
         adSoyad: 'John Doe',
         rol: 'student',
         email: 'john@example.com',
+        emailVerified: false,
         pansiyon: false
       });
       expect(result.current.isAuthenticated).toBe(true);
@@ -144,21 +146,20 @@ describe('AuthStore', () => {
   });
 
   describe('checkAuth', () => {
-    it('should restore user from localStorage with valid token', async () => {
+    it('should fetch user from server with valid token', async () => {
       const mockUser = {
         id: 'user123',
         adSoyad: 'John Doe',
         rol: 'student',
-        email: 'john@example.com'
+        email: 'john@example.com',
+        emailVerified: false
       };
 
-      // Set up localStorage
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      localStorage.setItem('accessToken', 'validToken');
-
       const { TokenManager } = await import('../../utils/security');
+      const { SecureAPI } = await import('../../utils/api');
       (TokenManager.getAccessToken as any).mockReturnValue('validToken');
       (TokenManager.isTokenExpired as any).mockReturnValue(false);
+      (SecureAPI.get as any).mockResolvedValue({ data: mockUser });
 
       const { result } = renderHook(() => useAuthStore());
 
@@ -166,25 +167,21 @@ describe('AuthStore', () => {
         await result.current.checkAuth();
       });
 
-      expect(result.current.user).toEqual(mockUser);
+      expect(SecureAPI.get).toHaveBeenCalledWith('/user/profile');
+      expect(result.current.user).toEqual({
+        ...mockUser,
+        pansiyon: false
+      });
       expect(result.current.isAuthenticated).toBe(true);
       expect(result.current.error).toBeNull();
     });
 
-    it('should clear state when token is expired', async () => {
-      const mockUser = {
-        id: 'user123',
-        adSoyad: 'John Doe',
-        rol: 'student'
-      };
-
-      // Set up localStorage
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      localStorage.setItem('accessToken', 'expiredToken');
-
+    it('should clear state when token is expired and no httpOnly session', async () => {
       const { TokenManager } = await import('../../utils/security');
+      const { SecureAPI } = await import('../../utils/api');
       (TokenManager.getAccessToken as any).mockReturnValue('expiredToken');
       (TokenManager.isTokenExpired as any).mockReturnValue(true);
+      (SecureAPI.getCurrentUser as any).mockRejectedValue(new Error('Unauthorized'));
 
       const { result } = renderHook(() => useAuthStore());
 
@@ -194,7 +191,6 @@ describe('AuthStore', () => {
 
       expect(result.current.user).toBeNull();
       expect(result.current.isAuthenticated).toBe(false);
-      expect(result.current.error).toBeNull();
     });
 
     it('should fetch user data when token is valid but no user in localStorage', async () => {
@@ -226,6 +222,7 @@ describe('AuthStore', () => {
         adSoyad: 'John Doe',
         rol: 'student',
         email: 'john@example.com',
+        emailVerified: false,
         pansiyon: false
       });
       expect(result.current.isAuthenticated).toBe(true);

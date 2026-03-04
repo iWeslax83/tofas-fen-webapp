@@ -49,6 +49,21 @@ export function initializeEventDrivenWebSocket() {
     }
   });
 
+  eventService.subscribe(EventType.EVCI_REQUEST_CREATED, async (payload) => {
+    logger.info('Evci request created event received', { eventId: payload.eventId });
+    const parentIds = payload.data.parentIds as string[] | undefined;
+    if (parentIds && parentIds.length > 0) {
+      for (const parentId of parentIds) {
+        ws.sendNotification(parentId, {
+          title: 'Yeni Evci Talebi',
+          message: `${payload.data.studentName || 'Öğrenci'} yeni bir evci talebi oluşturdu`,
+          type: 'info',
+          link: '/parent/evci',
+        });
+      }
+    }
+  });
+
   logger.info('Event-driven WebSocket enhancements initialized');
 }
 

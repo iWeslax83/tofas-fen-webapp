@@ -67,16 +67,42 @@ export const optionalAuth = async (req: Request, _res: Response, next: NextFunct
   }
 };
 
-// CSRF protection middleware
+// CSRF protection middleware - double-submit cookie pattern
 export const csrfProtection = (req: Request, res: Response, next: NextFunction): void => {
-  // Basit CSRF koruması - production'da daha güçlü bir çözüm kullanın
-  if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE' || req.method === 'PATCH') {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    // 1. Origin kontrolü
     const origin = req.get('Origin');
-    // const referer = req.get('Referer'); // Unused variable removed
+    if (origin) {
+      const allowedOrigins = [
+        process.env.FRONTEND_URL || 'http://localhost:5173',
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:5173',
+      ];
+      if (!allowedOrigins.includes(origin)) {
+        res.status(403).json({ error: 'CSRF koruması: Geçersiz origin' });
+        return;
+      }
+    }
 
-    // Same-origin kontrolü
-    if (origin && !origin.includes(process.env.FRONTEND_URL || 'localhost')) {
-      res.status(403).json({ error: 'CSRF koruması' });
+    // 2. Double-submit cookie doğrulaması
+    // Cookie'deki CSRF token ile header'daki eşleşmeli
+    const cookieToken = req.cookies?.csrfToken;
+    const headerToken = req.get('X-CSRF-Token');
+
+    if (cookieToken && headerToken) {
+      if (cookieToken !== headerToken) {
+        res.status(403).json({ error: 'CSRF koruması: Token uyuşmazlığı' });
+        return;
+      }
+    }
+
+    // 3. X-Requested-With kontrolü (AJAX isteklerini doğrula)
+    const xRequestedWith = req.get('X-Requested-With');
+    if (!xRequestedWith && !origin) {
+      // Ne Origin ne de X-Requested-With varsa, potansiyel CSRF
+      res.status(403).json({ error: 'CSRF koruması: Geçersiz istek' });
       return;
     }
   }

@@ -6,10 +6,10 @@
 export const tokens = {
   colors: {
     primary: {
-      red: '#374151', // Gray 700
-      redDark: '#111827', // Gray 900
-      redLight: '#9CA3AF', // Gray 400
-      redLighter: '#F3F4F6', // Gray 100
+      red: '#0f766e', // Teal 700
+      redDark: '#115e59', // Teal 800
+      redLight: '#14b8a6', // Teal 400
+      redLighter: '#ccfbf1', // Teal 50
     },
     secondary: {
       blue: '#1E40AF',
@@ -22,20 +22,20 @@ export const tokens = {
     },
     neutral: {
       white: '#FFFFFF',
-      gray50: '#F9FAFB',
-      gray100: '#F3F4F6',
-      gray200: '#E5E7EB',
-      gray300: '#D1D5DB',
-      gray400: '#9CA3AF',
-      gray500: '#6B7280',
-      gray600: '#4B5563',
-      gray700: '#374151',
-      gray800: '#1F2937',
-      gray900: '#111827',
+      gray50: '#f8fafc',
+      gray100: '#f1f5f9',
+      gray200: '#e2e8f0',
+      gray300: '#cbd5e1',
+      gray400: '#94a3b8',
+      gray500: '#64748b',
+      gray600: '#475569',
+      gray700: '#334155',
+      gray800: '#1e293b',
+      gray900: '#0f172a',
     },
   },
   gradients: {
-    primary: 'linear-gradient(135deg, #111827 0%, #374151 100%)',
+    primary: 'linear-gradient(135deg, #115e59 0%, #0f766e 100%)',
     secondary: 'linear-gradient(135deg, #1E40AF 0%, #7C3AED 100%)',
     success: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
     warning: 'linear-gradient(135deg, #EA580C 0%, #D97706 100%)',

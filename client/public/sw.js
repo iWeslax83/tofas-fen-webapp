@@ -45,6 +45,7 @@ self.addEventListener('install', (event) => {
         '/',
         '/index.html',
         '/manifest.webmanifest',
+        '/offline.html',
       ]).catch((error) => {
         console.error('[SW] Cachekullanmış yükleme hatası:', error);
       });
@@ -248,6 +249,11 @@ async function handleHtmlRequest(request) {
     if (cached) {
       return cached;
     }
+    // Final fallback: offline page
+    const offline = await caches.match('/offline.html');
+    if (offline) {
+      return offline;
+    }
     return new Response('Offline', { status: 503 });
   }
 }
@@ -258,6 +264,52 @@ async function handleHtmlRequest(request) {
 function isStaticAsset(pathname) {
   return STATIC_ASSET_PATTERNS.some(pattern => pattern.test(pathname));
 }
+
+// Push notification handler
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  try {
+    const data = event.data.json();
+    const options = {
+      body: data.body || '',
+      icon: data.icon || '/tofaslogo.png',
+      badge: '/tofaslogo.png',
+      data: { url: data.url || '/' },
+      vibrate: [200, 100, 200],
+      tag: data.tag || 'tofas-notification',
+      renotify: true,
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(data.title || 'Tofaş Fen Lisesi', options)
+    );
+  } catch (error) {
+    console.error('[SW] Push notification error:', error);
+  }
+});
+
+// Notification click handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const url = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Focus existing window if available
+      for (const client of windowClients) {
+        if (client.url.includes(url) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Open new window
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(url);
+      }
+    })
+  );
+});
 
 // Background sync for offline actions
 self.addEventListener('sync', (event) => {

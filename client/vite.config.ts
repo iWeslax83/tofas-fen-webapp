@@ -109,6 +109,11 @@ export default defineConfig({
               return 'security-vendor';
             }
 
+            // Chart libraries
+            if (id.includes('recharts') || id.includes('d3-')) {
+              return 'chart-vendor';
+            }
+
             // Large libraries - separate chunks
             if (id.includes('framer-motion')) {
               return 'animation-vendor';

@@ -63,7 +63,7 @@
   background: linear-gradient(135deg, var(--section-color) 0%, rgba(55, 65, 81, 0.8) 100%);
   border-color: var(--section-color);
   color: white;
-  box-shadow: 0 4px 16px rgba(55, 65, 81, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .demo-nav-icon {
@@ -138,7 +138,7 @@
 
 .demo-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(55, 65, 81, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .demo-button:disabled {

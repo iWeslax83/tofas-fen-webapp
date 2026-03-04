@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import logger from '../utils/logger';
 
 const CURRENT_API_VERSION = '1.0.0';
 const SUPPORTED_VERSIONS = ['1.0.0'];
@@ -72,7 +73,7 @@ export function deprecationWarningMiddleware(
     }
 
     // Log deprecation warning
-    console.warn(`[DEPRECATED] ${req.method} ${endpoint} - Deprecated since ${deprecationInfo.deprecatedSince}`);
+    logger.warn('Deprecated endpoint accessed', { method: req.method, endpoint, deprecatedSince: deprecationInfo.deprecatedSince });
   }
 
   next();

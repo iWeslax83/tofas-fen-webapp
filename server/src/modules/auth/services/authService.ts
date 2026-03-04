@@ -1,8 +1,15 @@
 import { User } from '../../../models/User';
 import { AppError } from '../../../utils/AppError';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { generateTokenPair } from '../../../utils/jwt';
 import crypto from 'crypto';
+import { sendVerificationEmail, sendTwoFactorEmail } from '../../../mailService';
+import { config } from '../../../config/environment';
+import { logSecurityEvent, SecurityEvent } from '../../../utils/securityLogger';
+
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 /**
  * Authentication Service
@@ -12,14 +19,28 @@ export class AuthService {
   /**
    * Authenticate user with ID and password
    */
-  static async authenticateUser(id: string, password: string): Promise<{
+  static async authenticateUser(id: string, password: string, trustedDeviceToken?: string, meta?: { ip?: string; userAgent?: string }): Promise<{
     user: any;
-    tokens: any;
+    tokens?: any;
+    requires2FA?: boolean;
+    twoFactorSessionToken?: string;
+    twoFactorExpiresAt?: number;
   }> {
     // Find user by ID
     const user = await User.findOne({ id, isActive: true });
     if (!user) {
+      // Timing-safe: Kullanıcı bulunamasa bile bcrypt karşılaştırması yap
+      // Bu sayede kullanıcı var/yok ayrımı zamanlama ile tespit edilemez
+      await bcrypt.compare(password, '$2a$12$placeholder.hash.to.prevent.timing.attacks.xxxxxxxxxxxx');
       throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
+    }
+
+    // #8: Check account lockout
+    if (user.lockUntil && user.lockUntil > new Date()) {
+      const remainingMs = user.lockUntil.getTime() - Date.now();
+      const remainingMin = Math.ceil(remainingMs / 60000);
+      logSecurityEvent({ event: SecurityEvent.ACCOUNT_LOCKED, userId: user.id, ip: meta?.ip, userAgent: meta?.userAgent });
+      throw AppError.unauthorized(`Hesap geçici olarak kilitlendi. ${remainingMin} dakika sonra tekrar deneyin.`);
     }
 
     // Check password: prefer bcrypt hashed `sifre` if present, fall back to TCKN
@@ -29,26 +50,125 @@ export class AuthService {
       try {
         authenticated = await bcrypt.compare(password, user.sifre);
       } catch (e) {
-        // If bcrypt fails for any reason, ensure we still try TCKN fallback below
         authenticated = false;
       }
     }
 
-    // Fallback to TCKN (plain equality) if bcrypt didn't authenticate
+    // #9: Fallback to TCKN (plain equality) — migrate to bcrypt on success
     if (!authenticated && user.tckn) {
       if (String(user.tckn).trim() === String(password).trim()) {
         authenticated = true;
+        // Migrate plaintext TCKN to bcrypt hash if user has no custom password
+        if (!user.sifre) {
+          user.sifre = await bcrypt.hash(password, 12);
+          logSecurityEvent({ event: SecurityEvent.TCKN_MIGRATED, userId: user.id, ip: meta?.ip });
+        }
       }
     }
 
     if (!authenticated) {
+      // #8: Increment failed attempts
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+      if (user.failedLoginAttempts >= MAX_LOGIN_ATTEMPTS) {
+        user.lockUntil = new Date(Date.now() + LOCK_DURATION_MS);
+        logSecurityEvent({ event: SecurityEvent.ACCOUNT_LOCKED, userId: user.id, ip: meta?.ip, userAgent: meta?.userAgent, details: { attempts: user.failedLoginAttempts } });
+      }
+      await user.save();
+      logSecurityEvent({ event: SecurityEvent.LOGIN_FAILED, userId: user.id, ip: meta?.ip, userAgent: meta?.userAgent });
       throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
+    }
+
+    // #8: Reset failed attempts on success
+    if (user.failedLoginAttempts > 0 || user.lockUntil) {
+      user.failedLoginAttempts = 0;
+      user.lockUntil = undefined as any;
+    }
+
+    // Check if 2FA is required
+    const requires2FA = (user.rol === 'admin' || user.rol === 'teacher') &&
+      user.emailVerified &&
+      user.twoFactorEnabled;
+
+    if (requires2FA) {
+      // Check trusted device
+      if (trustedDeviceToken && user.trustedDevices && user.trustedDevices.length > 0) {
+        const hashedToken = crypto.createHash('sha256').update(trustedDeviceToken).digest('hex');
+        if (user.trustedDevices.includes(hashedToken)) {
+          // Trusted device - skip 2FA, proceed normally
+          user.lastLogin = new Date();
+          user.loginCount = (user.loginCount || 0) + 1;
+          await user.save();
+          logSecurityEvent({ event: SecurityEvent.LOGIN_SUCCESS, userId: user.id, ip: meta?.ip, details: { trustedDevice: true } });
+
+          const tokens = generateTokenPair(user.id, user.rol, user.email, user.tokenVersion);
+          return {
+            user: {
+              id: user.id,
+              adSoyad: user.adSoyad,
+              rol: user.rol,
+              email: user.email,
+              emailVerified: user.emailVerified,
+              twoFactorEnabled: user.twoFactorEnabled,
+              sinif: user.sinif,
+              sube: user.sube,
+              oda: user.oda,
+              pansiyon: user.pansiyon,
+              lastLogin: user.lastLogin
+            },
+            tokens
+          };
+        }
+      }
+
+      // #1: Use crypto.randomInt for CSPRNG 2FA code
+      const code = crypto.randomInt(100000, 1000000).toString();
+      const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+      // #2: Hash 2FA code before storing in DB
+      const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+      user.twoFactorCode = codeHash;
+      user.twoFactorExpiry = expiry;
+      user.twoFactorAttempts = 0;
+      await user.save();
+
+      // #11: Handle email sending failure gracefully
+      try {
+        if (user.email) {
+          await sendTwoFactorEmail(user.email, code, user.adSoyad);
+          logSecurityEvent({ event: SecurityEvent.TWO_FACTOR_CODE_SENT, userId: user.id, ip: meta?.ip });
+        }
+      } catch (emailErr) {
+        // Clear the code since user never received it
+        user.twoFactorCode = undefined as any;
+        user.twoFactorExpiry = undefined as any;
+        await user.save();
+        logSecurityEvent({ event: SecurityEvent.EMAIL_SEND_FAILED, userId: user.id, ip: meta?.ip, details: { type: '2fa', error: (emailErr as Error).message } });
+        throw AppError.internal('Doğrulama kodu gönderilemedi. Lütfen daha sonra tekrar deneyin.');
+      }
+
+      // #10: Generate short-lived 2FA session token (will be set as httpOnly cookie)
+      const twoFactorSessionToken = jwt.sign(
+        { userId: user.id, purpose: '2fa' },
+        config.JWT_SECRET,
+        { expiresIn: '5m' }
+      );
+
+      return {
+        requires2FA: true,
+        twoFactorSessionToken,
+        twoFactorExpiresAt: expiry.getTime(),
+        user: {
+          id: user.id,
+          adSoyad: user.adSoyad,
+        }
+      };
     }
 
     // Update last login
     user.lastLogin = new Date();
     user.loginCount = (user.loginCount || 0) + 1;
     await user.save();
+    logSecurityEvent({ event: SecurityEvent.LOGIN_SUCCESS, userId: user.id, ip: meta?.ip });
 
     // Generate tokens
     const tokens = generateTokenPair(user.id, user.rol, user.email, user.tokenVersion);
@@ -59,6 +179,8 @@ export class AuthService {
         adSoyad: user.adSoyad,
         rol: user.rol,
         email: user.email,
+        emailVerified: user.emailVerified,
+        twoFactorEnabled: user.twoFactorEnabled,
         sinif: user.sinif,
         sube: user.sube,
         oda: user.oda,
@@ -67,6 +189,201 @@ export class AuthService {
       },
       tokens
     };
+  }
+
+  /**
+   * Verify 2FA code and complete login
+   */
+  static async verifyTwoFactorCode(sessionToken: string, code: string, requestTrustedDevice: boolean, meta?: { ip?: string; userAgent?: string }): Promise<{
+    user: any;
+    tokens: any;
+    trustedDeviceToken?: string;
+  }> {
+    // Verify 2FA session token
+    let payload: any;
+    try {
+      payload = jwt.verify(sessionToken, config.JWT_SECRET);
+    } catch (e) {
+      throw AppError.unauthorized('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+    }
+
+    if (payload.purpose !== '2fa') {
+      throw AppError.unauthorized('Geçersiz oturum tokeni');
+    }
+
+    // #3: Hash the input code for timing-safe comparison
+    const inputCodeHash = crypto.createHash('sha256').update(code).digest('hex');
+
+    // #6: Use atomic findOneAndUpdate to prevent race conditions / replay attacks
+    // Only match if twoFactorCode exists and matches
+    const user = await User.findOneAndUpdate(
+      {
+        id: payload.userId,
+        isActive: true,
+        twoFactorCode: inputCodeHash,
+        twoFactorExpiry: { $gt: new Date() },
+        twoFactorAttempts: { $lt: 5 },
+      },
+      {
+        $unset: { twoFactorCode: 1, twoFactorExpiry: 1 },
+        $set: { twoFactorAttempts: 0, lastLogin: new Date() },
+        $inc: { loginCount: 1 },
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      // Determine the specific failure reason
+      const checkUser = await User.findOne({ id: payload.userId, isActive: true });
+      if (!checkUser) {
+        throw AppError.notFound('Kullanıcı bulunamadı');
+      }
+      if (checkUser.twoFactorAttempts >= 5) {
+        checkUser.twoFactorCode = undefined as any;
+        checkUser.twoFactorExpiry = undefined as any;
+        await checkUser.save();
+        logSecurityEvent({ event: SecurityEvent.TWO_FACTOR_FAILED, userId: checkUser.id, ip: meta?.ip, details: { reason: 'max_attempts' } });
+        throw AppError.unauthorized('Çok fazla başarısız deneme. Lütfen tekrar giriş yapın.');
+      }
+      if (!checkUser.twoFactorCode || !checkUser.twoFactorExpiry || checkUser.twoFactorExpiry < new Date()) {
+        logSecurityEvent({ event: SecurityEvent.TWO_FACTOR_FAILED, userId: checkUser.id, ip: meta?.ip, details: { reason: 'expired' } });
+        throw AppError.validation('Doğrulama kodunun süresi dolmuş. Lütfen tekrar giriş yapın.');
+      }
+      // Code didn't match — increment attempts
+      checkUser.twoFactorAttempts = (checkUser.twoFactorAttempts || 0) + 1;
+      await checkUser.save();
+      logSecurityEvent({ event: SecurityEvent.TWO_FACTOR_FAILED, userId: checkUser.id, ip: meta?.ip, details: { reason: 'wrong_code', attempts: checkUser.twoFactorAttempts } });
+      throw AppError.validation('Geçersiz doğrulama kodu');
+    }
+
+    logSecurityEvent({ event: SecurityEvent.TWO_FACTOR_SUCCESS, userId: user.id, ip: meta?.ip });
+
+    // Handle trusted device
+    let trustedDeviceToken: string | undefined;
+    if (requestTrustedDevice) {
+      trustedDeviceToken = crypto.randomBytes(32).toString('hex');
+      const hashedToken = crypto.createHash('sha256').update(trustedDeviceToken).digest('hex');
+      if (!user.trustedDevices) {
+        user.trustedDevices = [];
+      }
+      // Keep max 5 trusted devices
+      if (user.trustedDevices.length >= 5) {
+        user.trustedDevices.shift();
+      }
+      user.trustedDevices.push(hashedToken);
+      await user.save();
+      logSecurityEvent({ event: SecurityEvent.TRUSTED_DEVICE_ADDED, userId: user.id, ip: meta?.ip });
+    }
+
+    // Generate tokens
+    const tokens = generateTokenPair(user.id, user.rol, user.email, user.tokenVersion);
+
+    return {
+      user: {
+        id: user.id,
+        adSoyad: user.adSoyad,
+        rol: user.rol,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        twoFactorEnabled: user.twoFactorEnabled,
+        sinif: user.sinif,
+        sube: user.sube,
+        oda: user.oda,
+        pansiyon: user.pansiyon,
+        lastLogin: user.lastLogin
+      },
+      tokens,
+      trustedDeviceToken
+    };
+  }
+
+  /**
+   * #13: Resend 2FA code using existing session token
+   */
+  static async resendTwoFactorCode(sessionToken: string, meta?: { ip?: string; userAgent?: string }): Promise<{
+    twoFactorSessionToken: string;
+    twoFactorExpiresAt: number;
+  }> {
+    let payload: any;
+    try {
+      payload = jwt.verify(sessionToken, config.JWT_SECRET);
+    } catch (e) {
+      throw AppError.unauthorized('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+    }
+
+    if (payload.purpose !== '2fa') {
+      throw AppError.unauthorized('Geçersiz oturum tokeni');
+    }
+
+    const user = await User.findOne({ id: payload.userId, isActive: true });
+    if (!user || !user.email) {
+      throw AppError.notFound('Kullanıcı bulunamadı');
+    }
+
+    // Generate new code
+    const code = crypto.randomInt(100000, 1000000).toString();
+    const expiry = new Date(Date.now() + 5 * 60 * 1000);
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+
+    user.twoFactorCode = codeHash;
+    user.twoFactorExpiry = expiry;
+    user.twoFactorAttempts = 0;
+    await user.save();
+
+    try {
+      await sendTwoFactorEmail(user.email, code, user.adSoyad);
+      logSecurityEvent({ event: SecurityEvent.TWO_FACTOR_CODE_RESENT, userId: user.id, ip: meta?.ip });
+    } catch (emailErr) {
+      user.twoFactorCode = undefined as any;
+      user.twoFactorExpiry = undefined as any;
+      await user.save();
+      logSecurityEvent({ event: SecurityEvent.EMAIL_SEND_FAILED, userId: user.id, ip: meta?.ip, details: { type: '2fa_resend' } });
+      throw AppError.internal('Doğrulama kodu gönderilemedi. Lütfen daha sonra tekrar deneyin.');
+    }
+
+    // Issue a fresh 2FA session token
+    const newSessionToken = jwt.sign(
+      { userId: user.id, purpose: '2fa' },
+      config.JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+
+    return {
+      twoFactorSessionToken: newSessionToken,
+      twoFactorExpiresAt: expiry.getTime(),
+    };
+  }
+
+  /**
+   * Toggle 2FA for admin/teacher users
+   */
+  static async toggleTwoFactor(userId: string, enabled: boolean, meta?: { ip?: string }): Promise<void> {
+    const user = await User.findOne({ id: userId, isActive: true });
+    if (!user) {
+      throw AppError.notFound('Kullanıcı bulunamadı');
+    }
+
+    if (user.rol !== 'admin' && user.rol !== 'teacher') {
+      throw AppError.forbidden('İki faktörlü doğrulama sadece yönetici ve öğretmenler için kullanılabilir');
+    }
+
+    if (enabled && !user.emailVerified) {
+      throw AppError.validation('İki faktörlü doğrulamayı açmak için e-posta adresinizi doğrulamanız gerekiyor');
+    }
+
+    user.twoFactorEnabled = enabled;
+
+    // Clear trusted devices when disabling 2FA
+    if (!enabled) {
+      user.trustedDevices = [];
+    }
+
+    await user.save();
+    logSecurityEvent({
+      event: enabled ? SecurityEvent.TWO_FACTOR_ENABLED : SecurityEvent.TWO_FACTOR_DISABLED,
+      userId: user.id,
+      ip: meta?.ip,
+    });
   }
 
   /**
@@ -83,6 +400,8 @@ export class AuthService {
       adSoyad: user.adSoyad,
       rol: user.rol,
       email: user.email,
+      emailVerified: user.emailVerified,
+      twoFactorEnabled: user.twoFactorEnabled,
       sinif: user.sinif,
       sube: user.sube,
       oda: user.oda,
@@ -92,64 +411,69 @@ export class AuthService {
     };
   }
 
-  // Şifre değiştirme fonksiyonu kaldırıldı - artık TCKN kullanılıyor ve değiştirilemez
-
   /**
-   * Request password reset
+   * Send email verification code
    */
-  static async requestPasswordReset(email: string): Promise<{
-    success: boolean;
-    resetToken?: string;
-  }> {
-    const user = await User.findOne({ email, isActive: true });
+  static async sendEmailVerification(userId: string): Promise<void> {
+    const user = await User.findOne({ id: userId, isActive: true });
     if (!user) {
-      // Don't reveal if user exists or not
-      return { success: true };
+      throw AppError.notFound('Kullanıcı bulunamadı');
     }
 
-    // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
+    if (!user.email) {
+      throw AppError.validation('Kullanıcının kayıtlı e-posta adresi yok');
+    }
 
-    user.resetToken = resetToken;
-    user.resetTokenExpiry = resetTokenExpiry;
+    if (user.emailVerified) {
+      throw AppError.validation('E-posta zaten doğrulanmış');
+    }
+
+    // Generate 6-digit code
+    const code = crypto.randomInt(100000, 1000000).toString();
+    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    // Hash verification code before storing (same pattern as 2FA codes)
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+    user.emailVerificationCode = codeHash;
+    user.emailVerificationExpiry = expiry;
     await user.save();
 
-    // TODO: Send email with reset link
-    // For now, return the token in development
-    return {
-      success: true,
-      resetToken: ['development', 'test'].includes(process.env.NODE_ENV || '') ? resetToken : undefined
-    };
+    await sendVerificationEmail(user.email, code, user.adSoyad);
   }
 
   /**
-   * Reset password with token
+   * Verify email with code
    */
-  static async resetPassword(token: string, newPassword: string): Promise<void> {
-    const user = await User.findOne({
-      resetToken: token,
-      isActive: true
-    });
-
+  static async verifyEmailCode(userId: string, code: string): Promise<void> {
+    const user = await User.findOne({ id: userId, isActive: true });
     if (!user) {
-      throw AppError.unauthorized('Geçersiz token');
+      throw AppError.notFound('Kullanıcı bulunamadı');
     }
 
-    if (user.resetTokenExpiry && user.resetTokenExpiry < new Date()) {
-      throw AppError.validation('Geçersiz veya süresi dolmuş token');
+    if (user.emailVerified) {
+      throw AppError.validation('E-posta zaten doğrulanmış');
     }
 
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-
-    // Update password and clear reset token
-    user.sifre = hashedPassword;
-    if (user.tokenVersion !== undefined) {
-      user.tokenVersion = (user.tokenVersion || 0) + 1;
+    if (!user.emailVerificationCode || !user.emailVerificationExpiry) {
+      throw AppError.validation('Doğrulama kodu bulunamadı. Lütfen yeni kod isteyin.');
     }
-    user.resetToken = undefined as any;
-    user.resetTokenExpiry = undefined as any;
+
+    if (user.emailVerificationExpiry < new Date()) {
+      user.emailVerificationCode = undefined as any;
+      user.emailVerificationExpiry = undefined as any;
+      await user.save();
+      throw AppError.validation('Doğrulama kodunun süresi dolmuş. Lütfen yeni kod isteyin.');
+    }
+
+    // Hash the input code and compare with stored hash
+    const inputCodeHash = crypto.createHash('sha256').update(code).digest('hex');
+    if (user.emailVerificationCode !== inputCodeHash) {
+      throw AppError.validation('Geçersiz doğrulama kodu');
+    }
+
+    user.emailVerified = true;
+    user.emailVerificationCode = undefined as any;
+    user.emailVerificationExpiry = undefined as any;
     await user.save();
   }
 
@@ -159,24 +483,8 @@ export class AuthService {
   static validatePasswordStrength(password: string): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
-    if (password.length < 6) {
-      errors.push('Şifre en az 6 karakter olmalıdır');
-    }
-
-    if (password.length > 100) {
-      errors.push('Şifre 100 karakterden kısa olmalıdır');
-    }
-
-    if (!/(?=.*[a-z])/.test(password)) {
-      errors.push('Şifre en az bir küçük harf içermelidir');
-    }
-
-    if (!/(?=.*[A-Z])/.test(password)) {
-      errors.push('Şifre en az bir büyük harf içermelidir');
-    }
-
-    if (!/(?=.*\d)/.test(password)) {
-      errors.push('Şifre en az bir rakam içermelidir');
+    if (!password || password.length === 0) {
+      errors.push('Şifre boş olamaz');
     }
 
     return {

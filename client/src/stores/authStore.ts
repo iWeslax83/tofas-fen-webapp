@@ -14,6 +14,10 @@ interface AuthState {
   isLoading: boolean;
   error: AppError | string | null;
   isAuthenticated: boolean;
+  requires2FA: boolean;
+  twoFactorSessionToken: string | null; // Deprecated: now in httpOnly cookie
+  twoFactorUser: { id: string; adSoyad: string } | null;
+  twoFactorExpiresAt: number | null; // #14: Countdown timer
 }
 
 interface AuthActions {
@@ -23,6 +27,9 @@ interface AuthActions {
   clearError: () => void;
   setLoading: (loading: boolean) => void;
   updateUser: (user: Partial<User>) => void;
+  verify2FA: (code: string, rememberDevice: boolean) => Promise<void>;
+  resend2FA: () => Promise<void>;
+  cancel2FA: () => void;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -35,6 +42,10 @@ export const useAuthStore = create<AuthStore>()(
       isLoading: false,
       error: null,
       isAuthenticated: false,
+      requires2FA: false,
+      twoFactorSessionToken: null,
+      twoFactorUser: null,
+      twoFactorExpiresAt: null,
 
       // Actions
       login: async (id: string, sifre: string) => {
@@ -42,6 +53,21 @@ export const useAuthStore = create<AuthStore>()(
           set({ isLoading: true, error: null });
 
           const response = await SecureAPI.login(id, sifre, { id, sifre });
+
+          // Check if 2FA is required
+          if ((response as any).requires2FA) {
+            set({
+              requires2FA: true,
+              twoFactorSessionToken: null, // #10: Token is now in httpOnly cookie
+              twoFactorUser: (response as any).user,
+              twoFactorExpiresAt: (response as any).twoFactorExpiresAt || null, // #14: countdown
+              isLoading: false,
+              error: null,
+              isAuthenticated: false,
+            });
+            return;
+          }
+
           const userData = response.user;
 
           if (!userData || !userData.rol) {
@@ -53,6 +79,8 @@ export const useAuthStore = create<AuthStore>()(
             adSoyad: String(userData.adSoyad || ''),
             rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli',
             ...(userData.email && { email: String(userData.email) }),
+            emailVerified: Boolean(userData.emailVerified),
+            twoFactorEnabled: Boolean(userData.twoFactorEnabled),
             ...(userData.sinif && { sinif: String(userData.sinif) }),
             ...(userData.sube && { sube: String(userData.sube) }),
             ...(userData.oda && { oda: String(userData.oda) }),
@@ -67,7 +95,10 @@ export const useAuthStore = create<AuthStore>()(
             user,
             isAuthenticated: true,
             isLoading: false,
-            error: null
+            error: null,
+            requires2FA: false,
+            twoFactorSessionToken: null,
+            twoFactorUser: null,
           });
         } catch (error) {
           const mapToAppError = (err: unknown): AppError => {
@@ -123,15 +154,9 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: async () => {
-        // Clear tokens first to prevent race conditions
+        // Legacy localStorage cleanup
         TokenManager.clearTokens();
-
         localStorage.removeItem('user');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('token_expiry');
         localStorage.removeItem('csrf_token');
 
         set({
@@ -157,68 +182,28 @@ export const useAuthStore = create<AuthStore>()(
         try {
           set({ isLoading: true, error: null });
 
-          // 1. Try to get user from localStorage (legacy/test support)
-          const storedUser = localStorage.getItem('user');
-          const accessToken = TokenManager.getAccessToken() || localStorage.getItem('accessToken');
+          const buildUser = (userData: any): User => ({
+            id: String(userData.id || ''),
+            adSoyad: String(userData.adSoyad || ''),
+            rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli',
+            ...(userData.email && { email: String(userData.email) }),
+            emailVerified: userData.emailVerified === true,
+            twoFactorEnabled: Boolean(userData.twoFactorEnabled),
+            ...(userData.sinif && { sinif: String(userData.sinif) }),
+            ...(userData.sube && { sube: String(userData.sube) }),
+            ...(userData.oda && { oda: String(userData.oda) }),
+            pansiyon: Boolean(userData.pansiyon),
+            ...(userData.childrenSiniflar && { childrenSiniflar: userData.childrenSiniflar }),
+            ...(userData.childId && { childId: userData.childId })
+          });
 
-          if (accessToken && !TokenManager.isTokenExpired()) {
-            if (storedUser) {
-              try {
-                const user = JSON.parse(storedUser);
-                set({ user, isAuthenticated: true, isLoading: false });
-                return;
-              } catch (e) {
-                localStorage.removeItem('user');
-              }
-            }
-
-            // 2. If no user in localStorage but we have a token, fetch it
-            try {
-              const response = await SecureAPI.get<any>('/user/profile');
-              const userData = response.data?.user || response.data;
-
-              if (userData && userData.rol) {
-                const user: User = {
-                  id: String(userData.id || ''),
-                  adSoyad: String(userData.adSoyad || ''),
-                  rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli',
-                  ...(userData.email && { email: String(userData.email) }),
-                  ...(userData.sinif && { sinif: String(userData.sinif) }),
-                  ...(userData.sube && { sube: String(userData.sube) }),
-                  ...(userData.oda && { oda: String(userData.oda) }),
-                pansiyon: Boolean(userData.pansiyon),
-                ...(userData.childrenSiniflar && { childrenSiniflar: userData.childrenSiniflar }),
-                ...(userData.childId && { childId: userData.childId })
-                };
-
-                set({ user, isAuthenticated: true, isLoading: false });
-                return;
-              }
-            } catch (e) {
-              // Failed to fetch, continue to httpOnly check
-            }
-          }
-
-          // 3. Fallback to httpOnly cookie check
+          // httpOnly cookie ile kullanıcı bilgisini al
           try {
             const response = await SecureAPI.getCurrentUser() as AxiosResponse;
             const userData = response.data?.user || response.data;
 
             if (userData && userData.rol) {
-              const user: User = {
-                id: String(userData.id || ''),
-                adSoyad: String(userData.adSoyad || ''),
-                rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli',
-                ...(userData.email && { email: String(userData.email) }),
-                ...(userData.sinif && { sinif: String(userData.sinif) }),
-                ...(userData.sube && { sube: String(userData.sube) }),
-                ...(userData.oda && { oda: String(userData.oda) }),
-                pansiyon: Boolean(userData.pansiyon),
-                ...(userData.childrenSiniflar && { childrenSiniflar: userData.childrenSiniflar }),
-                ...(userData.childId && { childId: userData.childId })
-              };
-
-              set({ user, isAuthenticated: true, isLoading: false });
+              set({ user: buildUser(userData), isAuthenticated: true, isLoading: false });
             } else {
               set({ isLoading: false, isAuthenticated: false, user: null });
             }
@@ -245,6 +230,78 @@ export const useAuthStore = create<AuthStore>()(
             user: { ...currentUser, ...userData }
           });
         }
+      },
+
+      verify2FA: async (code: string, rememberDevice: boolean) => {
+        try {
+          set({ isLoading: true, error: null });
+
+          // #10: Session token is now in httpOnly cookie, not sent in body
+          const response = await SecureAPI.post<any>('/api/auth/verify-2fa', {
+            code,
+            rememberDevice,
+          });
+
+          const respData = (response as any).data || response;
+          const userData = respData.user;
+
+          if (!userData || !userData.rol) {
+            throw AppError.server('Geçersiz kullanıcı verisi alındı');
+          }
+
+          // Token'lar httpOnly cookie olarak set ediliyor (sunucu tarafından)
+
+          const user: User = {
+            id: String(userData.id || ''),
+            adSoyad: String(userData.adSoyad || ''),
+            rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli',
+            ...(userData.email && { email: String(userData.email) }),
+            emailVerified: Boolean(userData.emailVerified),
+            twoFactorEnabled: Boolean(userData.twoFactorEnabled),
+            ...(userData.sinif && { sinif: String(userData.sinif) }),
+            ...(userData.sube && { sube: String(userData.sube) }),
+            ...(userData.oda && { oda: String(userData.oda) }),
+            pansiyon: Boolean(userData.pansiyon),
+          };
+
+          set({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+            requires2FA: false,
+            twoFactorSessionToken: null,
+            twoFactorUser: null,
+            twoFactorExpiresAt: null,
+          });
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
+
+      // #13: Resend 2FA code
+      resend2FA: async () => {
+        try {
+          // Session token is in httpOnly cookie, browser sends it automatically
+          const response = await SecureAPI.post<any>('/api/auth/resend-2fa', {});
+          const respData = (response as any).data || response;
+          set({
+            twoFactorExpiresAt: respData.twoFactorExpiresAt || null,
+          });
+        } catch (error) {
+          throw error;
+        }
+      },
+
+      cancel2FA: () => {
+        set({
+          requires2FA: false,
+          twoFactorSessionToken: null,
+          twoFactorUser: null,
+          twoFactorExpiresAt: null,
+          error: null,
+        });
       }
     }),
     {
@@ -259,6 +316,9 @@ export const useUser = () => useAuthStore((state) => state.user);
 export const useIsLoading = () => useAuthStore((state) => state.isLoading);
 export const useError = () => useAuthStore((state) => state.error);
 export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated);
+export const useRequires2FA = () => useAuthStore((state) => state.requires2FA);
+export const useTwoFactorUser = () => useAuthStore((state) => state.twoFactorUser);
+export const useTwoFactorExpiresAt = () => useAuthStore((state) => state.twoFactorExpiresAt);
 
 // Action selectors
 export const useLogin = () => useAuthStore((state) => state.login);
@@ -267,6 +327,9 @@ export const useCheckAuth = () => useAuthStore((state) => state.checkAuth);
 export const useClearError = () => useAuthStore((state) => state.clearError);
 export const useSetLoading = () => useAuthStore((state) => state.setLoading);
 export const useUpdateUser = () => useAuthStore((state) => state.updateUser);
+export const useVerify2FA = () => useAuthStore((state) => state.verify2FA);
+export const useResend2FA = () => useAuthStore((state) => state.resend2FA);
+export const useCancel2FA = () => useAuthStore((state) => state.cancel2FA);
 
 // Combined selectors - use these sparingly to avoid object recreation
 export const useAuth = () => {
@@ -285,6 +348,9 @@ export const useAuthActions = () => {
   const clearError = useClearError();
   const setLoading = useSetLoading();
   const updateUser = useUpdateUser();
+  const verify2FA = useVerify2FA();
+  const resend2FA = useResend2FA();
+  const cancel2FA = useCancel2FA();
 
-  return { login, logout, checkAuth, clearError, setLoading, updateUser };
+  return { login, logout, checkAuth, clearError, setLoading, updateUser, verify2FA, resend2FA, cancel2FA };
 };

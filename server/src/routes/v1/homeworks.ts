@@ -3,6 +3,7 @@ import { Homework } from "../../models/Homework";
 import { User } from "../../models/User";
 import { authenticateJWT, authorizeRoles } from "../../utils/jwt";
 import { validateHomework } from "../../middleware/validation";
+import logger from "../../utils/logger";
 
 interface AuthUser {
   userId: string;
@@ -90,7 +91,7 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Ödevler getirilirken hata:', error);
+    logger.error('Odevler getirilirken hata', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödevler getirilirken bir hata oluştu' });
   }
 });
@@ -131,7 +132,7 @@ router.get("/:id", authenticateJWT, async (req: Request, res: Response) => {
 
     res.json(homework);
   } catch (error) {
-    console.error('Ödev getirilirken hata:', error);
+    logger.error('Odev getirilirken hata', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödev getirilirken bir hata oluştu' });
   }
 });
@@ -160,7 +161,7 @@ router.post("/", authenticateJWT, authorizeRoles(['teacher', 'admin']), validate
     const savedHomework = await newHomework.save();
     res.status(201).json(savedHomework);
   } catch (error) {
-    console.error('Ödev oluşturulurken hata:', error);
+    logger.error('Odev olusturulurken hata', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödev oluşturulurken bir hata oluştu' });
   }
 });
@@ -189,7 +190,7 @@ router.post("/create", authenticateJWT, authorizeRoles(['teacher', 'admin']), va
     const savedHomework = await newHomework.save();
     res.status(201).json(savedHomework);
   } catch (error) {
-    console.error('Ödev oluşturulurken hata:', error);
+    logger.error('Odev olusturulurken hata', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödev oluşturulurken bir hata oluştu' });
   }
 });
@@ -217,7 +218,7 @@ router.put("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), valida
 
     res.json(updatedHomework);
   } catch (error) {
-    console.error('Ödev güncellenirken hata:', error);
+    logger.error('Odev guncellenirken hata', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödev güncellenirken bir hata oluştu' });
   }
 });
@@ -240,7 +241,7 @@ router.delete("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), asy
     await Homework.findOneAndDelete({ id: req.params.id });
     res.status(204).end();
   } catch (error) {
-    console.error('Ödev silinirken hata:', error);
+    logger.error('Odev silinirken hata', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödev silinirken bir hata oluştu' });
   }
 });
@@ -266,7 +267,7 @@ router.patch("/:id/status", authenticateJWT, authorizeRoles(['admin']), async (r
 
     res.json(updatedHomework);
   } catch (error) {
-    console.error('Ödev durumu güncellenirken hata:', error);
+    logger.error('Odev durumu guncellenirken hata', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Ödev durumu güncellenirken bir hata oluştu' });
   }
 });
@@ -311,7 +312,7 @@ router.get("/student/:studentId", authenticateJWT, async (req: Request, res: Res
 
     res.json({ homeworks });
   } catch (error) {
-    console.error('Öğrenci ödevleri getirilirken hata:', error);
+    logger.error('Ogrenci odevleri getirilirken hata', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Öğrenci ödevleri getirilirken bir hata oluştu' });
   }
 });
@@ -334,7 +335,7 @@ router.get("/teacher/:teacherId", authenticateJWT, async (req: Request, res: Res
 
     res.json({ homeworks });
   } catch (error) {
-    console.error('Öğretmen ödevleri getirilirken hata:', error);
+    logger.error('Ogretmen odevleri getirilirken hata', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Öğretmen ödevleri getirilirken bir hata oluştu' });
   }
 });

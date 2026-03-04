@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import logger from "./utils/logger";
 
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/tofas-fen";
 
@@ -36,101 +37,101 @@ const dbConfig: mongoose.ConnectOptions = {
 export async function connectDB() {
   try {
     await mongoose.connect(MONGO_URI, dbConfig);
-    console.log('✅ MongoDB connection established');
+    logger.info('MongoDB connection established');
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error);
+    logger.error('MongoDB connection failed', { error: error instanceof Error ? error.message : error });
     throw error;
   }
 }
 
 // Enhanced database connection event handlers
 mongoose.connection.on('connected', () => {
-  console.log('✅ MongoDB connected successfully');
-  
+  logger.info('MongoDB connected successfully');
+
   // Safely access pool and connection properties
   try {
     if ((mongoose.connection as any).pool) {
       const pool = (mongoose.connection as any).pool;
-      console.log(`📊 Connection pool size: ${pool.size}`);
+      logger.info(`Connection pool size: ${pool.size}`);
     }
     if (mongoose.connection.name) {
-      console.log(`🔗 Database: ${mongoose.connection.name}`);
+      logger.info(`Database: ${mongoose.connection.name}`);
     }
     if (mongoose.connection.host) {
-      console.log(`🌐 Host: ${mongoose.connection.host}`);
+      logger.info(`Host: ${mongoose.connection.host}`);
     }
     if (mongoose.connection.port) {
-      console.log(`🚪 Port: ${mongoose.connection.port}`);
+      logger.info(`Port: ${mongoose.connection.port}`);
     }
   } catch (error) {
-    console.log('ℹ️ Connection details not yet available');
+    logger.info('Connection details not yet available');
   }
 });
 
 mongoose.connection.on('error', (err) => {
-  console.error('❌ MongoDB connection error:', err);
-  console.error('🔍 Error details:', {
+  logger.error('MongoDB connection error', { error: err instanceof Error ? err.message : err });
+  logger.error('Error details', {
     name: err.name,
     message: err.message,
     code: err.code,
     codeName: err.codeName
   });
-  
+
   // Attempt to reconnect on error
   setTimeout(() => {
     if (mongoose.connection.readyState === 0) { // disconnected
-      console.log('🔄 Attempting to reconnect after error...');
+      logger.info('Attempting to reconnect after error...');
       connectDB().catch(reconnectErr => {
-        console.error('❌ Reconnection failed:', reconnectErr.message);
+        logger.error('Reconnection failed', { error: reconnectErr instanceof Error ? reconnectErr.message : reconnectErr });
       });
     }
   }, 5000); // Wait 5 seconds before reconnecting
 });
 
 mongoose.connection.on('disconnected', () => {
-  console.log('⚠️ MongoDB disconnected');
-  console.log('🔄 Attempting to reconnect...');
+  logger.warn('MongoDB disconnected');
+  logger.info('Attempting to reconnect...');
 });
 
 mongoose.connection.on('reconnected', () => {
-  console.log('✅ MongoDB reconnected successfully');
+  logger.info('MongoDB reconnected successfully');
 });
 
 mongoose.connection.on('close', () => {
-  console.log('🔒 MongoDB connection closed');
+  logger.info('MongoDB connection closed');
 });
 
 // Connection pool monitoring
 mongoose.connection.on('poolCreated', (event) => {
   try {
-    console.log('🏊 Connection pool created:', {
+    logger.info('Connection pool created', {
       size: event?.size || 'unknown',
       maxSize: event?.maxSize || 'unknown'
     });
   } catch (error) {
-    console.log('🏊 Connection pool created');
+    logger.info('Connection pool created');
   }
 });
 
 mongoose.connection.on('poolReady', (event) => {
   try {
-    console.log('✅ Connection pool ready:', {
+    logger.info('Connection pool ready', {
       size: event?.size || 'unknown',
       maxSize: event?.maxSize || 'unknown'
     });
   } catch (error) {
-    console.log('✅ Connection pool ready');
+    logger.info('Connection pool ready');
   }
 });
 
 mongoose.connection.on('poolCleared', (event) => {
   try {
-    console.log('🧹 Connection pool cleared:', {
+    logger.info('Connection pool cleared', {
       size: event?.size || 'unknown',
       maxSize: event?.maxSize || 'unknown'
     });
   } catch (error) {
-    console.log('🧹 Connection pool cleared');
+    logger.info('Connection pool cleared');
   }
 });
 
@@ -144,7 +145,7 @@ mongoose.connection.on('query', () => {
   const timeSinceLastQuery = now - lastQueryTime;
   
   if (timeSinceLastQuery > 1000) { // Log every second
-    console.log(`📊 Database queries: ${queryCount} in ${timeSinceLastQuery}ms`);
+    logger.info(`Database queries: ${queryCount} in ${timeSinceLastQuery}ms`);
     queryCount = 0;
     lastQueryTime = now;
   }
@@ -153,45 +154,45 @@ mongoose.connection.on('query', () => {
 // Graceful shutdown with enhanced error handling
 process.on('SIGINT', async () => {
   try {
-    console.log('🔄 Shutting down gracefully...');
-    
+    logger.info('Shutting down gracefully...');
+
     // Close all connections in the pool
     await mongoose.connection.close();
-    console.log('✅ MongoDB connection closed through app termination');
+    logger.info('MongoDB connection closed through app termination');
     
     // Force exit after cleanup
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error during graceful shutdown:', error);
+    logger.error('Error during graceful shutdown', { error: error instanceof Error ? error.message : error });
     process.exit(1);
   }
 });
 
 process.on('SIGTERM', async () => {
   try {
-    console.log('🔄 Received SIGTERM, shutting down gracefully...');
-    
+    logger.info('Received SIGTERM, shutting down gracefully...');
+
     // Close all connections in the pool
     await mongoose.connection.close();
-    console.log('✅ MongoDB connection closed through SIGTERM');
+    logger.info('MongoDB connection closed through SIGTERM');
     
     // Force exit after cleanup
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error during SIGTERM shutdown:', error);
+    logger.error('Error during SIGTERM shutdown', { error: error instanceof Error ? error.message : error });
     process.exit(1);
   }
 });
 
 // Enhanced error handling for uncaught exceptions
 process.on('uncaughtException', async (error) => {
-  console.error('💥 Uncaught Exception:', error);
-  
+  logger.error('Uncaught Exception', { error: error instanceof Error ? error.message : error });
+
   try {
     await mongoose.connection.close();
-    console.log('✅ MongoDB connection closed due to uncaught exception');
+    logger.info('MongoDB connection closed due to uncaught exception');
   } catch (closeError) {
-    console.error('❌ Error closing MongoDB connection:', closeError);
+    logger.error('Error closing MongoDB connection', { error: closeError instanceof Error ? closeError.message : closeError });
   }
   
   // Don't exit in test environment
@@ -201,13 +202,13 @@ process.on('uncaughtException', async (error) => {
 });
 
 process.on('unhandledRejection', async (reason, promise) => {
-  console.error('🚫 Unhandled Rejection at:', promise, 'reason:', reason);
-  
+  logger.error('Unhandled Rejection', { reason, promise });
+
   try {
     await mongoose.connection.close();
-    console.log('✅ MongoDB connection closed due to unhandled rejection');
+    logger.info('MongoDB connection closed due to unhandled rejection');
   } catch (closeError) {
-    console.error('❌ Error closing MongoDB connection:', closeError);
+    logger.error('Error closing MongoDB connection', { error: closeError instanceof Error ? closeError.message : closeError });
   }
   
   // Don't exit in test environment
@@ -268,7 +269,7 @@ export async function getDBStats() {
       fsTotalSize: stats.fsTotalSize
     };
   } catch (error) {
-    console.error('Error getting database stats:', error);
+    logger.error('Error getting database stats', { error: error instanceof Error ? error.message : error });
     return null;
   }
 }
@@ -292,9 +293,9 @@ export function getConnectionPoolInfo() {
 export async function closeDB() {
   try {
     await mongoose.connection.close();
-    console.log('✅ Database connection closed');
+    logger.info('Database connection closed');
   } catch (error) {
-    console.error('❌ Error closing database connection:', error);
+    logger.error('Error closing database connection', { error: error instanceof Error ? error.message : error });
     throw error;
   }
 }

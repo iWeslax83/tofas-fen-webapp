@@ -9,6 +9,8 @@ class TokenBlacklistManager {
   private redis: Redis | any;
   private static instance: TokenBlacklistManager;
   private isConnected: boolean = false;
+  private memoryStore: Map<string, number> = new Map(); // token → expiresAt timestamp
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     // Initialize Redis connection (prefer REDIS_URL if provided)
@@ -66,6 +68,8 @@ class TokenBlacklistManager {
       this.redis.on('connect', () => {
         this.isConnected = true;
         logger.info('Redis connected for token blacklist');
+        // Sync in-memory entries to Redis on reconnect
+        this.syncMemoryToRedis();
       });
     } catch (error) {
       logger.warn('Failed to initialize Redis, continuing without token blacklist:', error);
@@ -90,20 +94,66 @@ class TokenBlacklistManager {
   }
 
   /**
+   * Start periodic cleanup of expired in-memory entries (every 5 minutes)
+   */
+  private startCleanupInterval(): void {
+    if (this.cleanupInterval) return;
+    this.cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      for (const [token, expiresAt] of this.memoryStore) {
+        if (expiresAt <= now) {
+          this.memoryStore.delete(token);
+        }
+      }
+    }, 5 * 60 * 1000);
+    // Allow process to exit without waiting for this interval
+    if (this.cleanupInterval.unref) {
+      this.cleanupInterval.unref();
+    }
+  }
+
+  /**
+   * Sync in-memory blacklist entries to Redis on reconnect
+   */
+  private async syncMemoryToRedis(): Promise<void> {
+    if (!this.isConnected) return;
+    const now = Date.now();
+    for (const [token, expiresAt] of this.memoryStore) {
+      if (expiresAt <= now) {
+        this.memoryStore.delete(token);
+        continue;
+      }
+      try {
+        const ttl = Math.max(0, Math.floor((expiresAt - now) / 1000));
+        if (ttl > 0) {
+          await this.redis.setex(`blacklist:${token}`, ttl, '1');
+        }
+      } catch {
+        // Best-effort sync
+      }
+    }
+  }
+
+  /**
    * Add token to blacklist
    */
   async addToBlacklist(token: string, expiresAt: number): Promise<void> {
-    if (!this.isConnected) {
-      return; // Silently fail in development if Redis is not available
+    // Always write to in-memory store
+    if (expiresAt > Date.now()) {
+      this.memoryStore.set(token, expiresAt);
+      this.startCleanupInterval();
     }
-    try {
-      const ttl = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
-      
-      if (ttl > 0) {
-        await this.redis.setex(`blacklist:${token}`, ttl, '1');
+
+    // Also write to Redis if connected
+    if (this.isConnected) {
+      try {
+        const ttl = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+        if (ttl > 0) {
+          await this.redis.setex(`blacklist:${token}`, ttl, '1');
+        }
+      } catch (error) {
+        logger.warn('Error adding token to blacklist in Redis:', error);
       }
-    } catch (error) {
-      logger.warn('Error adding token to blacklist:', error);
     }
   }
 
@@ -111,22 +161,34 @@ class TokenBlacklistManager {
    * Check if token is blacklisted
    */
   async isBlacklisted(token: string): Promise<boolean> {
-    if (!this.isConnected) {
-      return false; // Fail open for availability
+    // Check in-memory first
+    const memExpiry = this.memoryStore.get(token);
+    if (memExpiry !== undefined) {
+      if (memExpiry > Date.now()) {
+        return true;
+      }
+      // Expired, clean up
+      this.memoryStore.delete(token);
     }
-    try {
-      const result = await this.redis.get(`blacklist:${token}`);
-      return result === '1';
-    } catch (error) {
-      logger.warn('Error checking token blacklist:', error);
-      return false; // Fail open for availability
+
+    // Then check Redis
+    if (this.isConnected) {
+      try {
+        const result = await this.redis.get(`blacklist:${token}`);
+        return result === '1';
+      } catch (error) {
+        logger.warn('Error checking token blacklist in Redis:', error);
+      }
     }
+
+    return false;
   }
 
   /**
    * Remove token from blacklist (for testing purposes)
    */
   async removeFromBlacklist(token: string): Promise<void> {
+    this.memoryStore.delete(token);
     try {
       await this.redis.del(`blacklist:${token}`);
     } catch (error) {
@@ -138,6 +200,7 @@ class TokenBlacklistManager {
    * Clear all blacklisted tokens (for testing purposes)
    */
   async clearBlacklist(): Promise<void> {
+    this.memoryStore.clear();
     try {
       const keys = await this.redis.keys('blacklist:*');
       if (keys.length > 0) {

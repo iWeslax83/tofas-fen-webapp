@@ -197,54 +197,56 @@ export const useUIStore = create<UIState>()(
 );
 
 /**
- * Selectors for better performance
+ * Selectors with useShallow to prevent infinite re-renders
  */
-export const useSidebar = () => useUIStore((state) => ({
+import { useShallow } from 'zustand/react/shallow';
+
+export const useSidebar = () => useUIStore(useShallow((state) => ({
   sidebarOpen: state.sidebarOpen,
   sidebarCollapsed: state.sidebarCollapsed,
   setSidebarOpen: state.setSidebarOpen,
   setSidebarCollapsed: state.setSidebarCollapsed,
   toggleSidebar: state.toggleSidebar,
   toggleSidebarCollapsed: state.toggleSidebarCollapsed
-}));
+})));
 
-export const useMobileMenu = () => useUIStore((state) => ({
+export const useMobileMenu = () => useUIStore(useShallow((state) => ({
   mobileMenuOpen: state.mobileMenuOpen,
   setMobileMenuOpen: state.setMobileMenuOpen,
   toggleMobileMenu: state.toggleMobileMenu
-}));
+})));
 
-export const useSearch = () => useUIStore((state) => ({
+export const useSearch = () => useUIStore(useShallow((state) => ({
   searchOpen: state.searchOpen,
   searchQuery: state.searchQuery,
   setSearchOpen: state.setSearchOpen,
   setSearchQuery: state.setSearchQuery,
   toggleSearch: state.toggleSearch,
   clearSearch: state.clearSearch
-}));
+})));
 
-export const useTheme = () => useUIStore((state) => ({
+export const useTheme = () => useUIStore(useShallow((state) => ({
   theme: state.theme,
   colorScheme: state.colorScheme,
   setTheme: state.setTheme,
   setColorScheme: state.setColorScheme
-}));
+})));
 
-export const useLoading = () => useUIStore((state) => ({
+export const useLoading = () => useUIStore(useShallow((state) => ({
   globalLoading: state.globalLoading,
   loadingMessage: state.loadingMessage,
   setGlobalLoading: state.setGlobalLoading
-}));
+})));
 
-export const useModal = () => useUIStore((state) => ({
+export const useModal = () => useUIStore(useShallow((state) => ({
   activeModal: state.activeModal,
   modalData: state.modalData,
   setActiveModal: state.setActiveModal,
   closeModal: state.closeModal
-}));
+})));
 
-export const useToastSettings = () => useUIStore((state) => ({
+export const useToastSettings = () => useUIStore(useShallow((state) => ({
   toastPosition: state.toastPosition,
   toastDuration: state.toastDuration,
   setToastSettings: state.setToastSettings
-}));
+})));

@@ -11,13 +11,11 @@ const LoadingSpinner = () => (
 
 // Auth pages
 const LoginPage = lazy(() => import('../pages/LoginPage'));
-const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 
 export const AuthRoutes = () => (
   <Suspense fallback={<LoadingSpinner />}>
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
     </Routes>
   </Suspense>
 );

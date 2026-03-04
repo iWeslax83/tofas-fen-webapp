@@ -1,7 +1,8 @@
 import express from 'express';
 import { body, query, param, validationResult } from 'express-validator';
 import { PerformanceService } from '../services/PerformanceService';
-// Auth middleware is not exported; endpoints are public or guarded elsewhere
+import { authenticateJWT, authorizeRoles } from '../utils/jwt';
+import logger from '../utils/logger';
 
 const router = express.Router();
 
@@ -59,7 +60,7 @@ const handleValidationErrors = (req: express.Request, res: express.Response, nex
 };
 
 // Metrics endpoints
-router.post('/metrics', validateMetricCreate, handleValidationErrors, async (req: any, res: any) => {
+router.post('/metrics', authenticateJWT, authorizeRoles(['admin']), validateMetricCreate, handleValidationErrors, async (req: any, res: any) => {
   try {
     await PerformanceService.recordMetric(req.body);
     return res.status(201).json({
@@ -67,7 +68,7 @@ router.post('/metrics', validateMetricCreate, handleValidationErrors, async (req
       message: 'Metric recorded successfully'
     });
   } catch (error: any) {
-    console.error('Error recording metric:', error);
+    logger.error('Error recording metric', { error: error instanceof Error ? error.message : error });
     return res.status(500).json({
       success: false,
       message: 'Error recording metric',
@@ -76,7 +77,7 @@ router.post('/metrics', validateMetricCreate, handleValidationErrors, async (req
   }
 });
 
-router.get('/metrics', [
+router.get('/metrics', authenticateJWT, authorizeRoles(['admin']), [
   query('type').optional().isString(),
   query('category').optional().isString(),
   query('status').optional().isString(),
@@ -108,7 +109,7 @@ router.get('/metrics', [
       data: result
     });
   } catch (error) {
-    console.error('Error getting metrics:', error);
+    logger.error('Error getting metrics', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error getting metrics',
@@ -117,7 +118,7 @@ router.get('/metrics', [
   }
 });
 
-router.get('/metrics/type/:type', [
+router.get('/metrics/type/:type', authenticateJWT, authorizeRoles(['admin']), [
   param('type').isIn(['api', 'database', 'frontend', 'system', 'cache', 'memory', 'cpu', 'network']),
   query('limit').optional().isInt({ min: 1, max: 1000 })
 ], handleValidationErrors, async (req, res) => {
@@ -130,7 +131,7 @@ router.get('/metrics/type/:type', [
       data: metrics
     });
   } catch (error) {
-    console.error('Error getting metrics by type:', error);
+    logger.error('Error getting metrics by type', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error getting metrics by type',
@@ -139,7 +140,7 @@ router.get('/metrics/type/:type', [
   }
 });
 
-router.get('/metrics/critical', async (req, res) => {
+router.get('/metrics/critical', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     const metrics = await PerformanceService.getCriticalMetrics();
 
@@ -148,7 +149,7 @@ router.get('/metrics/critical', async (req, res) => {
       data: metrics
     });
   } catch (error) {
-    console.error('Error getting critical metrics:', error);
+    logger.error('Error getting critical metrics', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error getting critical metrics',
@@ -158,7 +159,7 @@ router.get('/metrics/critical', async (req, res) => {
 });
 
 // Optimization endpoints
-router.post('/optimizations', validateOptimizationCreate, handleValidationErrors, async (req, res) => {
+router.post('/optimizations', authenticateJWT, authorizeRoles(['admin']), validateOptimizationCreate, handleValidationErrors, async (req, res) => {
   try {
     const optimization = await PerformanceService.createOptimization({
       ...req.body,
@@ -170,7 +171,7 @@ router.post('/optimizations', validateOptimizationCreate, handleValidationErrors
       data: optimization
     });
   } catch (error) {
-    console.error('Error creating optimization:', error);
+    logger.error('Error creating optimization', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error creating optimization',
@@ -179,7 +180,7 @@ router.post('/optimizations', validateOptimizationCreate, handleValidationErrors
   }
 });
 
-router.get('/optimizations', [
+router.get('/optimizations', authenticateJWT, authorizeRoles(['admin']), [
   query('type').optional().isString(),
   query('action').optional().isString(),
   query('status').optional().isString(),
@@ -211,7 +212,7 @@ router.get('/optimizations', [
       data: result
     });
   } catch (error) {
-    console.error('Error getting optimizations:', error);
+    logger.error('Error getting optimizations', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error getting optimizations',
@@ -220,7 +221,7 @@ router.get('/optimizations', [
   }
 });
 
-router.get('/optimizations/stats', async (req, res) => {
+router.get('/optimizations/stats', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     const stats = await PerformanceService.getOptimizationStats();
 
@@ -229,7 +230,7 @@ router.get('/optimizations/stats', async (req, res) => {
       data: stats
     });
   } catch (error) {
-    console.error('Error getting optimization stats:', error);
+    logger.error('Error getting optimization stats', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error getting optimization stats',
@@ -239,7 +240,7 @@ router.get('/optimizations/stats', async (req, res) => {
 });
 
 // Configuration endpoints
-router.post('/configs', validateConfigCreate, handleValidationErrors, async (req, res) => {
+router.post('/configs', authenticateJWT, authorizeRoles(['admin']), validateConfigCreate, handleValidationErrors, async (req, res) => {
   try {
     const config = await PerformanceService.createConfig(req.body);
 
@@ -248,7 +249,7 @@ router.post('/configs', validateConfigCreate, handleValidationErrors, async (req
       data: config
     });
   } catch (error) {
-    console.error('Error creating config:', error);
+    logger.error('Error creating config', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error creating config',
@@ -257,7 +258,7 @@ router.post('/configs', validateConfigCreate, handleValidationErrors, async (req
   }
 });
 
-router.get('/configs', [
+router.get('/configs', authenticateJWT, authorizeRoles(['admin']), [
   query('category').optional().isString()
 ], handleValidationErrors, async (req, res) => {
   try {
@@ -269,7 +270,7 @@ router.get('/configs', [
       data: configs
     });
   } catch (error) {
-    console.error('Error getting configs:', error);
+    logger.error('Error getting configs', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error getting configs',
@@ -278,7 +279,7 @@ router.get('/configs', [
   }
 });
 
-router.patch('/configs/:id', [
+router.patch('/configs/:id', authenticateJWT, authorizeRoles(['admin']), [
   param('id').isString().notEmpty(),
   body('name').optional().isString(),
   body('description').optional().isString(),
@@ -304,7 +305,7 @@ router.patch('/configs/:id', [
       data: config
     });
   } catch (error) {
-    console.error('Error updating config:', error);
+    logger.error('Error updating config', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error updating config',
@@ -314,7 +315,7 @@ router.patch('/configs/:id', [
 });
 
 // System monitoring endpoints
-router.get('/system', async (req, res) => {
+router.get('/system', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     const metrics = await PerformanceService.getSystemMetrics();
 
@@ -323,7 +324,7 @@ router.get('/system', async (req, res) => {
       data: metrics
     });
   } catch (error) {
-    console.error('Error getting system metrics:', error);
+    logger.error('Error getting system metrics', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error getting system metrics',
@@ -332,7 +333,7 @@ router.get('/system', async (req, res) => {
   }
 });
 
-router.get('/database', async (req, res) => {
+router.get('/database', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     const metrics = await PerformanceService.getDatabaseMetrics();
 
@@ -341,7 +342,7 @@ router.get('/database', async (req, res) => {
       data: metrics
     });
   } catch (error) {
-    console.error('Error getting database metrics:', error);
+    logger.error('Error getting database metrics', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error getting database metrics',
@@ -350,7 +351,7 @@ router.get('/database', async (req, res) => {
   }
 });
 
-router.get('/api', async (req, res) => {
+router.get('/api', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     const metrics = await PerformanceService.getAPIMetrics();
 
@@ -359,7 +360,7 @@ router.get('/api', async (req, res) => {
       data: metrics
     });
   } catch (error) {
-    console.error('Error getting API metrics:', error);
+    logger.error('Error getting API metrics', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error getting API metrics',
@@ -369,7 +370,7 @@ router.get('/api', async (req, res) => {
 });
 
 // Automated optimization endpoints
-router.post('/optimize/scheduled', async (req, res) => {
+router.post('/optimize/scheduled', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     await PerformanceService.runScheduledOptimizations();
 
@@ -378,7 +379,7 @@ router.post('/optimize/scheduled', async (req, res) => {
       message: 'Scheduled optimizations completed'
     });
   } catch (error) {
-    console.error('Error running scheduled optimizations:', error);
+    logger.error('Error running scheduled optimizations', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error running scheduled optimizations',
@@ -388,7 +389,7 @@ router.post('/optimize/scheduled', async (req, res) => {
 });
 
 // Manual optimization triggers
-router.post('/optimize/cache', async (req, res) => {
+router.post('/optimize/cache', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     const optimization = await PerformanceService.createOptimization({
       type: 'manual',
@@ -404,7 +405,7 @@ router.post('/optimize/cache', async (req, res) => {
       data: optimization
     });
   } catch (error) {
-    console.error('Error clearing cache:', error);
+    logger.error('Error clearing cache', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error clearing cache',
@@ -413,7 +414,7 @@ router.post('/optimize/cache', async (req, res) => {
   }
 });
 
-router.post('/optimize/database', async (req, res) => {
+router.post('/optimize/database', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     const optimization = await PerformanceService.createOptimization({
       type: 'manual',
@@ -429,7 +430,7 @@ router.post('/optimize/database', async (req, res) => {
       data: optimization
     });
   } catch (error) {
-    console.error('Error optimizing database:', error);
+    logger.error('Error optimizing database', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error optimizing database',
@@ -438,7 +439,7 @@ router.post('/optimize/database', async (req, res) => {
   }
 });
 
-router.post('/optimize/memory', async (req, res) => {
+router.post('/optimize/memory', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     const optimization = await PerformanceService.createOptimization({
       type: 'manual',
@@ -454,7 +455,7 @@ router.post('/optimize/memory', async (req, res) => {
       data: optimization
     });
   } catch (error) {
-    console.error('Error cleaning memory:', error);
+    logger.error('Error cleaning memory', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error cleaning memory',
@@ -464,7 +465,7 @@ router.post('/optimize/memory', async (req, res) => {
 });
 
 // Dashboard summary endpoint
-router.get('/dashboard', async (req, res) => {
+router.get('/dashboard', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     const [systemMetrics, databaseMetrics, apiMetrics, criticalMetrics, recentOptimizations] = await Promise.all([
       PerformanceService.getSystemMetrics(),
@@ -485,7 +486,7 @@ router.get('/dashboard', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error getting dashboard data:', error);
+    logger.error('Error getting dashboard data', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error getting dashboard data',
@@ -495,7 +496,7 @@ router.get('/dashboard', async (req, res) => {
 });
 
 // Health check endpoint
-router.get('/health', async (req, res) => {
+router.get('/health', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     const [systemMetrics, criticalMetrics] = await Promise.all([
       PerformanceService.getSystemMetrics(),
@@ -514,7 +515,7 @@ router.get('/health', async (req, res) => {
       data: healthStatus
     });
   } catch (error) {
-    console.error('Error getting health status:', error);
+    logger.error('Error getting health status', { error: error instanceof Error ? error.message : error });
     res.status(500).json({
       success: false,
       message: 'Error getting health status',

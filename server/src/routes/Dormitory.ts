@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import { MealList, SupervisorList, User } from "../models";
 import { requireAuth, requireRole } from "../middleware/auth";
+import logger from "../utils/logger";
 
 // Simple in-memory cache for meals data
 const mealsCache = new Map<string, { data: any; timestamp: number }>();
@@ -50,7 +51,7 @@ router.delete("/meals/cache", requireAuth, requireRole(['admin']), async (req, r
     mealsCache.clear();
     res.json({ message: "Meals cache cleared successfully" });
   } catch (error) {
-    console.error("Cache clear error:", error);
+    logger.error('Cache clear error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -72,7 +73,7 @@ router.get("/meals", requireAuth, async (req, res) => {
     if (mealsCache.has(cacheKey)) {
       const cached = mealsCache.get(cacheKey);
       if (cached && (now - cached.timestamp) < CACHE_TTL) {
-        console.log('Serving meals from cache');
+        logger.info('Serving meals from cache');
         return res.json({
           success: true,
           data: cached.data,
@@ -112,7 +113,7 @@ router.get("/meals", requireAuth, async (req, res) => {
       timestamp: now
     });
   } catch (error) {
-    console.error("Meal list fetch error:", error);
+    logger.error('Meal list fetch error', { error: error instanceof Error ? error.message : error });
     
     // Try to serve from cache even if expired
     const { month, year } = req.query;
@@ -123,7 +124,7 @@ router.get("/meals", requireAuth, async (req, res) => {
     
     if (mealsCache.has(cacheKey)) {
       const cached = mealsCache.get(cacheKey);
-      console.log('Serving expired cache due to database error');
+      logger.info('Serving expired cache due to database error');
       return res.json({
         success: true,
         data: cached.data,
@@ -189,7 +190,7 @@ router.post("/meals", requireAuth, requireRole(['admin', 'hizmetli']), upload.si
       res.status(201).json(mealList);
     }
   } catch (error) {
-    console.error("Meal list upload error:", error);
+    logger.error('Meal list upload error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -210,7 +211,7 @@ router.get("/meals/:id/download", requireAuth, async (req, res) => {
 
     res.download(mealList.fileUrl);
   } catch (error) {
-    console.error("Meal list download error:", error);
+    logger.error('Meal list download error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -229,7 +230,7 @@ router.get("/supervisors", requireAuth, async (req, res) => {
     const supervisorLists = await SupervisorList.find(filter).sort({ createdAt: -1 });
     res.json(supervisorLists);
   } catch (error) {
-    console.error("Supervisor list fetch error:", error);
+    logger.error('Supervisor list fetch error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -272,7 +273,7 @@ router.post("/supervisors", requireAuth, requireRole(['admin', 'hizmetli']), upl
       res.status(201).json(supervisorList);
     }
   } catch (error) {
-    console.error("Supervisor list upload error:", error);
+    logger.error('Supervisor list upload error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -293,7 +294,7 @@ router.get("/supervisors/:id/download", requireAuth, async (req, res) => {
 
     res.download(supervisorList.fileUrl);
   } catch (error) {
-    console.error("Supervisor list download error:", error);
+    logger.error('Supervisor list download error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });

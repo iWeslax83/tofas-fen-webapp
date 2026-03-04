@@ -4,6 +4,7 @@ export interface IAnnouncement extends Document {
   title: string;
   content: string;
   author: string;
+  authorId?: string;
   date: string;
   targetRoles?: string[];
   targetClasses?: string[];
@@ -27,6 +28,10 @@ const announcementSchema = new Schema<IAnnouncement>({
     type: String,
     required: true,
     default: 'Admin'
+  },
+  authorId: {
+    type: String,
+    index: true
   },
   date: {
     type: String,

@@ -6,7 +6,7 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import './AdminDilekceListPage.css';
 
-import axios from 'axios';
+import { apiClient } from '../../utils/api';
 
 interface Dilekce {
   _id: string;
@@ -53,10 +53,7 @@ const AdminDilekceListPage: React.FC = () => {
   const loadDilekceler = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
-      const response = await axios.get('/api/dilekce', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiClient.get('/api/dilekce');
 
       if (response.data.success) {
         setDilekceler(response.data.dilekceler || []);
@@ -71,13 +68,10 @@ const AdminDilekceListPage: React.FC = () => {
 
   const handleStatusUpdate = async (id: string, status: string, reviewNote?: string, response?: string) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response_data = await axios.put(`/api/dilekce/${id}/status`, {
+      const response_data = await apiClient.put(`/api/dilekce/${id}/status`, {
         status,
         reviewNote,
         response
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response_data.data.success) {

@@ -4,6 +4,8 @@ export interface User {
   adSoyad: string;
   rol: 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli';
   email?: string;
+  emailVerified?: boolean;
+  twoFactorEnabled?: boolean;
   sinif?: string;
   sube?: string;
   oda?: string;

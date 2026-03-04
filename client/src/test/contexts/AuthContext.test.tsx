@@ -74,6 +74,7 @@ describe('AuthContext', () => {
 
       expect(result.current.user).toEqual({
         ...mockUser,
+        emailVerified: false,
         pansiyon: false
       });
       expect(result.current.isLoading).toBe(false);
@@ -123,6 +124,7 @@ describe('AuthContext', () => {
 
       expect(result.current.user).toEqual({
         ...mockLoginResponse.user,
+        emailVerified: false,
         pansiyon: false
       });
       expect(result.current.error).toBeNull();

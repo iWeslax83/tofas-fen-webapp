@@ -56,7 +56,7 @@ export const generateAccessToken = (payload: Omit<JWTPayload, 'iat' | 'exp'>): s
 // Generate refresh token (long-lived)
 export const generateRefreshToken = (payload: RefreshTokenPayload): string => {
   return jwt.sign(payload, JWT_REFRESH_SECRET, {
-    expiresIn: '7d', // Reduced from 28d for better security
+    expiresIn: '3d', // Reduced from 7d for better security
     issuer: 'tofas-fen-webapp',
     audience: 'tofas-fen-users'
   });
@@ -164,7 +164,7 @@ export const generateTokenPair = (userId: string, role: string, email?: string, 
     accessToken,
     refreshToken,
     expiresIn: 15 * 60, // 15 minutes in seconds
-    refreshExpiresIn: 7 * 24 * 60 * 60, // 7 days in seconds
+    refreshExpiresIn: 3 * 24 * 60 * 60, // 3 days in seconds
     tokenVersion // Include token version for validation
   };
 };

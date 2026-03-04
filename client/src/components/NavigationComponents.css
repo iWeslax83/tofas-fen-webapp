@@ -3,12 +3,7 @@
 /* Import theme variables */
 @import url('../styles/theme.css');
 
-/* Reset and Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Reset and Base Styles are in App.css - do not duplicate here */
 
 /* Enhanced Sidebar Styles */
 .enhanced-sidebar {
@@ -32,7 +27,7 @@
 }
 
 /* Sidebar Header */
-.sidebar-header {
+.enhanced-sidebar .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -43,30 +38,32 @@
   min-height: 80px;
 }
 
-.sidebar-logo {
+.enhanced-sidebar .sidebar-logo {
   display: flex;
   align-items: center;
   gap: var(--space-3);
 }
 
-.logo-icon {
+.enhanced-sidebar .logo-icon {
   width: 32px;
   height: 32px;
   color: var(--white);
 }
 
-.logo-text h2 {
+.enhanced-sidebar .logo-text h2 {
   font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 700;
   line-height: 1.2;
   margin: 0;
+  color: var(--white);
 }
 
-.logo-text span {
+.enhanced-sidebar .logo-text span {
   font-size: 0.875rem;
   font-weight: 400;
   opacity: 0.9;
+  color: var(--white);
 }
 
 .sidebar-close {
@@ -787,7 +784,7 @@
     width: 280px;
   }
   
-  .sidebar-header {
+  .enhanced-sidebar .sidebar-header {
     padding: var(--space-4);
     min-height: 70px;
   }

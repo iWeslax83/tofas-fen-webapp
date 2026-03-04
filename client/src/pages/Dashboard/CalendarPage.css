@@ -4,9 +4,7 @@
 @import url('../../styles/theme.css');
 .calendar-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #374151 50%, #4B5563 75%, #1a1a1a 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 20s ease infinite;
+  background: #f8fafc;
   color: var(--text-primary);
 }
 
@@ -809,47 +807,91 @@
   .calendar-title {
     font-size: 1.5rem;
   }
-  
+
   .calendar-view-buttons {
     flex-wrap: wrap;
   }
-  
+
   .calendar-view-button {
     padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
   }
-  
+
   .calendar-month-day {
     min-height: 60px;
   }
-  
+
   .calendar-month-event {
     display: none;
   }
-  
+
   .calendar-day-event,
   .calendar-agenda-event {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .calendar-day-event-time,
   .calendar-agenda-event-date,
   .calendar-agenda-event-time {
     min-width: auto;
+  }
+
+  .calendar-content {
+    padding: 0.75rem;
+  }
+
+  .calendar-search-input {
+    width: 100%;
+  }
+
+  .calendar-search {
+    width: 100%;
+  }
+
+  .calendar-filters {
+    padding: 0.75rem;
+  }
+
+  .calendar-filters-left {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .calendar-filter-select {
+    width: 100%;
+    font-size: 16px;
+  }
+
+  .calendar-header-right {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .calendar-add-button {
+    width: 100%;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .calendar-modal {
+    margin: 0.5rem;
+    padding: 1rem;
   }
 }
 
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   .calendar-container {
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #2d2d2d;
-    --bg-tertiary: #404040;
-    --bg-hover: #3a3a3a;
-    --text-primary: #ffffff;
-    --text-secondary: #b0b0b0;
-    --border-color: #404040;
+    --bg-primary: #f8fafc;
+    --bg-secondary: #FFFFFF;
+    --bg-tertiary: #f1f5f9;
+    --bg-hover: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
     --accent-color: #3b82f6;
     --accent-hover: #2563eb;
     --accent-color-alpha: rgba(59, 130, 246, 0.1);

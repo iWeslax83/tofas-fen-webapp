@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '../models';
+import logger from '../utils/logger';
 
 /**
  * Lookup a parent's childId array from the database.
@@ -70,7 +71,7 @@ export function verifyParentChildAccess(studentIdSource: string) {
       // Any other role - deny
       res.status(403).json({ error: 'Insufficient permissions' });
     } catch (error) {
-      console.error('Parent-child access check error:', error);
+      logger.error('Parent-child access check error', { error: error instanceof Error ? error.message : error });
       res.status(500).json({ error: 'Yetki kontrolü sırasında hata oluştu' });
     }
   };
