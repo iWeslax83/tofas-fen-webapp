@@ -1,66 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { BookOpen, AlertCircle, User, GraduationCap } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { toast } from 'sonner';
-import { NotesService } from '../../utils/apiService';
+import { useNotes } from '../../hooks/queries/noteQueries';
+import GradeTrendChart from '../../components/charts/GradeTrendChart';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 
 import './NotlarPage.css';
 
-interface NoteEntry {
+export interface NoteEntry {
     _id?: string;
     id: string;
-    adSoyad: string;
-    ders: string;
-    sinav1: number;
-    sinav2: number;
-    sozlu: number;
-    ortalama: number;
-    giren?: string;
-    donem?: string;
-    sinif?: string;
-    sube?: string;
+    studentName: string;
+    lesson: string;
+    exam1: number;
+    exam2: number;
+    oral: number;
+    average: number;
+    teacherName?: string;
+    semester?: string;
+    gradeLevel?: string;
+    classSection?: string;
 }
 
-function getAverageClass(average: number): string {
-    if (average >= 85) return 'excellent';
-    if (average >= 70) return 'good';
-    if (average >= 50) return 'average';
+function getAverageClass(avg: number): string {
+    if (avg >= 85) return 'excellent';
+    if (avg >= 70) return 'good';
+    if (avg >= 50) return 'average';
     return 'poor';
 }
 
 export default function NotlarPage() {
     const { user } = useAuthContext();
+    const { data, isLoading, error, refetch } = useNotes();
+    const notes: NoteEntry[] = data?.data || [];
 
-    const [notes, setNotes] = useState<NoteEntry[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchNotes = async () => {
-            setIsLoading(true);
-            setError(null);
-
-            try {
-                // Server handles role-based filtering - no client-side filtering needed
-                const { data, error } = await NotesService.getNotes();
-                if (error) {
-                    throw new Error(error);
-                }
-                setNotes((data as NoteEntry[]) || []);
-            } catch (error) {
-                console.error('Error fetching notes:', error);
-                setError('Notlar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.');
-                toast.error('Notlar yüklenirken hata oluştu');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        if (user) {
-            fetchNotes();
-        }
-    }, [user]);
+    const showChart = useMemo(() => {
+        if (!user || (user.rol !== 'student' && user.rol !== 'parent')) return false;
+        const semesterSet = new Set(notes.map((n) => n.semester).filter(Boolean));
+        return semesterSet.size >= 2;
+    }, [user, notes]);
 
     const breadcrumb = [
         { label: 'Ana Sayfa', path: `/${user?.rol || 'student'}` },
@@ -86,9 +64,9 @@ export default function NotlarPage() {
                 <div className="notlar-page">
                     <div className="error-message">
                         <AlertCircle className="error-icon" />
-                        <p>{error}</p>
+                        <p>Notlar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.</p>
                         <button
-                            onClick={() => window.location.reload()}
+                            onClick={() => refetch()}
                             className="btn-blue"
                         >
                             Tekrar Dene
@@ -111,6 +89,8 @@ export default function NotlarPage() {
                     </div>
                 </div>
 
+                {showChart && <GradeTrendChart notes={notes} />}
+
                 <div className="notlar-page-content">
                     {notes.length === 0 ? (
                         <div className="empty-state">
@@ -127,37 +107,37 @@ export default function NotlarPage() {
                                             <BookOpen className="icon" size={24} />
                                         </div>
                                         <div className="card-badge">
-                                            <span className={`note-average ${getAverageClass(note.ortalama)}`}>
-                                                {note.ortalama.toFixed(1)}
+                                            <span className={`note-average ${getAverageClass(note.average)}`}>
+                                                {note.average.toFixed(1)}
                                             </span>
                                         </div>
                                     </div>
                                     <div className="card-content">
-                                        <h3 className="note-title">{note.ders}</h3>
+                                        <h3 className="note-title">{note.lesson}</h3>
                                         <div className="note-meta">
                                             <span className="note-student">
                                                 <User size={14} />
-                                                {note.adSoyad}
+                                                {note.studentName}
                                             </span>
-                                            {note.sinif && (
+                                            {note.gradeLevel && (
                                                 <span className="note-class">
                                                     <GraduationCap size={14} />
-                                                    {note.sinif}/{note.sube}
+                                                    {note.gradeLevel}/{note.classSection}
                                                 </span>
                                             )}
                                         </div>
                                         <div className="note-scores">
                                             <div className="score-item">
                                                 <span className="score-label">1. Sınav</span>
-                                                <span className="score-value">{note.sinav1}</span>
+                                                <span className="score-value">{note.exam1}</span>
                                             </div>
                                             <div className="score-item">
                                                 <span className="score-label">2. Sınav</span>
-                                                <span className="score-value">{note.sinav2}</span>
+                                                <span className="score-value">{note.exam2}</span>
                                             </div>
                                             <div className="score-item">
                                                 <span className="score-label">Sözlü</span>
-                                                <span className="score-value">{note.sozlu}</span>
+                                                <span className="score-value">{note.oral}</span>
                                             </div>
                                         </div>
                                     </div>

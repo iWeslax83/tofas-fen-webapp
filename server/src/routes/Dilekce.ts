@@ -127,16 +127,18 @@ router.get(
 
     const authUser = (req as any).user as {
       userId: string;
-      rol: 'student' | 'teacher' | 'parent' | 'admin' | string;
+      role: 'student' | 'teacher' | 'parent' | 'admin' | string;
     };
 
     const query: any = {};
 
     // Role-based filtering
-    if (authUser.rol === 'student' || authUser.rol === 'teacher') {
-      // Students and teachers can only see their own dilekçeler
-      query.userId = authUser.userId;
-    } else if (authUser.rol === 'parent') {
+    if (authUser.role === 'admin') {
+      // Admins can see all dilekçeler, optionally filter by userId
+      if (userId) {
+        query.userId = userId;
+      }
+    } else if (authUser.role === 'parent') {
       // Parents can see their own dilekçeler, optionally including their children
       const parentId = authUser.userId;
 
@@ -157,9 +159,9 @@ router.get(
         // Default: only parent's own dilekçeler
         query.userId = parentId;
       }
-    } else if (userId) {
-      // Admins (and other privileged roles) can filter by arbitrary user
-      query.userId = userId;
+    } else {
+      // Students, teachers, and any other role can only see their own dilekçeler
+      query.userId = authUser.userId;
     }
 
     if (type) query.type = type;
@@ -209,7 +211,7 @@ router.get(
     }
 
     // Check permissions
-    if (user.rol !== 'admin' && dilekce.userId !== user.id) {
+    if (user.role !== 'admin' && dilekce.userId !== user.userId) {
       res.status(403).json({ error: 'Bu dilekçeye erişim yetkiniz yok' });
       return;
     }
@@ -290,7 +292,7 @@ router.put(
       return;
     }
 
-    if (dilekce.userId !== user.id) {
+    if (dilekce.userId !== user.userId) {
       res.status(403).json({ error: 'Bu dilekçeyi düzenleme yetkiniz yok' });
       return;
     }
@@ -338,12 +340,12 @@ router.delete(
       return;
     }
 
-    if (dilekce.userId !== user.id && user.rol !== 'admin') {
+    if (dilekce.userId !== user.userId && user.role !== 'admin') {
       res.status(403).json({ error: 'Bu dilekçeyi silme yetkiniz yok' });
       return;
     }
 
-    if (dilekce.status !== 'pending' && user.rol !== 'admin') {
+    if (dilekce.status !== 'pending' && user.role !== 'admin') {
       res.status(400).json({ error: 'Sadece bekleyen dilekçeler silinebilir' });
       return;
     }

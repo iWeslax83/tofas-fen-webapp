@@ -11,13 +11,19 @@ import {
   parseParentChildFile,
   bulkLinkParentChild
 } from "../services/bulkImportService";
+import logger from "../utils/logger";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const router = Router();
 
-// Get all users (with optional role filter) - requires authentication
-router.get("/", authenticateJWT, async (req: Request, res: Response) => {
+// Regex özel karakterlerini escape et (ReDoS/injection koruması)
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Get all users (with optional role filter) - requires admin/teacher
+router.get("/", authenticateJWT, authorizeRoles(['admin', 'teacher']), async (req: Request, res: Response) => {
   try {
     const { role } = req.query;
     const filter: any = {};
@@ -30,22 +36,23 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
     const users = await User.find(filter).select('-sifre -tckn');
     res.json(users);
   } catch (error) {
-    console.error('Error getting users:', error);
+    logger.error('Error getting users', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Get users by role - plural RESTful alias
-router.get("/role/:role", authenticateJWT, async (req: Request, res: Response) => {
+// Get users by role - plural RESTful alias - requires admin/teacher
+router.get("/role/:role", authenticateJWT, authorizeRoles(['admin', 'teacher']), async (req: Request, res: Response) => {
   try {
     const { role } = req.params;
     const { search } = req.query;
     const filter: any = { rol: role };
 
     if (search) {
+      const safeSearch = escapeRegex(String(search));
       filter.$or = [
-        { adSoyad: { $regex: search, $options: 'i' } },
-        { id: { $regex: search, $options: 'i' } }
+        { adSoyad: { $regex: safeSearch, $options: 'i' } },
+        { id: { $regex: safeSearch, $options: 'i' } }
       ];
     }
 
@@ -66,9 +73,16 @@ router.get("/role/:role", authenticateJWT, async (req: Request, res: Response) =
   }
 });
 
-// Parent-child link - requires authentication
+// Parent-child link - requires authentication (admin veya kendi hesabı)
 router.post("/parent-child-link", authenticateJWT, async (req, res) => {
   const { parentId, childId } = req.body;
+  const authUser = (req as any).user;
+
+  // Yetki kontrolü: Admin veya parentId kendisi olmalı
+  if (authUser?.role !== 'admin' && authUser?.userId !== parentId) {
+    return res.status(403).json({ error: "Bu işlem için yetkiniz yok" });
+  }
+
   const parent = await User.findOne({ id: parentId });
   const child = await User.findOne({ id: childId });
   if (!parent || !child) {
@@ -156,7 +170,7 @@ router.post("/bulk-import", authenticateJWT, authorizeRoles(['admin']), upload.s
       importErrors: result.errors,
     });
   } catch (error) {
-    console.error('Bulk import error:', error);
+    logger.error('Bulk import error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Toplu kullanıcı aktarımı sırasında hata oluştu' });
   }
 });
@@ -189,7 +203,7 @@ router.post("/bulk-parent-child-link", authenticateJWT, authorizeRoles(['admin']
       errors: result.errors,
     });
   } catch (error) {
-    console.error('Bulk parent-child link error:', error);
+    logger.error('Bulk parent-child link error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Toplu eşleştirme sırasında hata oluştu' });
   }
 });
@@ -197,9 +211,25 @@ router.post("/bulk-parent-child-link", authenticateJWT, authorizeRoles(['admin']
 // Update user - RESTful alias
 router.put("/:userId", authenticateJWT, async (req, res) => {
   const { userId } = req.params;
+  const authUser = (req as any).user;
+
+  // GÜVENLİK: Kullanıcı sadece kendini güncelleyebilir, admin herkesi güncelleyebilir
+  if (authUser?.userId !== userId && authUser?.role !== 'admin') {
+    return res.status(403).json({ error: 'Bu işlem için yetkiniz yok' });
+  }
+
   const updateData = req.body;
+
+  // Hassas alanların güncellenmesini engelle (admin hariç)
+  if (authUser?.role !== 'admin') {
+    delete updateData.rol;
+    delete updateData.isActive;
+    delete updateData.sifre;
+    delete updateData.tckn;
+  }
+
   try {
-    const user = await User.findOneAndUpdate({ id: userId }, updateData, { new: true, runValidators: true }).select('-sifre');
+    const user = await User.findOneAndUpdate({ id: userId }, updateData, { new: true, runValidators: true }).select('-sifre -tckn');
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(user);
   } catch (error) {
@@ -210,14 +240,38 @@ router.put("/:userId", authenticateJWT, async (req, res) => {
 // Update user - legacy action suffix
 router.put("/:userId/update", authenticateJWT, async (req, res) => {
   const { userId } = req.params;
+  const authUser = (req as any).user;
+
+  // GÜVENLİK: Kullanıcı sadece kendini güncelleyebilir, admin herkesi güncelleyebilir
+  if (authUser?.userId !== userId && authUser?.role !== 'admin') {
+    return res.status(403).json({ error: 'Bu işlem için yetkiniz yok' });
+  }
+
   const updateData = req.body;
 
   // Remove sensitive fields
   delete updateData.sifre;
   delete updateData.id;
   delete updateData.rol;
+  delete updateData.tckn;
   delete updateData.createdAt;
   delete updateData.updatedAt;
+  delete updateData.emailVerified;
+  delete updateData.emailVerificationCode;
+  delete updateData.emailVerificationExpiry;
+
+  // If email is being changed, reset verification and disable 2FA (#18)
+  if (updateData.email) {
+    const currentUser = await User.findOne({ id: userId }).select('email').lean() as any;
+    if (currentUser && currentUser.email !== updateData.email) {
+      updateData.emailVerified = false;
+      updateData.emailVerificationCode = null;
+      updateData.emailVerificationExpiry = null;
+      // #18: Disable 2FA when email changes (email is the 2FA delivery channel)
+      updateData.twoFactorEnabled = false;
+      updateData.trustedDevices = [];
+    }
+  }
 
   try {
     const user = await User.findOneAndUpdate(
@@ -232,7 +286,7 @@ router.put("/:userId/update", authenticateJWT, async (req, res) => {
 
     res.json({ success: true, user });
   } catch (error) {
-    console.error('User update error:', error);
+    logger.error('User update error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -321,22 +375,29 @@ router.get("/me", authenticateJWT, async (req, res) => {
 
     res.json(user);
   } catch (error) {
-    console.error('Error getting user info:', error);
+    logger.error('Error getting user info', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Get user by ID - requires authentication
+// Get user by ID - requires authentication, users can only view themselves (admin/teacher can view anyone)
 router.get("/:userId", authenticateJWT, async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = await User.findOne({ id: userId }).select('-sifre');
+    const authUser = (req as any).user;
+
+    // Sadece kendi bilgilerini veya admin/teacher tüm kullanıcıları görebilir
+    if (authUser?.userId !== userId && authUser?.role !== 'admin' && authUser?.role !== 'teacher') {
+      return res.status(403).json({ error: 'Bu kullanıcıyı görme yetkiniz yok' });
+    }
+
+    const user = await User.findOne({ id: userId }).select('-sifre -tckn');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     res.json(user);
   } catch (error) {
-    console.error('Error getting user:', error);
+    logger.error('Error getting user', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Internal server error' });
   }
 });

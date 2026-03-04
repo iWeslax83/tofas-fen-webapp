@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 import { authenticateJWT, authorizeRoles } from "../utils/jwt";
 import { User } from "../models";
 import { getParentChildIds, verifyParentChildAccess } from "../middleware/parentChildAccess";
+import logger from "../utils/logger";
 
 const router = Router();
 
@@ -52,10 +53,10 @@ router.get("/", authenticateJWT, async (req: Request, res: Response) => {
       .sort({ lastUpdated: -1 })
       .lean();
 
-    res.json(notes);
+    res.json({ success: true, data: notes });
   } catch (error) {
-    console.error('Notları getirme hatası:', error);
-    res.status(500).json({ error: 'Notlar getirilemedi' });
+    logger.error('Notlari getirme hatasi', { error: error instanceof Error ? error.message : error });
+    res.status(500).json({ success: false, error: 'Notlar getirilemedi' });
   }
 });
 
@@ -79,7 +80,7 @@ router.get("/student/:studentId", authenticateJWT, verifyParentChildAccess('para
 
     res.json(notes);
   } catch (error) {
-    console.error('Öğrenci notları getirme hatası:', error);
+    logger.error('Ogrenci notlari getirme hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Öğrenci notları getirilemedi' });
   }
 });
@@ -95,32 +96,41 @@ router.post("/", authenticateJWT, authorizeRoles(['teacher', 'admin']), async (r
     
     res.status(201).json(note);
   } catch (error) {
-    console.error('Not ekleme hatası:', error);
+    logger.error('Not ekleme hatasi', { error: error instanceof Error ? error.message : error });
     res.status(400).json({ error: 'Not eklenemedi', details: error.message });
   }
 });
 
-// Not güncelle - requires teacher/admin authentication
+// Not güncelle - requires teacher/admin authentication + ownership check
 router.put("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    
-    const note = await Note.findByIdAndUpdate(
-      id, 
-      updateData, 
-      { new: true, runValidators: true }
-    );
-    
-    if (!note) {
+    const authUser = req.user;
+
+    // Önce notu getir ve sahiplik kontrolü yap
+    const existingNote = await Note.findById(id);
+    if (!existingNote) {
       res.status(404).json({ error: 'Not bulunamadı' });
       return;
     }
-    
+
+    // Sadece notu oluşturan öğretmen veya admin güncelleyebilir
+    if (authUser?.role !== 'admin' && (existingNote as any).createdBy && (existingNote as any).createdBy !== authUser?.userId) {
+      res.status(403).json({ error: 'Bu notu güncelleme yetkiniz yok' });
+      return;
+    }
+
+    const note = await Note.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
     res.json(note);
   } catch (error) {
-    console.error('Not güncelleme hatası:', error);
-    res.status(400).json({ error: 'Not güncellenemedi', details: error.message });
+    logger.error('Not guncelleme hatasi', { error: error instanceof Error ? error.message : error });
+    res.status(400).json({ error: 'Not güncellenemedi', details: (error as Error).message });
   }
 });
 
@@ -142,7 +152,7 @@ router.delete("/:id", authenticateJWT, authorizeRoles(['teacher', 'admin']), asy
     
     res.json({ success: true });
   } catch (error) {
-    console.error('Not silme hatası:', error);
+    logger.error('Not silme hatasi', { error: error instanceof Error ? error.message : error });
     res.status(400).json({ error: 'Not silinemedi', details: error.message });
   }
 });
@@ -213,7 +223,7 @@ router.post("/import-excel", authenticateJWT, authorizeRoles(['teacher', 'admin'
       message: `${savedNotes.length} not başarıyla içe aktarıldı`
     });
   } catch (error) {
-    console.error('Excel import hatası:', error);
+    logger.error('Excel import hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Excel dosyası işlenemedi', details: error.message });
   }
 });
@@ -222,8 +232,23 @@ router.post("/import-excel", authenticateJWT, authorizeRoles(['teacher', 'admin'
 router.get("/stats", authenticateJWT, async (req: Request, res: Response) => {
   try {
     const { semester, academicYear, gradeLevel, classSection } = req.query;
-    
+    const role = req.user?.role;
+    const userId = req.user?.userId;
+
     const filter: any = { isActive: true };
+
+    // Role-based filtering
+    if (role === 'student') {
+      filter.studentId = userId;
+    } else if (role === 'parent') {
+      const childIds = await getParentChildIds(userId!);
+      if (childIds.length === 0) {
+        res.json([]);
+        return;
+      }
+      filter.studentId = { $in: childIds };
+    }
+
     if (semester) filter.semester = semester;
     if (academicYear) filter.academicYear = academicYear;
     if (gradeLevel) filter.gradeLevel = gradeLevel;
@@ -249,16 +274,17 @@ router.get("/stats", authenticateJWT, async (req: Request, res: Response) => {
 
     res.json(stats);
   } catch (error) {
-    console.error('İstatistik hatası:', error);
+    logger.error('Istatistik hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'İstatistikler hesaplanamadı' });
   }
 });
 
-// Toplu not güncelleme - requires teacher/admin authentication
+// Toplu not güncelleme - requires teacher/admin authentication + ownership check
 router.put("/bulk-update", authenticateJWT, authorizeRoles(['teacher', 'admin']), async (req: Request, res: Response) => {
   try {
     const { notes } = req.body;
-    
+    const authUser = req.user;
+
     if (!Array.isArray(notes)) {
       res.status(400).json({ error: 'Notlar dizisi gerekli' });
       return;
@@ -266,19 +292,29 @@ router.put("/bulk-update", authenticateJWT, authorizeRoles(['teacher', 'admin'])
 
     const updatePromises = notes.map(async (noteUpdate: any) => {
       const { id, ...updateData } = noteUpdate;
+
+      // Sahiplik kontrolü: admin değilse, notu oluşturan kişi mi kontrol et
+      if (authUser?.role !== 'admin') {
+        const existingNote = await Note.findById(id);
+        if (existingNote && (existingNote as any).createdBy && (existingNote as any).createdBy !== authUser?.userId) {
+          return null; // Yetkisiz notları atla
+        }
+      }
+
       return Note.findByIdAndUpdate(id, updateData, { new: true });
     });
 
-    const updatedNotes = await Promise.all(updatePromises);
-    
+    const results = await Promise.all(updatePromises);
+    const updatedNotes = results.filter(Boolean);
+
     res.json({
       success: true,
       updated: updatedNotes.length,
       notes: updatedNotes
     });
   } catch (error) {
-    console.error('Toplu güncelleme hatası:', error);
-    res.status(500).json({ error: 'Notlar güncellenemedi', details: error.message });
+    logger.error('Toplu guncelleme hatasi', { error: error instanceof Error ? error.message : error });
+    res.status(500).json({ error: 'Notlar güncellenemedi', details: (error as Error).message });
   }
 });
 
@@ -288,7 +324,7 @@ router.get("/templates", authenticateJWT, async (req: Request, res: Response) =>
     const templates = await Note.distinct('lesson');
     res.json(templates);
   } catch (error) {
-    console.error('Şablon hatası:', error);
+    logger.error('Sablon hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Şablonlar getirilemedi' });
   }
 });
@@ -297,13 +333,16 @@ router.get("/templates", authenticateJWT, async (req: Request, res: Response) =>
 router.get("/search", authenticateJWT, async (req: Request, res: Response) => {
   try {
     const { q, semester, academicYear } = req.query;
-    
+
     if (!q) {
       res.status(400).json({ error: 'Arama terimi gerekli' });
       return;
     }
 
-    const filter: any = { 
+    const role = req.user?.role;
+    const userId = req.user?.userId;
+
+    const filter: any = {
       isActive: true,
       $or: [
         { studentId: { $regex: q, $options: 'i' } },
@@ -311,6 +350,18 @@ router.get("/search", authenticateJWT, async (req: Request, res: Response) => {
         { description: { $regex: q, $options: 'i' } }
       ]
     };
+
+    // Role-based filtering
+    if (role === 'student') {
+      filter.studentId = userId;
+    } else if (role === 'parent') {
+      const childIds = await getParentChildIds(userId!);
+      if (childIds.length === 0) {
+        res.json([]);
+        return;
+      }
+      filter.studentId = { $in: childIds };
+    }
 
     if (semester) filter.semester = semester;
     if (academicYear) filter.academicYear = academicYear;
@@ -322,7 +373,7 @@ router.get("/search", authenticateJWT, async (req: Request, res: Response) => {
 
     res.json(notes);
   } catch (error) {
-    console.error('Arama hatası:', error);
+    logger.error('Arama hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Arama yapılamadı' });
   }
 });
@@ -359,7 +410,7 @@ router.post("/backup", authenticateJWT, authorizeRoles(['admin']), async (req: R
       backup: backupData
     });
   } catch (error) {
-    console.error('Yedekleme hatası:', error);
+    logger.error('Yedekleme hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Yedekleme yapılamadı' });
   }
 });

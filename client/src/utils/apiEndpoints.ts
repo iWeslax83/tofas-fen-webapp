@@ -7,8 +7,9 @@ export const API_ENDPOINTS = {
     REFRESH: '/api/auth/refresh-token',
     ME: '/api/auth/me',
     PROFILE: '/api/auth/profile',
-    FORGOT_PASSWORD: '/api/auth/request-password-reset',
-    RESET_PASSWORD: '/api/auth/reset-password',
+    VERIFY_2FA: '/api/auth/verify-2fa',
+    RESEND_2FA: '/api/auth/resend-2fa',
+    TOGGLE_2FA: '/api/auth/toggle-2fa',
     // CHANGE_PASSWORD kaldırıldı - artık TCKN kullanılıyor
   },
 
@@ -17,12 +18,10 @@ export const API_ENDPOINTS = {
     BASE: '/api/user',
     CREATE: '/api/user/create',
     UPDATE: (id: string) => `/api/user/${id}/update`,
-    DELETE: (id: string) => `/api/user/${id}/delete`,
+    DELETE: (id: string) => `/api/user/${id}`,
     GET_BY_ID: (id: string) => `/api/user/${id}`,
     GET_BY_ROLE: (role: string) => `/api/user?role=${role}`,
-    GET_CHILDREN: (parentId: string) => `/api/user/${parentId}/children`,
-    // CHANGE_PASSWORD kaldırıldı - artık TCKN kullanılıyor
-    EMAIL: '/api/user/email',
+    GET_CHILDREN: (parentId: string) => `/api/user/parent/${parentId}/children`,
     PARENT_CHILD: {
       LINK: '/api/user/parent-child-link',
       UNLINK: '/api/user/parent-child-link',
@@ -34,18 +33,15 @@ export const API_ENDPOINTS = {
   // Notes and grades endpoints
   NOTES: {
     BASE: '/api/notes',
-    CREATE: '/api/notes/create',
+    CREATE: '/api/notes',
     UPDATE: (id: string) => `/api/notes/${id}`,
     DELETE: (id: string) => `/api/notes/${id}`,
     BULK_UPDATE: '/api/notes/bulk-update',
     STATS: '/api/notes/stats',
     IMPORT: {
-      FORMATS: '/api/notes/import/formats',
-      FILE: '/api/notes/import/file',
+      EXCEL: '/api/notes/import-excel',
     },
-    TEMPLATE: {
-      DOWNLOAD: '/api/notes/template/download',
-    },
+    TEMPLATES: '/api/notes/templates',
   },
 
   // Homework endpoints
@@ -54,8 +50,7 @@ export const API_ENDPOINTS = {
     CREATE: '/api/homeworks/create',
     UPDATE: (id: string) => `/api/homeworks/${id}`,
     DELETE: (id: string) => `/api/homeworks/${id}`,
-    GET_BY_STUDENT: (studentId: string) => `/api/homeworks/student/${studentId}`,
-    GET_BY_TEACHER: (teacherId: string) => `/api/homeworks/teacher/${teacherId}`,
+    GET_BY_TEACHER: (teacherId: string) => `/api/homeworks?teacherId=${teacherId}`,
   },
 
   // Announcements endpoints
@@ -70,12 +65,11 @@ export const API_ENDPOINTS = {
   // Schedule endpoints
   SCHEDULE: {
     BASE: '/api/schedule',
-    CREATE: '/api/schedule/create',
+    CREATE: '/api/schedule',
     UPDATE: (id: string) => `/api/schedule/${id}`,
     DELETE: (id: string) => `/api/schedule/${id}`,
     GET_BY_CLASS: (classLevel: string, section: string) =>
       `/api/schedule/class/${classLevel}/${section}`,
-    GET_BY_TEACHER: (teacherId: string) => `/api/schedule/teacher/${teacherId}`,
   },
 
   // Clubs endpoints
@@ -144,6 +138,20 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/api/evci-requests/${id}`,
     GET_BY_STUDENT: (studentId: string) => `/api/evci-requests/student/${studentId}`,
     GET_BY_PARENT: (parentId: string) => `/api/evci-requests/parent/${parentId}`,
+    PARENT_APPROVAL: (id: string) => `/api/evci-requests/${id}/parent-approval`,
+    ADMIN_APPROVAL: (id: string) => `/api/evci-requests/${id}/admin-approval`,
+    SUBMISSION_WINDOW: '/api/evci-requests/submission-window',
+    STATS: '/api/evci-requests/stats',
+    EXPORT: '/api/evci-requests/export',
+    BULK_STATUS: '/api/evci-requests/bulk-status',
+    WINDOW_OVERRIDE: '/api/evci-requests/window-override',
+  },
+
+  // Push notification endpoints
+  PUSH: {
+    VAPID_PUBLIC_KEY: '/api/push/vapid-public-key',
+    SUBSCRIBE: '/api/push/subscribe',
+    UNSUBSCRIBE: '/api/push/unsubscribe',
   },
 
   // Requests endpoints
@@ -314,4 +322,4 @@ export const addQueryParams = (
 };
 
 // Export individual endpoint groups for easier imports
-export const { AUTH, USER, NOTES, HOMEWORKS, ANNOUNCEMENTS, SCHEDULE, CLUBS, DORMITORY, EVCI, REQUESTS, CALENDAR, MONITORING, COMMUNICATION, PERFORMANCE } = API_ENDPOINTS;
+export const { AUTH, USER, NOTES, HOMEWORKS, ANNOUNCEMENTS, SCHEDULE, CLUBS, DORMITORY, EVCI, REQUESTS, CALENDAR, MONITORING, COMMUNICATION, PERFORMANCE, PUSH } = API_ENDPOINTS;

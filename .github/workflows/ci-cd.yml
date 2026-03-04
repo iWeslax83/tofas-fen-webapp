@@ -84,12 +84,12 @@ jobs:
       - name: Run client tests
         run: |
           cd client
-          npm run test -- --coverage --watchAll=false
+          npm run test:ci
 
       - name: Run server tests
         run: |
           cd server
-          npm run test -- --coverage --watchAll=false
+          npm run test:ci
 
       - name: Build client
         run: |

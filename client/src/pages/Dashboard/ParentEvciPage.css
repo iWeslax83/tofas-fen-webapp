@@ -40,7 +40,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+    background: #0f766e;
   }
 
   .page-header-content {
@@ -91,7 +91,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+    background: #0f766e;
   }
 
   .card-actions {
@@ -164,7 +164,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+    background: #0f766e;
   }
 
   .request-card:hover {
@@ -203,7 +203,7 @@
   }
 
   .status-rejected {
-    background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+    background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
     color: var(--white);
   }
 
@@ -254,6 +254,105 @@
     line-height: 1.4;
   }
 
+  /* Request Badges */
+  .request-badges {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  .status-badge.going {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: var(--white);
+  }
+
+  .status-badge.not-going {
+    background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%);
+    color: var(--white);
+  }
+
+  /* Parent Approval Badge */
+  .parent-approval-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full, 9999px);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .parent-approved {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .parent-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .parent-pending {
+    background: #fef9c3;
+    color: #854d0e;
+  }
+
+  /* Approval Actions */
+  .approval-actions {
+    display: flex;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--gray-200);
+    margin-top: var(--space-4);
+  }
+
+  .btn-approve {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: var(--white);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-approve:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .btn-reject {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: var(--white);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-reject:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
   /* Request Footer */
   .request-footer {
     display: flex;
@@ -261,9 +360,19 @@
     gap: var(--space-1);
     padding-top: var(--space-3);
     border-top: 1px solid var(--gray-200);
+    margin-top: var(--space-4);
   }
 
   .request-date {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    font-style: italic;
+  }
+
+  .approval-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     font-size: 0.75rem;
     color: var(--gray-500);
     font-style: italic;
@@ -339,7 +448,7 @@
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+    background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
     color: var(--white);
     box-shadow: var(--shadow-md);
   }
@@ -416,6 +525,24 @@
     color: var(--gray-600);
     margin: 0 0 var(--space-4) 0;
     line-height: 1.5;
+  }
+
+  /* Reject Modal */
+  .reject-modal-desc {
+    margin-bottom: 0.75rem;
+    color: var(--gray-600);
+  }
+
+  .reject-textarea {
+    width: 100%;
+    resize: vertical;
+  }
+
+  .reject-modal-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
   }
 
   /* Animation Classes */

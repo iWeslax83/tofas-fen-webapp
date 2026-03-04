@@ -2,6 +2,7 @@ import { Router } from "express";
 import { SupervisorList, ISupervisorList } from "../models/SupervisorList";
 import { authenticateJWT, authorizeRoles } from "../utils/jwt";
 import { validateSupervisorList } from "../middleware/validation";
+import logger from "../utils/logger";
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.get("/", authenticateJWT, async (req, res) => {
     const supervisors = await SupervisorList.find(filter).sort({ date: -1 });
     res.json(supervisors);
   } catch (error) {
-    console.error("Belletmen listesi getirme hatası:", error);
+    logger.error('Belletmen listesi getirme hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -35,7 +36,7 @@ router.get("/:id", authenticateJWT, async (req, res) => {
     }
     res.json(supervisor);
   } catch (error) {
-    console.error("Belletmen nöbeti getirme hatası:", error);
+    logger.error('Belletmen nobeti getirme hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -47,7 +48,7 @@ router.post("/", authenticateJWT, authorizeRoles(['admin']), validateSupervisorL
     await supervisor.save();
     res.status(201).json(supervisor);
   } catch (error) {
-    console.error("Belletmen nöbeti oluşturma hatası:", error);
+    logger.error('Belletmen nobeti olusturma hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -55,13 +56,13 @@ router.post("/", authenticateJWT, authorizeRoles(['admin']), validateSupervisorL
 // Belletmen nöbetini güncelle (sadece admin)
 router.put("/:id", authenticateJWT, authorizeRoles(['admin']), validateSupervisorList, async (req, res) => {
   try {
-    const supervisor = await SupervisorList.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const supervisor = await SupervisorList.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
     if (!supervisor) {
       return res.status(404).json({ error: "Belletmen nöbeti bulunamadı" });
     }
     res.json(supervisor);
   } catch (error) {
-    console.error("Belletmen nöbeti güncelleme hatası:", error);
+    logger.error('Belletmen nobeti guncelleme hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
@@ -75,7 +76,7 @@ router.delete("/:id", authenticateJWT, authorizeRoles(['admin']), async (req, re
     }
     res.json({ success: true, message: "Belletmen nöbeti silindi" });
   } catch (error) {
-    console.error("Belletmen nöbeti silme hatası:", error);
+    logger.error('Belletmen nobeti silme hatasi', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });

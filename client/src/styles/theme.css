@@ -2,16 +2,15 @@
 
 /* CSS Variables - Tofaş Fen Lisesi Brand Colors */
 :root {
-  /* Primary Colors - Tofaş Brand */
-  /* Primary Colors - Replaced Burgundy with Grayscale */
-  --primary-red: #374151;
-  /* Gray 700 */
-  --primary-red-dark: #111827;
-  /* Gray 900 */
-  --primary-red-light: #9CA3AF;
-  /* Gray 400 */
-  --primary-red-lighter: #F3F4F6;
-  /* Gray 100 */
+  /* Primary Colors - Tofaş Brand (Deep Teal) */
+  --primary-red: #0f766e;
+  /* Teal 700 */
+  --primary-red-dark: #115e59;
+  /* Teal 800 */
+  --primary-red-light: #14b8a6;
+  /* Teal 400 */
+  --primary-red-lighter: #ccfbf1;
+  /* Teal 50 */
 
   /* Secondary Colors */
   --secondary-blue: #1E40AF;
@@ -58,18 +57,18 @@
   --color-info-darker: #1d4ed8;
   --color-info-darkest: #1e40af;
 
-  /* Neutral Colors */
+  /* Neutral Colors (Slate) */
   --white: #FFFFFF;
-  --gray-50: #F9FAFB;
-  --gray-100: #F3F4F6;
-  --gray-200: #E5E7EB;
-  --gray-300: #D1D5DB;
-  --gray-400: #9CA3AF;
-  --gray-500: #6B7280;
-  --gray-600: #4B5563;
-  --gray-700: #374151;
-  --gray-800: #1F2937;
-  --gray-900: #111827;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
 
   /* Opacity Scale */
   --opacity-0: 0;
@@ -89,13 +88,13 @@
   --opacity-100: 1;
 
   /* Color with Opacity Utilities */
-  /* Color with Opacity Utilities - Using Gray 700 (55, 65, 81) */
-  --primary-red-10: rgba(55, 65, 81, 0.1);
-  --primary-red-20: rgba(55, 65, 81, 0.2);
-  --primary-red-30: rgba(55, 65, 81, 0.3);
-  --primary-red-50: rgba(55, 65, 81, 0.5);
-  --primary-red-70: rgba(55, 65, 81, 0.7);
-  --primary-red-90: rgba(55, 65, 81, 0.9);
+  /* Color with Opacity Utilities - Using Teal 700 (15, 118, 110) */
+  --primary-red-10: rgba(15, 118, 110, 0.1);
+  --primary-red-20: rgba(15, 118, 110, 0.2);
+  --primary-red-30: rgba(15, 118, 110, 0.3);
+  --primary-red-50: rgba(15, 118, 110, 0.5);
+  --primary-red-70: rgba(15, 118, 110, 0.7);
+  --primary-red-90: rgba(15, 118, 110, 0.9);
 
   --success-10: rgba(16, 185, 129, 0.1);
   --success-20: rgba(16, 185, 129, 0.2);
@@ -114,8 +113,8 @@
   --info-50: rgba(59, 130, 246, 0.5);
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, var(--primary-red-dark) 0%, var(--primary-red) 100%);
-  --gradient-primary-animated: linear-gradient(135deg, #111827 0%, #374151 50%, #4B5563 100%);
+  --gradient-primary: linear-gradient(135deg, #115e59 0%, #0f766e 100%);
+  --gradient-primary-animated: linear-gradient(135deg, #115e59 0%, #0f766e 50%, #14b8a6 100%);
   --gradient-secondary: linear-gradient(135deg, var(--secondary-blue) 0%, var(--secondary-purple) 100%);
   --gradient-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --gradient-success: linear-gradient(135deg, var(--color-success-dark) 0%, var(--color-success) 100%);
@@ -232,7 +231,7 @@
   --cta-padding-horizontal: 1.25rem;
   --cta-font-size: 1rem;
   --cta-radius: 0.75rem;
-  --cta-focus-ring: rgba(55, 65, 81, 0.18);
+  --cta-focus-ring: rgba(15, 118, 110, 0.18);
 }
 
 /* Global footer */
@@ -2200,11 +2199,11 @@ p,
 
 /* Explicit Dark Mode */
 [data-theme="dark"] {
-  /* Override media query for explicit dark mode */
   --primary-red: #9CA3AF;
   --primary-red-dark: #6B7280;
   --primary-red-light: #D1D5DB;
   --primary-red-lighter: #1F2937;
+
   --white: #1F2937;
   --gray-50: #111827;
   --gray-100: #1F2937;
@@ -2216,10 +2215,106 @@ p,
   --gray-700: #E5E7EB;
   --gray-800: #F3F4F6;
   --gray-900: #F9FAFB;
+
+  --color-success: #34d399;
+  --color-success-light: #6ee7b7;
+  --color-success-lighter: #a7f3d0;
+  --color-success-lightest: #064e3b;
+  --color-success-dark: #10b981;
+  --color-success-darker: #059669;
+  --color-success-darkest: #047857;
+
+  --color-warning: #fbbf24;
+  --color-warning-light: #fcd34d;
+  --color-warning-lighter: #fde68a;
+  --color-warning-lightest: #78350f;
+  --color-warning-dark: #f59e0b;
+  --color-warning-darker: #d97706;
+  --color-warning-darkest: #b45309;
+
+  --color-error: #f87171;
+  --color-error-light: #fca5a5;
+  --color-error-lighter: #fecaca;
+  --color-error-lightest: #7f1d1d;
+  --color-error-dark: #ef4444;
+  --color-error-darker: #dc2626;
+  --color-error-darkest: #b91c1c;
+
+  --color-info: #60a5fa;
+  --color-info-light: #93c5fd;
+  --color-info-lighter: #bfdbfe;
+  --color-info-lightest: #1e3a8a;
+  --color-info-dark: #3b82f6;
+  --color-info-darker: #2563eb;
+  --color-info-darkest: #1d4ed8;
+
+  --bg-primary: #111827;
+  --bg-secondary: #1F2937;
+  --bg-tertiary: #374151;
+  --text-primary: #F9FAFB;
+  --text-secondary: #D1D5DB;
+  --text-tertiary: #9CA3AF;
+  --border-primary: #374151;
+  --border-secondary: #4B5563;
+  --border-tertiary: #6B7280;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
 }
 
-/* Light Mode (Default) - Explicit */
+/* Explicit Light Mode — overrides @media (prefers-color-scheme: dark) */
 [data-theme="light"] {
+  --primary-red: #0f766e;
+  --primary-red-dark: #115e59;
+  --primary-red-light: #14b8a6;
+  --primary-red-lighter: #ccfbf1;
+
+  --white: #FFFFFF;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+
+  --color-success: #10b981;
+  --color-success-light: #34d399;
+  --color-success-lighter: #a7f3d0;
+  --color-success-lightest: #d1fae5;
+  --color-success-dark: #059669;
+  --color-success-darker: #047857;
+  --color-success-darkest: #065f46;
+
+  --color-warning: #f59e0b;
+  --color-warning-light: #fbbf24;
+  --color-warning-lighter: #fde68a;
+  --color-warning-lightest: #fef3c7;
+  --color-warning-dark: #d97706;
+  --color-warning-darker: #b45309;
+  --color-warning-darkest: #92400e;
+
+  --color-error: #ef4444;
+  --color-error-light: #f87171;
+  --color-error-lighter: #fca5a5;
+  --color-error-lightest: #fee2e2;
+  --color-error-dark: #dc2626;
+  --color-error-darker: #b91c1c;
+  --color-error-darkest: #991b1b;
+
+  --color-info: #3b82f6;
+  --color-info-light: #60a5fa;
+  --color-info-lighter: #93c5fd;
+  --color-info-lightest: #dbeafe;
+  --color-info-dark: #2563eb;
+  --color-info-darker: #1d4ed8;
+  --color-info-darkest: #1e40af;
+
   --bg-primary: #FFFFFF;
   --bg-secondary: #F9FAFB;
   --bg-tertiary: #F3F4F6;
@@ -2229,6 +2324,11 @@ p,
   --border-primary: #E5E7EB;
   --border-secondary: #D1D5DB;
   --border-tertiary: #9CA3AF;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 /* Micro-interactions - Button Feedback */
@@ -2649,7 +2749,7 @@ a:hover {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+  background: #0f766e;
 }
 
 .page-header-content {
@@ -2727,6 +2827,7 @@ a:hover {
   border-radius: var(--radius-lg);
   font-family: inherit;
   font-size: 1rem;
+  color: var(--gray-900);
   transition: all var(--transition-fast);
   background: var(--white);
 }
@@ -2743,12 +2844,8 @@ a:hover {
   opacity: 0.7;
 }
 
-/* Grid Layouts */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space-6);
-}
+/* Grid Layouts - base fallback, overridden by component-specific CSS */
+/* NOT: .dashboard-grid kuralları bileşen CSS dosyalarında tanımlanır (ModernDashboard.css vb.) */
 
 /* Responsive Overrides */
 @media (max-width: 768px) {
@@ -2938,17 +3035,9 @@ a:hover {
   background: transparent;
 }
 
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-6);
-}
-
-@media (max-width: 1024px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* NOT: .dashboard-grid kuralları ModernDashboard.css'de tanımlanır.
+   Buradaki duplicate tanım CSS cascade sorunu yarattığı için kaldırıldı.
+   (Ana sayfaya geri dönüşte 3 yerine 2 buton gösterilmesine neden oluyordu) */
 
 /* Welcome Illustration */
 .welcome-illustration {

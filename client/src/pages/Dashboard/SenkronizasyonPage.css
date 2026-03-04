@@ -13,7 +13,7 @@
   --sync-primary-dark: var(--gray-700);
   --sync-primary-light: var(--gray-500);
   --sync-primary-lighter: var(--gray-100);
-  --sync-gradient: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+  --sync-gradient: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
   --sync-shadow: 0 20px 40px rgba(107, 114, 128, 0.15);
   --sync-shadow-lg: 0 30px 60px rgba(107, 114, 128, 0.25);
 
@@ -219,7 +219,7 @@
   }
 
   .btn-danger {
-    background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+    background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
     color: var(--white);
     box-shadow: var(--shadow-md);
   }
@@ -227,7 +227,7 @@
   .btn-danger:hover {
     background: linear-gradient(135deg, var(--gray-600) 0%, var(--gray-700) 100%);
     transform: translateY(-1px);
-    box-shadow: 0 8px 25px rgba(55, 65, 81, 0.3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
   /* User Grid */
@@ -818,6 +818,249 @@
     }
   }
 
+  /* Parent-Child Matching Panel */
+  .parent-child-matching-panel {
+    background: var(--white);
+    border-radius: var(--radius-2xl);
+    border: 2px solid var(--sync-primary-lighter);
+    padding: var(--space-6);
+    margin-top: var(--space-6);
+    box-shadow: var(--shadow-md);
+  }
+
+  .matching-header {
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .matching-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 var(--space-2) 0;
+  }
+
+  .matching-description {
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  /* Manual Assign */
+  .manual-assign-section {
+    margin-bottom: var(--space-6);
+    padding: var(--space-4);
+    background: var(--gray-50);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+  }
+
+  .manual-assign-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  .manual-assign-label {
+    font-weight: 600;
+    color: var(--gray-700);
+    font-size: 0.875rem;
+  }
+
+  .manual-assign-input-group {
+    display: flex;
+    gap: var(--space-2);
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .manual-assign-input {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  /* Student Selection */
+  .student-selection-section {
+    margin-bottom: var(--space-6);
+  }
+
+  .student-selection-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  .section-subtitle {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 0;
+  }
+
+  .student-search-filter {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .student-search {
+    min-width: 200px;
+  }
+
+  .student-filter {
+    min-width: 140px;
+  }
+
+  .senkronizasyon-student-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--space-3);
+    max-height: 400px;
+    overflow-y: auto;
+    padding: var(--space-2);
+  }
+
+  .student-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: var(--white);
+  }
+
+  .student-checkbox-item:hover {
+    background: var(--gray-50);
+    border-color: var(--sync-primary-light);
+  }
+
+  .student-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--sync-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .student-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .student-name {
+    font-weight: 600;
+    color: var(--gray-900);
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .student-class {
+    color: var(--gray-500);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .student-dormitory {
+    display: inline-block;
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: #059669;
+    background: #DCFCE7;
+    padding: 1px var(--space-2);
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    width: fit-content;
+  }
+
+  .no-students-found {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--space-8);
+    color: var(--gray-500);
+    font-size: 0.875rem;
+  }
+
+  /* Selected Children Summary */
+  .selected-children-summary {
+    margin-bottom: var(--space-6);
+    padding: var(--space-4);
+    background: var(--sync-primary-lighter);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+  }
+
+  .selected-children-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+  }
+
+  .selected-child-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-lg);
+    font-size: 0.8125rem;
+  }
+
+  .child-name {
+    font-weight: 600;
+    color: var(--gray-900);
+  }
+
+  .child-class {
+    color: var(--gray-500);
+    font-size: 0.75rem;
+  }
+
+  .remove-child-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: var(--gray-100);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--gray-500);
+    transition: all var(--transition-fast);
+    padding: 0;
+  }
+
+  .remove-child-btn:hover {
+    background: #FEE2E2;
+    color: #DC2626;
+  }
+
+  /* Matching Actions */
+  .matching-actions {
+    display: flex;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--gray-200);
+  }
+
   /* Print Styles */
   @media print {
     .user-card {
@@ -833,14 +1076,3 @@
   }
 }
 
-@keyframes gradientShift {
-
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-}

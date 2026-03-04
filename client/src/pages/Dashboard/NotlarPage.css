@@ -10,8 +10,8 @@
   padding: var(--space-6);
 }
 
-/* Page Header */
-.page-header {
+/* Page Header - scoped to notlar-page */
+.notlar-page .page-header {
   background: var(--white);
   border-radius: var(--radius-2xl);
   padding: var(--space-6);
@@ -22,30 +22,30 @@
   overflow: hidden;
 }
 
-.page-header::before {
+.notlar-page .page-header::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+  background: #0f766e;
 }
 
-.page-header-content {
+.notlar-page .page-header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
 }
 
-.page-title-section {
+.notlar-page .page-title-section {
   display: flex;
   align-items: center;
   gap: var(--space-4);
 }
 
-.page-icon {
+.notlar-page .page-icon {
   width: 48px;
   height: 48px;
   color: var(--gray-700);
@@ -55,7 +55,7 @@
   flex-shrink: 0;
 }
 
-.page-title-main {
+.notlar-page .page-title-main {
   font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 700;
@@ -106,17 +106,17 @@
 }
 
 .notlar-page-content .dashboard-card:hover::before {
-  background: linear-gradient(135deg, var(--gray-400) 0%, var(--gray-500) 100%);
+  background: #0f766e;
 }
 
-.card-header {
+.notlar-page .card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: var(--space-4);
 }
 
-.card-icon {
+.notlar-page .card-icon {
   width: 44px;
   height: 44px;
   background: var(--gray-100);
@@ -133,7 +133,7 @@
   transform: scale(1.1);
 }
 
-.card-badge {
+.notlar-page .card-badge {
   display: flex;
   align-items: center;
 }
@@ -166,7 +166,7 @@
   color: var(--gray-700);
 }
 
-.card-content {
+.notlar-page .card-content {
   flex: 1;
 }
 
@@ -225,7 +225,7 @@
 }
 
 /* Empty State */
-.empty-state {
+.notlar-page .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -239,21 +239,21 @@
   margin: var(--space-8) 0;
 }
 
-.empty-icon {
+.notlar-page .empty-icon {
   width: 80px;
   height: 80px;
   color: var(--gray-400);
   margin-bottom: var(--space-4);
 }
 
-.empty-state h3 {
+.notlar-page .empty-state h3 {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--gray-900);
   margin: 0 0 var(--space-2) 0;
 }
 
-.empty-state p {
+.notlar-page .empty-state p {
   font-size: 1rem;
   color: var(--gray-600);
   margin: 0;
@@ -315,7 +315,7 @@
 .btn-blue {
   margin-top: var(--space-4);
   padding: var(--space-3) var(--space-6);
-  background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
   color: var(--white);
   border: none;
   border-radius: var(--radius-lg);
@@ -336,15 +336,77 @@
     padding: var(--space-4);
   }
 
-  .page-title-main {
+  .notlar-page .page-title-main {
     font-size: 1.5rem;
   }
 
-  .page-header {
+  .notlar-page .page-header {
     padding: var(--space-4);
   }
 
-  .dashboard-grid {
+  .notlar-page .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .notlar-page {
+    padding: var(--space-3);
+  }
+
+  .notlar-page .page-header {
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .notlar-page .page-title-main {
+    font-size: 1.25rem;
+  }
+
+  .notlar-page .page-icon {
+    width: 40px;
+    height: 40px;
+    padding: var(--space-2);
+  }
+
+  .notlar-page-content .dashboard-card {
+    padding: var(--space-4);
+  }
+
+  .notlar-page .note-title {
+    font-size: 1.0625rem;
+  }
+
+  .notlar-page .note-scores {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+
+  .notlar-page .score-item {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .notlar-page .note-average {
+    font-size: 1rem;
+    padding: var(--space-1) var(--space-3);
+  }
+
+  .notlar-page .empty-state {
+    padding: var(--space-8);
+  }
+
+  .notlar-page .empty-icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .notlar-page .empty-state h3 {
+    font-size: 1.25rem;
+  }
+
+  .notlar-page .empty-state p {
+    font-size: 0.875rem;
   }
 }

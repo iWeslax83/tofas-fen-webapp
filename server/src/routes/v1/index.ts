@@ -1,5 +1,5 @@
 import express from 'express';
-import authRoutes from '../auth';
+import authRoutes from '../../modules/auth/routes/authRoutes';
 import userRoutes from '../User';
 import noteRoutes from '../Notes';
 import announcementRoutes from '../Announcement';

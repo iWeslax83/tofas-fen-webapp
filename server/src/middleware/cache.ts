@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import Redis from 'ioredis';
+import logger from '../utils/logger';
 
 // Enhanced Redis client configuration for production performance
 const redisConfig: any = {
@@ -59,14 +60,14 @@ const redis: any = isRedisConfigured
   };
 
 if (!isRedisConfigured) {
-  console.log('ℹ️ Redis caching disabled in development mode. Set NODE_ENV=production and REDIS_URL to enable caching.');
+  logger.info('Redis caching disabled in development mode. Set NODE_ENV=production and REDIS_URL to enable caching.');
 }
 
 // Enhanced Redis event handling
 if (isRedisConfigured) {
   redis.on('error', (err: Error) => {
-    console.error('❌ Redis connection error:', err);
-    console.error('🔍 Error details:', {
+    logger.error('Redis connection error', {
+      error: err instanceof Error ? err.message : err,
       code: (err as any).code,
       syscall: (err as any).syscall,
       address: (err as any).address,
@@ -75,26 +76,27 @@ if (isRedisConfigured) {
   });
 
   redis.on('connect', () => {
-    console.log('✅ Redis connected successfully');
-    console.log(`🌐 Host: ${redis.options.host || 'unknown'}`);
-    console.log(`🚪 Port: ${redis.options.port || 'unknown'}`);
-    console.log(`🗄️ Database: ${redis.options.db || 0}`);
+    logger.info('Redis connected successfully', {
+      host: redis.options.host || 'unknown',
+      port: redis.options.port || 'unknown',
+      database: redis.options.db || 0
+    });
   });
 
   redis.on('ready', () => {
-    console.log('🚀 Redis ready for operations');
+    logger.info('Redis ready for operations');
   });
 
   redis.on('close', () => {
-    console.log('🔒 Redis connection closed');
+    logger.info('Redis connection closed');
   });
 
   redis.on('reconnecting', (delay: number) => {
-    console.log(`🔄 Redis reconnecting in ${delay}ms`);
+    logger.info('Redis reconnecting', { delayMs: delay });
   });
 
   redis.on('end', () => {
-    console.log('🏁 Redis connection ended');
+    logger.info('Redis connection ended');
   });
 }
 
@@ -140,7 +142,7 @@ export const cache = (duration: number = 300) => {
       res.json = function (data: any) {
         // Cache the response data
         redis.setex(cacheKey, duration, JSON.stringify(data))
-          .catch((err: unknown) => console.error('Cache set error:', err));
+          .catch((err: unknown) => logger.error('Cache set error', { error: err instanceof Error ? (err as Error).message : err }));
 
         // Call original method
         return originalJson.call(this, data);
@@ -148,7 +150,7 @@ export const cache = (duration: number = 300) => {
 
       next();
     } catch (error: unknown) {
-      console.error('Cache middleware error:', error);
+      logger.error('Cache middleware error', { error: error instanceof Error ? (error as Error).message : error });
       next(); // Continue without caching on error
     }
   };
@@ -164,12 +166,12 @@ export const invalidateCache = async (pattern: string) => {
       keys.forEach((key: string) => pipeline.del(key));
       await pipeline.exec();
 
-      console.log(`🗑️ Cache invalidated for pattern: ${pattern} (${keys.length} keys)`);
+      logger.info('Cache invalidated', { pattern, keysCount: keys.length });
       return keys.length;
     }
     return 0;
   } catch (error: unknown) {
-    console.error('Cache invalidation error:', error);
+    logger.error('Cache invalidation error', { error: error instanceof Error ? (error as Error).message : error });
     return 0;
   }
 };
@@ -194,7 +196,7 @@ export const sessionCache = async (req: Request, _res: Response, next: NextFunct
 
     next();
   } catch (error: unknown) {
-    console.error('Session cache error:', error);
+    logger.error('Session cache error', { error: error instanceof Error ? (error as Error).message : error });
     next();
   }
 };
@@ -206,7 +208,7 @@ export const cacheHelpers = {
     try {
       return await redis.mget(keys);
     } catch (error: unknown) {
-      console.error('Cache mget error:', error);
+      logger.error('Cache mget error', { error: error instanceof Error ? (error as Error).message : error });
       return keys.map(() => null);
     }
   },
@@ -225,7 +227,7 @@ export const cacheHelpers = {
       }
       return true;
     } catch (error: unknown) {
-      console.error('Cache mset error:', error);
+      logger.error('Cache mset error', { error: error instanceof Error ? (error as Error).message : error });
       return false;
     }
   },
@@ -239,7 +241,7 @@ export const cacheHelpers = {
       const pipeline = redis.pipeline();
 
       // Cache user profile (without sensitive data)
-      const { sifre, resetToken, forgotPasswordToken, ...profileData } = userData;
+      const { sifre, ...profileData } = userData;
       pipeline.setex(userProfileKey, duration, JSON.stringify(profileData));
 
       // Set user key with TTL
@@ -247,10 +249,10 @@ export const cacheHelpers = {
 
       await pipeline.exec();
 
-      console.log(`💾 User ${userId} cached for ${duration}s`);
+      logger.info('User cached', { userId, durationSeconds: duration });
       return true;
     } catch (error: unknown) {
-      console.error('Set user cache error:', error);
+      logger.error('Set user cache error', { error: error instanceof Error ? (error as Error).message : error });
       return false;
     }
   },
@@ -269,10 +271,10 @@ export const cacheHelpers = {
         totalInvalidated += await invalidateCache(pattern);
       }
 
-      console.log(`🗑️ User ${userId} cache invalidated (${totalInvalidated} keys)`);
+      logger.info('User cache invalidated', { userId, keysCount: totalInvalidated });
       return totalInvalidated;
     } catch (error: unknown) {
-      console.error('Invalidate user cache error:', error);
+      logger.error('Invalidate user cache error', { error: error instanceof Error ? (error as Error).message : error });
       return 0;
     }
   },
@@ -288,10 +290,10 @@ export const cacheHelpers = {
 
       await pipeline.exec();
 
-      console.log(`💾 Bulk cached ${operations.length} items`);
+      logger.info('Bulk cached items', { count: operations.length });
       return true;
     } catch (error: unknown) {
-      console.error('Bulk cache set error:', error);
+      logger.error('Bulk cache set error', { error: error instanceof Error ? (error as Error).message : error });
       return false;
     }
   },
@@ -313,7 +315,7 @@ export const cacheHelpers = {
         }, {})
       };
     } catch (error: unknown) {
-      console.error('Get cache stats error:', error);
+      logger.error('Get cache stats error', { error: error instanceof Error ? (error as Error).message : error });
       return null;
     }
   }
@@ -331,13 +333,13 @@ export const cleanupCache = async () => {
       keys.forEach((key: string) => pipeline.del(key));
       await pipeline.exec();
 
-      console.log(`🧹 Cleaned up ${keys.length} cache keys`);
+      logger.info('Cleaned up cache keys', { count: keys.length });
       return keys.length;
     }
 
     return 0;
   } catch (error: unknown) {
-    console.error('Cache cleanup error:', error);
+    logger.error('Cache cleanup error', { error: error instanceof Error ? (error as Error).message : error });
     return 0;
   }
 };

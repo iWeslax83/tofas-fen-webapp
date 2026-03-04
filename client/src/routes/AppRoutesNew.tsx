@@ -41,7 +41,6 @@ export default function AppRoutes() {
 
         {/* Legacy routes for backward compatibility */}
         <Route path="/login" element={<Navigate to="/auth/login" replace />} />
-        <Route path="/reset-password" element={<Navigate to="/auth/reset-password" replace />} />
 
         {/* Role-based dashboard routes */}
         <Route path="/student" element={<ModernDashboard />} />

@@ -1,9 +1,9 @@
 // src/pages/AdminEvciListPage.tsx
 import { useState, useEffect } from "react";
-// import { Link } from "react-router-dom"; // Not used
+import { Link } from "react-router-dom";
 import { EvciService, UserService } from "../../utils/apiService";
 import { toast } from "sonner";
-import { Home, Plus, Trash2, Calendar, MapPin, User, Filter } from "lucide-react";
+import { Home, Plus, Trash2, Calendar, MapPin, User, Filter, Shield, Download, CheckSquare, XCircle, AlertCircle, BarChart3, ChevronLeft, ChevronRight, Check, X, Settings2 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 
@@ -18,6 +18,10 @@ interface EvciTalep {
   destination: string;
   createdAt: string;
   willGo: boolean;
+  parentApproval?: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  weekOf?: string;
+  status?: string;
 }
 
 interface Student {
@@ -29,6 +33,18 @@ interface Student {
   pansiyon?: boolean;
 }
 
+function getParentApprovalBadge(approval?: string) {
+  switch (approval) {
+    case 'approved':
+      return { text: 'Veli Onayladı', className: 'parent-approved' };
+    case 'rejected':
+      return { text: 'Veli Reddetti', className: 'parent-rejected' };
+    case 'pending':
+    default:
+      return { text: 'Veli Bekliyor', className: 'parent-pending' };
+  }
+}
+
 export default function AdminEvciListPage() {
   const { user: authUser } = useAuth(["admin", "teacher"]);
   const [requests, setRequests] = useState<EvciTalep[]>([]);
@@ -37,27 +53,50 @@ export default function AdminEvciListPage() {
   const [newReq, setNewReq] = useState<Partial<EvciTalep>>({ willGo: true });
   const [filterClass, setFilterClass] = useState<string>("All");
   const [filterRoom, setFilterRoom] = useState<string>("All");
+  const [filterParentApproval, setFilterParentApproval] = useState<string>("All");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  // Window override
+  const [showOverride, setShowOverride] = useState(false);
+  const [overrideWeekOf, setOverrideWeekOf] = useState('');
+  const [overrideIsOpen, setOverrideIsOpen] = useState(true);
+  const [overrideReason, setOverrideReason] = useState('');
 
   useEffect(() => {
     if (authUser) {
-      fetchData();
+      fetchData(1);
     }
-  }, [authUser]);
+  }, [authUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchData = async () => {
+  useEffect(() => {
+    if (authUser && page > 1) {
+      fetchData(page);
+    }
+  }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchData = async (currentPage = page) => {
     try {
       setIsLoading(true);
-      // Tüm evci taleplerini çek
-      const { data: requestsData, error: requestsError } = await EvciService.getEvciRequests();
+      const { data: requestsData, error: requestsError } = await EvciService.getEvciRequests(currentPage, 50);
       if (requestsError) {
         console.error('Error fetching evci requests:', requestsError);
       } else {
-        setRequests((requestsData as EvciTalep[]) || []);
+        const resp = requestsData as any;
+        if (resp?.requests) {
+          setRequests(resp.requests as EvciTalep[]);
+          setTotalPages(resp.pagination?.totalPages || 1);
+          setTotalCount(resp.pagination?.total || 0);
+        } else {
+          // Backward compatibility if server returns array
+          setRequests((Array.isArray(resp) ? resp : []) as EvciTalep[]);
+        }
       }
 
-      // Tüm öğrencileri çek
       const { data: studentsData, error: studentsError } = await UserService.getUsersByRole('student');
       if (studentsError) {
         console.error('Error fetching students:', studentsError);
@@ -95,7 +134,6 @@ export default function AdminEvciListPage() {
           toast.error(error);
         } else {
           toast.success('Evci talebi başarıyla eklendi');
-          // Yeniden yükle
           await fetchData();
           setShowForm(false);
           setNewReq({ willGo: true });
@@ -120,12 +158,108 @@ export default function AdminEvciListPage() {
           toast.error(error);
         } else {
           setRequests((reqs) => reqs.filter((r) => r._id !== id));
+          setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
           toast.success('Evci talebi başarıyla silindi');
         }
       } catch (error) {
         console.error('Error deleting evci request:', error);
         toast.error('Evci talebi silinirken hata oluştu');
       }
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredRequests.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredRequests.map(r => r._id)));
+    }
+  };
+
+  const handleBulkAction = async (status: 'approved' | 'rejected') => {
+    if (selectedIds.size === 0) return;
+    const label = status === 'approved' ? 'onaylamak' : 'reddetmek';
+    if (!window.confirm(`Seçili ${selectedIds.size} talebi ${label} istediğinize emin misiniz?`)) return;
+
+    try {
+      const { error } = await EvciService.bulkUpdateStatus(Array.from(selectedIds), status) as any;
+      if (error) {
+        toast.error(error);
+      } else {
+        toast.success(`${selectedIds.size} talep başarıyla güncellendi`);
+        setSelectedIds(new Set());
+        await fetchData();
+      }
+    } catch (error) {
+      console.error('Error bulk updating:', error);
+      toast.error('Toplu güncelleme sırasında hata oluştu');
+    }
+  };
+
+  const handleExport = async (format: 'excel' | 'pdf') => {
+    setShowExportMenu(false);
+    try {
+      const response = await EvciService.exportEvciRequests(format);
+      const blob = new Blob([response.data], {
+        type: format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `evci-talepleri.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success(`${format.toUpperCase()} dosyası indirildi`);
+    } catch (error) {
+      console.error('Error exporting:', error);
+      toast.error('Dışa aktarma sırasında hata oluştu');
+    }
+  };
+
+  const handleAdminAction = async (id: string, action: 'approve' | 'reject') => {
+    const label = action === 'approve' ? 'onaylamak' : 'reddetmek';
+    if (!window.confirm(`Bu talebi ${label} istediğinize emin misiniz?`)) return;
+
+    try {
+      const { error } = await EvciService.adminApproveEvciRequest(id, action);
+      if (error) {
+        toast.error(error);
+      } else {
+        toast.success(`Talep ${action === 'approve' ? 'onaylandı' : 'reddedildi'}`);
+        await fetchData(page);
+      }
+    } catch (error) {
+      console.error('Error admin action:', error);
+      toast.error('İşlem sırasında hata oluştu');
+    }
+  };
+
+  const handleWindowOverride = async () => {
+    if (!overrideWeekOf) {
+      toast.error('Hafta başlangıç tarihi seçin');
+      return;
+    }
+    try {
+      const { error } = await EvciService.setWindowOverride(overrideWeekOf, overrideIsOpen, overrideReason) as any;
+      if (error) {
+        toast.error(error);
+      } else {
+        toast.success(`Pencere override ${overrideIsOpen ? 'açık' : 'kapalı'} olarak ayarlandı`);
+        setShowOverride(false);
+        setOverrideReason('');
+      }
+    } catch (error) {
+      console.error('Error setting override:', error);
+      toast.error('Override ayarlanırken hata oluştu');
     }
   };
 
@@ -153,6 +287,7 @@ export default function AdminEvciListPage() {
     if (!st) return false;
     if (filterClass !== "All" && st.sinif !== filterClass) return false;
     if (filterRoom !== "All" && String(st.oda) !== filterRoom) return false;
+    if (filterParentApproval !== "All" && (r.parentApproval || 'pending') !== filterParentApproval) return false;
     return true;
   });
 
@@ -168,10 +303,7 @@ export default function AdminEvciListPage() {
 
   if (isLoading) {
     return (
-      <ModernDashboardLayout
-        pageTitle="Evci Talepleri Yönetimi"
-        breadcrumb={breadcrumb}
-      >
+      <ModernDashboardLayout pageTitle="Evci Talepleri Yönetimi" breadcrumb={breadcrumb}>
         <div className="admin-evci-page">
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -183,10 +315,7 @@ export default function AdminEvciListPage() {
   }
 
   return (
-    <ModernDashboardLayout
-      pageTitle="Evci Talepleri Yönetimi"
-      breadcrumb={breadcrumb}
-    >
+    <ModernDashboardLayout pageTitle="Evci Talepleri Yönetimi" breadcrumb={breadcrumb}>
       <div className="admin-evci-page">
 
         <div className="page-header">
@@ -195,15 +324,106 @@ export default function AdminEvciListPage() {
               <Home className="page-icon" />
               <h1 className="page-title-main">Evci Talepleri Yönetimi</h1>
             </div>
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="btn btn-primary"
-            >
-              <Plus size={18} />
-              {showForm ? 'Formu Gizle' : 'Evci Ekle'}
-            </button>
+            <div className="page-header-actions">
+              <Link to={`/${authUser?.rol || 'admin'}/evci-istatistik`} className="btn btn-secondary">
+                <BarChart3 size={18} />
+                İstatistikler
+              </Link>
+              <button onClick={() => setShowOverride(!showOverride)} className="btn btn-secondary">
+                <Settings2 size={18} />
+                Pencere
+              </button>
+              <div className="export-dropdown">
+                <button
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className="btn btn-secondary"
+                >
+                  <Download size={18} />
+                  Dışa Aktar
+                </button>
+                {showExportMenu && (
+                  <div className="export-menu">
+                    <button onClick={() => handleExport('excel')} className="export-menu-item">
+                      Excel (.xlsx)
+                    </button>
+                    <button onClick={() => handleExport('pdf')} className="export-menu-item">
+                      PDF
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="btn btn-primary"
+              >
+                <Plus size={18} />
+                {showForm ? 'Formu Gizle' : 'Evci Ekle'}
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Bulk Action Bar */}
+        {selectedIds.size > 0 && (
+          <div className="bulk-action-bar">
+            <span className="bulk-count">{selectedIds.size} talep seçili</span>
+            <button onClick={() => handleBulkAction('approved')} className="btn btn-approve btn-sm">
+              <CheckSquare size={16} />
+              Toplu Onayla
+            </button>
+            <button onClick={() => handleBulkAction('rejected')} className="btn btn-reject btn-sm">
+              <XCircle size={16} />
+              Toplu Reddet
+            </button>
+            <button onClick={() => setSelectedIds(new Set())} className="btn btn-secondary btn-sm">
+              Seçimi Temizle
+            </button>
+          </div>
+        )}
+
+        {/* Window Override Panel */}
+        {showOverride && (
+          <div className="override-panel">
+            <h3 className="override-title">Talep Penceresi Override</h3>
+            <div className="override-form">
+              <div className="form-group">
+                <label className="form-label">Hafta Başlangıcı (Pazartesi)</label>
+                <input
+                  type="date"
+                  value={overrideWeekOf}
+                  onChange={(e) => setOverrideWeekOf(e.target.value)}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Pencere Durumu</label>
+                <select
+                  value={overrideIsOpen ? 'true' : 'false'}
+                  onChange={(e) => setOverrideIsOpen(e.target.value === 'true')}
+                  className="form-control"
+                >
+                  <option value="true">Açık (talep alınabilir)</option>
+                  <option value="false">Kapalı (talep alınamaz)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Sebep</label>
+                <input
+                  type="text"
+                  value={overrideReason}
+                  onChange={(e) => setOverrideReason(e.target.value)}
+                  className="form-control"
+                  placeholder="Örn: Tatil haftası, sınav haftası..."
+                  maxLength={500}
+                />
+              </div>
+              <div className="override-actions">
+                <button onClick={() => setShowOverride(false)} className="btn btn-secondary">İptal</button>
+                <button onClick={handleWindowOverride} className="btn btn-primary">Kaydet</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="filter-section">
           <div className="filter-group">
@@ -216,9 +436,7 @@ export default function AdminEvciListPage() {
             >
               <option value="All">Tüm Sınıflar</option>
               {classes.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </div>
@@ -233,10 +451,23 @@ export default function AdminEvciListPage() {
             >
               <option value="All">Tüm Odalar</option>
               {rooms.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
+                <option key={r} value={r}>{r}</option>
               ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <Shield className="filter-icon" />
+            <label className="filter-label">Veli Onayı:</label>
+            <select
+              value={filterParentApproval}
+              onChange={(e) => setFilterParentApproval(e.target.value)}
+              className="filter-select"
+            >
+              <option value="All">Tümü</option>
+              <option value="pending">Beklemede</option>
+              <option value="approved">Onaylandı</option>
+              <option value="rejected">Reddedildi</option>
             </select>
           </div>
         </div>
@@ -314,12 +545,7 @@ export default function AdminEvciListPage() {
             </div>
 
             <div className="form-actions">
-              <button
-                onClick={resetForm}
-                className="btn btn-secondary"
-              >
-                İptal
-              </button>
+              <button onClick={resetForm} className="btn btn-secondary">İptal</button>
               <button
                 onClick={saveNew}
                 disabled={isSubmitting}
@@ -339,71 +565,149 @@ export default function AdminEvciListPage() {
               <p>Filtrelenen kriterlere uygun evci talebi bulunamadı.</p>
             </div>
           ) : (
-            <div className="requests-grid">
-              {filteredRequests.map((r) => {
-                const st = students.find((s) => s.id === r.studentId);
-                return (
-                  <div key={r._id} className="request-card">
-                    <div className="card-header">
-                      <div className="card-icon">
-                        <User size={20} />
+            <>
+              {filteredRequests.length > 0 && (
+                <div className="select-all-row">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.size === filteredRequests.length && filteredRequests.length > 0}
+                      onChange={toggleSelectAll}
+                    />
+                    <span>Tümünü Seç ({filteredRequests.length})</span>
+                  </label>
+                </div>
+              )}
+              <div className="requests-grid">
+                {filteredRequests.map((r) => {
+                  const st = students.find((s) => s.id === r.studentId);
+                  const pBadge = getParentApprovalBadge(r.parentApproval);
+                  return (
+                    <div key={r._id} className={`request-card ${selectedIds.has(r._id) ? 'selected' : ''}`}>
+                      <div className="card-header">
+                        <label className="card-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(r._id)}
+                            onChange={() => toggleSelect(r._id)}
+                          />
+                        </label>
+                        <div className="card-icon">
+                          <User size={20} />
+                        </div>
+                        <button
+                          onClick={() => handleDelete(r._id)}
+                          className="action-button delete-button"
+                          title="Sil"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleDelete(r._id)}
-                        className="action-button delete-button"
-                        title="Sil"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="card-content">
+                        <h3 className="card-title">{r.studentName || st?.adSoyad || "-"}</h3>
+                        <div className="request-info">
+                          <div className="info-item">
+                            <User className="info-icon" />
+                            <span className="info-label">ID:</span>
+                            <span className="info-value">{r.studentId}</span>
+                          </div>
+                          <div className="info-item">
+                            <Calendar className="info-icon" />
+                            <span className="info-label">Sınıf:</span>
+                            <span className="info-value">{st?.sinif ? `${String(st.sinif)}${st.sube ? String(st.sube) : ''}` : "-"}</span>
+                          </div>
+                          <div className="info-item">
+                            <MapPin className="info-icon" />
+                            <span className="info-label">Oda:</span>
+                            <span className="info-value">{st?.pansiyon ? st.oda : "-"}</span>
+                          </div>
+                          <div className="info-item">
+                            <Calendar className="info-icon" />
+                            <span className="info-label">Başlangıç:</span>
+                            <span className="info-value">{r.startDate || "-"}</span>
+                          </div>
+                          <div className="info-item">
+                            <Calendar className="info-icon" />
+                            <span className="info-label">Bitiş:</span>
+                            <span className="info-value">{r.endDate || "-"}</span>
+                          </div>
+                          <div className="info-item">
+                            <MapPin className="info-icon" />
+                            <span className="info-label">Yer:</span>
+                            <span className="info-value">{r.destination || "-"}</span>
+                          </div>
+                          <div className="info-item">
+                            <Calendar className="info-icon" />
+                            <span className="info-label">Talep Tarihi:</span>
+                            <span className="info-value">{new Date(r.createdAt).toLocaleString('tr-TR')}</span>
+                          </div>
+                          {r.parentApproval === 'rejected' && r.rejectionReason && (
+                            <div className="info-item rejection-reason">
+                              <AlertCircle className="info-icon" />
+                              <span className="info-label">Red Sebebi:</span>
+                              <span className="info-value">{r.rejectionReason}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="status-badge-container">
+                          <span className={`status-badge ${r.willGo ? 'going' : 'not-going'}`}>
+                            {r.willGo ? "Evci gidecek" : "Evci gitmeyecek"}
+                          </span>
+                          <span className={`parent-approval-badge ${pBadge.className}`}>
+                            <Shield size={14} /> {pBadge.text}
+                          </span>
+                        </div>
+                        {(!r.status || r.status === 'pending') && (
+                          <div className="admin-card-actions">
+                            <button
+                              onClick={() => handleAdminAction(r._id, 'approve')}
+                              className="btn btn-approve btn-sm"
+                              title="Onayla"
+                            >
+                              <Check size={14} /> Onayla
+                            </button>
+                            <button
+                              onClick={() => handleAdminAction(r._id, 'reject')}
+                              className="btn btn-reject btn-sm"
+                              title="Reddet"
+                            >
+                              <X size={14} /> Reddet
+                            </button>
+                          </div>
+                        )}
+                        {r.status && r.status !== 'pending' && (
+                          <div className={`admin-status-badge ${r.status}`}>
+                            {r.status === 'approved' ? 'Admin Onayladı' : 'Admin Reddetti'}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="card-content">
-                      <h3 className="card-title">{r.studentName || st?.adSoyad || "-"}</h3>
-                      <div className="request-info">
-                        <div className="info-item">
-                          <User className="info-icon" />
-                          <span className="info-label">ID:</span>
-                          <span className="info-value">{r.studentId}</span>
-                        </div>
-                        <div className="info-item">
-                          <Calendar className="info-icon" />
-                          <span className="info-label">Sınıf:</span>
-                          <span className="info-value">{st?.sinif ? `${String(st.sinif)}${st.sube ? String(st.sube) : ''}` : "-"}</span>
-                        </div>
-                        <div className="info-item">
-                          <MapPin className="info-icon" />
-                          <span className="info-label">Oda:</span>
-                          <span className="info-value">{st?.pansiyon ? st.oda : "-"}</span>
-                        </div>
-                        <div className="info-item">
-                          <Calendar className="info-icon" />
-                          <span className="info-label">Başlangıç:</span>
-                          <span className="info-value">{r.startDate || "-"}</span>
-                        </div>
-                        <div className="info-item">
-                          <Calendar className="info-icon" />
-                          <span className="info-label">Bitiş:</span>
-                          <span className="info-value">{r.endDate || "-"}</span>
-                        </div>
-                        <div className="info-item">
-                          <MapPin className="info-icon" />
-                          <span className="info-label">Yer:</span>
-                          <span className="info-value">{r.destination || "-"}</span>
-                        </div>
-                        <div className="info-item">
-                          <Calendar className="info-icon" />
-                          <span className="info-label">Talep Tarihi:</span>
-                          <span className="info-value">{new Date(r.createdAt).toLocaleString('tr-TR')}</span>
-                        </div>
-                      </div>
-                      <div className="status-badge-container">
-                        <span className={`status-badge ${r.willGo ? 'going' : 'not-going'}`}>
-                          {r.willGo ? "Evci gidecek" : "Evci gitmeyecek"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="pagination-controls">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="btn btn-secondary btn-sm"
+              >
+                <ChevronLeft size={16} /> Önceki
+              </button>
+              <span className="pagination-info">
+                Sayfa {page} / {totalPages} ({totalCount} talep)
+              </span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="btn btn-secondary btn-sm"
+              >
+                Sonraki <ChevronRight size={16} />
+              </button>
             </div>
           )}
         </div>

@@ -14,6 +14,9 @@ export * from './homeworkQueries';
 // Evci Requests
 export * from './evciQueries';
 
+// Notes
+export * from './noteQueries';
+
 // Dormitory
 export * from './dormitoryQueries';
 

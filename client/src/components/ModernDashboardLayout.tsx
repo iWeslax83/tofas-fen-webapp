@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import {
   Home,
   Settings,
   Menu,
-  X
+  X,
+  Bell,
+  CheckCheck
 } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { dashboardButtons } from '../pages/Dashboard/dashboardButtonConfig';
+import { useNotifications } from '../hooks/useNotifications';
 import './ModernDashboardLayout.css';
 
 interface ModernDashboardLayoutProps {
@@ -27,6 +30,20 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
 }) => {
   const { user } = useAuthContext();
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 1024);
+  const { notifications, unreadCount, isOpen, setIsOpen, markAsRead, markAllAsRead } = useNotifications(user?.id);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  // Dışarı tıklayınca dropdown'ı kapat
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [setIsOpen]);
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -143,6 +160,66 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
           </div>
           <div className="header-right">
             {customHeaderActions}
+            {/* Notification Bell */}
+            <div className="notif-container" ref={notifRef}>
+              <button
+                className="notif-bell-btn"
+                onClick={() => setIsOpen(!isOpen)}
+                aria-label="Bildirimler"
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                )}
+              </button>
+
+              {isOpen && (
+                <div className="notif-dropdown">
+                  <div className="notif-dropdown-header">
+                    <span className="notif-dropdown-title">Bildirimler</span>
+                    {unreadCount > 0 && (
+                      <button className="notif-mark-all" onClick={markAllAsRead}>
+                        <CheckCheck size={14} />
+                        Tümünü oku
+                      </button>
+                    )}
+                  </div>
+                  <div className="notif-dropdown-list">
+                    {notifications.length === 0 ? (
+                      <div className="notif-empty">Bildirim yok</div>
+                    ) : (
+                      notifications.map(n => (
+                        <button
+                          key={n._id}
+                          className={`notif-item${n.read ? '' : ' unread'}`}
+                          onClick={() => {
+                            if (!n.read) markAsRead(n._id);
+                            if (n.actionUrl) {
+                              navigate(n.actionUrl);
+                              setIsOpen(false);
+                            }
+                          }}
+                        >
+                          <div className={`notif-item-dot ${n.read ? 'read' : ''}`} />
+                          <div className="notif-item-content">
+                            <span className="notif-item-title">{n.title}</span>
+                            <span className="notif-item-msg">{n.message}</span>
+                            <span className="notif-item-time">
+                              {new Date(n.createdAt).toLocaleDateString('tr-TR', {
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 

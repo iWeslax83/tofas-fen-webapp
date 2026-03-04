@@ -709,49 +709,49 @@
   }
 }
 
-/* Dark Mode Support */
+/* Dark Mode Support - disabled for consistent light theme */
 @media (prefers-color-scheme: dark) {
   .accessible-modal {
-    background: #1a1a1a;
-    color: #ffffff;
+    background: #FFFFFF;
+    color: #0f172a;
   }
-  
+
   .accessible-modal__header {
-    background: #2d2d2d;
-    border-bottom-color: #404040;
+    background: #f8fafc;
+    border-bottom-color: #e2e8f0;
   }
-  
+
   .accessible-modal__title {
-    color: #ffffff;
+    color: #0f172a;
   }
-  
+
   .accessible-dropdown__content {
-    background: #1a1a1a;
-    border-color: #404040;
-    color: #ffffff;
+    background: #FFFFFF;
+    border-color: #e2e8f0;
+    color: #0f172a;
   }
-  
+
   .accessible-tooltip {
-    background: #333333;
+    background: #334155;
   }
-  
+
   .accessibility-panel {
-    background: #1a1a1a;
-    color: #ffffff;
+    background: #FFFFFF;
+    color: #0f172a;
   }
-  
+
   .accessibility-panel__header {
-    background: #2d2d2d;
-    border-bottom-color: #404040;
+    background: #f8fafc;
+    border-bottom-color: #e2e8f0;
   }
-  
+
   .accessibility-panel__section h3 {
-    color: #ffffff;
-    border-bottom-color: #404040;
+    color: #0f172a;
+    border-bottom-color: #e2e8f0;
   }
-  
+
   .accessibility-panel__footer {
-    background: #2d2d2d;
-    border-top-color: #404040;
+    background: #f8fafc;
+    border-top-color: #e2e8f0;
   }
 }

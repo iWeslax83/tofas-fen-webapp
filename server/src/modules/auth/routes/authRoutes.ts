@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/authController';
-import { authenticateJWT } from '../../../utils/jwt';
+import { authenticateJWT, authorizeRoles } from '../../../utils/jwt';
 import { authLimiter } from '../../../middleware/rateLimiter';
 
 const router = Router();
@@ -75,7 +75,8 @@ router.post('/login', authLimiter, AuthController.login);
  *       409:
  *         description: Kullanıcı zaten var
  */
-router.post('/register', AuthController.register);
+// #21: Register requires admin authentication
+router.post('/register', authenticateJWT, authorizeRoles(['admin']), AuthController.register);
 
 /**
  * @swagger
@@ -113,7 +114,7 @@ router.post('/register', AuthController.register);
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.post('/refresh-token', AuthController.refreshToken);
+router.post('/refresh-token', authLimiter, AuthController.refreshToken);
 
 /**
  * @swagger
@@ -219,51 +220,51 @@ router.get('/me', authenticateJWT, AuthController.getMe);
 
 /**
  * @swagger
- * /api/auth/forgot-password:
+ * /api/auth/send-verification:
  *   post:
- *     summary: Şifre sıfırlama talebi
+ *     summary: E-posta doğrulama kodu gönder
  *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [email]
- *             properties:
- *               email:
- *                 type: string
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: İstek başarılı
+ *         description: Doğrulama kodu gönderildi
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.post('/forgot-password', AuthController.forgotPassword);
+// #22: Rate limit on send-verification
+router.post('/send-verification', authenticateJWT, authLimiter, AuthController.sendVerification);
 
 /**
  * @swagger
- * /api/auth/reset-password:
+ * /api/auth/verify-email:
  *   post:
- *     summary: Şifre sıfırlama
+ *     summary: E-posta doğrulama kodunu onayla
  *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [token, newPassword]
+ *             required: [code]
  *             properties:
- *               token:
- *                 type: string
- *               newPassword:
+ *               code:
  *                 type: string
  *     responses:
  *       200:
- *         description: Şifre güncellendi
+ *         description: E-posta doğrulandı
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.post('/reset-password', AuthController.resetPassword);
+router.post('/verify-email', authenticateJWT, AuthController.verifyEmail);
 
-// Şifre değiştirme endpoint'i kaldırıldı - artık TCKN kullanılıyor ve değiştirilemez
-
+// 2FA routes
+router.post('/verify-2fa', authLimiter, AuthController.verifyTwoFactor);
+// #13: Resend 2FA code route
+router.post('/resend-2fa', authLimiter, AuthController.resendTwoFactor);
+router.post('/toggle-2fa', authenticateJWT, AuthController.toggleTwoFactor);
 
 export default router;

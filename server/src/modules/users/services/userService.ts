@@ -41,7 +41,7 @@ export class UserService {
 
     const [users, total] = await Promise.all([
       User.find(query)
-        .select('-sifre -resetToken -forgotPasswordToken')
+        .select('-sifre')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -62,7 +62,7 @@ export class UserService {
    */
   static async getUserById(id: string): Promise<any> {
     const user = await User.findOne({ id, isActive: true })
-      .select('-sifre -resetToken -forgotPasswordToken -forgotPasswordExpires');
+      .select('-sifre');
     
     if (!user) {
       throw AppError.notFound('Kullanıcı bulunamadı');
@@ -98,7 +98,7 @@ export class UserService {
     await user.save();
 
     // Return user without sensitive data
-    const { sifre, resetToken, forgotPasswordToken, ...userResponse } = user.toObject();
+    const { sifre, ...userResponse } = user.toObject();
     return userResponse;
   }
 
@@ -137,7 +137,7 @@ export class UserService {
     await user.save();
 
     // Return user without sensitive data
-    const { sifre, resetToken, forgotPasswordToken, ...userResponse } = user.toObject();
+    const { sifre, ...userResponse } = user.toObject();
     return userResponse;
   }
 
@@ -242,7 +242,7 @@ export class UserService {
     }
 
     const users = await User.find(searchQuery)
-      .select('-sifre -resetToken -forgotPasswordToken')
+      .select('-sifre')
       .limit(limit);
 
     return users;
@@ -260,7 +260,7 @@ export class UserService {
 
     const [users, total] = await Promise.all([
       User.find({ rol: role, isActive: true })
-        .select('-sifre -resetToken -forgotPasswordToken')
+        .select('-sifre')
         .sort({ adSoyad: 1 })
         .skip(skip)
         .limit(limit),
@@ -283,7 +283,7 @@ export class UserService {
     const children = await User.find({
       parentId,
       isActive: true
-    }).select('-sifre -resetToken -forgotPasswordToken');
+    }).select('-sifre');
 
     return children;
   }
@@ -297,7 +297,7 @@ export class UserService {
       sinif,
       sube,
       isActive: true
-    }).select('-sifre -resetToken -forgotPasswordToken');
+    }).select('-sifre');
 
     return students;
   }
@@ -318,7 +318,7 @@ export class UserService {
         pansiyon: true,
         isActive: true
       })
-        .select('-sifre -resetToken -forgotPasswordToken')
+        .select('-sifre')
         .sort({ adSoyad: 1 })
         .skip(skip)
         .limit(limit),

@@ -12,6 +12,7 @@ import { UserRole } from '../@types';
 import { useErrorHandler } from '../hooks/useErrorHandler';
 import { safeConsoleError } from '../utils/safeLogger';
 import ModernDashboardLayout from './ModernDashboardLayout';
+import EmailVerificationBanner from './EmailVerificationBanner';
 import './ModernDashboard.css';
 
 interface UserData {
@@ -128,99 +129,6 @@ const ModernDashboard: React.FC = () => {
     });
   };
 
-  // Professional color theme functions
-  const getCardGradient = (_color: string) => {
-    const gradients = {
-      emerald: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-      sky: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-      violet: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
-      amber: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-      indigo: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)',
-      cyan: 'linear-gradient(135deg, #ecfeff 0%, #cffafe 100%)',
-      rose: 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)',
-      green: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-      blue: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-      purple: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
-      orange: 'linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)',
-      teal: 'linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)',
-      default: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)'
-    };
-    return gradients[_color as keyof typeof gradients] || gradients.default;
-  };
-
-  const getCardBorderColor = (_color: string) => {
-    const borders = {
-      emerald: '#bbf7d0',
-      sky: '#bae6fd',
-      violet: '#e9d5ff',
-      amber: '#fed7aa',
-      indigo: '#c7d2fe',
-      cyan: '#a5f3fc',
-      rose: '#fecdd3',
-      green: '#bbf7d0',
-      blue: '#bfdbfe',
-      purple: '#e9d5ff',
-      orange: '#fed7aa',
-      teal: '#99f6e4',
-      default: '#e5e7eb'
-    };
-    return borders[_color as keyof typeof borders] || borders.default;
-  };
-
-  const getCardShadowColor = () => {
-    return 'rgba(0, 0, 0, 0.08)';
-  };
-
-  const getHoverBorderColor = (_color: string) => {
-    const borders = {
-      emerald: '#10b981',
-      sky: '#0ea5e9',
-      violet: '#8b5cf6',
-      amber: '#f59e0b',
-      indigo: '#6366f1',
-      cyan: '#06b6d4',
-      rose: '#f43f5e',
-      green: '#22c55e',
-      blue: '#3b82f6',
-      purple: '#a855f7',
-      orange: '#f97316',
-      teal: '#14b8a6',
-      default: '#6b7280'
-    };
-    return borders[_color as keyof typeof borders] || borders.default;
-  };
-
-  const getIconBackground = (_color: string) => {
-    const backgrounds = {
-      emerald: '#10b981',
-      sky: '#0ea5e9',
-      violet: '#8b5cf6',
-      amber: '#f59e0b',
-      indigo: '#6366f1',
-      cyan: '#06b6d4',
-      rose: '#f43f5e',
-      green: '#22c55e',
-      blue: '#3b82f6',
-      purple: '#a855f7',
-      orange: '#f97316',
-      teal: '#14b8a6',
-      default: '#6b7280'
-    };
-    return backgrounds[_color as keyof typeof backgrounds] || backgrounds.default;
-  };
-
-  const getIconColor = () => {
-    return '#ffffff';
-  };
-
-  const getTextColor = () => {
-    return '#1f2937';
-  };
-
-  const getSubtextColor = () => {
-    return '#6b7280';
-  };
-
   useEffect(() => {
     if (authLoading) return;
 
@@ -309,6 +217,8 @@ const ModernDashboard: React.FC = () => {
           </div>
         </div>
         </section>
+        {/* Email Verification Banner */}
+        <EmailVerificationBanner />
         {/* Dashboard Grid */}
         <section className="dashboard-grid-section">
 
@@ -319,44 +229,15 @@ const ModernDashboard: React.FC = () => {
               className="dashboard-card-container"
             >
               <Link to={button.route} className="dashboard-card-link">
-                <div
-                  className={`dashboard-card ${button.color || 'default'}`}
-                  style={{
-                    background: getCardGradient(button.color || 'default'),
-                    border: `2px solid ${getCardBorderColor(button.color || 'default')}`,
-                    boxShadow: `0 8px 32px ${getCardShadowColor()}`,
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer',
-                  }}
-                  onMouseEnter={(e) => {
-                    const target = e.currentTarget;
-                    target.style.transform = 'translateY(-4px)';
-                    target.style.boxShadow = `0 12px 24px rgba(0, 0, 0, 0.12), inset 0 3px 0 0 ${getHoverBorderColor(button.color || 'default')}`;
-                  }}
-                  onMouseLeave={(e) => {
-                    const target = e.currentTarget;
-                    target.style.transform = 'translateY(0)';
-                    target.style.boxShadow = `0 8px 32px ${getCardShadowColor()}`;
-                  }}
-                >
+                <div className="dashboard-card">
                   <div className="card-header">
-                    <div
-                      className="card-icon"
-                      style={{
-                        background: getIconBackground(button.color || 'default'),
-                        color: getIconColor(),
-                      }}
-                    >
+                    <div className="card-icon">
                       {button.icon && <button.icon className="icon" />}
                     </div>
                   </div>
                   <div className="card-content">
-                    <h3 style={{ color: getTextColor() }}>
-                      {button.title}
-                    </h3>
-                    <p style={{ color: getSubtextColor() }}>
-                      {button.description}
-                    </p>
+                    <h3>{button.title}</h3>
+                    <p>{button.description}</p>
                   </div>
                 </div>
               </Link>

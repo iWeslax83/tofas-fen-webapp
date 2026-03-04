@@ -3,12 +3,13 @@ import express from 'express';
 import { User } from '../models/User';
 import { CalendarEvent } from '../models/Calendar';
 import { AuditLog } from '../models/AuditLog';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requireRole } from '../middleware/auth';
+import logger from '../utils/logger';
 
 const router = express.Router();
 
-// Dashboard Stats Endpoint
-router.get('/stats', requireAuth, async (req, res) => {
+// Dashboard Stats Endpoint - admin/teacher only
+router.get('/stats', requireAuth, requireRole(['admin', 'teacher']), async (req, res) => {
     try {
         // Basic counts
         const totalStudents = await User.countDocuments({ rol: 'student' });
@@ -36,7 +37,7 @@ router.get('/stats', requireAuth, async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Dashboard stats error:', error);
+        logger.error('Dashboard stats error', { error: error instanceof Error ? error.message : error });
         res.status(500).json({ error: 'İstatistikler alınırken hata oluştu' });
     }
 });

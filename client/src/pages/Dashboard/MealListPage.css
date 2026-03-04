@@ -28,7 +28,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+        background: #0f766e;
     }
 
     .page-header-content {
@@ -234,7 +234,7 @@
     }
 
     .meal-list-page .dashboard-card:hover::before {
-        background: linear-gradient(135deg, var(--gray-400) 0%, var(--gray-500) 100%);
+        background: #0f766e;
     }
 
     .card-header {
@@ -310,7 +310,7 @@
         align-items: center;
         gap: var(--space-2);
         padding: var(--space-2) var(--space-4);
-        background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+        background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
         color: var(--white);
         border: none;
         border-radius: var(--radius-lg);
@@ -326,7 +326,7 @@
         align-items: center;
         gap: var(--space-2);
         padding: var(--space-2) var(--space-4);
-        background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+        background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
         color: var(--white);
         border: none;
         border-radius: var(--radius-lg);
@@ -433,6 +433,58 @@
 
         .dashboard-grid {
             grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        &.meal-list-page {
+            padding: var(--space-3);
+        }
+
+        .page-header {
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+
+        .page-title-main {
+            font-size: 1.25rem;
+        }
+
+        .page-icon {
+            width: 40px;
+            height: 40px;
+            padding: var(--space-2);
+        }
+
+        .filters-section {
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+
+        .upload-section {
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+
+        .upload-form {
+            grid-template-columns: 1fr;
+        }
+
+        .form-select,
+        .form-input {
+            font-size: 16px;
+        }
+
+        .dashboard-card {
+            padding: var(--space-4);
+        }
+
+        .card-title {
+            font-size: 1.0625rem;
+        }
+
+        .empty-state {
+            padding: var(--space-6);
         }
     }
 }

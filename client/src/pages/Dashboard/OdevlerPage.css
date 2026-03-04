@@ -12,13 +12,13 @@
 
 /* Page Header handled by theme.css */
 
-.title-wrapper {
+.odevler-page .title-wrapper {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
 }
 
-.header-actions {
+.odevler-page .header-actions {
     display: flex;
     gap: var(--space-4);
 }
@@ -29,7 +29,7 @@
 }
 
 /* Filters Section */
-.filters-section {
+.odevler-page .filters-section {
     background: var(--white);
     border-radius: var(--radius-xl);
     padding: var(--space-6);
@@ -38,20 +38,20 @@
     border: 1px solid var(--gray-200);
 }
 
-.filter-group {
+.odevler-page .filter-group {
     display: flex;
     align-items: center;
     gap: var(--space-4);
 }
 
-.filter-label {
+.odevler-page .filter-label {
     font-weight: 600;
     color: var(--gray-700);
     font-size: 0.875rem;
     white-space: nowrap;
 }
 
-.filter-select {
+.odevler-page .filter-select {
     padding: var(--space-3) var(--space-4);
     border: 2px solid var(--gray-300);
     border-radius: var(--radius-lg);
@@ -63,14 +63,14 @@
     min-width: 200px;
 }
 
-.filter-select:focus {
+.odevler-page .filter-select:focus {
     outline: none;
     border-color: var(--primary-red);
     box-shadow: 0 0 0 3px var(--primary-red-lighter);
 }
 
 /* Dashboard Grid */
-.dashboard-grid {
+.odevler-page .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: var(--space-6);
@@ -78,7 +78,7 @@
 }
 
 /* Homework Cards */
-.dashboard-card {
+.odevler-page .dashboard-card {
     background: var(--white);
     border-radius: var(--radius-2xl);
     padding: var(--space-6);
@@ -89,7 +89,7 @@
     overflow: hidden;
 }
 
-.dashboard-card::before {
+.odevler-page .dashboard-card::before {
     content: '';
     position: absolute;
     top: 0;
@@ -99,20 +99,20 @@
     background: var(--gradient-primary);
 }
 
-.dashboard-card:hover {
+.odevler-page .dashboard-card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-xl);
     border-color: var(--primary-red-light);
 }
 
-.card-header {
+.odevler-page .card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: var(--space-4);
 }
 
-.card-icon {
+.odevler-page .card-icon {
     width: 56px;
     height: 56px;
     border-radius: var(--radius-xl);
@@ -123,12 +123,12 @@
     color: var(--primary-red);
 }
 
-.card-icon .icon {
+.odevler-page .card-icon .icon {
     width: 24px;
     height: 24px;
 }
 
-.delete-button {
+.odevler-page .delete-button {
     width: 40px;
     height: 40px;
     border-radius: var(--radius-lg);
@@ -143,12 +143,12 @@
     box-shadow: var(--shadow-sm);
 }
 
-.delete-button:hover {
+.odevler-page .delete-button:hover {
     transform: scale(1.05);
     box-shadow: var(--shadow-md);
 }
 
-.card-content h3 {
+.odevler-page .card-content h3 {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--gray-900);
@@ -156,7 +156,7 @@
     line-height: 1.3;
 }
 
-.card-subtitle {
+.odevler-page .card-subtitle {
     font-size: 0.875rem;
     color: var(--primary-red);
     font-weight: 600;
@@ -167,7 +167,7 @@
     display: inline-block;
 }
 
-.card-description {
+.odevler-page .card-description {
     font-size: 0.875rem;
     color: var(--gray-600);
     line-height: 1.5;
@@ -178,13 +178,13 @@
     overflow: hidden;
 }
 
-.card-meta {
+.odevler-page .card-meta {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
 }
 
-.meta-item {
+.odevler-page .meta-item {
     display: flex;
     align-items: center;
     gap: var(--space-2);
@@ -192,27 +192,27 @@
     color: var(--gray-600);
 }
 
-.meta-icon {
+.odevler-page .meta-icon {
     width: 16px;
     height: 16px;
     color: var(--primary-red);
     flex-shrink: 0;
 }
 
-.file-link {
+.odevler-page .file-link {
     color: var(--primary-red);
     text-decoration: none;
     font-weight: 600;
     transition: color var(--transition-fast);
 }
 
-.file-link:hover {
+.odevler-page .file-link:hover {
     color: var(--primary-red-dark);
     text-decoration: underline;
 }
 
 /* Empty State */
-.empty-state {
+.odevler-page .empty-state {
     grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
@@ -226,21 +226,21 @@
     border: 1px solid var(--gray-200);
 }
 
-.empty-icon {
+.odevler-page .empty-icon {
     width: 80px;
     height: 80px;
     color: var(--gray-400);
     margin-bottom: var(--space-4);
 }
 
-.empty-state h3 {
+.odevler-page .empty-state h3 {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--gray-900);
     margin: 0 0 var(--space-2) 0;
 }
 
-.empty-state p {
+.odevler-page .empty-state p {
     font-size: 1rem;
     color: var(--gray-600);
     margin: 0;
@@ -253,23 +253,23 @@
 
 /* Forms handled by theme.css */
 
-.form-control::placeholder {
+.odevler-page .form-control::placeholder {
     color: var(--gray-500);
 }
 
-textarea.form-control {
+.odevler-page textarea.form-control {
     resize: vertical;
     min-height: 100px;
 }
 
 /* File Upload */
-.file-upload {
+.odevler-page .file-upload {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
 }
 
-.file-upload-label {
+.odevler-page .file-upload-label {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -283,7 +283,7 @@ textarea.form-control {
     font-weight: 500;
 }
 
-.file-upload-label:hover {
+.odevler-page .file-upload-label:hover {
     background: var(--gray-200);
     border-color: var(--primary-red);
     color: var(--primary-red);
@@ -301,14 +301,14 @@ textarea.form-control {
     border: 0;
 }
 
-.file-name {
+.odevler-page .file-name {
     font-size: 0.875rem;
     color: var(--gray-600);
     font-style: italic;
 }
 
 /* Form Actions */
-.form-actions {
+.odevler-page .form-actions {
     display: flex;
     gap: var(--space-3);
     justify-content: flex-end;
@@ -325,43 +325,43 @@ textarea.form-control {
         padding: var(--space-4);
     }
 
-    .welcome-content {
+    .odevler-page .welcome-content {
         flex-direction: column;
         text-align: center;
     }
 
-    .welcome-text h2 {
+    .odevler-page .welcome-text h2 {
         font-size: 2rem;
     }
 
-    .dashboard-grid {
+    .odevler-page .dashboard-grid {
         grid-template-columns: 1fr;
         gap: var(--space-4);
     }
 
-    .form-row {
+    .odevler-page .form-row {
         grid-template-columns: 1fr;
     }
 
-    .filter-group {
+    .odevler-page .filter-group {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .filter-select {
+    .odevler-page .filter-select {
         min-width: 100%;
     }
 
-    .modal-content {
+    .odevler-page .modal-content {
         margin: var(--space-4);
         max-height: calc(100vh - 2rem);
     }
 
-    .form-actions {
+    .odevler-page .form-actions {
         flex-direction: column;
     }
 
-    .btn {
+    .odevler-page .btn {
         width: 100%;
         justify-content: center;
     }
@@ -372,23 +372,23 @@ textarea.form-control {
         padding: var(--space-3);
     }
 
-    .welcome-card {
+    .odevler-page .welcome-card {
         padding: var(--space-6);
     }
 
-    .welcome-text h2 {
+    .odevler-page .welcome-text h2 {
         font-size: 1.75rem;
     }
 
-    .modal-header {
+    .odevler-page .modal-header {
         padding: var(--space-4);
     }
 
-    .modal-body {
+    .odevler-page .modal-body {
         padding: var(--space-4);
     }
 
-    .card-content h3 {
+    .odevler-page .card-content h3 {
         font-size: 1.125rem;
     }
 }
@@ -398,14 +398,14 @@ textarea.form-control {
 /* Print Styles */
 @media print {
 
-    .welcome-actions,
-    .filters-section,
-    .delete-button,
-    .modal-overlay {
+    .odevler-page .welcome-actions,
+    .odevler-page .filters-section,
+    .odevler-page .delete-button,
+    .odevler-page .modal-overlay {
         display: none !important;
     }
 
-    .dashboard-card {
+    .odevler-page .dashboard-card {
         box-shadow: none !important;
         border: 1px solid var(--gray-300) !important;
         break-inside: avoid;

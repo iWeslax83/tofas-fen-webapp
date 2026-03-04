@@ -6,6 +6,7 @@ import { createReadStream, createWriteStream, existsSync, mkdirSync, readdirSync
 // import { join } from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import logger from '../utils/logger';
 
 const execAsync = promisify(exec);
 
@@ -86,7 +87,7 @@ export class PerformanceService {
       // Update cache
       this.updateMetricCache(data.type, data.category);
     } catch (error) {
-      console.error('Error recording metric:', error);
+      logger.error('Error recording metric', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -128,7 +129,7 @@ export class PerformanceService {
         totalPages: Math.ceil(total / limit)
       };
     } catch (error) {
-      console.error('Error getting metrics:', error);
+      logger.error('Error getting metrics', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -140,7 +141,7 @@ export class PerformanceService {
         .limit(limit)
         .lean();
     } catch (error) {
-      console.error('Error getting metrics by type:', error);
+      logger.error('Error getting metrics by type', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -151,7 +152,7 @@ export class PerformanceService {
         .sort({ 'context.timestamp': -1 })
         .lean();
     } catch (error) {
-      console.error('Error getting critical metrics:', error);
+      logger.error('Error getting critical metrics', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -182,7 +183,7 @@ export class PerformanceService {
 
       return optimization;
     } catch (error) {
-      console.error('Error creating optimization:', error);
+      logger.error('Error creating optimization', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -224,7 +225,7 @@ export class PerformanceService {
         totalPages: Math.ceil(total / limit)
       };
     } catch (error) {
-      console.error('Error getting optimizations:', error);
+      logger.error('Error getting optimizations', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -243,7 +244,7 @@ export class PerformanceService {
       ]);
       return stats;
     } catch (error) {
-      console.error('Error getting optimization stats:', error);
+      logger.error('Error getting optimization stats', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -273,7 +274,7 @@ export class PerformanceService {
       await config.save();
       return config;
     } catch (error) {
-      console.error('Error creating config:', error);
+      logger.error('Error creating config', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -284,7 +285,7 @@ export class PerformanceService {
       if (category) query.category = category;
       return await PerformanceConfig.find(query).lean();
     } catch (error) {
-      console.error('Error getting configs:', error);
+      logger.error('Error getting configs', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -298,7 +299,7 @@ export class PerformanceService {
       );
       return config;
     } catch (error) {
-      console.error('Error updating config:', error);
+      logger.error('Error updating config', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -327,7 +328,7 @@ export class PerformanceService {
       this.setCache(cacheKey, metrics);
       return metrics;
     } catch (error) {
-      console.error('Error getting system metrics:', error);
+      logger.error('Error getting system metrics', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -354,7 +355,7 @@ export class PerformanceService {
       this.setCache(cacheKey, metrics);
       return metrics;
     } catch (error) {
-      console.error('Error getting database metrics:', error);
+      logger.error('Error getting database metrics', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -407,7 +408,7 @@ export class PerformanceService {
       this.setCache(cacheKey, metrics);
       return metrics;
     } catch (error) {
-      console.error('Error getting API metrics:', error);
+      logger.error('Error getting API metrics', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -423,7 +424,7 @@ export class PerformanceService {
         }
       }
     } catch (error) {
-      console.error('Error running scheduled optimizations:', error);
+      logger.error('Error running scheduled optimizations', { error: error instanceof Error ? error.message : error });
       throw error;
     }
   }
@@ -488,7 +489,7 @@ export class PerformanceService {
         await this.notifyOptimizationSuccess(optimization);
       }
     } catch (error) {
-      console.error('Error executing optimization:', error);
+      logger.error('Error executing optimization', { error: error instanceof Error ? error.message : error });
 
       optimization.status = 'failed';
       optimization.error = (error as Error).message;
@@ -519,7 +520,7 @@ export class PerformanceService {
         sender: { id: 'system', name: 'System', role: 'system' }
       } as any);
     } catch (error) {
-      console.error('Error triggering critical alert:', error);
+      logger.error('Error triggering critical alert', { error: error instanceof Error ? error.message : error });
     }
   }
 
@@ -608,7 +609,7 @@ export class PerformanceService {
   private static async optimizeDatabase(): Promise<void> {
     // This would typically involve database-specific optimizations
     // For MongoDB, we could run maintenance commands
-    console.log('Database optimization completed');
+    logger.info('Database optimization completed');
   }
 
   private static async cleanupMemory(): Promise<void> {
@@ -619,17 +620,17 @@ export class PerformanceService {
 
   private static async optimizeQueries(): Promise<void> {
     // This would involve analyzing and optimizing slow queries
-    console.log('Query optimization completed');
+    logger.info('Query optimization completed');
   }
 
   private static async compressAssets(): Promise<void> {
     // This would involve compressing static assets
-    console.log('Asset compression completed');
+    logger.info('Asset compression completed');
   }
 
   private static async updateCDN(): Promise<void> {
     // This would involve updating CDN cache
-    console.log('CDN update completed');
+    logger.info('CDN update completed');
   }
 
   private static async checkAndExecuteOptimization(config: any): Promise<void> {
@@ -689,7 +690,7 @@ export class PerformanceService {
         sender: { id: 'system', name: 'System', role: 'system' }
       } as any);
     } catch (error) {
-      console.error('Error sending optimization success notification:', error);
+      logger.error('Error sending optimization success notification', { error: error instanceof Error ? error.message : error });
     }
   }
 
@@ -705,7 +706,7 @@ export class PerformanceService {
         sender: { id: 'system', name: 'System', role: 'system' }
       } as any);
     } catch (error) {
-      console.error('Error sending optimization failure notification:', error);
+      logger.error('Error sending optimization failure notification', { error: error instanceof Error ? error.message : error });
     }
   }
 

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuditLogService } from '../services/auditLogService';
+import logger from '../utils/logger';
 
 /**
  * Audit Log Middleware
@@ -35,7 +36,7 @@ export const auditLogMiddleware = (
           response: body
         }
       }).catch(err => {
-        console.error('Audit log middleware error:', err);
+        logger.error('Audit log middleware error', { error: err instanceof Error ? err.message : err });
       });
 
       // Call original json method

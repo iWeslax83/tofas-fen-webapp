@@ -1,5 +1,6 @@
 import { Request } from 'express';
 import { AuditLog, IAuditLog } from '../models/AuditLog';
+import logger from '../utils/logger';
 
 /**
  * Audit Log Service
@@ -57,7 +58,7 @@ export class AuditLogService {
       await auditLog.save();
     } catch (error) {
       // Don't throw error - audit logging should not break the main flow
-      console.error('Audit log error:', error);
+      logger.error('Audit log error', { error: error instanceof Error ? error.message : error });
     }
   }
 

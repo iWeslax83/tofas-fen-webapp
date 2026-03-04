@@ -47,18 +47,12 @@ const createSecureApiClient = (): AxiosInstance => {
     },
   });
 
-  // Request interceptor for authentication and CSRF
-  // ⚠️ GÜVENLİK: Token artık httpOnly cookie'de, Authorization header'a eklemeye gerek yok
-  // httpOnly cookies browser tarafından otomatik olarak withCredentials: true ile gönderilir
+  // Request interceptor for CSRF and sanitization
+  // ⚠️ GÜVENLİK: Token artık httpOnly cookie'de, browser otomatik gönderir (withCredentials: true)
   client.interceptors.request.use(
     (config) => {
       // httpOnly cookie'ler browser tarafından otomatik gönderilir (withCredentials: true)
-      // Backward compatibility: Eğer localStorage'da token varsa Authorization header ekle
-      // (Eski API endpoint'leri veya migration dönemi için)
-      const token = TokenManager.getAccessToken();
-      if (token && !TokenManager.isTokenExpired()) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+      // localStorage'da token saklanmıyor
 
       // Add CSRF token
       const csrfToken = CSRFProtection.getToken();
@@ -119,7 +113,7 @@ const createSecureApiClient = (): AxiosInstance => {
 
       const apiError = normalizeApiError(error);
 
-      // Handle 401 errors (unauthorized)
+      // Handle 401 errors (unauthorized) with mutex to prevent concurrent refreshes
       if (apiError.response?.status === 401 && !originalRequest?._retry) {
         // Don't retry if specific endpoints fail to avoid infinite loops
         const url = originalRequest.url || '';
@@ -132,39 +126,42 @@ const createSecureApiClient = (): AxiosInstance => {
 
         originalRequest._retry = true;
 
-        try {
-          // Try to refresh token
-          // httpOnly cookie kullanılıyorsa refresh token da cookie'de
-          // Backward compatibility için body'den de okuyabiliriz
-          const refreshToken = TokenManager.getRefreshToken();
+        // Eğer zaten bir refresh işlemi devam ediyorsa, sıraya gir
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            subscribeToTokenRefresh((success: boolean) => {
+              if (success) {
+                resolve(client(originalRequest));
+              } else {
+                reject(apiError);
+              }
+            });
+          });
+        }
 
-          const response = await axios.post(
+        isRefreshing = true;
+
+        try {
+          // httpOnly cookie'deki refresh token ile yenileme yap
+          await axios.post(
             `${API_BASE_URL}/api/auth/refresh-token`,
-            refreshToken ? { refreshToken } : {}, // Body'ye sadece backward compatibility için ekle
+            {},
             {
-              withCredentials: true, // httpOnly cookies için gerekli
+              withCredentials: true,
             }
           );
 
-          // Token'lar artık httpOnly cookie'de set ediliyor
-          // Sadece expiry bilgisi response'da geliyor
-          const { expiresIn } = response.data;
+          isRefreshing = false;
+          onRefreshComplete(true);
 
-          // Backward compatibility: Eğer response'da token varsa localStorage'a da kaydet
-          if (response.data.accessToken) {
-            TokenManager.setTokens(
-              response.data.accessToken,
-              response.data.refreshToken || refreshToken || '',
-              expiresIn
-            );
-            originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
-          }
-
-          // Retry original request
+          // Orijinal isteği tekrarla
           return client(originalRequest);
         } catch (refreshError) {
+          isRefreshing = false;
+          onRefreshComplete(false);
+
           // Refresh failed, redirect to login
-          TokenManager.clearTokens();
+          TokenManager.clearTokens(); // Legacy cleanup
           CSRFProtection.clearToken();
 
           // Only redirect if not already on login page to prevent infinite loops
@@ -202,6 +199,19 @@ const createSecureApiClient = (): AxiosInstance => {
   return client;
 };
 
+// Token refresh mutex - prevents concurrent refresh requests
+let isRefreshing = false;
+let refreshSubscribers: ((success: boolean) => void)[] = [];
+
+function subscribeToTokenRefresh(callback: (success: boolean) => void) {
+  refreshSubscribers.push(callback);
+}
+
+function onRefreshComplete(success: boolean) {
+  refreshSubscribers.forEach(cb => cb(success));
+  refreshSubscribers = [];
+}
+
 // Secure API client instance
 export const apiClient = createSecureApiClient();
 
@@ -225,24 +235,22 @@ export class SecureAPI {
         withCredentials: true,
       });
 
+      // Check if 2FA is required
+      if (response.data.requires2FA) {
+        RateLimiter.clearAttempts(this.LOGIN_ATTEMPTS_KEY);
+        return {
+          requires2FA: true,
+          twoFactorSessionToken: response.data.twoFactorSessionToken,
+          user: response.data.user,
+        };
+      }
+
       // Clear rate limit on successful login
       RateLimiter.clearAttempts(this.LOGIN_ATTEMPTS_KEY);
 
-      // Extract tokens from response (backward compatibility during migration)
-      // Token'lar artık httpOnly cookie'de, response'da sadece expiry bilgisi var
-      const { accessToken, refreshToken, expiresIn, user, ...otherData } = response.data;
-
-      // Backward compatibility: Eğer response'da token varsa localStorage'a da kaydet
-      // (Migration dönemi için - sonra kaldırılacak)
-      if (accessToken) {
-        TokenManager.setTokens(accessToken, refreshToken, expiresIn || 900); // 15 minutes default
-
-        // Also store tokens with alternative keys for compatibility
-        localStorage.setItem('accessToken', accessToken);
-        if (refreshToken) {
-          localStorage.setItem('refreshToken', refreshToken);
-        }
-      }
+      // Token'lar httpOnly cookie'de set ediliyor (sunucu tarafından)
+      // Client-side token saklaması yok
+      const { user, ...otherData } = response.data;
 
       // Return the user data - ensure we return the user object, not the entire response
       if (user) {

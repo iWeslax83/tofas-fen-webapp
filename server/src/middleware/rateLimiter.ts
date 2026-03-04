@@ -1,5 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import { Request, Response } from 'express';
+import logger from '../utils/logger';
 // import { tokenBlacklist } from '../utils/tokenBlacklist'; // Unused import removed
 
 /**
@@ -33,7 +34,7 @@ export const createRateLimiter = (options: {
     }),
     handler: async (req: Request, res: Response) => {
       // Log rate limit violation
-      console.warn('Rate limit exceeded', {
+      logger.warn('Rate limit exceeded', {
         ip: req.ip,
         userId: (req as any).user?.userId,
         path: req.path,

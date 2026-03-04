@@ -1,0 +1,137 @@
+/* EvciStatsPage - Tofas Fen Lisesi Styles */
+@import url('../../styles/theme.css');
+
+.evci-stats-page {
+  min-height: 100vh;
+  background: transparent;
+  padding: var(--space-6);
+
+  .stats-controls {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+  }
+
+  /* Summary Cards */
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+
+  .summary-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    background: var(--white);
+    padding: var(--space-5);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--gray-200);
+  }
+
+  .summary-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .summary-icon.total {
+    background: #ede9fe;
+    color: #7c3aed;
+  }
+
+  .summary-icon.going {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .summary-icon.not-going {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  .summary-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .summary-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    line-height: 1;
+  }
+
+  .summary-label {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    font-weight: 500;
+    margin-top: 4px;
+  }
+
+  /* Charts Grid */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+  }
+
+  .chart-card {
+    background: var(--white);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--gray-200);
+  }
+
+  .chart-card.wide {
+    grid-column: 1 / -1;
+  }
+
+  .chart-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 0 0 var(--space-4) 0;
+  }
+
+  /* Filter Select */
+  .filter-select {
+    padding: var(--space-2) var(--space-3);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    background: var(--white);
+    cursor: pointer;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .charts-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .summary-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .stats-controls {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .summary-value {
+      font-size: 1.5rem;
+    }
+  }
+}

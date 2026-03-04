@@ -77,15 +77,14 @@ export default function AdvancedNotesPage() {
       setLoading(true);
       setError(null);
 
-      const [notesRes, statsRes, formatsRes] = await Promise.all([
+      const [notesRes, statsRes] = await Promise.all([
         NotesService.getNotes(),
         NotesService.getNotesStats(),
-        NotesService.getImportFormats()
       ]);
 
       const notesData = notesRes.data || [];
       const statsData = statsRes.data || {};
-      const formatsData = formatsRes.data || [];
+      const formatsData: ImportFormat[] = [];
 
       setNotes(notesData as Note[]);
       setStats(statsData as NotesStats);
@@ -172,7 +171,7 @@ export default function AdvancedNotesPage() {
 
   const handleDownloadTemplate = async (format: ImportFormat) => {
     try {
-      const response = await NotesService.downloadTemplate();
+      const response = await NotesService.getTemplates();
       // Handle file download
       const blob = new Blob([(response as { data: string }).data], { type: 'application/octet-stream' });
       const url = window.URL.createObjectURL(blob);

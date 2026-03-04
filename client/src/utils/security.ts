@@ -1,69 +1,47 @@
 import DOMPurify from 'dompurify';
 
-// JWT Token Management
+// JWT Token Management - httpOnly cookies are the primary auth mechanism
+// This class now only handles legacy cleanup and cookie-based auth state
 export class TokenManager {
   private static readonly TOKEN_KEY = 'auth_token';
   private static readonly REFRESH_TOKEN_KEY = 'refresh_token';
   private static readonly TOKEN_EXPIRY_KEY = 'token_expiry';
 
-  static setTokens(accessToken: string, refreshToken: string, expiresIn: number) {
-    const expiryTime = Date.now() + (expiresIn * 1000); // Convert seconds to milliseconds
-
-    if (import.meta.env.DEV) {
-      console.log('[TokenManager] Setting tokens - expiresIn:', expiresIn, 'expiryTime:', new Date(expiryTime).toISOString());
-    }
-
-    localStorage.setItem(this.TOKEN_KEY, accessToken);
-    localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
-    localStorage.setItem(this.TOKEN_EXPIRY_KEY, expiryTime.toString());
-
-    if (import.meta.env.DEV) {
-      console.log('[TokenManager] Tokens stored - accessToken exists:', !!localStorage.getItem(this.TOKEN_KEY));
-      console.log('[TokenManager] Token expiry stored:', localStorage.getItem(this.TOKEN_EXPIRY_KEY));
-    }
+  // No-op: Tokenlar artık httpOnly cookie'de saklanıyor, localStorage kullanılmıyor
+  static setTokens(_accessToken: string, _refreshToken: string, _expiresIn: number) {
+    // httpOnly cookies are set by the server automatically
+    // No client-side token storage needed
   }
 
+  // httpOnly cookie'ler browser tarafından otomatik gönderilir
+  // Client-side token erişimi artık gerekli değil
   static getAccessToken(): string | null {
-    const token = localStorage.getItem(this.TOKEN_KEY);
-    if (import.meta.env.DEV) {
-      console.log('[TokenManager] Getting access token - exists:', !!token);
-    }
-    return token;
+    return null;
   }
 
   static getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    return null;
   }
 
+  // httpOnly cookie'ler sunucu tarafından yönetilir
   static isTokenExpired(): boolean {
-    const expiry = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
-    if (!expiry) {
-      if (import.meta.env.DEV) {
-        console.log('[TokenManager] No expiry found - token expired');
-      }
-      return true;
-    }
-    const isExpired = Date.now() >= parseInt(expiry);
-    if (import.meta.env.DEV) {
-      console.log('[TokenManager] Token expiry check - current:', new Date().toISOString(), 'expiry:', new Date(parseInt(expiry)).toISOString(), 'expired:', isExpired);
-    }
-    return isExpired;
+    // httpOnly cookie expire kontrolü sunucu tarafında yapılır
+    // Client her zaman request gönderebilir, 401 alırsa refresh dener
+    return false;
   }
 
+  // Tüm localStorage token kalıntılarını temizle
   static clearTokens() {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
-    // Also clear alternative keys for compatibility
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
   }
 
   static shouldRefreshToken(): boolean {
-    const expiry = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
-    if (!expiry) return false;
-    // Refresh token 5 minutes before expiry
-    return Date.now() > (parseInt(expiry) - 5 * 60 * 1000);
+    // httpOnly cookie'ler sunucu tarafında kontrol edilir
+    return false;
   }
 }
 

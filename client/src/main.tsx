@@ -7,7 +7,7 @@ import App from './App.tsx'
 // React imports removed as they're not used
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { initializeMonitoring } from './utils/monitoring';
 
 // Fix for "process is not defined" error
@@ -36,7 +36,7 @@ const queryClient = new QueryClient({
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
       refetchOnWindowFocus: false, // Disable refetch on window focus for better UX
       refetchOnReconnect: true, // Refetch when network reconnects
-      refetchOnMount: false, // Use cache instead of refetching on mount for better performance
+      refetchOnMount: true, // Refetch on mount to ensure fresh data when navigating between pages
     },
     mutations: {
       retry: 1, // Retry mutations once
@@ -60,7 +60,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New version available - optionally show update notification to user
+                toast('Yeni sürüm mevcut! Sayfayı yenileyiniz.', { duration: 10000 });
               }
             });
           }

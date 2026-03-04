@@ -16,7 +16,11 @@ import logger from '../utils/logger';
 // JWT verification helper
 async function verifyToken(token: string): Promise<unknown> {
   try {
-    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+    const JWT_SECRET = process.env.JWT_SECRET;
+    if (!JWT_SECRET) {
+      logger.error('JWT_SECRET environment variable is not set');
+      return null;
+    }
 
     // Verify and decode token
     const decoded = jwt.verify(token, JWT_SECRET) as any;

@@ -79,23 +79,9 @@ const NotEkleme: React.FC = () => {
       return;
     }
 
-    // Load supported formats
-    const loadFormats = async () => {
-      try {
-        const { data, error } = await NotesService.getImportFormats();
-        if (error) {
-          console.error('Failed to load supported formats:', error);
-        } else {
-          setSupportedFormats((data as { formats?: string[] })?.formats || ['.xlsx', '.xls', '.csv']);
-        }
-      } catch (error) {
-        console.error('Failed to load supported formats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadFormats();
+    // Supported formats (server supports Excel import)
+    setSupportedFormats(['.xlsx', '.xls', '.csv']);
+    setLoading(false);
   }, [userRole, navigate]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,7 +103,7 @@ const NotEkleme: React.FC = () => {
     formData.append('file', file);
 
     try {
-      const { data, error } = await NotesService.importNotesFile(formData);
+      const { data, error } = await NotesService.importNotesExcel(formData);
       if (error) {
         toast.error(error);
       } else {
@@ -152,7 +138,7 @@ const NotEkleme: React.FC = () => {
 
   const downloadTemplate = async () => {
     try {
-      const response = await NotesService.downloadTemplate();
+      const response = await NotesService.getTemplates();
       const url = window.URL.createObjectURL(new Blob([(response as { data: string }).data]));
       const link = document.createElement('a');
       link.href = url;

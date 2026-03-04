@@ -113,7 +113,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+    background: #0f766e;
   }
 
   .request-card:hover {
@@ -154,7 +154,7 @@
   }
 
   .delete-button {
-    background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+    background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
     color: var(--white);
   }
 
@@ -218,7 +218,36 @@
   .status-badge-container {
     display: flex;
     justify-content: flex-end;
+    gap: var(--space-2);
     margin-top: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  /* Parent Approval Badge */
+  .parent-approval-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full, 9999px);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .parent-approved {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .parent-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .parent-pending {
+    background: #fef9c3;
+    color: #854d0e;
   }
 
   .status-badge {
@@ -236,7 +265,7 @@
   }
 
   .status-badge.not-going {
-    background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+    background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
     color: var(--white);
   }
 
@@ -274,6 +303,235 @@
     color: var(--gray-600);
     margin: 0;
     line-height: 1.5;
+  }
+
+  /* Bulk Action Bar */
+  .bulk-action-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--space-4);
+  }
+
+  .bulk-count {
+    font-weight: 600;
+    color: #1e40af;
+    font-size: 0.875rem;
+    margin-right: auto;
+  }
+
+  .btn-sm {
+    padding: var(--space-1) var(--space-3);
+    font-size: 0.8rem;
+  }
+
+  .btn-approve {
+    background: #16a34a;
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+  }
+
+  .btn-approve:hover {
+    background: #15803d;
+  }
+
+  .btn-reject {
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+  }
+
+  .btn-reject:hover {
+    background: #b91c1c;
+  }
+
+  /* Select All Row */
+  .select-all-row {
+    padding: var(--space-2) var(--space-4);
+    margin-bottom: var(--space-3);
+  }
+
+  .checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  /* Card Checkbox */
+  .card-checkbox {
+    display: flex;
+    align-items: center;
+  }
+
+  .card-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  .request-card.selected {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+
+  /* Export Dropdown */
+  .page-header-actions {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+  }
+
+  .export-dropdown {
+    position: relative;
+  }
+
+  .export-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    z-index: 50;
+    min-width: 150px;
+    overflow: hidden;
+  }
+
+  .export-menu-item {
+    display: block;
+    width: 100%;
+    padding: var(--space-2) var(--space-4);
+    border: none;
+    background: none;
+    text-align: left;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+  }
+
+  .export-menu-item:hover {
+    background: var(--gray-100);
+  }
+
+  /* Rejection Reason */
+  .rejection-reason {
+    background: #fef2f2;
+    border-radius: var(--radius-lg);
+    padding: var(--space-2) !important;
+    border-bottom: none !important;
+  }
+
+  .rejection-reason .info-icon {
+    color: var(--color-error, #ef4444);
+  }
+
+  .rejection-reason .info-value {
+    color: var(--color-error, #ef4444);
+  }
+
+  /* Admin Card Actions */
+  .admin-card-actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--gray-200);
+  }
+
+  .admin-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: var(--space-3);
+  }
+
+  .admin-status-badge.approved {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .admin-status-badge.rejected {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  /* Override Panel */
+  .override-panel {
+    background: var(--white);
+    padding: var(--space-5);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--gray-200);
+    margin-bottom: var(--space-4);
+  }
+
+  .override-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 var(--space-4) 0;
+  }
+
+  .override-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-3);
+    align-items: end;
+  }
+
+  .override-actions {
+    display: flex;
+    gap: var(--space-2);
+    align-items: end;
+    padding-top: var(--space-1);
+  }
+
+  /* Pagination */
+  .pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+    padding: var(--space-4) 0;
+  }
+
+  .pagination-info {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-600);
   }
 
   /* Buttons handled by theme.css */

@@ -5,7 +5,7 @@ import { FileText, X, Plus, Calendar, Tag, Trash2, Mail } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import './DilekcePage.css';
-import axios from 'axios';
+import { apiClient } from '../../utils/api';
 import { extractError } from '../../utils/apiResponseHandler';
 
 interface Dilekce {
@@ -59,7 +59,6 @@ const DilekcePage: React.FC = () => {
   const loadDilekceler = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
 
       // Veliler için hem kendi hem çocuklarının dilekçelerini çek
       const includeChildren =
@@ -67,9 +66,7 @@ const DilekcePage: React.FC = () => {
           ? '?includeChildren=true'
           : '';
 
-      const response = await axios.get(`/api/dilekce${includeChildren}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiClient.get(`/api/dilekce${includeChildren}`);
 
       if (response.data.success) {
         setDilekceler(response.data.dilekceler || []);
@@ -107,7 +104,6 @@ const DilekcePage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      const token = localStorage.getItem('accessToken');
       const formData = new FormData();
       formData.append('type', type);
       formData.append('subject', subject);
@@ -119,9 +115,8 @@ const DilekcePage: React.FC = () => {
         formData.append('attachments', file);
       });
 
-      const response = await axios.post('/api/dilekce', formData, {
+      const response = await apiClient.post('/api/dilekce', formData, {
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       });
@@ -152,10 +147,7 @@ const DilekcePage: React.FC = () => {
     }
 
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await axios.delete(`/api/dilekce/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiClient.delete(`/api/dilekce/${id}`);
 
       if (response.data.success) {
         toast.success('Dilekçe silindi');
@@ -423,8 +415,7 @@ const DilekcePage: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="request-info">
-                      <div className="info-item">
+                    <div className="request-owner">
                         <Tag className="info-icon" />
                         <span className="info-label">Tür:</span>
                         <span className="info-value">
@@ -432,7 +423,7 @@ const DilekcePage: React.FC = () => {
                           {dilekce.category && ` - ${dilekce.category}`}
                         </span>
                       </div>
-                      <div className="info-item">
+                      <div className="request-owner">
                         <Calendar className="info-icon" />
                         <span className="info-label">Tarih:</span>
                         <span className="info-value">
@@ -445,7 +436,6 @@ const DilekcePage: React.FC = () => {
                           })}
                         </span>
                       </div>
-                    </div>
 
                     <div className="content-box">
                       {dilekce.content}

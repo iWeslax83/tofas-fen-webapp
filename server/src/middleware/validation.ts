@@ -1,13 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult, param, query } from 'express-validator';
 import DOMPurify from 'isomorphic-dompurify';
+import logger from '../utils/logger';
 
 // Enhanced validation result handler with security logging
 export const validateRequest = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     // Log validation errors for security monitoring
-    console.warn('🚫 Validation failed:', {
+    logger.warn('Validation failed', {
       ip: req.ip,
       userAgent: req.get('User-Agent'),
       path: req.path,
@@ -45,7 +46,7 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
 
     next();
   } catch (error) {
-    console.error('Input sanitization error:', error);
+    logger.error('Input sanitization error', { error: error instanceof Error ? error.message : error });
     res.status(400).json({
       error: 'Invalid input detected',
       message: 'Input contains potentially dangerous content'
