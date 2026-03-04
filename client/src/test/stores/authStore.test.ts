@@ -8,14 +8,15 @@ vi.mock('../../utils/api', () => ({
   SecureAPI: {
     login: vi.fn(),
     get: vi.fn(),
+    post: vi.fn(),
     getCurrentUser: vi.fn()
   }
 }));
 
 vi.mock('../../utils/security', () => ({
   TokenManager: {
-    getAccessToken: vi.fn(),
-    isTokenExpired: vi.fn(),
+    getAccessToken: vi.fn().mockReturnValue(null),
+    isTokenExpired: vi.fn().mockReturnValue(false),
     clearTokens: vi.fn()
   }
 }));
@@ -68,6 +69,7 @@ describe('AuthStore', () => {
         rol: 'student',
         email: 'john@example.com',
         emailVerified: false,
+        twoFactorEnabled: false,
         pansiyon: false
       });
       expect(result.current.isAuthenticated).toBe(true);
@@ -146,7 +148,7 @@ describe('AuthStore', () => {
   });
 
   describe('checkAuth', () => {
-    it('should fetch user from server with valid token', async () => {
+    it('should fetch user via httpOnly cookie session', async () => {
       const mockUser = {
         id: 'user123',
         adSoyad: 'John Doe',
@@ -155,11 +157,8 @@ describe('AuthStore', () => {
         emailVerified: false
       };
 
-      const { TokenManager } = await import('../../utils/security');
       const { SecureAPI } = await import('../../utils/api');
-      (TokenManager.getAccessToken as any).mockReturnValue('validToken');
-      (TokenManager.isTokenExpired as any).mockReturnValue(false);
-      (SecureAPI.get as any).mockResolvedValue({ data: mockUser });
+      (SecureAPI.getCurrentUser as any).mockResolvedValue({ data: mockUser });
 
       const { result } = renderHook(() => useAuthStore());
 
@@ -167,20 +166,18 @@ describe('AuthStore', () => {
         await result.current.checkAuth();
       });
 
-      expect(SecureAPI.get).toHaveBeenCalledWith('/user/profile');
+      expect(SecureAPI.getCurrentUser).toHaveBeenCalled();
       expect(result.current.user).toEqual({
         ...mockUser,
+        twoFactorEnabled: false,
         pansiyon: false
       });
       expect(result.current.isAuthenticated).toBe(true);
       expect(result.current.error).toBeNull();
     });
 
-    it('should clear state when token is expired and no httpOnly session', async () => {
-      const { TokenManager } = await import('../../utils/security');
+    it('should clear state when httpOnly session is invalid', async () => {
       const { SecureAPI } = await import('../../utils/api');
-      (TokenManager.getAccessToken as any).mockReturnValue('expiredToken');
-      (TokenManager.isTokenExpired as any).mockReturnValue(true);
       (SecureAPI.getCurrentUser as any).mockRejectedValue(new Error('Unauthorized'));
 
       const { result } = renderHook(() => useAuthStore());
@@ -193,7 +190,7 @@ describe('AuthStore', () => {
       expect(result.current.isAuthenticated).toBe(false);
     });
 
-    it('should fetch user data when token is valid but no user in localStorage', async () => {
+    it('should authenticate when server returns valid user data', async () => {
       const mockUser = {
         id: 'user123',
         adSoyad: 'John Doe',
@@ -201,14 +198,8 @@ describe('AuthStore', () => {
         email: 'john@example.com'
       };
 
-      localStorage.setItem('accessToken', 'validToken');
-
-      const { TokenManager } = await import('../../utils/security');
       const { SecureAPI } = await import('../../utils/api');
-      
-      (TokenManager.getAccessToken as any).mockReturnValue('validToken');
-      (TokenManager.isTokenExpired as any).mockReturnValue(false);
-      (SecureAPI.get as any).mockResolvedValue({ data: mockUser });
+      (SecureAPI.getCurrentUser as any).mockResolvedValue({ data: mockUser });
 
       const { result } = renderHook(() => useAuthStore());
 
@@ -216,13 +207,14 @@ describe('AuthStore', () => {
         await result.current.checkAuth();
       });
 
-      expect(SecureAPI.get).toHaveBeenCalledWith('/user/profile');
+      expect(SecureAPI.getCurrentUser).toHaveBeenCalled();
       expect(result.current.user).toEqual({
         id: 'user123',
         adSoyad: 'John Doe',
         rol: 'student',
         email: 'john@example.com',
         emailVerified: false,
+        twoFactorEnabled: false,
         pansiyon: false
       });
       expect(result.current.isAuthenticated).toBe(true);

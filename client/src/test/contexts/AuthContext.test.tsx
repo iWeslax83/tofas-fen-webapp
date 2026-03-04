@@ -55,9 +55,7 @@ describe('AuthContext', () => {
         email: 'john@example.com'
       };
 
-      mockTokenManager.getAccessToken.mockReturnValue('valid-token');
-      mockTokenManager.isTokenExpired.mockReturnValue(false);
-      mockSecureAPI.get.mockResolvedValue({
+      mockSecureAPI.getCurrentUser.mockResolvedValue({
         data: mockUser
       });
 
@@ -75,6 +73,7 @@ describe('AuthContext', () => {
       expect(result.current.user).toEqual({
         ...mockUser,
         emailVerified: false,
+        twoFactorEnabled: false,
         pansiyon: false
       });
       expect(result.current.isLoading).toBe(false);
@@ -125,6 +124,7 @@ describe('AuthContext', () => {
       expect(result.current.user).toEqual({
         ...mockLoginResponse.user,
         emailVerified: false,
+        twoFactorEnabled: false,
         pansiyon: false
       });
       expect(result.current.error).toBeNull();

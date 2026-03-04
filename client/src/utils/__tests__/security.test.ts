@@ -1,49 +1,39 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { TokenManager, InputSanitizer, PasswordPolicy, XSSProtection, CSRFProtection, RateLimiter } from '../security'
 
-describe('TokenManager', () => {
+describe('TokenManager (httpOnly cookie mode)', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.clearAllMocks()
   })
 
-  it('should set and get tokens', () => {
-    const accessToken = 'test-access-token'
-    const refreshToken = 'test-refresh-token'
-    const expiresIn = 3600
+  it('setTokens should be a no-op (tokens are in httpOnly cookies)', () => {
+    TokenManager.setTokens('access', 'refresh', 3600)
 
-    TokenManager.setTokens(accessToken, refreshToken, expiresIn)
-
-    expect(localStorage.setItem).toHaveBeenCalledWith('auth_token', accessToken)
-    expect(localStorage.setItem).toHaveBeenCalledWith('refresh_token', refreshToken)
-    expect(localStorage.setItem).toHaveBeenCalledWith('token_expiry', expect.any(String))
+    // httpOnly cookie modunda localStorage'a yazılmamalı
+    expect(localStorage.setItem).not.toHaveBeenCalled()
   })
 
-  it('should get access token', () => {
-    const token = 'test-token'
-    vi.mocked(localStorage.getItem).mockReturnValue(token)
-
+  it('getAccessToken should return null (tokens are in httpOnly cookies)', () => {
     const result = TokenManager.getAccessToken()
 
-    expect(result).toBe(token)
-    expect(localStorage.getItem).toHaveBeenCalledWith('auth_token')
+    expect(result).toBeNull()
   })
 
-  it('should check if token is expired', () => {
-    const futureTime = Date.now() + 3600000 // 1 hour from now
-    vi.mocked(localStorage.getItem).mockReturnValue(futureTime.toString())
-
+  it('isTokenExpired should return false (server handles expiration)', () => {
     const result = TokenManager.isTokenExpired()
 
     expect(result).toBe(false)
   })
 
-  it('should clear tokens', () => {
+  it('clearTokens should remove legacy localStorage entries', () => {
     TokenManager.clearTokens()
 
     expect(localStorage.removeItem).toHaveBeenCalledWith('auth_token')
     expect(localStorage.removeItem).toHaveBeenCalledWith('refresh_token')
     expect(localStorage.removeItem).toHaveBeenCalledWith('token_expiry')
+    expect(localStorage.removeItem).toHaveBeenCalledWith('accessToken')
+    expect(localStorage.removeItem).toHaveBeenCalledWith('refreshToken')
   })
 })
 
