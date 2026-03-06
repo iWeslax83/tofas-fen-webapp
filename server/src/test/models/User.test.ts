@@ -132,7 +132,7 @@ describe('User Model', () => {
     });
 
     it('should validate role enum values', async () => {
-      const validRoles = ['admin', 'teacher', 'student', 'parent', 'hizmetli'];
+      const validRoles = ['admin', 'teacher', 'student', 'parent', 'hizmetli', 'ziyaretci'];
 
       for (const role of validRoles) {
         const userData = {

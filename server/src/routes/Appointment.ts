@@ -9,7 +9,7 @@ import logger from '../utils/logger';
 const router = Router();
 
 // Ziyaretci: Create appointment
-router.post('/', authenticateJWT, async (req: Request, res: Response) => {
+router.post('/', authenticateJWT, authorizeRoles(['ziyaretci']), async (req: Request, res: Response) => {
   try {
     const authUser = (req as any).user;
     const { date, timeSlot, purpose, notes, registrationId } = req.body;
@@ -18,12 +18,28 @@ router.post('/', authenticateJWT, async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Gerekli alanlar eksik' });
     }
 
+    // Validate date is valid and in the future
+    const appointmentDate = new Date(date);
+    if (isNaN(appointmentDate.getTime())) {
+      return res.status(400).json({ error: 'Gecersiz tarih formati' });
+    }
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    if (appointmentDate < now) {
+      return res.status(400).json({ error: 'Gecmis bir tarihe randevu olusturulamaz' });
+    }
+
     const user = await User.findOne({ id: authUser.userId });
     if (!user) return res.status(404).json({ error: 'Kullanici bulunamadi' });
 
     // Check for conflicting appointment on same date+time
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+
     const existingAppointment = await Appointment.findOne({
-      date: new Date(date),
+      date: { $gte: dayStart, $lte: dayEnd },
       timeSlot,
       status: { $in: ['pending', 'approved'] }
     });
@@ -84,6 +100,27 @@ router.get('/my', authenticateJWT, async (req: Request, res: Response) => {
   }
 });
 
+// Visitor: Cancel own pending appointment
+router.put('/my/:id/cancel', authenticateJWT, async (req: Request, res: Response) => {
+  try {
+    const authUser = (req as any).user;
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) return res.status(404).json({ error: 'Randevu bulunamadi' });
+    if (appointment.applicantUserId !== authUser.userId) {
+      return res.status(403).json({ error: 'Bu randevuyu iptal etme yetkiniz yok' });
+    }
+    if (appointment.status !== 'pending') {
+      return res.status(400).json({ error: 'Sadece beklemedeki randevular iptal edilebilir' });
+    }
+    appointment.status = 'cancelled';
+    await appointment.save();
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Appointment cancel error', { error: error instanceof Error ? error.message : error });
+    res.status(500).json({ error: 'Randevu iptal edilirken hata olustu' });
+  }
+});
+
 // Admin: Get all appointments
 router.get('/', authenticateJWT, authorizeRoles(['admin']), async (req: Request, res: Response) => {
   try {
@@ -91,8 +128,8 @@ router.get('/', authenticateJWT, authorizeRoles(['admin']), async (req: Request,
     const filter: any = {};
     if (status) filter.status = status;
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    const pageNum = Math.max(parseInt(page as string) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit as string) || 20, 1), 100);
 
     const [appointments, total] = await Promise.all([
       Appointment.find(filter).sort({ date: -1 }).skip((pageNum - 1) * limitNum).limit(limitNum),

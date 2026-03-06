@@ -44,7 +44,7 @@ describe('User Types', () => {
     });
 
     it('should accept valid role values', () => {
-      const roles: User['rol'][] = ['admin', 'teacher', 'student', 'parent', 'hizmetli'];
+      const roles: User['rol'][] = ['admin', 'teacher', 'student', 'parent', 'hizmetli', 'ziyaretci'];
       
       roles.forEach(role => {
         const user: User = {

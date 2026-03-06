@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
 import { apiClient } from '../../utils/api';
 import { CalendarDays, Check, X, Clock } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface Appointment {
   _id: string;
@@ -38,6 +39,8 @@ export default function AdminAppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('');
   const [updating, setUpdating] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const fetchData = useCallback(async () => {
     try {
@@ -45,7 +48,7 @@ export default function AdminAppointmentsPage() {
       const res = await apiClient.get(`/api/appointments${params}`);
       setAppointments((res.data as any).data || []);
     } catch {
-      // error
+      toast.error('Randevular yuklenirken hata olustu');
     } finally {
       setLoading(false);
     }
@@ -55,13 +58,17 @@ export default function AdminAppointmentsPage() {
     fetchData();
   }, [fetchData]);
 
-  const updateStatus = async (id: string, status: string) => {
+  const updateStatus = async (id: string, status: string, reason?: string) => {
     setUpdating(id);
     try {
-      await apiClient.put(`/api/appointments/${id}/status`, { status });
+      await apiClient.put(`/api/appointments/${id}/status`, { status, rejectionReason: reason });
+      const statusMsg: Record<string, string> = { approved: 'onaylandi', rejected: 'reddedildi', completed: 'tamamlandi' };
+      toast.success(`Randevu ${statusMsg[status] || 'guncellendi'}`);
+      setRejectingId(null);
+      setRejectionReason('');
       await fetchData();
     } catch {
-      // error
+      toast.error('Randevu guncellenirken hata olustu');
     } finally {
       setUpdating(null);
     }
@@ -135,16 +142,38 @@ export default function AdminAppointmentsPage() {
                       {statusLabels[apt.status]}
                     </span>
 
-                    {apt.status === 'pending' && (
+                    {apt.status === 'pending' && rejectingId !== apt._id && (
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button onClick={() => updateStatus(apt._id, 'approved')} disabled={updating === apt._id}
                           style={{ padding: '6px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', background: '#10b981', color: '#fff', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                           <Check size={14} /> Onayla
                         </button>
-                        <button onClick={() => updateStatus(apt._id, 'rejected')} disabled={updating === apt._id}
+                        <button onClick={() => setRejectingId(apt._id)} disabled={updating === apt._id}
                           style={{ padding: '6px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', background: '#ef4444', color: '#fff', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                           <X size={14} /> Reddet
                         </button>
+                      </div>
+                    )}
+
+                    {rejectingId === apt._id && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 220 }}>
+                        <textarea
+                          placeholder="Ret sebebi (opsiyonel)"
+                          value={rejectionReason}
+                          onChange={e => setRejectionReason(e.target.value)}
+                          rows={2}
+                          style={{ padding: 8, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 12, resize: 'vertical' }}
+                        />
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => updateStatus(apt._id, 'rejected', rejectionReason)} disabled={updating === apt._id}
+                            style={{ flex: 1, padding: '6px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', background: '#ef4444', color: '#fff', fontSize: 12, fontWeight: 600 }}>
+                            Reddet
+                          </button>
+                          <button onClick={() => { setRejectingId(null); setRejectionReason(''); }}
+                            style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #e5e7eb', cursor: 'pointer', background: '#fff', color: '#374151', fontSize: 12 }}>
+                            Iptal
+                          </button>
+                        </div>
                       </div>
                     )}
 

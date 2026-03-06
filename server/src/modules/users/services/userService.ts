@@ -352,7 +352,7 @@ export class UserService {
       errors.push('Ad soyad en az 2 karakter olmalıdır');
     }
 
-    if (!userData.rol || !['admin', 'teacher', 'student', 'parent', 'hizmetli'].includes(userData.rol)) {
+    if (!userData.rol || !['admin', 'teacher', 'student', 'parent', 'hizmetli', 'ziyaretci'].includes(userData.rol)) {
       errors.push('Geçerli bir rol seçilmelidir');
     }
 

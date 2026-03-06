@@ -21,7 +21,7 @@ export const isUser = (obj: unknown): obj is IUser => {
 };
 
 export const isUserRole = (value: unknown): value is UserRole => {
-  return typeof value === 'string' && ['student', 'teacher', 'parent', 'admin', 'hizmetli'].includes(value);
+  return typeof value === 'string' && ['student', 'teacher', 'parent', 'admin', 'hizmetli', 'ziyaretci'].includes(value);
 };
 
 export const isPartialUser = (obj: unknown): obj is Partial<IUser> => {

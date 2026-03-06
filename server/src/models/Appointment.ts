@@ -21,8 +21,8 @@ export interface IAppointment extends Document {
 const AppointmentSchema = new Schema<IAppointment>({
   applicantUserId: { type: String, required: true, index: true },
   applicantName: { type: String, required: true },
-  applicantEmail: { type: String, required: true },
-  applicantPhone: { type: String, required: true },
+  applicantEmail: { type: String, default: '' },
+  applicantPhone: { type: String, default: '' },
   date: { type: Date, required: true, index: true },
   timeSlot: { type: String, required: true },
   purpose: { type: String, required: true },

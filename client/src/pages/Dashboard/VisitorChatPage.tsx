@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
 import { apiClient } from '../../utils/api';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { MessageCircle, Send, RefreshCw } from 'lucide-react';
+import { MessageCircle, Send } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface ChatMessage {
   _id: string;
@@ -35,10 +36,20 @@ export default function VisitorChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const isNearBottomRef = useRef(true);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleScroll = () => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
   };
 
   // For visitors: auto-create/get conversation
@@ -59,11 +70,12 @@ export default function VisitorChatPage() {
         setActiveConversationId(conv.id);
       }
     } catch {
-      // error
+      toast.error('Sohbet yuklenirken hata olustu');
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, activeConversationId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
   const fetchMessages = useCallback(async () => {
     if (!activeConversationId) return;
@@ -105,7 +117,7 @@ export default function VisitorChatPage() {
       setNewMessage('');
       await fetchMessages();
     } catch {
-      // error
+      toast.error('Mesaj gonderilemedi');
     } finally {
       setSending(false);
     }
@@ -176,7 +188,7 @@ export default function VisitorChatPage() {
             ) : (
               <>
                 {/* Messages */}
-                <div style={{ flex: 1, overflow: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div ref={messagesContainerRef} onScroll={handleScroll} style={{ flex: 1, overflow: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {messages.length === 0 ? (
                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 14 }}>
                       <div style={{ textAlign: 'center' }}>

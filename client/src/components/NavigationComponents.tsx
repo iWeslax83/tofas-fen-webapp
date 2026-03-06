@@ -215,7 +215,7 @@ export const EnhancedSidebar: React.FC = () => {
         label: 'Ana Sayfa',
         path: `/${role}`,
         icon: Home,
-        roles: ['admin', 'teacher', 'student', 'parent', 'hizmetli'],
+        roles: ['admin', 'teacher', 'student', 'parent', 'hizmetli', 'ziyaretci'],
         color: 'blue'
       }
     ];

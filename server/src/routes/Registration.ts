@@ -5,12 +5,23 @@ import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import { NotificationService } from '../services/NotificationService';
 import { sendMail } from '../mailService';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
 import logger from '../utils/logger';
 
 const router = Router();
 
+// Rate limiter for public registration endpoint
+const registrationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 applications per 15 minutes per IP
+  message: { error: 'Cok fazla basvuru yapildi. Lutfen daha sonra tekrar deneyin.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Public: Submit a new registration application
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', registrationLimiter, async (req: Request, res: Response) => {
   try {
     const {
       applicantName, applicantEmail, applicantPhone,
@@ -25,6 +36,11 @@ router.post('/', async (req: Request, res: Response) => {
     // Validate types
     if (typeof applicantEmail !== 'string' || typeof applicantName !== 'string') {
       return res.status(400).json({ error: 'Gecersiz veri tipleri' });
+    }
+
+    // Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(applicantEmail)) {
+      return res.status(400).json({ error: 'Gecersiz e-posta adresi' });
     }
 
     const registration = new Registration({
@@ -54,7 +70,7 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
 
-    res.status(201).json({ success: true, registration });
+    res.status(201).json({ success: true, message: 'Basvurunuz basariyla alindi.' });
   } catch (error) {
     logger.error('Registration create error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Basvuru olusturulurken hata olustu' });
@@ -68,8 +84,8 @@ router.get('/', authenticateJWT, authorizeRoles(['admin']), async (req: Request,
     const filter: any = {};
     if (status) filter.status = status;
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    const pageNum = Math.max(parseInt(page as string) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit as string) || 20, 1), 100);
 
     const [registrations, total] = await Promise.all([
       Registration.find(filter).sort({ createdAt: -1 }).skip((pageNum - 1) * limitNum).limit(limitNum),
@@ -132,7 +148,7 @@ router.put('/:id/status', authenticateJWT, authorizeRoles(['admin']), async (req
     // If approved, create a ziyaretci user account
     if (status === 'approved' && !registration.createdUserId) {
       const userId = `ZYR-${Date.now()}`;
-      const tempPassword = Math.random().toString(36).slice(-8) + 'A1!';
+      const tempPassword = crypto.randomBytes(6).toString('base64url') + 'A1!';
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
       const newUser = new User({
