@@ -48,6 +48,7 @@ const roleLabels: Record<string, string> = {
   student: 'Öğrenci',
   parent: 'Veli',
   hizmetli: 'Hizmetli',
+  ziyaretci: 'Ziyaretci',
 };
 
 export default function SettingsPage() {

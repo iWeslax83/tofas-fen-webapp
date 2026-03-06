@@ -26,6 +26,7 @@ const NotFoundPage = lazy(() => import('../pages/Dashboard/NotFoundPage'));
 
 // Auth Pages
 const LoginPage = lazy(() => import('../pages/LoginPage'));
+const RegistrationFormPage = lazy(() => import('../pages/RegistrationFormPage'));
 // Academic Pages
 const OdevlerPage = lazy(() => import('../pages/Dashboard/OdevlerPage'));
 const DersProgramiPage = lazy(() => import('../pages/Dashboard/DersProgramiPage'));
@@ -96,6 +97,7 @@ export default function AppRoutes() {
         {/* Root and Auth Routes */}
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/kayit-basvurusu" element={<RegistrationFormPage />} />
 
         {/* Main Dashboard Routes */}
         <Route path="/admin" element={<ModernDashboard key="admin" />} />
@@ -174,7 +176,7 @@ export default function AppRoutes() {
         <Route path="/admin/ziyaretci-sohbet" element={<ProtectedRoute allowedRoles={['admin']}><VisitorChatPage /></ProtectedRoute>} />
         <Route path="/ziyaretci/sohbet" element={<ProtectedRoute allowedRoles={['ziyaretci']}><VisitorChatPage /></ProtectedRoute>} />
         <Route path="/ziyaretci/randevu" element={<ProtectedRoute allowedRoles={['ziyaretci']}><VisitorAppointmentPage /></ProtectedRoute>} />
-        <Route path="/ziyaretci/ayarlar" element={<SettingsPage />} />
+        <Route path="/ziyaretci/ayarlar" element={<ProtectedRoute allowedRoles={['ziyaretci']}><SettingsPage /></ProtectedRoute>} />
 
         {/* Settings and Admin Routes */}
         <Route path="/admin/senkronizasyon" element={<ProtectedRoute allowedRoles={['admin']}><SenkronizasyonPage /></ProtectedRoute>} />

@@ -80,7 +80,7 @@ const options = {
             },
             rol: {
               type: 'string',
-              enum: ['admin', 'teacher', 'student', 'parent', 'hizmetli'],
+              enum: ['admin', 'teacher', 'student', 'parent', 'hizmetli', 'ziyaretci'],
               description: 'Kullanıcı rolü'
             },
             email: {

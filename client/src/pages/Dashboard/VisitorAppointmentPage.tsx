@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
 import { apiClient } from '../../utils/api';
-import { CalendarDays, Clock, Check, AlertCircle } from 'lucide-react';
+import { CalendarDays, Clock, Check, AlertCircle, XCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface Appointment {
   _id: string;
@@ -43,12 +44,14 @@ export default function VisitorAppointmentPage() {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
+  const [cancelling, setCancelling] = useState<string | null>(null);
+
   const fetchAppointments = useCallback(async () => {
     try {
       const res = await apiClient.get('/api/appointments/my');
       setAppointments(res.data as Appointment[]);
     } catch {
-      // error
+      toast.error('Randevular yuklenirken hata olustu');
     } finally {
       setLoading(false);
     }
@@ -66,6 +69,7 @@ export default function VisitorAppointmentPage() {
       setAvailableSlots((res.data as any).availableSlots || []);
     } catch {
       setAvailableSlots([]);
+      toast.error('Musait saatler alinirken hata olustu');
     } finally {
       setLoadingSlots(false);
     }
@@ -99,6 +103,19 @@ export default function VisitorAppointmentPage() {
       setErrorMsg(err?.response?.data?.error || 'Randevu olusturulurken hata olustu');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const cancelAppointment = async (id: string) => {
+    setCancelling(id);
+    try {
+      await apiClient.put(`/api/appointments/my/${id}/cancel`);
+      toast.success('Randevu iptal edildi');
+      await fetchAppointments();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || 'Randevu iptal edilirken hata olustu');
+    } finally {
+      setCancelling(null);
     }
   };
 
@@ -247,14 +264,22 @@ export default function VisitorAppointmentPage() {
                   <div style={{ fontSize: 14, color: '#374151', marginLeft: 28 }}>{apt.purpose}</div>
                   {apt.notes && <div style={{ fontSize: 13, color: '#9ca3af', marginLeft: 28 }}>{apt.notes}</div>}
                 </div>
-                <span style={{
-                  padding: '4px 10px', borderRadius: 6,
-                  background: `${statusColors[apt.status] || '#6b7280'}15`,
-                  color: statusColors[apt.status] || '#6b7280',
-                  fontSize: 12, fontWeight: 600
-                }}>
-                  {statusLabels[apt.status] || apt.status}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{
+                    padding: '4px 10px', borderRadius: 6,
+                    background: `${statusColors[apt.status] || '#6b7280'}15`,
+                    color: statusColors[apt.status] || '#6b7280',
+                    fontSize: 12, fontWeight: 600
+                  }}>
+                    {statusLabels[apt.status] || apt.status}
+                  </span>
+                  {apt.status === 'pending' && (
+                    <button onClick={() => cancelAppointment(apt._id)} disabled={cancelling === apt._id}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: '#fef2f2', color: '#ef4444', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <XCircle size={12} /> {cancelling === apt._id ? 'Iptal ediliyor...' : 'Iptal Et'}
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

@@ -17,7 +17,7 @@ interface PageButton {
 
 interface DashboardPanelProps {
   pageTitle: string;
-  role: 'student' | 'teacher' | 'parent' | 'admin' | 'hizmetli';
+  role: 'student' | 'teacher' | 'parent' | 'admin' | 'hizmetli' | 'ziyaretci';
   shouldValidateRole?: boolean;
   shouldShowDormitoryOnly?: boolean;
   onAdditionalDataLoad?: (user?: Record<string, unknown>) => Promise<void>;

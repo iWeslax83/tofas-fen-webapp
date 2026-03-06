@@ -102,7 +102,7 @@ app.use(helmet({
 }));
 
 // Rate limiting - API isteklerini sınırla (env ile yapılandırılabilir)
-const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000);
+const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 5 * 60 * 1000);
 const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS || 500); // Increased for better UX
 
 // General API rate limiter - more lenient for normal usage

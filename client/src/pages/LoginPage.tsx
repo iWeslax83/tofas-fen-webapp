@@ -1,6 +1,6 @@
 // src/pages/LoginPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore, useAuthActions, useUser, useRequires2FA, useTwoFactorUser, useTwoFactorExpiresAt } from '../stores/authStore';
 import { Eye, EyeOff, Lock, User, ShieldCheck, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -390,6 +390,13 @@ export default function LoginPage() {
               </button>
             </form>
           )}
+
+          {/* Registration Link */}
+          <div style={{ textAlign: 'center', margin: '16px 0' }}>
+            <Link to="/kayit-basvurusu" style={{ color: '#3b82f6', fontSize: 14, textDecoration: 'none', fontWeight: 500 }}>
+              Yeni kayit basvurusu yapin
+            </Link>
+          </div>
 
           {/* Footer */}
           <footer className="login-footer">

@@ -16,7 +16,7 @@ function generateId() {
 }
 
 // Ziyaretci or Admin: Get or create a visitor conversation
-router.post('/conversation', authenticateJWT, async (req: Request, res: Response) => {
+router.post('/conversation', authenticateJWT, authorizeRoles(['ziyaretci', 'admin']), async (req: Request, res: Response) => {
   try {
     const authUser = (req as any).user;
 
@@ -72,14 +72,14 @@ router.post('/conversation', authenticateJWT, async (req: Request, res: Response
 });
 
 // Get messages for a visitor conversation
-router.get('/messages/:conversationId', authenticateJWT, async (req: Request, res: Response) => {
+router.get('/messages/:conversationId', authenticateJWT, authorizeRoles(['ziyaretci', 'admin']), async (req: Request, res: Response) => {
   try {
     const authUser = (req as any).user;
     const { conversationId } = req.params;
     const { page = '1', limit = '50' } = req.query;
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    const pageNum = Math.max(parseInt(page as string) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit as string) || 50, 1), 200);
 
     // Verify user is part of conversation
     const conversation = await Conversation.findOne({
@@ -106,7 +106,7 @@ router.get('/messages/:conversationId', authenticateJWT, async (req: Request, re
 });
 
 // Send message in visitor conversation
-router.post('/messages', authenticateJWT, async (req: Request, res: Response) => {
+router.post('/messages', authenticateJWT, authorizeRoles(['ziyaretci', 'admin']), async (req: Request, res: Response) => {
   try {
     const authUser = (req as any).user;
     const { conversationId, content } = req.body;
@@ -115,8 +115,8 @@ router.post('/messages', authenticateJWT, async (req: Request, res: Response) =>
       return res.status(400).json({ error: 'Konusma ID ve mesaj icerigi gerekli' });
     }
 
-    if (typeof content !== 'string' || content.length > 2000) {
-      return res.status(400).json({ error: 'Mesaj 2000 karakterden uzun olamaz' });
+    if (typeof content !== 'string' || !content.trim() || content.trim().length > 2000) {
+      return res.status(400).json({ error: 'Mesaj bos olamaz ve 2000 karakterden uzun olamaz' });
     }
 
     // Verify user is part of conversation
@@ -138,7 +138,7 @@ router.post('/messages', authenticateJWT, async (req: Request, res: Response) =>
       senderId: authUser.userId,
       senderName: user?.adSoyad || 'Bilinmeyen',
       senderRole: authUser.role,
-      content,
+      content: content.trim(),
       contentType: 'text',
       priority: 'normal',
       isEncrypted: false

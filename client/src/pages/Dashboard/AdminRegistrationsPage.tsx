@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
 import { apiClient } from '../../utils/api';
-import { ClipboardList, Check, X, Eye, Clock, UserPlus, MessageSquare } from 'lucide-react';
+import { ClipboardList, Check, X, Eye, UserPlus, MessageSquare } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface Registration {
   _id: string;
@@ -66,7 +67,7 @@ export default function AdminRegistrationsPage() {
       setRegistrations((regsRes.data as any).data || []);
       setStats(statsRes.data as Stats);
     } catch {
-      // error handled silently
+      toast.error('Basvurular yuklenirken hata olustu');
     } finally {
       setLoading(false);
     }
@@ -86,9 +87,11 @@ export default function AdminRegistrationsPage() {
       setRejectionReason('');
       setShowDetail(false);
       setSelectedReg(null);
+      const statusMsg: Record<string, string> = { approved: 'onaylandi', rejected: 'reddedildi', interview: 'mulakat icin secildi' };
+      toast.success(`Basvuru ${statusMsg[status] || 'guncellendi'}`);
       await fetchData();
     } catch {
-      // error
+      toast.error('Basvuru guncellenirken hata olustu');
     } finally {
       setUpdating(false);
     }
@@ -237,7 +240,7 @@ export default function AdminRegistrationsPage() {
                 </span>
               </div>
 
-              {selectedReg.status === 'pending' && (
+              {(selectedReg.status === 'pending' || selectedReg.status === 'interview') && (
                 <div style={{ marginTop: 20 }}>
                   <textarea
                     placeholder="Ret sebebi (opsiyonel)"

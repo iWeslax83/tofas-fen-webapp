@@ -171,7 +171,7 @@ export const announcementSchema = yup.object({
     .min(10, 'İçerik en az 10 karakter olmalıdır')
     .max(2000, 'İçerik en fazla 2000 karakter olabilir'),
   targetRoles: yup.array()
-    .of(yup.string().oneOf(['admin', 'teacher', 'student', 'parent', 'hizmetli']))
+    .of(yup.string().oneOf(['admin', 'teacher', 'student', 'parent', 'hizmetli', 'ziyaretci']))
     .min(1, 'En az bir hedef rol seçilmelidir')
     .required('Hedef roller zorunludur'),
   priority: yup.string()
