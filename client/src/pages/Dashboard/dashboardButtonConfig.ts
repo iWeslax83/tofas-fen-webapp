@@ -1,7 +1,7 @@
 // Central config for dashboard panel buttons, routes, roles, and permissions
-import { BookOpen, ClipboardList, Utensils, Wrench, House, MessageSquareWarning, Megaphone, NotebookText, BarChart3 } from 'lucide-react';
+import { BookOpen, ClipboardList, Utensils, Wrench, House, MessageSquareWarning, Megaphone, NotebookText, BarChart3, UserPlus, CalendarDays, MessageCircle } from 'lucide-react';
 
-export type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli';
+export type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli' | 'ziyaretci';
 
 export interface DashboardButton {
   key: string;
@@ -279,9 +279,54 @@ export const dashboardButtons: DashboardButton[] = [
     icon: Wrench,
     actionText: 'Senkronize Et',
   },
-  // Analytics ve Raporlama - REMOVED
+  // Admin: Yeni Kayıt ve Randevu Yönetimi
+  {
+    key: 'admin-registrations',
+    title: 'Yeni Kayit Basvurulari',
+    description: 'Yeni kayit basvurularini incele ve yonet',
+    route: '/admin/yeni-kayit-basvurulari',
+    roles: ['admin'],
+    icon: UserPlus,
+    actionText: 'Basvurulari Gor',
+  },
+  {
+    key: 'admin-appointments',
+    title: 'Randevu Basvurulari',
+    description: 'Okul randevu taleplerini yonet',
+    route: '/admin/randevu-basvurulari',
+    roles: ['admin'],
+    icon: CalendarDays,
+    actionText: 'Randevulari Gor',
+  },
+  {
+    key: 'admin-visitor-chat',
+    title: 'Ziyaretci Sohbetleri',
+    description: 'Yeni kayit ziyaretcileri ile mesajlas',
+    route: '/admin/ziyaretci-sohbet',
+    roles: ['admin'],
+    icon: MessageCircle,
+    actionText: 'Sohbetleri Gor',
+  },
 
-  // Dosya Yönetimi Sistemi (Sadece Admin) - REMOVED
+  // Ziyaretci Buttons
+  {
+    key: 'visitor-chat',
+    title: 'Yonetici ile Sohbet',
+    description: 'Okul yoneticileri ile mesajlasin',
+    route: '/ziyaretci/sohbet',
+    roles: ['ziyaretci'],
+    icon: MessageCircle,
+    actionText: 'Sohbeti Ac',
+  },
+  {
+    key: 'visitor-appointment',
+    title: 'Randevu Al',
+    description: 'Okula ziyaret icin randevu alin',
+    route: '/ziyaretci/randevu',
+    roles: ['ziyaretci'],
+    icon: CalendarDays,
+    actionText: 'Randevu Al',
+  },
 
   // Settings — sidebar "Sistem" bölümünde zaten mevcut, burada tekrar eklenmez
 ];

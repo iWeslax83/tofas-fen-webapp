@@ -49,6 +49,9 @@ export const requireParent = requireRole(['parent']);
 // Service middleware
 export const requireService = requireRole(['hizmetli', 'admin']);
 
+// Visitor middleware
+export const requireVisitor = requireRole(['ziyaretci']);
+
 // Optional authentication - kullanıcı giriş yapmışsa bilgilerini ekle
 export const optionalAuth = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
   try {

@@ -2,7 +2,7 @@
 export interface User {
   id: string;
   adSoyad: string;
-  rol: 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli';
+  rol: 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli' | 'ziyaretci';
   email?: string;
   emailVerified?: boolean;
   twoFactorEnabled?: boolean;

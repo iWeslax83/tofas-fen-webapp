@@ -6,7 +6,7 @@ export interface IUser extends Document {
   adSoyad: string;
   tckn?: string; // T.C. Kimlik No - şifre olarak kullanılacak
   sifre?: string; // Deprecated - artık TCKN kullanılacak, geriye dönük uyumluluk için bırakıldı
-  rol: 'student' | 'teacher' | 'parent' | 'admin' | 'hizmetli';
+  rol: 'student' | 'teacher' | 'parent' | 'admin' | 'hizmetli' | 'ziyaretci';
   sinif?: string;
   sube?: string;
   oda?: string;
@@ -65,7 +65,7 @@ const UserSchema = new Schema<IUser>({
   },
   rol: {
     type: String,
-    enum: ['student', 'teacher', 'parent', 'admin', 'hizmetli'],
+    enum: ['student', 'teacher', 'parent', 'admin', 'hizmetli', 'ziyaretci'],
     required: true,
     index: true // For role-based queries
   },
