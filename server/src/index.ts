@@ -58,6 +58,9 @@ import auditLogRoutes from './routes/AuditLog';
 // import attendanceRoutes from './routes/Attendance';
 import dilekceRoutes from './routes/Dilekce';
 import pushSubscriptionRoutes from './routes/PushSubscription';
+import registrationRoutes from './routes/Registration';
+import appointmentRoutes from './routes/Appointment';
+import visitorChatRoutes from './routes/VisitorChat';
 import { connectDB } from "./db";
 import dashboardRoutes from './routes/Dashboard';
 import { sendMail } from "./mailService";
@@ -465,6 +468,9 @@ app.use('/api/audit-logs', auditLogRoutes);
 // app.use('/api/attendance', attendanceRoutes);
 app.use('/api/dilekce', dilekceRoutes);
 app.use('/api/push', pushSubscriptionRoutes);
+app.use('/api/registrations', registrationRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/visitor-chat', visitorChatRoutes);
 
 // Dashboard stats endpoint - now active
 app.use('/api/dashboard', dashboardRoutes);

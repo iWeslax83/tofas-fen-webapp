@@ -52,11 +52,18 @@ const EvciStatsPage = lazy(() => import('../pages/Dashboard/EvciStatsPage'));
 // Settings and Admin Pages
 const SettingsPage = lazy(() => import('../pages/Dashboard/SettingsPage'));
 const SenkronizasyonPage = lazy(() => import('../pages/Dashboard/SenkronizasyonPage'));
+const ParentChildManagement = lazy(() => import('../pages/Dashboard/ParentChildManagement'));
 // const ReportManagement = lazy(() => import('../pages/Dashboard/ReportManagement'));
 const CalendarPage = lazy(() => import('../pages/Dashboard/CalendarPage'));
 // const FileManagementPage = lazy(() => import('../pages/Dashboard/FileManagementPage'));
 const CommunicationPage = lazy(() => import('../pages/Dashboard/CommunicationPage'));
 const PerformancePage = lazy(() => import('../pages/Dashboard/PerformancePage'));
+
+// Visitor / Registration Pages
+const AdminRegistrationsPage = lazy(() => import('../pages/Dashboard/AdminRegistrationsPage'));
+const AdminAppointmentsPage = lazy(() => import('../pages/Dashboard/AdminAppointmentsPage'));
+const VisitorChatPage = lazy(() => import('../pages/Dashboard/VisitorChatPage'));
+const VisitorAppointmentPage = lazy(() => import('../pages/Dashboard/VisitorAppointmentPage'));
 
 // Demo Pages
 const SkeletonDemoPage = lazy(() => import('../pages/Dashboard/SkeletonDemoPage'));
@@ -101,6 +108,8 @@ export default function AppRoutes() {
         <Route path="/dashboard/student" element={<Navigate to="/student" replace />} />
         <Route path="/hizmetli" element={<ModernDashboard key="hizmetli" />} />
         <Route path="/dashboard/hizmetli" element={<Navigate to="/hizmetli" replace />} />
+        <Route path="/ziyaretci" element={<ModernDashboard key="ziyaretci" />} />
+        <Route path="/dashboard/ziyaretci" element={<Navigate to="/ziyaretci" replace />} />
 
         {/* Academic Routes */}
         <Route path="/admin/odevler" element={<OdevlerPage />} />
@@ -159,8 +168,17 @@ export default function AppRoutes() {
         <Route path="/teacher/evci-listesi" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><AdminEvciListPage /></ProtectedRoute>} />
         <Route path="/admin/dilekce-listesi" element={<ProtectedRoute allowedRoles={['admin']}><AdminDilekceListPage /></ProtectedRoute>} />
 
+        {/* Registration & Appointment Routes */}
+        <Route path="/admin/yeni-kayit-basvurulari" element={<ProtectedRoute allowedRoles={['admin']}><AdminRegistrationsPage /></ProtectedRoute>} />
+        <Route path="/admin/randevu-basvurulari" element={<ProtectedRoute allowedRoles={['admin']}><AdminAppointmentsPage /></ProtectedRoute>} />
+        <Route path="/admin/ziyaretci-sohbet" element={<ProtectedRoute allowedRoles={['admin']}><VisitorChatPage /></ProtectedRoute>} />
+        <Route path="/ziyaretci/sohbet" element={<ProtectedRoute allowedRoles={['ziyaretci']}><VisitorChatPage /></ProtectedRoute>} />
+        <Route path="/ziyaretci/randevu" element={<ProtectedRoute allowedRoles={['ziyaretci']}><VisitorAppointmentPage /></ProtectedRoute>} />
+        <Route path="/ziyaretci/ayarlar" element={<SettingsPage />} />
+
         {/* Settings and Admin Routes */}
         <Route path="/admin/senkronizasyon" element={<ProtectedRoute allowedRoles={['admin']}><SenkronizasyonPage /></ProtectedRoute>} />
+        <Route path="/admin/veli-eslestirme" element={<ProtectedRoute allowedRoles={['admin']}><ParentChildManagement /></ProtectedRoute>} />
         {/* <Route path="/admin/reports" element={<ReportManagement />} /> */}
         {/* <Route path="/teacher/reports" element={<ReportManagement />} /> */}
 

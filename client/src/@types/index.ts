@@ -1,5 +1,5 @@
 // User and Authentication Types
-export type UserRole = 'student' | 'teacher' | 'parent' | 'admin' | 'hizmetli';
+export type UserRole = 'student' | 'teacher' | 'parent' | 'admin' | 'hizmetli' | 'ziyaretci';
 
 export interface IUser {
   _id: string;

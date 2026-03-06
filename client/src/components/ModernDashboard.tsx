@@ -161,7 +161,8 @@ const ModernDashboard: React.FC = () => {
                   : `${userData.rol === 'admin' ? 'Yönetici' :
                     userData.rol === 'teacher' ? 'Öğretmen' :
                       userData.rol === 'parent' ? 'Veli' :
-                        userData.rol === 'hizmetli' ? 'Hizmetli' : 'Kullanıcı'} paneli`
+                        userData.rol === 'hizmetli' ? 'Hizmetli' :
+                          userData.rol === 'ziyaretci' ? 'Ziyaretci' : 'Kullanıcı'} paneli`
                 }
                 {userData.pansiyon && userData.oda && ` - Oda: ${userData.oda}`}
               </p>
@@ -173,7 +174,8 @@ const ModernDashboard: React.FC = () => {
                     userData.rol === 'teacher' ? 'ÖĞRETMEN' :
                       userData.rol === 'student' ? 'ÖĞRENCİ' :
                         userData.rol === 'parent' ? 'VELİ' :
-                          userData.rol === 'hizmetli' ? 'HİZMETLİ' : 'KULLANICI'}
+                          userData.rol === 'hizmetli' ? 'HİZMETLİ' :
+                            userData.rol === 'ziyaretci' ? 'ZİYARETÇİ' : 'KULLANICI'}
                 </span>
                 {userData.rol === 'student' && userData.sinif && userData.sube && (
                   <span className="badge role-badge">

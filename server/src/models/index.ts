@@ -32,3 +32,7 @@ export type { IMessage, IConversation, IEmail, IChatRoom, IContact } from './Com
 export type { IPerformanceMetric, IOptimizationLog, IPerformanceConfig } from './Performance';
 export type { IAuditLog } from './AuditLog';
 export type { IDilekce } from './Dilekce';
+export { Registration } from './Registration';
+export type { IRegistration } from './Registration';
+export { Appointment } from './Appointment';
+export type { IAppointment } from './Appointment';
