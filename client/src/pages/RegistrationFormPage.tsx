@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../utils/api';
-import { GraduationCap, Check, AlertCircle } from 'lucide-react';
+import { Check, AlertCircle, User, Mail, Phone, School, Calendar, FileText, Users } from 'lucide-react';
+import './LoginPage.css';
 
 export default function RegistrationFormPage() {
   const [form, setForm] = useState({
@@ -21,7 +22,7 @@ export default function RegistrationFormPage() {
 
     if (!form.applicantName || !form.applicantEmail || !form.applicantPhone ||
         !form.studentName || !form.targetClass || !form.parentName || !form.parentPhone) {
-      setError('Lutfen tum zorunlu alanlari doldurun');
+      setError('Lütfen tüm zorunlu alanları doldurun');
       return;
     }
 
@@ -30,7 +31,7 @@ export default function RegistrationFormPage() {
       await apiClient.post('/api/registrations', form);
       setSuccess(true);
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Basvuru gonderilirken bir hata olustu');
+      setError(err?.response?.data?.error || 'Başvuru gönderilirken bir hata oluştu');
     } finally {
       setSubmitting(false);
     }
@@ -38,146 +39,155 @@ export default function RegistrationFormPage() {
 
   if (success) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: 20 }}>
-        <div style={{ background: '#fff', borderRadius: 16, padding: 40, maxWidth: 480, width: '100%', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-            <Check size={32} style={{ color: '#10b981' }} />
+      <div className="login-bg" role="main">
+        <div className="login-gradient-border">
+          <div className="login-container" style={{ textAlign: 'center' }}>
+            <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', border: '2px solid #99f6e4' }}>
+              <Check size={36} style={{ color: '#0f766e' }} />
+            </div>
+            <h1 style={{ fontSize: 22, marginBottom: 12, color: '#1e293b' }}>Başvurunuz Alındı!</h1>
+            <p style={{ color: '#6b7280', lineHeight: 1.6, marginBottom: 24, fontSize: 14 }}>
+              Kayıt başvurunuz başarıyla gönderildi. Yönetim ekibimiz başvurunuzu inceleyecek ve
+              size e-posta yoluyla bilgi verecektir.
+            </p>
+            <Link to="/login" className="login-button" style={{ textDecoration: 'none', display: 'inline-flex' }}>
+              Giriş Sayfasına Dön
+            </Link>
           </div>
-          <h1 style={{ fontSize: 24, marginBottom: 12 }}>Basvurunuz Alindi!</h1>
-          <p style={{ color: '#6b7280', lineHeight: 1.6, marginBottom: 24 }}>
-            Kayit basvurunuz basariyla gonderildi. Yonetim ekibimiz basvurunuzu inceleyecek ve
-            size e-posta yoluyla bilgi verecektir.
-          </p>
-          <Link to="/login" style={{
-            display: 'inline-block', padding: '12px 24px', borderRadius: 8,
-            background: '#3b82f6', color: '#fff', textDecoration: 'none', fontWeight: 600
-          }}>
-            Giris Sayfasina Don
-          </Link>
         </div>
       </div>
     );
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb',
-    fontSize: 14, boxSizing: 'border-box', outline: 'none'
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 600, color: '#374151'
-  };
-
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '40px 20px' }}>
-      <div style={{ maxWidth: 600, margin: '0 auto' }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 8 }}>
-            <GraduationCap size={36} style={{ color: '#3b82f6' }} />
-            <h1 style={{ margin: 0, fontSize: 28 }}>Tofas Fen Lisesi</h1>
-          </div>
-          <p style={{ color: '#6b7280', fontSize: 16 }}>Yeni Kayit Basvuru Formu</p>
-        </div>
-
-        {error && (
-          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '12px 16px', marginBottom: 16, color: '#991b1b', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <AlertCircle size={16} /> {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} style={{
-          background: '#fff', borderRadius: 16, padding: 32,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
-        }}>
-          {/* Ogrenci Bilgileri */}
-          <h2 style={{ fontSize: 16, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #f1f5f9' }}>Ogrenci Bilgileri</h2>
-          <div style={{ display: 'grid', gap: 14, marginBottom: 24 }}>
-            <div>
-              <label style={labelStyle}>Ogrenci Adi Soyadi *</label>
-              <input style={inputStyle} value={form.studentName} onChange={e => update('studentName', e.target.value)} placeholder="Ornek: Ali Veli" />
+    <div className="login-bg" role="main">
+      <div className="login-gradient-border" style={{ maxWidth: 560 }}>
+        <div className="login-container" style={{ maxWidth: '100%', padding: '1.5rem' }}>
+          {/* Header */}
+          <header className="login-header" style={{ marginBottom: '1.25rem' }}>
+            <div className="login-logo" style={{ width: 80, height: 80 }}>
+              <img src="/tofaslogo.png" alt="Tofaş Fen Lisesi logosu" className="login-logo-img" />
             </div>
+            <h1 className="login-title" style={{ fontSize: '1.5rem', marginTop: 8 }}>Tofaş Fen Lisesi</h1>
+            <p className="login-subtitle" style={{ marginBottom: '0.5rem' }}>Yeni Kayıt Başvuru Formu</p>
+          </header>
+
+          {error && (
+            <div className="login-error" style={{ display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', marginBottom: 16 }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} /> {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="login-form" style={{ gap: '0.75rem' }}>
+            {/* Öğrenci Bilgileri */}
+            <SectionTitle icon={School} title="Öğrenci Bilgileri" />
+
+            <div className="login-form-group" style={{ marginBottom: 0 }}>
+              <label className="login-label"><User className="login-icon" />Öğrenci Adı Soyadı *</label>
+              <input className="login-input" value={form.studentName} onChange={e => update('studentName', e.target.value)} placeholder="Örnek: Ali Veli" />
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <label style={labelStyle}>Dogum Tarihi</label>
-                <input type="date" style={inputStyle} value={form.studentBirthDate} onChange={e => update('studentBirthDate', e.target.value)} />
+              <div className="login-form-group" style={{ marginBottom: 0 }}>
+                <label className="login-label"><Calendar className="login-icon" />Doğum Tarihi</label>
+                <input type="date" className="login-input" style={{ paddingLeft: '1rem' }} value={form.studentBirthDate} onChange={e => update('studentBirthDate', e.target.value)} />
               </div>
-              <div>
-                <label style={labelStyle}>Hedef Sinif *</label>
-                <select style={inputStyle} value={form.targetClass} onChange={e => update('targetClass', e.target.value)}>
-                  <option value="">Secin...</option>
-                  <option value="9">9. Sinif</option>
-                  <option value="10">10. Sinif</option>
-                  <option value="11">11. Sinif</option>
-                  <option value="12">12. Sinif</option>
+              <div className="login-form-group" style={{ marginBottom: 0 }}>
+                <label className="login-label"><School className="login-icon" />Hedef Sınıf *</label>
+                <select className="login-input" style={{ paddingLeft: '1rem' }} value={form.targetClass} onChange={e => update('targetClass', e.target.value)}>
+                  <option value="">Seçin...</option>
+                  <option value="9">9. Sınıf</option>
+                  <option value="10">10. Sınıf</option>
+                  <option value="11">11. Sınıf</option>
+                  <option value="12">12. Sınıf</option>
                 </select>
               </div>
             </div>
-            <div>
-              <label style={labelStyle}>Mevcut Okulu</label>
-              <input style={inputStyle} value={form.currentSchool} onChange={e => update('currentSchool', e.target.value)} placeholder="Su an devam ettigi okul" />
-            </div>
-          </div>
 
-          {/* Basvuran Bilgileri */}
-          <h2 style={{ fontSize: 16, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #f1f5f9' }}>Basvuran Bilgileri</h2>
-          <div style={{ display: 'grid', gap: 14, marginBottom: 24 }}>
-            <div>
-              <label style={labelStyle}>Ad Soyad *</label>
-              <input style={inputStyle} value={form.applicantName} onChange={e => update('applicantName', e.target.value)} placeholder="Basvuran kisi" />
+            <div className="login-form-group" style={{ marginBottom: 0 }}>
+              <label className="login-label"><School className="login-icon" />Mevcut Okulu</label>
+              <input className="login-input" value={form.currentSchool} onChange={e => update('currentSchool', e.target.value)} placeholder="Şu an devam ettiği okul" />
             </div>
+
+            {/* Başvuran Bilgileri */}
+            <SectionTitle icon={User} title="Başvuran Bilgileri" />
+
+            <div className="login-form-group" style={{ marginBottom: 0 }}>
+              <label className="login-label"><User className="login-icon" />Ad Soyad *</label>
+              <input className="login-input" value={form.applicantName} onChange={e => update('applicantName', e.target.value)} placeholder="Başvuran kişi" />
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <label style={labelStyle}>E-posta *</label>
-                <input type="email" style={inputStyle} value={form.applicantEmail} onChange={e => update('applicantEmail', e.target.value)} placeholder="ornek@mail.com" />
+              <div className="login-form-group" style={{ marginBottom: 0 }}>
+                <label className="login-label"><Mail className="login-icon" />E-posta *</label>
+                <input type="email" className="login-input" value={form.applicantEmail} onChange={e => update('applicantEmail', e.target.value)} placeholder="ornek@mail.com" />
               </div>
-              <div>
-                <label style={labelStyle}>Telefon *</label>
-                <input style={inputStyle} value={form.applicantPhone} onChange={e => update('applicantPhone', e.target.value)} placeholder="05XX XXX XX XX" />
+              <div className="login-form-group" style={{ marginBottom: 0 }}>
+                <label className="login-label"><Phone className="login-icon" />Telefon *</label>
+                <input className="login-input" value={form.applicantPhone} onChange={e => update('applicantPhone', e.target.value)} placeholder="05XX XXX XX XX" />
               </div>
             </div>
-          </div>
 
-          {/* Veli Bilgileri */}
-          <h2 style={{ fontSize: 16, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid #f1f5f9' }}>Veli Bilgileri</h2>
-          <div style={{ display: 'grid', gap: 14, marginBottom: 24 }}>
-            <div>
-              <label style={labelStyle}>Veli Adi Soyadi *</label>
-              <input style={inputStyle} value={form.parentName} onChange={e => update('parentName', e.target.value)} />
+            {/* Veli Bilgileri */}
+            <SectionTitle icon={Users} title="Veli Bilgileri" />
+
+            <div className="login-form-group" style={{ marginBottom: 0 }}>
+              <label className="login-label"><User className="login-icon" />Veli Adı Soyadı *</label>
+              <input className="login-input" value={form.parentName} onChange={e => update('parentName', e.target.value)} />
             </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <label style={labelStyle}>Veli Telefon *</label>
-                <input style={inputStyle} value={form.parentPhone} onChange={e => update('parentPhone', e.target.value)} placeholder="05XX XXX XX XX" />
+              <div className="login-form-group" style={{ marginBottom: 0 }}>
+                <label className="login-label"><Phone className="login-icon" />Veli Telefon *</label>
+                <input className="login-input" value={form.parentPhone} onChange={e => update('parentPhone', e.target.value)} placeholder="05XX XXX XX XX" />
               </div>
-              <div>
-                <label style={labelStyle}>Veli E-posta</label>
-                <input type="email" style={inputStyle} value={form.parentEmail} onChange={e => update('parentEmail', e.target.value)} />
+              <div className="login-form-group" style={{ marginBottom: 0 }}>
+                <label className="login-label"><Mail className="login-icon" />Veli E-posta</label>
+                <input type="email" className="login-input" value={form.parentEmail} onChange={e => update('parentEmail', e.target.value)} />
               </div>
             </div>
+
+            {/* Notlar */}
+            <div className="login-form-group" style={{ marginBottom: 0 }}>
+              <label className="login-label"><FileText className="login-icon" />Ek Notlar</label>
+              <textarea className="login-input" style={{ resize: 'vertical', minHeight: 70, paddingLeft: '1rem' }} value={form.notes}
+                onChange={e => update('notes', e.target.value)} placeholder="Eklemek istediğiniz bilgiler..." />
+            </div>
+
+            <button type="submit" className="login-button" disabled={submitting}>
+              {submitting ? (
+                <>
+                  <div className="loading-spinner" style={{ marginRight: 8 }}></div>
+                  Gönderiliyor...
+                </>
+              ) : (
+                'Başvuruyu Gönder'
+              )}
+            </button>
+          </form>
+
+          <div style={{ textAlign: 'center', margin: '16px 0 0' }}>
+            <Link to="/login" style={{ color: '#0f766e', fontSize: 14, textDecoration: 'none', fontWeight: 500 }}>
+              Zaten hesabınız var mı? Giriş yapın
+            </Link>
           </div>
 
-          {/* Notlar */}
-          <div style={{ marginBottom: 24 }}>
-            <label style={labelStyle}>Ek Notlar</label>
-            <textarea style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }} value={form.notes}
-              onChange={e => update('notes', e.target.value)} placeholder="Eklemek istediginiz bilgiler..." />
-          </div>
-
-          <button type="submit" disabled={submitting} style={{
-            width: '100%', padding: '14px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
-            background: '#3b82f6', color: '#fff', fontWeight: 600, fontSize: 16
-          }}>
-            {submitting ? 'Gonderiliyor...' : 'Basvuruyu Gonder'}
-          </button>
-        </form>
-
-        <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <Link to="/login" style={{ color: '#6b7280', fontSize: 14, textDecoration: 'none' }}>
-            Zaten hesabiniz var mi? Giris yapin
-          </Link>
+          <footer className="login-footer">
+            <p className="login-footer-text">
+              &copy; 2024 Tofaş Fen Lisesi. Tüm hakları saklıdır.
+            </p>
+          </footer>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SectionTitle({ icon: Icon, title }: { icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>; title: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 6, borderBottom: '2px solid #f0fdfa', marginTop: 4 }}>
+      <Icon size={16} style={{ color: '#0f766e' }} />
+      <span style={{ fontSize: 14, fontWeight: 600, color: '#115e59' }}>{title}</span>
     </div>
   );
 }
