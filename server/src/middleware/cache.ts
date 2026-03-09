@@ -369,4 +369,4 @@ export const checkCacheHealth = async () => {
 };
 
 // Export all cache functions
-export { redis }; 
+export { redis, isRedisConfigured }; 

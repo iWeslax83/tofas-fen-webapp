@@ -7,6 +7,11 @@ import crypto from 'crypto';
 import { sendVerificationEmail, sendTwoFactorEmail } from '../../../mailService';
 import { config } from '../../../config/environment';
 import { logSecurityEvent, SecurityEvent } from '../../../utils/securityLogger';
+import { SecurityAlertService } from '../../../services/SecurityAlertService';
+import { trackFailedLogin, resetFailedLogin } from '../../../middleware/captcha';
+import { decrypt } from '../../../utils/encryption';
+import { RefreshToken } from '../../../models/RefreshToken';
+const uuidv4 = () => crypto.randomUUID();
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
@@ -54,9 +59,10 @@ export class AuthService {
       }
     }
 
-    // #9: Fallback to TCKN (plain equality) — migrate to bcrypt on success
+    // #9: Fallback to TCKN — decrypt and compare, migrate to bcrypt on success
     if (!authenticated && user.tckn) {
-      if (String(user.tckn).trim() === String(password).trim()) {
+      const decryptedTckn = decrypt(user.tckn);
+      if (String(decryptedTckn).trim() === String(password).trim()) {
         authenticated = true;
         // Migrate plaintext TCKN to bcrypt hash if user has no custom password
         if (!user.sifre) {
@@ -75,7 +81,19 @@ export class AuthService {
       }
       await user.save();
       logSecurityEvent({ event: SecurityEvent.LOGIN_FAILED, userId: user.id, ip: meta?.ip, userAgent: meta?.userAgent });
+
+      // Track for CAPTCHA and security alerts
+      if (meta?.ip) {
+        trackFailedLogin(meta.ip);
+        SecurityAlertService.trackLoginFailure(id, meta.ip);
+      }
+
       throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
+    }
+
+    // Reset CAPTCHA tracking on successful login
+    if (meta?.ip) {
+      resetFailedLogin(meta.ip);
     }
 
     // #8: Reset failed attempts on success
@@ -170,8 +188,20 @@ export class AuthService {
     await user.save();
     logSecurityEvent({ event: SecurityEvent.LOGIN_SUCCESS, userId: user.id, ip: meta?.ip });
 
-    // Generate tokens
+    // Generate tokens with refresh token rotation
     const tokens = generateTokenPair(user.id, user.rol, user.email, user.tokenVersion);
+
+    // Store refresh token with family ID for rotation detection
+    const familyId = uuidv4();
+    const tokenHash = crypto.createHash('sha256').update(tokens.refreshToken).digest('hex');
+    await RefreshToken.create({
+      token: tokenHash,
+      userId: user.id,
+      familyId,
+      expiresAt: new Date(Date.now() + tokens.refreshExpiresIn * 1000),
+      userAgent: meta?.userAgent,
+      ipAddress: meta?.ip,
+    });
 
     return {
       user: {
@@ -542,6 +572,92 @@ export class AuthService {
       activeUsers,
       usersByRole: roleStats,
       recentLogins
+    };
+  }
+
+  /**
+   * Rotate a refresh token (use once, issue new one in same family).
+   * If a used token is presented (replay attack), invalidate the entire family.
+   */
+  static async rotateRefreshToken(oldRefreshToken: string, meta?: { ip?: string; userAgent?: string }): Promise<{
+    tokens: any;
+    user: any;
+  }> {
+    const tokenHash = crypto.createHash('sha256').update(oldRefreshToken).digest('hex');
+    const storedToken = await RefreshToken.findOne({ token: tokenHash });
+
+    if (!storedToken) {
+      throw AppError.unauthorized('Geçersiz refresh token');
+    }
+
+    // Check if token was already used (replay attack!)
+    if (storedToken.isUsed) {
+      // SECURITY: Invalidate entire token family
+      await RefreshToken.updateMany(
+        { familyId: storedToken.familyId },
+        { $set: { isRevoked: true } }
+      );
+
+      SecurityAlertService.trackSuspiciousTokenUsage(
+        storedToken.userId,
+        'Refresh token replay attack detected - token family invalidated',
+        meta?.ip
+      );
+
+      // Increment user's tokenVersion to invalidate all JWTs
+      await User.findOneAndUpdate(
+        { id: storedToken.userId },
+        { $inc: { tokenVersion: 1 } }
+      );
+
+      logSecurityEvent({
+        event: SecurityEvent.TOKEN_REUSE_DETECTED || 'TOKEN_REUSE_DETECTED' as any,
+        userId: storedToken.userId,
+        ip: meta?.ip,
+        details: { familyId: storedToken.familyId },
+      });
+
+      throw AppError.unauthorized('Güvenlik ihlali tespit edildi. Lütfen tekrar giriş yapın.');
+    }
+
+    // Check if token is revoked or expired
+    if (storedToken.isRevoked || storedToken.expiresAt < new Date()) {
+      throw AppError.unauthorized('Refresh token süresi dolmuş veya iptal edilmiş');
+    }
+
+    // Mark old token as used
+    storedToken.isUsed = true;
+    storedToken.usedAt = new Date();
+
+    const user = await User.findOne({ id: storedToken.userId, isActive: true });
+    if (!user) {
+      throw AppError.unauthorized('Kullanıcı bulunamadı');
+    }
+
+    // Generate new token pair
+    const newTokens = generateTokenPair(user.id, user.rol, user.email, user.tokenVersion);
+
+    // Store new refresh token in the same family
+    const newTokenHash = crypto.createHash('sha256').update(newTokens.refreshToken).digest('hex');
+    storedToken.replacedByToken = newTokenHash;
+    await storedToken.save();
+
+    await RefreshToken.create({
+      token: newTokenHash,
+      userId: user.id,
+      familyId: storedToken.familyId,
+      expiresAt: new Date(Date.now() + newTokens.refreshExpiresIn * 1000),
+      userAgent: meta?.userAgent,
+      ipAddress: meta?.ip,
+    });
+
+    return {
+      tokens: newTokens,
+      user: {
+        id: user.id,
+        adSoyad: user.adSoyad,
+        rol: user.rol,
+      },
     };
   }
 

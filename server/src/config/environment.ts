@@ -99,33 +99,85 @@ export const config = {
 // Validate configuration
 export const validateConfig = () => {
   const errors: string[] = [];
-  
+  const warnings: string[] = [];
+
   // Validate port
   if (config.PORT < 1 || config.PORT > 65535) {
     errors.push('PORT must be between 1 and 65535');
   }
-  
+
   // Validate rate limits
   if (config.RATE_LIMIT_MAX_REQUESTS < 1) {
     errors.push('RATE_LIMIT_MAX_REQUESTS must be at least 1');
   }
-  
+
   if (config.AUTH_RATE_LIMIT_MAX < 1) {
     errors.push('AUTH_RATE_LIMIT_MAX must be at least 1');
   }
-  
+
   // Validate bcrypt rounds
   if (config.BCRYPT_ROUNDS < 10 || config.BCRYPT_ROUNDS > 15) {
     errors.push('BCRYPT_ROUNDS must be between 10 and 15');
   }
-  
+
   // Validate file size
   if (config.MAX_FILE_SIZE < 1024) {
     errors.push('MAX_FILE_SIZE must be at least 1KB');
   }
-  
+
+  // ===== Production-specific security validations =====
+  if (config.NODE_ENV === 'production') {
+    // Redis must have authentication in production
+    if (!config.REDIS_PASSWORD && !process.env.REDIS_URL?.includes('@')) {
+      warnings.push('PRODUCTION WARNING: Redis has no password configured (REDIS_PASSWORD). This is a security risk.');
+    }
+
+    // Redis should use TLS in production
+    if (process.env.REDIS_TLS !== 'true' && !process.env.REDIS_URL?.startsWith('rediss://')) {
+      warnings.push('PRODUCTION WARNING: Redis TLS is not enabled (REDIS_TLS=true). Data in transit is unencrypted.');
+    }
+
+    // MongoDB should use authentication
+    if (config.MONGODB_URI && !config.MONGODB_URI.includes('@') && !config.MONGODB_URI.includes('authSource')) {
+      warnings.push('PRODUCTION WARNING: MongoDB URI does not appear to include authentication credentials.');
+    }
+
+    // MongoDB should use TLS
+    if (config.MONGODB_URI && !config.MONGODB_URI.includes('tls=true') && !config.MONGODB_URI.includes('ssl=true')) {
+      warnings.push('PRODUCTION WARNING: MongoDB connection does not use TLS/SSL.');
+    }
+
+    // MongoDB should not bind to 0.0.0.0 / public
+    if (config.MONGODB_URI && (config.MONGODB_URI.includes('0.0.0.0') || config.MONGODB_URI.includes('*'))) {
+      errors.push('PRODUCTION ERROR: MongoDB is bound to 0.0.0.0 (publicly accessible). Use localhost or VPC address.');
+    }
+
+    // CORS must be restricted
+    if (!process.env.CORS_ORIGIN || process.env.CORS_ORIGIN.includes('localhost')) {
+      warnings.push('PRODUCTION WARNING: CORS_ORIGIN includes localhost. Set to production domain only.');
+    }
+
+    // Encryption key should be set
+    if (!process.env.ENCRYPTION_KEY) {
+      warnings.push('PRODUCTION WARNING: ENCRYPTION_KEY not set. TCKN encryption will derive key from JWT_SECRET. Set a dedicated 64-char hex key for better security.');
+    }
+
+    // Monitoring API key should be set
+    if (!process.env.MONITORING_API_KEY) {
+      warnings.push('PRODUCTION WARNING: MONITORING_API_KEY not set. Monitoring endpoints are unprotected.');
+    }
+  }
+
   if (errors.length > 0) {
     throw new Error(`Configuration validation failed:\n${errors.join('\n')}`);
+  }
+
+  // Log warnings but don't fail startup
+  if (warnings.length > 0) {
+    // Use console.warn since logger might not be initialized yet
+    for (const warning of warnings) {
+      console.warn(`[CONFIG] ${warning}`);
+    }
   }
 };
 

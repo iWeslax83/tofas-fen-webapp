@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Notification } from "../models";
 import { NotificationService } from "../services/NotificationService";
 import { requireAuth, requireRole } from "../middleware/auth";
+import { requireOwnership } from "../middleware/ownershipCheck";
 import { sendMail } from "../mailService";
 import logger from "../utils/logger";
 
@@ -11,7 +12,8 @@ const router = Router();
 router.use(requireAuth);
 
 // Get user's notifications with pagination and filters
-router.get("/user/:userId", async (req, res) => {
+// IDOR protection: users can only access their own notifications, parents can access children's
+router.get("/user/:userId", requireOwnership('params.userId', { allowParentAccess: true }), async (req, res) => {
   try {
     const { userId } = req.params;
     const {
@@ -53,8 +55,8 @@ router.get("/user/:userId", async (req, res) => {
   }
 });
 
-// Get unread count for user
-router.get("/user/:userId/unread-count", async (req, res) => {
+// Get unread count for user - IDOR protected
+router.get("/user/:userId/unread-count", requireOwnership('params.userId', { allowParentAccess: true }), async (req, res) => {
   try {
     const { userId } = req.params;
     const unreadCount = await NotificationService.getUnreadCount(userId);
