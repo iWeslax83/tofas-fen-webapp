@@ -420,6 +420,14 @@ export default function SenkronizasyonPage() {
               <Link2 size={16} />
               Toplu Veli-Öğrenci Eşleştir
             </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => navigate('/admin/veli-eslestirme')}
+              style={{ background: '#7c3aed', borderColor: '#7c3aed' }}
+            >
+              <Users size={16} />
+              Veli-Öğrenci Eşleştirme Sayfası
+            </button>
           </div>
 
           {/* Bulk User Import Panel */}

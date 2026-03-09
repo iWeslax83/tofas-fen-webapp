@@ -46,7 +46,11 @@
       "Bash(npm uninstall:*)",
       "WebSearch",
       "Bash(npm install:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(git:*)"
     ]
   }
 }

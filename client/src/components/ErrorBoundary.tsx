@@ -5,6 +5,7 @@ import { ultraSafeErrorLog } from '../utils/safeLogger';
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  resetKey?: string; // changes to this value auto-reset the error state
 }
 
 interface State {
@@ -21,6 +22,13 @@ class ErrorBoundary extends Component<Props, State> {
       error: null,
       errorInfo: null
     };
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    // Auto-reset when resetKey changes (e.g. route change)
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false, error: null, errorInfo: null });
+    }
   }
 
   static getDerivedStateFromError(error: Error): State {

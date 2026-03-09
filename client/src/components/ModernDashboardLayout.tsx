@@ -45,12 +45,6 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [setIsOpen]);
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // getRoleDisplayName function removed as not used
-
   const roleButtons = useMemo(() => {
     const role = user?.rol || 'student';
     return dashboardButtons.filter(btn => {
@@ -59,6 +53,11 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
       return true;
     });
   }, [user?.rol, user?.pansiyon]);
+
+  // Guard must be AFTER all hooks to avoid "fewer hooks" error on logout
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
   const closeSidebarOnMobile = () => {
     if (window.innerWidth <= 1024) {
