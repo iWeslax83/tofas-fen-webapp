@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { AuthController } from '../controllers/authController';
 import { authenticateJWT, authorizeRoles } from '../../../utils/jwt';
 import { authLimiter } from '../../../middleware/rateLimiter';
+import { captchaMiddleware } from '../../../middleware/captcha';
 
 const router = Router();
 
@@ -41,7 +42,7 @@ const router = Router();
  *       429:
  *         description: Çok fazla giriş denemesi
  */
-router.post('/login', authLimiter, AuthController.login);
+router.post('/login', authLimiter, captchaMiddleware, AuthController.login);
 
 /**
  * @swagger

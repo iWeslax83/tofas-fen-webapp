@@ -5,6 +5,8 @@ import { AuthService } from '../services/authService';
 import { generateTokenPair, verifyRefreshToken, logoutUser } from '../../../utils/jwt';
 import { asyncHandler } from '../../../middleware/errorHandler';
 import bcrypt from 'bcryptjs';
+import { RefreshToken } from '../../../models/RefreshToken';
+import crypto from 'crypto';
 
 /** Extract request metadata for security logging */
 function extractMeta(req: Request) {
@@ -168,7 +170,7 @@ export class AuthController {
   });
 
   /**
-   * Refresh access token
+   * Refresh access token with rotation (one-time use refresh tokens)
    */
   static refreshToken = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
     const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
@@ -177,6 +179,7 @@ export class AuthController {
       throw AppError.validation('Refresh token gereklidir');
     }
 
+    // Verify JWT signature first
     const payload = verifyRefreshToken(refreshToken);
     if (!payload) {
       throw AppError.unauthorized('Geçersiz refresh token');
@@ -191,7 +194,9 @@ export class AuthController {
       throw AppError.unauthorized('Token versiyonu uyumsuz');
     }
 
-    const tokens = generateTokenPair(user.id, user.rol, user.email, user.tokenVersion);
+    // Use refresh token rotation with family detection
+    const result = await AuthService.rotateRefreshToken(refreshToken, extractMeta(req));
+    const tokens = result.tokens;
     const isProduction = process.env.NODE_ENV === 'production';
 
     res.cookie('accessToken', tokens.accessToken, {

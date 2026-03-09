@@ -1,10 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import logger from '../utils/logger';
+import { encrypt, decrypt, isEncrypted, maskTckn, hashTckn } from '../utils/encryption';
 
 export interface IUser extends Document {
   id: string;
   adSoyad: string;
-  tckn?: string; // T.C. Kimlik No - şifre olarak kullanılacak
+  tckn?: string; // T.C. Kimlik No - encrypted at rest
+  tcknHash?: string; // HMAC hash of TCKN for lookups
   sifre?: string; // Deprecated - artık TCKN kullanılacak, geriye dönük uyumluluk için bırakıldı
   rol: 'student' | 'teacher' | 'parent' | 'admin' | 'hizmetli' | 'ziyaretci';
   sinif?: string;
@@ -28,8 +30,13 @@ export interface IUser extends Document {
   lastLogin?: Date;
   loginCount: number;
   isActive: boolean;
+  kvkkConsent: boolean;
+  kvkkConsentDate?: Date;
   createdAt: Date;
   updatedAt: Date;
+  // Helper methods
+  getDecryptedTckn(): string;
+  getMaskedTckn(): string;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -49,14 +56,12 @@ const UserSchema = new Schema<IUser>({
     unique: true,
     sparse: true, // Allow multiple null values
     index: true,
-    validate: {
-      validator: function (v: string) {
-        if (!v) return true; // TCKN optional for now (will be required later)
-        // TCKN validation: 11 digits
-        return /^\d{11}$/.test(v);
-      },
-      message: 'TCKN 11 haneli olmalıdır'
-    }
+    // Validation removed since encrypted values won't be 11 digits
+  },
+  tcknHash: {
+    type: String,
+    sparse: true,
+    index: true, // For searching by TCKN without decrypting
   },
   sifre: {
     type: String,
@@ -145,10 +150,47 @@ const UserSchema = new Schema<IUser>({
     type: Boolean,
     default: true,
     index: true // For active user queries
-  }
+  },
+  kvkkConsent: {
+    type: Boolean,
+    default: false,
+  },
+  kvkkConsentDate: {
+    type: Date,
+  },
 }, {
   timestamps: true
 });
+
+// Pre-save hook: Encrypt TCKN before saving
+UserSchema.pre('save', function (next) {
+  if (this.isModified('tckn') && this.tckn) {
+    // If TCKN is plaintext (11 digits), encrypt it
+    if (/^\d{11}$/.test(this.tckn)) {
+      const plainTckn = this.tckn;
+      this.tcknHash = hashTckn(plainTckn);
+      this.tckn = encrypt(plainTckn);
+    } else if (!isEncrypted(this.tckn)) {
+      // Legacy data that's not 11 digits and not encrypted - try to encrypt
+      const plainTckn = this.tckn;
+      this.tcknHash = hashTckn(plainTckn);
+      this.tckn = encrypt(plainTckn);
+    }
+  }
+  next();
+});
+
+// Instance method: Get decrypted TCKN
+UserSchema.methods.getDecryptedTckn = function (): string {
+  if (!this.tckn) return '';
+  return decrypt(this.tckn);
+};
+
+// Instance method: Get masked TCKN for display
+UserSchema.methods.getMaskedTckn = function (): string {
+  if (!this.tckn) return '';
+  return maskTckn(this.tckn);
+};
 
 // Essential compound indexes for common query patterns
 UserSchema.index({ rol: 1, isActive: 1 }); // Most common query pattern
