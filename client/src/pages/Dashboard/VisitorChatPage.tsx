@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
 import { apiClient } from '../../utils/api';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { useTheme } from '../../stores/uiStore';
 import { MessageCircle, Send } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -27,7 +28,58 @@ interface Conversation {
 
 export default function VisitorChatPage() {
   const { user } = useAuthContext();
+  const { theme } = useTheme();
   const isAdmin = user?.rol === 'admin';
+
+  // Resolve effective theme (system -> actual)
+  const isDark = useMemo(() => {
+    if (theme === 'dark') return true;
+    if (theme === 'light') return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }, [theme]);
+
+  // Theme-aware colors
+  const colors = useMemo(() => isDark ? {
+    bg: '#111827',
+    card: '#1f2937',
+    cardHover: '#374151',
+    border: '#374151',
+    borderLight: '#4b5563',
+    text: '#f9fafb',
+    textSecondary: '#d1d5db',
+    textMuted: '#9ca3af',
+    input: '#374151',
+    inputBorder: '#4b5563',
+    myBubble: '#0f766e',
+    myBubbleText: '#fff',
+    otherBubble: '#374151',
+    otherBubbleText: '#f3f4f6',
+    activeConv: '#1e3a5f',
+    placeholder: '#6b7280',
+    sendBtn: '#0f766e',
+    sendBtnDisabled: '#374151',
+    sendBtnTextDisabled: '#6b7280',
+  } : {
+    bg: '#f8fafc',
+    card: '#ffffff',
+    cardHover: '#f1f5f9',
+    border: '#e2e8f0',
+    borderLight: '#f1f5f9',
+    text: '#0f172a',
+    textSecondary: '#374151',
+    textMuted: '#9ca3af',
+    input: '#ffffff',
+    inputBorder: '#e5e7eb',
+    myBubble: '#0f766e',
+    myBubbleText: '#fff',
+    otherBubble: '#f1f5f9',
+    otherBubbleText: '#1f2937',
+    activeConv: '#eff6ff',
+    placeholder: '#9ca3af',
+    sendBtn: '#0f766e',
+    sendBtnDisabled: '#e5e7eb',
+    sendBtnTextDisabled: '#9ca3af',
+  }, [isDark]);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -81,7 +133,7 @@ export default function VisitorChatPage() {
     if (!activeConversationId) return;
     try {
       const res = await apiClient.get(`/api/visitor-chat/messages/${activeConversationId}`);
-      setMessages((res.data as any).messages || []);
+      setMessages((res.data as { messages?: ChatMessage[] }).messages || []);
     } catch {
       // error
     }
@@ -133,7 +185,7 @@ export default function VisitorChatPage() {
   return (
     <ModernDashboardLayout pageTitle={isAdmin ? 'Ziyaretci Sohbetleri' : 'Yonetici ile Sohbet'}>
       <div style={{ padding: '24px', maxWidth: 1000, margin: '0 auto', height: 'calc(100vh - 160px)', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, color: colors.text }}>
           <MessageCircle size={28} />
           <h1 style={{ margin: 0, fontSize: 24 }}>{isAdmin ? 'Ziyaretci Sohbetleri' : 'Yonetici ile Sohbet'}</h1>
         </div>
@@ -142,14 +194,14 @@ export default function VisitorChatPage() {
           {/* Conversation List (admin only) */}
           {isAdmin && (
             <div style={{
-              width: 260, background: '#fff', borderRadius: 12, border: '1px solid #f1f5f9',
+              width: 260, background: colors.card, borderRadius: 12, border: `1px solid ${colors.border}`,
               overflow: 'auto', flexShrink: 0
             }}>
-              <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', fontWeight: 600, fontSize: 14, color: '#374151' }}>
+              <div style={{ padding: '12px 16px', borderBottom: `1px solid ${colors.border}`, fontWeight: 600, fontSize: 14, color: colors.textSecondary }}>
                 Sohbetler ({conversations.length})
               </div>
               {conversations.length === 0 ? (
-                <div style={{ padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
+                <div style={{ padding: 20, textAlign: 'center', color: colors.textMuted, fontSize: 13 }}>
                   Henuz sohbet yok
                 </div>
               ) : (
@@ -157,12 +209,13 @@ export default function VisitorChatPage() {
                   <button key={conv.id} onClick={() => setActiveConversationId(conv.id)}
                     style={{
                       width: '100%', textAlign: 'left', padding: '12px 16px', border: 'none',
-                      cursor: 'pointer', borderBottom: '1px solid #f8fafc',
-                      background: activeConversationId === conv.id ? '#eff6ff' : '#fff'
+                      cursor: 'pointer', borderBottom: `1px solid ${colors.borderLight}`,
+                      background: activeConversationId === conv.id ? colors.activeConv : colors.card,
+                      color: colors.text
                     }}>
                     <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 2 }}>{conv.title}</div>
                     {conv.lastMessage && (
-                      <div style={{ color: '#9ca3af', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ color: colors.textMuted, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {conv.lastMessage.senderName}: {conv.lastMessage.content}
                       </div>
                     )}
@@ -174,15 +227,15 @@ export default function VisitorChatPage() {
 
           {/* Chat Area */}
           <div style={{
-            flex: 1, background: '#fff', borderRadius: 12, border: '1px solid #f1f5f9',
+            flex: 1, background: colors.card, borderRadius: 12, border: `1px solid ${colors.border}`,
             display: 'flex', flexDirection: 'column', minHeight: 0
           }}>
             {loading ? (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.textMuted }}>
                 Yukleniyor...
               </div>
             ) : !activeConversationId ? (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.textMuted }}>
                 Bir sohbet secin
               </div>
             ) : (
@@ -190,7 +243,7 @@ export default function VisitorChatPage() {
                 {/* Messages */}
                 <div ref={messagesContainerRef} onScroll={handleScroll} style={{ flex: 1, overflow: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {messages.length === 0 ? (
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 14 }}>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.textMuted, fontSize: 14 }}>
                       <div style={{ textAlign: 'center' }}>
                         <MessageCircle size={40} style={{ marginBottom: 8, opacity: 0.3 }} />
                         <p>Henuz mesaj yok. Bir soru sorun!</p>
@@ -205,11 +258,11 @@ export default function VisitorChatPage() {
                         }}>
                           <div style={{
                             maxWidth: '70%', padding: '10px 14px', borderRadius: 12,
-                            background: isMe ? '#3b82f6' : '#f1f5f9',
-                            color: isMe ? '#fff' : '#1f2937'
+                            background: isMe ? colors.myBubble : colors.otherBubble,
+                            color: isMe ? colors.myBubbleText : colors.otherBubbleText
                           }}>
                             {!isMe && (
-                              <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2, color: isMe ? '#dbeafe' : '#6b7280' }}>
+                              <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2, color: colors.textMuted }}>
                                 {msg.senderName} ({msg.senderRole === 'admin' ? 'Yonetici' : 'Ziyaretci'})
                               </div>
                             )}
@@ -226,7 +279,7 @@ export default function VisitorChatPage() {
                 </div>
 
                 {/* Input */}
-                <div style={{ padding: 16, borderTop: '1px solid #f1f5f9', display: 'flex', gap: 8 }}>
+                <div style={{ padding: 16, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: 8 }}>
                   <textarea
                     value={newMessage}
                     onChange={e => setNewMessage(e.target.value)}
@@ -234,15 +287,16 @@ export default function VisitorChatPage() {
                     placeholder="Mesajinizi yazin..."
                     rows={1}
                     style={{
-                      flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid #e5e7eb',
-                      fontSize: 14, resize: 'none', outline: 'none', lineHeight: 1.5
+                      flex: 1, padding: '10px 14px', borderRadius: 8, border: `1px solid ${colors.inputBorder}`,
+                      fontSize: 14, resize: 'none', outline: 'none', lineHeight: 1.5,
+                      background: colors.input, color: colors.text
                     }}
                   />
                   <button onClick={sendMessage} disabled={!newMessage.trim() || sending}
                     style={{
                       padding: '10px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                      background: newMessage.trim() ? '#3b82f6' : '#e5e7eb',
-                      color: newMessage.trim() ? '#fff' : '#9ca3af',
+                      background: newMessage.trim() ? colors.sendBtn : colors.sendBtnDisabled,
+                      color: newMessage.trim() ? '#fff' : colors.sendBtnTextDisabled,
                       display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600, fontSize: 14
                     }}>
                     <Send size={16} />
