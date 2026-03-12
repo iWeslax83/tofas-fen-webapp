@@ -105,33 +105,7 @@ db.club_events.createIndex({ "date": 1 });
 db.club_chat.createIndex({ "clubId": 1 });
 db.club_chat.createIndex({ "createdAt": -1 });
 
-// Insert initial admin user
-db.users.insertOne({
-  name: "System Administrator",
-  email: "admin@tofasfen.edu.tr",
-  password: "$2b$10$rQZ8K9vL8mN7pQ6rS5tT.uVwXyZ1aB2cD3eF4gH5iJ6kL7mN8oP9qR",
-  role: "admin",
-  studentNumber: null,
-  class: null,
-  isActive: true,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  lastLogin: null,
-  profile: {
-    phone: "",
-    address: "",
-    emergencyContact: "",
-    bloodType: "",
-    allergies: "",
-    medicalNotes: ""
-  },
-  preferences: {
-    notifications: true,
-    emailNotifications: true,
-    smsNotifications: false,
-    theme: "light",
-    language: "tr"
-  }
-});
+// NOTE: Initial admin user should be created via `npm run seed` after deployment.
+// Do NOT hardcode credentials in initialization scripts.
 
 print("Database initialization completed successfully!");

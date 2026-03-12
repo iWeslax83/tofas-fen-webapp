@@ -61,7 +61,6 @@ export default function MealListPage() {
 
       if (error) {
         if (retryCount < maxRetries) {
-          console.log(`Retrying meal list fetch (${retryCount + 1}/${maxRetries})...`);
           setTimeout(() => fetchMealLists(retryCount + 1), Math.pow(2, retryCount) * 1000);
           return;
         }
@@ -70,17 +69,13 @@ export default function MealListPage() {
         setMealLists(Array.isArray(data) ? data as MealList[] : []);
       }
     } catch (err: unknown) {
-      console.error('Error fetching meal lists:', err);
-
       if ((err as any)?.response?.status === 429 && retryCount < maxRetries) {
         const retryAfter = (err as any)?.response?.data?.retryAfter || Math.pow(2, retryCount);
-        console.log(`Rate limited. Retrying after ${retryAfter} seconds...`);
         setTimeout(() => fetchMealLists(retryCount + 1), retryAfter * 1000);
         return;
       }
 
       if (retryCount < maxRetries) {
-        console.log(`Retrying meal list fetch due to error (${retryCount + 1}/${maxRetries})...`);
         setTimeout(() => fetchMealLists(retryCount + 1), Math.pow(2, retryCount) * 1000);
         return;
       }

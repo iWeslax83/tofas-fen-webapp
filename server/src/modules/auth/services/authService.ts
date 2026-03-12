@@ -85,7 +85,7 @@ export class AuthService {
       // Track for CAPTCHA and security alerts
       if (meta?.ip) {
         trackFailedLogin(meta.ip);
-        SecurityAlertService.trackLoginFailure(id, meta.ip);
+        SecurityAlertService.trackLoginFailure(id, meta.ip).catch(() => {});
       }
 
       throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');

@@ -65,9 +65,7 @@ export default function DersProgramiPage() {
   const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔍 Fetching user data for ders programı...');
       const { data: userData, error: userError } = await UserService.getCurrentUser();
-      console.log('📡 User Data:', userData);
 
       if (userError || !userData || !["admin", "teacher", "student", "parent"].includes(userData.rol)) {
         setError(userError || "Bu sayfaya erişim yetkiniz bulunmuyor.");
@@ -113,11 +111,10 @@ export default function DersProgramiPage() {
         ];
       }
 
-      console.log('✅ Classes set:', allClasses);
       setClasses(allClasses);
       setError(null);
     } catch (err: unknown) {
-      console.error("❌ Error fetching user data:", err);
+      // Error fetching user data
       setError("Kullanıcı bilgileri yüklenirken bir hata oluştu.");
       toast.error("Ders programı yüklenirken bir hata oluştu.");
     } finally {

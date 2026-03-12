@@ -3,17 +3,29 @@ import logger from '../utils/logger';
 
 /**
  * Web Application Firewall (WAF) middleware.
- * Provides basic request filtering and IP blocking for when
- * a dedicated WAF (Cloudflare, AWS WAF) is not yet deployed.
+ * Uses Redis for shared state in multi-instance deployments,
+ * falls back to in-memory for development.
  */
 
-// In-memory blocked IPs (production should use Redis)
-const blockedIPs = new Set<string>();
-const suspiciousIPCounts = new Map<string, { count: number; firstSeen: number }>();
+// In-memory fallback stores
+const memoryBlockedIPs = new Set<string>();
+const memorySuspiciousIPCounts = new Map<string, { count: number; firstSeen: number }>();
 
 const SUSPICIOUS_THRESHOLD = 50; // requests with suspicious patterns
 const SUSPICIOUS_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 const BLOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+
+// Redis client reference (set via initWafRedis)
+let redisClient: any = null;
+
+/**
+ * Initialize WAF with Redis for distributed IP blocking.
+ * Call this after Redis is connected.
+ */
+export function initWafRedis(redis: any): void {
+  redisClient = redis;
+  logger.info('WAF: Redis initialized for distributed IP tracking');
+}
 
 // Suspicious patterns in request paths and query strings
 const SUSPICIOUS_PATTERNS = [
@@ -33,11 +45,6 @@ const SUSPICIOUS_PATTERNS = [
   /\.git\//,                   // Git directory probing
 ];
 
-// Suspicious headers
-const SUSPICIOUS_HEADERS = [
-  'x-forwarded-host',  // Host header injection
-];
-
 /**
  * Check if a string contains suspicious patterns.
  */
@@ -46,16 +53,43 @@ function hasSuspiciousPattern(input: string): boolean {
 }
 
 /**
+ * Check if IP is blocked (Redis first, then memory fallback).
+ */
+async function isIPBlocked(ip: string): Promise<boolean> {
+  if (redisClient) {
+    try {
+      const blocked = await redisClient.get(`waf:blocked:${ip}`);
+      return blocked === '1';
+    } catch {
+      // Fall through to memory
+    }
+  }
+  return memoryBlockedIPs.has(ip);
+}
+
+/**
  * WAF middleware - blocks suspicious requests.
  */
 export function wafMiddleware(req: Request, res: Response, next: NextFunction): void {
   const clientIP = req.ip || req.socket.remoteAddress || 'unknown';
 
-  // 1. Check if IP is blocked
-  if (blockedIPs.has(clientIP)) {
+  // 1. Check if IP is blocked (async with sync fallback)
+  const memBlocked = memoryBlockedIPs.has(clientIP);
+
+  if (memBlocked) {
     logger.warn('WAF: Blocked IP attempted access', { ip: clientIP, path: req.path });
     res.status(403).json({ error: 'Erişim engellendi' });
     return;
+  }
+
+  // Async Redis check (non-blocking for first request from IP)
+  if (redisClient) {
+    isIPBlocked(clientIP).then(blocked => {
+      if (blocked && !memoryBlockedIPs.has(clientIP)) {
+        // Sync memory with Redis for faster future checks
+        memoryBlockedIPs.add(clientIP);
+      }
+    }).catch(() => { /* ignore Redis errors */ });
   }
 
   // 2. Check request path for suspicious patterns
@@ -108,27 +142,44 @@ export function wafMiddleware(req: Request, res: Response, next: NextFunction): 
  */
 function trackSuspiciousActivity(ip: string, type: string, detail: string): void {
   const now = Date.now();
-  const entry = suspiciousIPCounts.get(ip);
+  const entry = memorySuspiciousIPCounts.get(ip);
 
   if (entry && (now - entry.firstSeen) < SUSPICIOUS_WINDOW_MS) {
     entry.count++;
     if (entry.count >= SUSPICIOUS_THRESHOLD) {
-      blockedIPs.add(ip);
+      // Block in memory
+      memoryBlockedIPs.add(ip);
       logger.error('WAF: IP auto-blocked due to suspicious activity', {
         ip,
         count: entry.count,
         lastType: type,
       });
 
-      // Auto-unblock after duration
+      // Block in Redis for distributed awareness
+      if (redisClient) {
+        const blockDurationSec = Math.floor(BLOCK_DURATION_MS / 1000);
+        redisClient.setex(`waf:blocked:${ip}`, blockDurationSec, '1').catch(() => {});
+      }
+
+      // Auto-unblock from memory after duration
       setTimeout(() => {
-        blockedIPs.delete(ip);
-        suspiciousIPCounts.delete(ip);
+        memoryBlockedIPs.delete(ip);
+        memorySuspiciousIPCounts.delete(ip);
         logger.info('WAF: IP auto-unblocked', { ip });
       }, BLOCK_DURATION_MS);
     }
   } else {
-    suspiciousIPCounts.set(ip, { count: 1, firstSeen: now });
+    memorySuspiciousIPCounts.set(ip, { count: 1, firstSeen: now });
+  }
+
+  // Track in Redis for distributed counting
+  if (redisClient) {
+    const key = `waf:suspicious:${ip}`;
+    redisClient.multi()
+      .incr(key)
+      .expire(key, Math.floor(SUSPICIOUS_WINDOW_MS / 1000))
+      .exec()
+      .catch(() => {});
   }
 }
 
@@ -136,12 +187,17 @@ function trackSuspiciousActivity(ip: string, type: string, detail: string): void
  * Manually block an IP address.
  */
 export function blockIP(ip: string, durationMs?: number): void {
-  blockedIPs.add(ip);
+  memoryBlockedIPs.add(ip);
   logger.info('WAF: IP manually blocked', { ip });
+
+  if (redisClient) {
+    const ttl = durationMs ? Math.floor(durationMs / 1000) : Math.floor(BLOCK_DURATION_MS / 1000);
+    redisClient.setex(`waf:blocked:${ip}`, ttl, '1').catch(() => {});
+  }
 
   if (durationMs) {
     setTimeout(() => {
-      blockedIPs.delete(ip);
+      memoryBlockedIPs.delete(ip);
       logger.info('WAF: IP auto-unblocked (manual block expired)', { ip });
     }, durationMs);
   }
@@ -151,9 +207,13 @@ export function blockIP(ip: string, durationMs?: number): void {
  * Manually unblock an IP address.
  */
 export function unblockIP(ip: string): void {
-  blockedIPs.delete(ip);
-  suspiciousIPCounts.delete(ip);
+  memoryBlockedIPs.delete(ip);
+  memorySuspiciousIPCounts.delete(ip);
   logger.info('WAF: IP manually unblocked', { ip });
+
+  if (redisClient) {
+    redisClient.del(`waf:blocked:${ip}`, `waf:suspicious:${ip}`).catch(() => {});
+  }
 }
 
 /**
@@ -161,12 +221,13 @@ export function unblockIP(ip: string): void {
  */
 export function getWafStatus() {
   return {
-    blockedIPs: Array.from(blockedIPs),
-    suspiciousIPs: Array.from(suspiciousIPCounts.entries()).map(([ip, data]) => ({
+    blockedIPs: Array.from(memoryBlockedIPs),
+    suspiciousIPs: Array.from(memorySuspiciousIPCounts.entries()).map(([ip, data]) => ({
       ip,
       count: data.count,
       firstSeen: new Date(data.firstSeen).toISOString(),
     })),
+    redisEnabled: !!redisClient,
   };
 }
 

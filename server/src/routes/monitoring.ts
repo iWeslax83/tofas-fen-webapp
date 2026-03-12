@@ -374,9 +374,9 @@ router.post('/waf/unblock', requireAuth, requireRole(['admin']), (req, res) => {
 });
 
 // Security alerts status
-router.get('/security', requireAuth, requireRole(['admin']), (_req, res) => {
+router.get('/security', requireAuth, requireRole(['admin']), async (_req, res) => {
   try {
-    const status = SecurityAlertService.getSecurityStatus();
+    const status = await SecurityAlertService.getSecurityStatus();
     res.json({ success: true, ...status });
   } catch (error) {
     logger.error('Security status failed', { error: error instanceof Error ? error.message : error });

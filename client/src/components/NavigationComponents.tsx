@@ -514,8 +514,7 @@ export const EnhancedTopNavigation: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Implement search functionality
-    console.log('Searching for:', searchQuery);
+    // TODO: Implement search functionality
   };
 
   const toggleSearch = () => {

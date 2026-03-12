@@ -20,7 +20,7 @@ export const useRenderPerformance = (componentName: string) => {
     return () => {
       const renderTime = performance.now() - renderStart.current;
 
-      if (renderTime > 16) { // More than one frame (60fps)
+      if (import.meta.env.DEV && renderTime > 16) { // More than one frame (60fps)
         console.warn(`[Performance] ${componentName} render took ${renderTime.toFixed(2)}ms (render #${renderCount.current})`);
       }
     };
@@ -113,10 +113,8 @@ export const usePerformanceMetrics = () => {
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      console.log(`[Performance] ${name} completed in ${duration.toFixed(2)}ms`);
-
-      // Log slow operations
-      if (duration > 1000) {
+      // Log slow operations in development
+      if (import.meta.env.DEV && duration > 1000) {
         console.warn(`[Performance] Slow operation detected: ${name} took ${duration.toFixed(2)}ms`);
       }
 
@@ -145,7 +143,7 @@ export const usePerformanceMetrics = () => {
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      if (duration > 16) { // More than one frame
+      if (import.meta.env.DEV && duration > 16) { // More than one frame
         console.warn(`[Performance] Slow sync operation: ${name} took ${duration.toFixed(2)}ms`);
       }
 
