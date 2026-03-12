@@ -12,7 +12,7 @@ export const registerServiceWorker = async (): Promise<void> => {
   if ('serviceWorker' in navigator) {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('Service Worker registered successfully:', registration);
+      // Service Worker registered successfully
       
       // Handle updates
       registration.addEventListener('updatefound', () => {
@@ -55,11 +55,7 @@ export const showInstallPrompt = () => {
       installButton.addEventListener('click', async () => {
         deferredPrompt?.prompt();
         const { outcome } = await deferredPrompt?.userChoice || { outcome: 'dismissed' };
-        if (outcome === 'accepted') {
-          console.log('User accepted the install prompt');
-        } else {
-          console.log('User dismissed the install prompt');
-        }
+        // Install prompt handled
         deferredPrompt = null;
         installButton.style.display = 'none';
       });
@@ -196,9 +192,7 @@ export const usePWAInstall = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        console.log('App installed successfully');
-      }
+      // App install handled
       deferredPrompt = null;
       setCanInstall(false);
     }

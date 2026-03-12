@@ -9,15 +9,9 @@ const ParentPanel: React.FC = () => {
 
   const handleAdditionalDataLoad = async (currentUser: any) => {
     try {
-      // Try to fetch children data, but don't fail if it doesn't work
-      try {
-        const childrenResponse = await UserService.getChildren(currentUser.id);
-        console.log('[ParentPanel] Children data loaded:', childrenResponse.data);
-      } catch (childrenError) {
-        console.warn('[ParentPanel] Could not fetch children data:', childrenError);
-      }
-    } catch (error) {
-      console.error('[ParentPanel] Error loading additional data:', error);
+      await UserService.getChildren(currentUser.id);
+    } catch {
+      // Children data fetch is non-critical, silently ignore
     }
   };
 

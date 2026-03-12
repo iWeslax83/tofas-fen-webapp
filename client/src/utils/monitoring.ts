@@ -31,9 +31,7 @@ export function initializeSentry() {
       environment: process.env.NODE_ENV,
       beforeSend(event) {
         // Filter out certain errors or add custom context
-        if (event.exception) {
-          console.log('Sending error to Sentry:', event.exception);
-        }
+        // Sentry event filtering
         return event;
       },
     });
@@ -94,8 +92,6 @@ export class PerformanceMonitor {
         for (const entry of list.getEntries()) {
           if (entry.name === 'first-contentful-paint') {
             const fcp = entry.startTime;
-            console.log('First Contentful Paint:', fcp, 'ms');
-            
             if (process.env.NODE_ENV === 'production') {
               this.sendMetricsToService({
                 type: 'fcp',
@@ -115,8 +111,6 @@ export class PerformanceMonitor {
       const lcpObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           const lcp = entry.startTime;
-          console.log('Largest Contentful Paint:', lcp, 'ms');
-          
           if (process.env.NODE_ENV === 'production') {
             this.sendMetricsToService({
               type: 'lcp',
@@ -145,8 +139,6 @@ export class PerformanceMonitor {
       
       // Report CLS after page unload
       window.addEventListener('beforeunload', () => {
-        console.log('Cumulative Layout Shift:', clsValue);
-        
         if (process.env.NODE_ENV === 'production') {
           this.sendMetricsToService({
             type: 'cls',
@@ -254,11 +246,8 @@ export class MemoryMonitor {
       const totalMB = Math.round(memory.totalJSHeapSize / 1024 / 1024);
       const limitMB = Math.round(memory.jsHeapSizeLimit / 1024 / 1024);
 
-      console.log(`Memory Usage: ${usedMB}MB / ${totalMB}MB (Limit: ${limitMB}MB)`);
-
       // Warning if memory usage is high
       if (usedMB > limitMB * 0.8) {
-        console.warn('High memory usage detected!');
         
         if (process.env.NODE_ENV === 'production') {
           Sentry.captureMessage('High memory usage detected', 'warning');
@@ -287,12 +276,6 @@ export class NetworkMonitor {
           
           // Log slow requests
           if (resourceEntry.duration > 3000) {
-            console.warn('Slow network request detected:', {
-              name: resourceEntry.name,
-              duration: resourceEntry.duration,
-              size: resourceEntry.transferSize,
-            });
-
             if (process.env.NODE_ENV === 'production') {
               Sentry.captureMessage('Slow network request detected', 'warning');
             }
@@ -326,5 +309,4 @@ export function initializeMonitoring(): void {
   // Track initial page view
   analytics.trackPageView(window.location.pathname);
 
-  console.log('Frontend monitoring initialized');
 }

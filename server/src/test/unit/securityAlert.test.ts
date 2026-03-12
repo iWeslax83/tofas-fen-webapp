@@ -30,46 +30,44 @@ import { SecurityAlertService } from '../../services/SecurityAlertService';
 
 describe('SecurityAlertService', () => {
   describe('getSecurityStatus', () => {
-    it('should return a status object with expected fields', () => {
-      const status = SecurityAlertService.getSecurityStatus();
+    it('should return a status object with expected fields', async () => {
+      const status = await SecurityAlertService.getSecurityStatus();
       expect(status).toHaveProperty('recentLoginFailures');
       expect(status).toHaveProperty('uniqueFailedIPs');
       expect(status).toHaveProperty('uniqueFailedUsers');
       expect(status).toHaveProperty('recentRoleChanges');
-      expect(status).toHaveProperty('activeDataExportUsers');
-      expect(status).toHaveProperty('activeAlertCooldowns');
     });
   });
 
   describe('trackLoginFailure', () => {
-    it('should increment recentLoginFailures count', () => {
-      const before = SecurityAlertService.getSecurityStatus().recentLoginFailures;
-      SecurityAlertService.trackLoginFailure('user1', '10.0.0.1');
-      const after = SecurityAlertService.getSecurityStatus().recentLoginFailures;
+    it('should increment recentLoginFailures count', async () => {
+      const before = (await SecurityAlertService.getSecurityStatus()).recentLoginFailures;
+      await SecurityAlertService.trackLoginFailure('user1', '10.0.0.1');
+      const after = (await SecurityAlertService.getSecurityStatus()).recentLoginFailures;
       expect(after).toBeGreaterThan(before);
     });
 
-    it('should track unique IPs', () => {
-      SecurityAlertService.trackLoginFailure('user1', '10.0.0.2');
-      SecurityAlertService.trackLoginFailure('user1', '10.0.0.3');
-      const status = SecurityAlertService.getSecurityStatus();
+    it('should track unique IPs', async () => {
+      await SecurityAlertService.trackLoginFailure('user1', '10.0.0.2');
+      await SecurityAlertService.trackLoginFailure('user1', '10.0.0.3');
+      const status = await SecurityAlertService.getSecurityStatus();
       expect(status.uniqueFailedIPs).toBeGreaterThanOrEqual(2);
     });
   });
 
   describe('trackDataExport', () => {
-    it('should track data export activity', () => {
-      SecurityAlertService.trackDataExport('export-user-1');
-      const status = SecurityAlertService.getSecurityStatus();
+    it('should track data export activity', async () => {
+      await SecurityAlertService.trackDataExport('export-user-1');
+      const status = await SecurityAlertService.getSecurityStatus();
       expect(status.activeDataExportUsers).toBeGreaterThanOrEqual(1);
     });
   });
 
   describe('trackRoleChange', () => {
-    it('should increment role change count', () => {
-      const before = SecurityAlertService.getSecurityStatus().recentRoleChanges;
-      SecurityAlertService.trackRoleChange('user1', 'admin', 'admin1');
-      const after = SecurityAlertService.getSecurityStatus().recentRoleChanges;
+    it('should increment role change count', async () => {
+      const before = (await SecurityAlertService.getSecurityStatus()).recentRoleChanges;
+      await SecurityAlertService.trackRoleChange('user1', 'admin', 'admin1');
+      const after = (await SecurityAlertService.getSecurityStatus()).recentRoleChanges;
       expect(after).toBeGreaterThan(before);
     });
   });

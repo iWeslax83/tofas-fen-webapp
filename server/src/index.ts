@@ -30,7 +30,9 @@ import {
   sanitizeInput
 } from './middleware/security';
 import { globalErrorHandler } from './middleware/errorHandler';
-import { wafMiddleware, cloudflareHeaders } from './middleware/waf';
+import { wafMiddleware, cloudflareHeaders, initWafRedis } from './middleware/waf';
+import { initSecurityAlertRedis } from './services/SecurityAlertService';
+import { redis as cacheRedis, isRedisConfigured } from './middleware/cache';
 
 // Monitoring and logging imports
 import logger, { morganStream } from './utils/logger';
@@ -247,6 +249,12 @@ if (process.env.NODE_ENV !== 'test') {
         logger.info(`Monitoring: http://localhost:${PORT}/status`);
         logger.info(`Swagger: http://localhost:${PORT}/api-docs`);
         logger.info(`Health: http://localhost:${PORT}/health`);
+
+        // Initialize Redis-backed services (WAF, SecurityAlerts)
+        if (isRedisConfigured) {
+          initWafRedis(cacheRedis);
+          initSecurityAlertRedis(cacheRedis);
+        }
 
         // Initialize WebSocket for real-time notifications
         initializeWebSocket(server);
