@@ -1,5 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Settings, LogOut, Bell, BellOff, Smartphone, Mail, Save, ShieldCheck, Send, Sun, Moon, Monitor, Shield } from 'lucide-react';
+import {
+  Settings,
+  LogOut,
+  Bell,
+  BellOff,
+  Smartphone,
+  Mail,
+  Save,
+  ShieldCheck,
+  Send,
+  Sun,
+  Moon,
+  Monitor,
+  Shield,
+} from 'lucide-react';
 import axios from 'axios';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useUpdateUser } from '../../stores/authStore';
@@ -48,7 +62,7 @@ const roleLabels: Record<string, string> = {
   student: 'Öğrenci',
   parent: 'Veli',
   hizmetli: 'Hizmetli',
-  ziyaretci: 'Ziyaretci',
+  ziyaretci: 'Ziyaretçi',
 };
 
 export default function SettingsPage() {
@@ -93,9 +107,8 @@ export default function SettingsPage() {
       await SecureAPI.post(API_ENDPOINTS.AUTH.TOGGLE_2FA, { enabled: newValue });
       setTwoFactorEnabled(newValue);
       updateUser({ twoFactorEnabled: newValue });
-      toast.success(newValue
-        ? 'İki faktörlü doğrulama aktif edildi'
-        : 'İki faktörlü doğrulama deaktif edildi'
+      toast.success(
+        newValue ? 'İki faktörlü doğrulama aktif edildi' : 'İki faktörlü doğrulama deaktif edildi',
       );
     } catch (error: unknown) {
       toast.error(getApiErrorMessage(error, 'İşlem başarısız'));
@@ -145,7 +158,9 @@ export default function SettingsPage() {
         }
 
         // Get VAPID public key
-        const { data: vapidData } = await SecureAPI.get<{ data: { publicKey?: string } }>(API_ENDPOINTS.PUSH.VAPID_PUBLIC_KEY);
+        const { data: vapidData } = await SecureAPI.get<{ data: { publicKey?: string } }>(
+          API_ENDPOINTS.PUSH.VAPID_PUBLIC_KEY,
+        );
         const vapidPublicKey = vapidData?.publicKey;
         if (!vapidPublicKey) {
           toast.error('Push bildirimleri sunucuda yapılandırılmamış');
@@ -267,9 +282,9 @@ export default function SettingsPage() {
         <div className="page-header">
           <div className="page-header-content">
             <div className="page-title-section">
-            <Settings className="page-icon" />
-            <h1 className="page-title-main">Ayarlar</h1>
-          </div>
+              <Settings className="page-icon" />
+              <h1 className="page-title-main">Ayarlar</h1>
+            </div>
           </div>
         </div>
 
@@ -332,7 +347,9 @@ export default function SettingsPage() {
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                         placeholder="000000"
-                        onKeyDown={(e) => { if (e.key === 'Enter') handleVerifyCode(); }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleVerifyCode();
+                        }}
                       />
                       <button
                         className="btn-verify-code"
@@ -364,7 +381,9 @@ export default function SettingsPage() {
             {user?.sinif && user?.sube && (
               <div className="profile-info-item">
                 <span className="profile-info-label">Sınıf / Şube</span>
-                <span className="profile-info-value">{user.sinif} / {user.sube}</span>
+                <span className="profile-info-value">
+                  {user.sinif} / {user.sube}
+                </span>
               </div>
             )}
             <div className="profile-info-item">
@@ -381,15 +400,18 @@ export default function SettingsPage() {
             <div className="settings-row">
               <div className="settings-row-info">
                 <div className="settings-row-label-group">
-                  <Shield size={18} className={`settings-row-icon${twoFactorEnabled ? ' active' : ''}`} />
+                  <Shield
+                    size={18}
+                    className={`settings-row-icon${twoFactorEnabled ? ' active' : ''}`}
+                  />
                   <span className="settings-row-label">İki Faktörlü Doğrulama</span>
                 </div>
                 <span className="settings-row-desc">
                   {!user?.email
                     ? 'İki faktörlü doğrulama için bir e-posta adresi eklemeniz gerekiyor.'
                     : !user?.emailVerified
-                    ? 'İki faktörlü doğrulama için e-posta adresinizi doğrulamanız gerekiyor.'
-                    : 'Giriş yaparken e-posta adresinize gönderilen bir kod ile ek güvenlik sağlar.'}
+                      ? 'İki faktörlü doğrulama için e-posta adresinizi doğrulamanız gerekiyor.'
+                      : 'Giriş yaparken e-posta adresinize gönderilen bir kod ile ek güvenlik sağlar.'}
                 </span>
               </div>
               <label className="toggle-switch">
@@ -399,7 +421,9 @@ export default function SettingsPage() {
                   onChange={handleTwoFactorToggle}
                   disabled={!canEnable2FA || twoFactorLoading}
                 />
-                <span className={`toggle-slider${!canEnable2FA || twoFactorLoading ? ' disabled' : ''}`} />
+                <span
+                  className={`toggle-slider${!canEnable2FA || twoFactorLoading ? ' disabled' : ''}`}
+                />
               </label>
             </div>
           </section>
@@ -471,7 +495,10 @@ export default function SettingsPage() {
             <div className="settings-row">
               <div className="settings-row-info">
                 <div className="settings-row-label-group">
-                  <Smartphone size={18} className={`settings-row-icon${pushEnabled ? ' active' : ''}`} />
+                  <Smartphone
+                    size={18}
+                    className={`settings-row-icon${pushEnabled ? ' active' : ''}`}
+                  />
                   <span className="settings-row-label">Push Bildirimleri</span>
                 </div>
                 <span className="settings-row-desc">
@@ -485,7 +512,9 @@ export default function SettingsPage() {
                   onChange={handlePushToggle}
                   disabled={pushLoading || permissionDenied}
                 />
-                <span className={`toggle-slider${pushLoading || permissionDenied ? ' disabled' : ''}`} />
+                <span
+                  className={`toggle-slider${pushLoading || permissionDenied ? ' disabled' : ''}`}
+                />
               </label>
             </div>
           </section>

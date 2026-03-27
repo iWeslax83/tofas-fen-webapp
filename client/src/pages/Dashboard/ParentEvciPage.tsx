@@ -1,5 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Home, Calendar, MapPin, User, RefreshCw, AlertCircle, CheckCircle, XCircle, Shield, Clock } from 'lucide-react';
+import {
+  Home,
+  Calendar,
+  MapPin,
+  User,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Shield,
+  Clock,
+} from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { EvciService } from '../../utils/apiService';
@@ -33,7 +44,7 @@ interface Student {
 }
 
 export default function ParentEvciPage() {
-  const { user: authUser } = useAuth(["parent"]);
+  const { user: authUser } = useAuth(['parent']);
 
   const [children, setChildren] = useState<Student[]>([]);
   const [requests, setRequests] = useState<EvciTalep[]>([]);
@@ -107,11 +118,17 @@ export default function ParentEvciPage() {
         return;
       }
       // Local state güncelle
-      setRequests(prev => prev.map(r =>
-        r._id === id
-          ? { ...r, parentApproval: 'approved' as const, parentApprovalAt: new Date().toISOString() }
-          : r
-      ));
+      setRequests((prev) =>
+        prev.map((r) =>
+          r._id === id
+            ? {
+                ...r,
+                parentApproval: 'approved' as const,
+                parentApprovalAt: new Date().toISOString(),
+              }
+            : r,
+        ),
+      );
       toast.success('Evci talebi onaylandı');
     } catch (err) {
       console.error('Error approving request:', err);
@@ -129,16 +146,25 @@ export default function ParentEvciPage() {
     if (!rejectingId) return;
 
     try {
-      const { error: apiError } = await EvciService.rejectEvciRequest(rejectingId, rejectReason || undefined);
+      const { error: apiError } = await EvciService.rejectEvciRequest(
+        rejectingId,
+        rejectReason || undefined,
+      );
       if (apiError) {
         toast.error('Reddetme hatası: ' + apiError);
         return;
       }
-      setRequests(prev => prev.map(r =>
-        r._id === rejectingId
-          ? { ...r, parentApproval: 'rejected' as const, parentApprovalAt: new Date().toISOString() }
-          : r
-      ));
+      setRequests((prev) =>
+        prev.map((r) =>
+          r._id === rejectingId
+            ? {
+                ...r,
+                parentApproval: 'rejected' as const,
+                parentApprovalAt: new Date().toISOString(),
+              }
+            : r,
+        ),
+      );
       toast.success('Evci talebi reddedildi');
       setRejectModalOpen(false);
       setRejectingId(null);
@@ -149,19 +175,23 @@ export default function ParentEvciPage() {
     }
   };
 
-  const filteredRequests = selectedChild === 'all'
-    ? requests
-    : requests.filter(r => r.studentId === selectedChild);
+  const filteredRequests =
+    selectedChild === 'all' ? requests : requests.filter((r) => r.studentId === selectedChild);
 
   const formatDate = (dateString: string) => {
+    // startDate/endDate may contain day names like "Perşembe 16:00" (not ISO dates)
+    const parsed = new Date(dateString);
+    if (isNaN(parsed.getTime())) {
+      return dateString; // Zaten okunabilir format (ör. "Perşembe 16:00")
+    }
     const options: Intl.DateTimeFormatOptions = {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     };
-    return new Date(dateString).toLocaleString('tr-TR', options);
+    return parsed.toLocaleString('tr-TR', options);
   };
 
   const getParentApprovalBadge = (approval: string) => {
@@ -176,10 +206,7 @@ export default function ParentEvciPage() {
     }
   };
 
-  const breadcrumb = [
-    { label: 'Ana Sayfa', path: '/parent' },
-    { label: 'Evci Çıkış İşlemleri' }
-  ];
+  const breadcrumb = [{ label: 'Ana Sayfa', path: '/parent' }, { label: 'Evci Çıkış İşlemleri' }];
 
   if (isLoading) {
     return (
@@ -202,7 +229,9 @@ export default function ParentEvciPage() {
             <AlertCircle className="error-icon" />
             <h2>Hata Oluştu</h2>
             <p>{error}</p>
-            <button onClick={handleRefresh} className="btn btn-primary">Tekrar Dene</button>
+            <button onClick={handleRefresh} className="btn btn-primary">
+              Tekrar Dene
+            </button>
           </div>
         </div>
       </ModernDashboardLayout>
@@ -233,7 +262,9 @@ export default function ParentEvciPage() {
         <div className="content-card">
           <div className="card-actions">
             <div className="child-selector">
-              <label htmlFor="childSelect" className="selector-label">Öğrenci Seçin:</label>
+              <label htmlFor="childSelect" className="selector-label">
+                Öğrenci Seçin:
+              </label>
               <select
                 id="childSelect"
                 value={selectedChild}
@@ -269,7 +300,9 @@ export default function ParentEvciPage() {
                           {request.willGo ? request.destination || 'Evci' : 'Evciye Gitmeyecek'}
                         </h3>
                         <div className="request-badges">
-                          <span className={`status-badge ${request.willGo ? 'going' : 'not-going'}`}>
+                          <span
+                            className={`status-badge ${request.willGo ? 'going' : 'not-going'}`}
+                          >
                             {request.willGo ? 'Gidecek' : 'Gitmeyecek'}
                           </span>
                           <span className={`parent-approval-badge ${badge.className}`}>
@@ -341,7 +374,8 @@ export default function ParentEvciPage() {
                         <div className="request-footer">
                           <span className="approval-date">
                             <Shield size={14} />
-                            {request.parentApproval === 'approved' ? 'Onay' : 'Red'} tarihi: {formatDate(request.parentApprovalAt)}
+                            {request.parentApproval === 'approved' ? 'Onay' : 'Red'} tarihi:{' '}
+                            {formatDate(request.parentApprovalAt)}
                           </span>
                         </div>
                       )}
@@ -379,16 +413,10 @@ export default function ParentEvciPage() {
                   placeholder="Red sebebi (isteğe bağlı)"
                 />
                 <div className="form-actions reject-modal-actions">
-                  <button
-                    onClick={() => setRejectModalOpen(false)}
-                    className="btn btn-secondary"
-                  >
+                  <button onClick={() => setRejectModalOpen(false)} className="btn btn-secondary">
                     İptal
                   </button>
-                  <button
-                    onClick={confirmReject}
-                    className="btn btn-reject"
-                  >
+                  <button onClick={confirmReject} className="btn btn-reject">
                     <XCircle size={16} />
                     Reddet
                   </button>

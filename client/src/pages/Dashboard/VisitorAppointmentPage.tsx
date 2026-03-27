@@ -16,10 +16,10 @@ interface Appointment {
 
 const statusLabels: Record<string, string> = {
   pending: 'Beklemede',
-  approved: 'Onaylandi',
+  approved: 'Onaylandı',
   rejected: 'Reddedildi',
-  completed: 'Tamamlandi',
-  cancelled: 'Iptal Edildi'
+  completed: 'Tamamlandı',
+  cancelled: 'İptal Edildi',
 };
 
 const statusColors: Record<string, string> = {
@@ -27,7 +27,7 @@ const statusColors: Record<string, string> = {
   approved: '#10b981',
   rejected: '#ef4444',
   completed: '#6b7280',
-  cancelled: '#9ca3af'
+  cancelled: '#9ca3af',
 };
 
 export default function VisitorAppointmentPage() {
@@ -51,7 +51,7 @@ export default function VisitorAppointmentPage() {
       const res = await apiClient.get('/api/appointments/my');
       setAppointments(res.data as Appointment[]);
     } catch {
-      toast.error('Randevular yuklenirken hata olustu');
+      toast.error('Randevular yüklenirken hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export default function VisitorAppointmentPage() {
       setAvailableSlots((res.data as any).availableSlots || []);
     } catch {
       setAvailableSlots([]);
-      toast.error('Musait saatler alinirken hata olustu');
+      toast.error('Müsait saatler alınırken hata oluştu');
     } finally {
       setLoadingSlots(false);
     }
@@ -84,14 +84,14 @@ export default function VisitorAppointmentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!date || !timeSlot || !purpose) {
-      setErrorMsg('Lutfen tum gerekli alanlari doldurun');
+      setErrorMsg('Lütfen tüm gerekli alanları doldurun');
       return;
     }
     setSubmitting(true);
     setErrorMsg('');
     try {
       await apiClient.post('/api/appointments', { date, timeSlot, purpose, notes });
-      setSuccessMsg('Randevu talebiniz basariyla olusturuldu!');
+      setSuccessMsg('Randevu talebiniz başarıyla oluşturuldu!');
       setShowForm(false);
       setDate('');
       setTimeSlot('');
@@ -100,7 +100,7 @@ export default function VisitorAppointmentPage() {
       await fetchAppointments();
       setTimeout(() => setSuccessMsg(''), 5000);
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.error || 'Randevu olusturulurken hata olustu');
+      setErrorMsg(err?.response?.data?.error || 'Randevu oluşturulurken hata oluştu');
     } finally {
       setSubmitting(false);
     }
@@ -113,7 +113,7 @@ export default function VisitorAppointmentPage() {
       toast.success('Randevu iptal edildi');
       await fetchAppointments();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Randevu iptal edilirken hata olustu');
+      toast.error(err?.response?.data?.error || 'Randevu iptal edilirken hata oluştu');
     } finally {
       setCancelling(null);
     }
@@ -127,69 +127,156 @@ export default function VisitorAppointmentPage() {
   return (
     <ModernDashboardLayout pageTitle="Randevu Al">
       <div style={{ padding: '24px', maxWidth: 800, margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 24,
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <CalendarDays size={28} />
             <h1 style={{ margin: 0, fontSize: 24 }}>Randevu Al</h1>
           </div>
-          <button onClick={() => setShowForm(!showForm)} style={{
-            padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
-            background: '#3b82f6', color: '#fff', fontWeight: 600, fontSize: 14
-          }}>
-            {showForm ? 'Iptal' : 'Yeni Randevu'}
+          <button
+            onClick={() => setShowForm(!showForm)}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 8,
+              border: 'none',
+              cursor: 'pointer',
+              background: '#3b82f6',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: 14,
+            }}
+          >
+            {showForm ? 'İptal' : 'Yeni Randevu'}
           </button>
         </div>
 
         {successMsg && (
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '12px 16px', marginBottom: 16, color: '#166534', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div
+            style={{
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: 8,
+              padding: '12px 16px',
+              marginBottom: 16,
+              color: '#166534',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
             <Check size={16} /> {successMsg}
           </div>
         )}
 
         {errorMsg && (
-          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '12px 16px', marginBottom: 16, color: '#991b1b', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div
+            style={{
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: 8,
+              padding: '12px 16px',
+              marginBottom: 16,
+              color: '#991b1b',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
             <AlertCircle size={16} /> {errorMsg}
           </div>
         )}
 
         {/* New Appointment Form */}
         {showForm && (
-          <form onSubmit={handleSubmit} style={{
-            background: '#fff', borderRadius: 12, padding: 24, marginBottom: 24,
-            border: '1px solid #f1f5f9', boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
-          }}>
+          <form
+            onSubmit={handleSubmit}
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              padding: 24,
+              marginBottom: 24,
+              border: '1px solid #f1f5f9',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+            }}
+          >
             <h2 style={{ margin: '0 0 20px', fontSize: 18 }}>Yeni Randevu Talebi</h2>
 
             <div style={{ display: 'grid', gap: 16 }}>
               <div>
-                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 600, color: '#374151' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: '#374151',
+                  }}
+                >
                   Tarih *
                 </label>
-                <input type="date" value={date} onChange={handleDateChange} min={minDate}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 14, boxSizing: 'border-box' }} />
+                <input
+                  type="date"
+                  value={date}
+                  onChange={handleDateChange}
+                  min={minDate}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    border: '1px solid #e5e7eb',
+                    fontSize: 14,
+                    boxSizing: 'border-box',
+                  }}
+                />
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 600, color: '#374151' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: '#374151',
+                  }}
+                >
                   Saat Dilimi *
                 </label>
                 {!date ? (
-                  <p style={{ color: '#9ca3af', fontSize: 13 }}>Once bir tarih secin</p>
+                  <p style={{ color: '#9ca3af', fontSize: 13 }}>Önce bir tarih seçin</p>
                 ) : loadingSlots ? (
-                  <p style={{ color: '#9ca3af', fontSize: 13 }}>Musait saatler yukleniyor...</p>
+                  <p style={{ color: '#9ca3af', fontSize: 13 }}>Müsait saatler yükleniyor...</p>
                 ) : availableSlots.length === 0 ? (
-                  <p style={{ color: '#ef4444', fontSize: 13 }}>Bu tarihte musait saat bulunmuyor</p>
+                  <p style={{ color: '#ef4444', fontSize: 13 }}>
+                    Bu tarihte müsait saat bulunmuyor
+                  </p>
                 ) : (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {availableSlots.map(slot => (
-                      <button type="button" key={slot} onClick={() => setTimeSlot(slot)}
+                    {availableSlots.map((slot) => (
+                      <button
+                        type="button"
+                        key={slot}
+                        onClick={() => setTimeSlot(slot)}
                         style={{
-                          padding: '8px 14px', borderRadius: 8, border: '1px solid',
-                          cursor: 'pointer', fontSize: 13, fontWeight: 500,
+                          padding: '8px 14px',
+                          borderRadius: 8,
+                          border: '1px solid',
+                          cursor: 'pointer',
+                          fontSize: 13,
+                          fontWeight: 500,
                           borderColor: timeSlot === slot ? '#3b82f6' : '#e5e7eb',
                           background: timeSlot === slot ? '#eff6ff' : '#fff',
-                          color: timeSlot === slot ? '#3b82f6' : '#374151'
-                        }}>
+                          color: timeSlot === slot ? '#3b82f6' : '#374151',
+                        }}
+                      >
                         <Clock size={12} style={{ marginRight: 4 }} />
                         {slot}
                       </button>
@@ -199,61 +286,123 @@ export default function VisitorAppointmentPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 600, color: '#374151' }}>
-                  Randevu Amaci *
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: '#374151',
+                  }}
+                >
+                  Randevu Amacı *
                 </label>
-                <select value={purpose} onChange={e => setPurpose(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 14, boxSizing: 'border-box' }}>
-                  <option value="">Secin...</option>
-                  <option value="Okul Tanitimi">Okul Tanitimi</option>
-                  <option value="Kayit Islemi">Kayit Islemi</option>
+                <select
+                  value={purpose}
+                  onChange={(e) => setPurpose(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    border: '1px solid #e5e7eb',
+                    fontSize: 14,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <option value="">Seçin...</option>
+                  <option value="Okul Tanıtımı">Okul Tanıtımı</option>
+                  <option value="Kayıt İşlemi">Kayıt İşlemi</option>
                   <option value="Bilgi Alma">Bilgi Alma</option>
-                  <option value="Mulakat">Mulakat</option>
-                  <option value="Diger">Diger</option>
+                  <option value="Mülakat">Mülakat</option>
+                  <option value="Diğer">Diğer</option>
                 </select>
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 600, color: '#374151' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: '#374151',
+                  }}
+                >
                   Ek Notlar
                 </label>
-                <textarea value={notes} onChange={e => setNotes(e.target.value)}
-                  placeholder="Eklemek istediginiz notlar..."
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Eklemek istediğiniz notlar..."
                   rows={3}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }} />
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    border: '1px solid #e5e7eb',
+                    fontSize: 14,
+                    resize: 'vertical',
+                    boxSizing: 'border-box',
+                  }}
+                />
               </div>
 
-              <button type="submit" disabled={submitting || !date || !timeSlot || !purpose}
+              <button
+                type="submit"
+                disabled={submitting || !date || !timeSlot || !purpose}
                 style={{
-                  padding: '12px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                  background: (date && timeSlot && purpose) ? '#3b82f6' : '#e5e7eb',
-                  color: (date && timeSlot && purpose) ? '#fff' : '#9ca3af',
-                  fontWeight: 600, fontSize: 14
-                }}>
-                {submitting ? 'Gonderiliyor...' : 'Randevu Talebi Olustur'}
+                  padding: '12px 20px',
+                  borderRadius: 8,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: date && timeSlot && purpose ? '#3b82f6' : '#e5e7eb',
+                  color: date && timeSlot && purpose ? '#fff' : '#9ca3af',
+                  fontWeight: 600,
+                  fontSize: 14,
+                }}
+              >
+                {submitting ? 'Gönderiliyor...' : 'Randevu Talebi Oluştur'}
               </button>
             </div>
           </form>
         )}
 
         {/* Existing Appointments */}
-        <h2 style={{ fontSize: 18, marginBottom: 16 }}>Randevularim</h2>
+        <h2 style={{ fontSize: 18, marginBottom: 16 }}>Randevularım</h2>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>Yukleniyor...</div>
+          <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>Yükleniyor...</div>
         ) : appointments.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af', background: '#fff', borderRadius: 12, border: '1px solid #f1f5f9' }}>
+          <div
+            style={{
+              textAlign: 'center',
+              padding: 40,
+              color: '#9ca3af',
+              background: '#fff',
+              borderRadius: 12,
+              border: '1px solid #f1f5f9',
+            }}
+          >
             <CalendarDays size={40} style={{ marginBottom: 8, opacity: 0.3 }} />
-            <p>Henuz randevunuz bulunmuyor</p>
+            <p>Henüz randevunuz bulunmuyor</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
-            {appointments.map(apt => (
-              <div key={apt._id} style={{
-                background: '#fff', borderRadius: 12, padding: 16,
-                border: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between',
-                alignItems: 'center', flexWrap: 'wrap', gap: 12
-              }}>
+            {appointments.map((apt) => (
+              <div
+                key={apt._id}
+                style={{
+                  background: '#fff',
+                  borderRadius: 12,
+                  padding: 16,
+                  border: '1px solid #f1f5f9',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
                 <div>
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 4 }}>
                     <CalendarDays size={16} style={{ color: '#6b7280' }} />
@@ -261,22 +410,48 @@ export default function VisitorAppointmentPage() {
                       {new Date(apt.date).toLocaleDateString('tr-TR')} - {apt.timeSlot}
                     </span>
                   </div>
-                  <div style={{ fontSize: 14, color: '#374151', marginLeft: 28 }}>{apt.purpose}</div>
-                  {apt.notes && <div style={{ fontSize: 13, color: '#9ca3af', marginLeft: 28 }}>{apt.notes}</div>}
+                  <div style={{ fontSize: 14, color: '#374151', marginLeft: 28 }}>
+                    {apt.purpose}
+                  </div>
+                  {apt.notes && (
+                    <div style={{ fontSize: 13, color: '#9ca3af', marginLeft: 28 }}>
+                      {apt.notes}
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{
-                    padding: '4px 10px', borderRadius: 6,
-                    background: `${statusColors[apt.status] || '#6b7280'}15`,
-                    color: statusColors[apt.status] || '#6b7280',
-                    fontSize: 12, fontWeight: 600
-                  }}>
+                  <span
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 6,
+                      background: `${statusColors[apt.status] || '#6b7280'}15`,
+                      color: statusColors[apt.status] || '#6b7280',
+                      fontSize: 12,
+                      fontWeight: 600,
+                    }}
+                  >
                     {statusLabels[apt.status] || apt.status}
                   </span>
                   {apt.status === 'pending' && (
-                    <button onClick={() => cancelAppointment(apt._id)} disabled={cancelling === apt._id}
-                      style={{ padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: '#fef2f2', color: '#ef4444', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <XCircle size={12} /> {cancelling === apt._id ? 'Iptal ediliyor...' : 'Iptal Et'}
+                    <button
+                      onClick={() => cancelAppointment(apt._id)}
+                      disabled={cancelling === apt._id}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 6,
+                        border: 'none',
+                        cursor: 'pointer',
+                        background: '#fef2f2',
+                        color: '#ef4444',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <XCircle size={12} />{' '}
+                      {cancelling === apt._id ? 'İptal ediliyor...' : 'Iptal Et'}
                     </button>
                   )}
                 </div>

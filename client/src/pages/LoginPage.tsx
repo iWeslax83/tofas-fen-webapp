@@ -1,7 +1,14 @@
 // src/pages/LoginPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuthStore, useAuthActions, useUser, useRequires2FA, useTwoFactorUser, useTwoFactorExpiresAt } from '../stores/authStore';
+import {
+  useAuthStore,
+  useAuthActions,
+  useUser,
+  useRequires2FA,
+  useTwoFactorUser,
+  useTwoFactorExpiresAt,
+} from '../stores/authStore';
 import { Eye, EyeOff, Lock, User, ShieldCheck, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { AppError } from '../utils/AppError';
@@ -57,9 +64,10 @@ export default function LoginPage() {
       toast.success('Yeni doğrulama kodu gönderildi');
       setTwoFactorCode('');
     } catch (err: unknown) {
-      const msg = (err as any)?.response?.data?.error?.message
-        || (err as any)?.response?.data?.message
-        || (err instanceof Error ? err.message : 'Kod gönderilemedi');
+      const msg =
+        (err as any)?.response?.data?.error?.message ||
+        (err as any)?.response?.data?.message ||
+        (err instanceof Error ? err.message : 'Kod gönderilemedi');
       setError(msg);
       toast.error(msg);
     } finally {
@@ -140,7 +148,8 @@ export default function LoginPage() {
         errorMessage = 'Giriş başarısız. Lütfen kullanıcı ID ve şifrenizi kontrol edin.';
       }
 
-      const shortMessage = errorMessage.length > 300 ? `${errorMessage.slice(0, 300)}...` : errorMessage;
+      const shortMessage =
+        errorMessage.length > 300 ? `${errorMessage.slice(0, 300)}...` : errorMessage;
 
       setError(shortMessage);
       toast.error(shortMessage);
@@ -173,7 +182,12 @@ export default function LoginPage() {
           {/* Conditional: Login Form or 2FA Form */}
           {!requires2FA ? (
             <>
-              <form onSubmit={handleSubmit} className="login-form" role="form" aria-label="Giriş formu">
+              <form
+                onSubmit={handleSubmit}
+                className="login-form"
+                role="form"
+                aria-label="Giriş formu"
+              >
                 <div className="login-form-group">
                   <label htmlFor="id" className="login-label">
                     <User className="login-icon" />
@@ -267,9 +281,10 @@ export default function LoginPage() {
                   await verify2FA(twoFactorCode, rememberDevice);
                   toast.success('Giriş başarılı!');
                 } catch (err: unknown) {
-                  const msg = (err as any)?.response?.data?.error?.message
-                    || (err as any)?.response?.data?.message
-                    || (err instanceof Error ? err.message : 'Doğrulama başarısız');
+                  const msg =
+                    (err as any)?.response?.data?.error?.message ||
+                    (err as any)?.response?.data?.message ||
+                    (err instanceof Error ? err.message : 'Doğrulama başarısız');
                   setError(msg);
                   toast.error(msg);
                 } finally {
@@ -282,8 +297,10 @@ export default function LoginPage() {
             >
               <div className="login-2fa-info">
                 <ShieldCheck size={24} />
-                <p>Merhaba <strong>{twoFactorUser?.adSoyad}</strong>,<br />
-                E-posta adresinize gönderilen 6 haneli doğrulama kodunu girin.</p>
+                <p>
+                  Merhaba <strong>{twoFactorUser?.adSoyad}</strong>,<br />
+                  E-posta adresinize gönderilen 6 haneli doğrulama kodunu girin.
+                </p>
               </div>
 
               {/* #14: Countdown timer */}
@@ -363,7 +380,10 @@ export default function LoginPage() {
               >
                 {isResending ? (
                   <>
-                    <div className="loading-spinner" style={{ marginRight: '6px', width: '14px', height: '14px' }}></div>
+                    <div
+                      className="loading-spinner"
+                      style={{ marginRight: '6px', width: '14px', height: '14px' }}
+                    ></div>
                     Gönderiliyor...
                   </>
                 ) : (
@@ -393,18 +413,34 @@ export default function LoginPage() {
 
           {/* Registration Link */}
           <div style={{ textAlign: 'center', margin: '16px 0' }}>
-            <Link to="/kayit-basvurusu" style={{ color: '#3b82f6', fontSize: 14, textDecoration: 'none', fontWeight: 500 }}>
-              Yeni kayit basvurusu yapin
+            <Link
+              to="/kayit-basvurusu"
+              style={{ color: '#3b82f6', fontSize: 14, textDecoration: 'none', fontWeight: 500 }}
+            >
+              Yeni kayıt başvurusu yapın
             </Link>
           </div>
 
           {/* Footer */}
           <footer className="login-footer">
-            <p className="login-footer-text">
-              © 2024 Tofaş Fen Lisesi. Tüm hakları saklıdır.
-            </p>
-            <a href="https://github.com/iWeslax83/tofas-fen-webapp" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style={{ display: 'inline-block', marginTop: 8, color: '#9ca3af', transition: 'color 0.2s' }} onMouseEnter={e => (e.currentTarget.style.color = '#1f2937')} onMouseLeave={e => (e.currentTarget.style.color = '#9ca3af')}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            <p className="login-footer-text">© 2025 Tofaş Fen Lisesi. Tüm hakları saklıdır.</p>
+            <a
+              href="https://github.com/iWeslax83/tofas-fen-webapp"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub"
+              style={{
+                display: 'inline-block',
+                marginTop: 8,
+                color: '#9ca3af',
+                transition: 'color 0.2s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#1f2937')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#9ca3af')}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+              </svg>
             </a>
           </footer>
         </div>
