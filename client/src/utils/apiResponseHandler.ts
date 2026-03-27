@@ -45,7 +45,7 @@ export class ApiResponseHandler {
    */
   static extractDataSafe<T>(
     response: AxiosResponse<ApiResponse<T>> | AxiosResponse<T> | unknown,
-    fallback: T
+    fallback: T,
   ): T {
     try {
       if (!response) return fallback;
@@ -75,8 +75,8 @@ export class ApiResponseHandler {
    * Extract data array with proper fallback
    */
   static extractDataArray<T>(
-    response: AxiosResponse<ApiResponse<T[]>> | AxiosResponse<T[]> | any,
-    fallback: T[] = []
+    response: AxiosResponse<ApiResponse<T[]>> | AxiosResponse<T[]> | unknown,
+    fallback: T[] = [],
   ): T[] {
     const data = this.extractDataSafe(response, fallback);
     return Array.isArray(data) ? data : fallback;
@@ -86,8 +86,8 @@ export class ApiResponseHandler {
    * Extract single data item with fallback
    */
   static extractDataItem<T>(
-    response: AxiosResponse<ApiResponse<T>> | AxiosResponse<T> | any,
-    fallback: T
+    response: AxiosResponse<ApiResponse<T>> | AxiosResponse<T> | unknown,
+    fallback: T,
   ): T {
     const data = this.extractDataSafe(response, fallback);
     return data || fallback;
@@ -96,7 +96,9 @@ export class ApiResponseHandler {
   /**
    * Check if response is successful
    */
-  static isSuccess(response: AxiosResponse<ApiResponse<unknown>> | AxiosResponse<unknown> | unknown): boolean {
+  static isSuccess(
+    response: AxiosResponse<ApiResponse<unknown>> | AxiosResponse<unknown> | unknown,
+  ): boolean {
     if (!response) return false;
 
     // Check HTTP status
@@ -193,12 +195,18 @@ export class ApiResponseHandler {
     const status = respAny['status'] as number | undefined;
     if (status) {
       switch (status) {
-        case 400: return 'Geçersiz istek';
-        case 401: return 'Yetkisiz erişim';
-        case 403: return 'Erişim reddedildi';
-        case 404: return 'Kaynak bulunamadı';
-        case 500: return 'Sunucu hatası';
-        default: return `HTTP ${status} hatası`;
+        case 400:
+          return 'Geçersiz istek';
+        case 401:
+          return 'Yetkisiz erişim';
+        case 403:
+          return 'Erişim reddedildi';
+        case 404:
+          return 'Kaynak bulunamadı';
+        case 500:
+          return 'Sunucu hatası';
+        default:
+          return `HTTP ${status} hatası`;
       }
     }
 
@@ -212,7 +220,7 @@ export class ApiResponseHandler {
     return {
       message,
       code: code || 'UNKNOWN_ERROR',
-      status: status || 500
+      status: status || 500,
     };
   }
 
@@ -221,7 +229,7 @@ export class ApiResponseHandler {
    */
   static async handleResponse<T>(
     apiCall: Promise<AxiosResponse<T>>,
-    fallback: T
+    fallback: T,
   ): Promise<{ data: T; error: string | null }> {
     try {
       const response = await apiCall;
@@ -238,7 +246,7 @@ export class ApiResponseHandler {
    */
   static async handleResponseArray<T>(
     apiCall: Promise<AxiosResponse<T[]>>,
-    fallback: T[] = []
+    fallback: T[] = [],
   ): Promise<{ data: T[]; error: string | null }> {
     try {
       const response = await apiCall;
@@ -261,8 +269,7 @@ export const extractDataArray = <T>(response: unknown, fallback: T[] = []): T[] 
 export const extractDataItem = <T>(response: unknown, fallback: T): T =>
   ApiResponseHandler.extractDataItem(response, fallback);
 
-export const isSuccess = (response: unknown): boolean =>
-  ApiResponseHandler.isSuccess(response);
+export const isSuccess = (response: unknown): boolean => ApiResponseHandler.isSuccess(response);
 
 export const extractError = (response: unknown): string =>
   ApiResponseHandler.extractError(response);

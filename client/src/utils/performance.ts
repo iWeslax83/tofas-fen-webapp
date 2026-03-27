@@ -33,7 +33,10 @@ const BUDGET: PerformanceBudget = {
 };
 
 // Rating function
-function getRating(value: number, threshold: { good: number; poor: number }): 'good' | 'needs-improvement' | 'poor' {
+function getRating(
+  value: number,
+  threshold: { good: number; poor: number },
+): 'good' | 'needs-improvement' | 'poor' {
   if (value <= threshold.good) return 'good';
   if (value <= threshold.poor) return 'needs-improvement';
   return 'poor';
@@ -63,14 +66,14 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
       const lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1] as PerformanceEntry & Record<string, unknown>;
-          const value = (lastEntry as any).renderTime || (lastEntry as any).loadTime || 0;
-          const metric: PerformanceMetric = {
-            name: 'LCP',
-            value,
-            rating: getRating(value, THRESHOLDS.lcp),
-            id: (lastEntry as any).id || '',
-            navigationType: (lastEntry as any).navigationType
-          };
+        const value = (lastEntry['renderTime'] as number) || (lastEntry['loadTime'] as number) || 0;
+        const metric: PerformanceMetric = {
+          name: 'LCP',
+          value,
+          rating: getRating(value, THRESHOLDS.lcp),
+          id: (lastEntry['id'] as string) || '',
+          navigationType: lastEntry['navigationType'] as string | undefined,
+        };
         onPerfEntry(metric);
       });
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
@@ -82,14 +85,14 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
     try {
       const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: PerformanceEntry & Record<string, any>) => {
-          const value = (entry as any).processingStart - (entry as any).startTime;
+        entries.forEach((entry: PerformanceEntry & Record<string, unknown>) => {
+          const value = (entry['processingStart'] as number) - (entry['startTime'] as number);
           const metric: PerformanceMetric = {
             name: 'FID',
             value,
             rating: getRating(value, THRESHOLDS.fid),
-            id: (entry as any).id || '',
-            navigationType: (entry as any).navigationType,
+            id: (entry['id'] as string) || '',
+            navigationType: entry['navigationType'] as string | undefined,
           };
           onPerfEntry(metric);
         });
@@ -104,9 +107,9 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
       let clsValue = 0;
       const clsObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: PerformanceEntry & Record<string, any>) => {
-          if (!(entry as any).hadRecentInput) {
-            clsValue += (entry as any).value || 0;
+        entries.forEach((entry: PerformanceEntry & Record<string, unknown>) => {
+          if (!(entry['hadRecentInput'] as boolean)) {
+            clsValue += (entry['value'] as number) || 0;
           }
         });
         const metric: PerformanceMetric = {
@@ -126,14 +129,14 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
     try {
       const fcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: PerformanceEntry & Record<string, any>) => {
-          if ((entry as any).name === 'first-contentful-paint') {
-            const start = (entry as any).startTime || 0;
+        entries.forEach((entry: PerformanceEntry & Record<string, unknown>) => {
+          if (entry.name === 'first-contentful-paint') {
+            const start = entry.startTime || 0;
             const metric: PerformanceMetric = {
               name: 'FCP',
               value: start,
               rating: getRating(start, THRESHOLDS.fcp),
-              id: (entry as any).id || '',
+              id: (entry['id'] as string) || '',
             };
             onPerfEntry(metric);
           }

@@ -164,7 +164,7 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 1000, // Increased to suppress warnings during dev
+    chunkSizeWarningLimit: 500, // Catch bundle size regressions early
     target: 'esnext',
     cssCodeSplit: true,
     reportCompressedSize: true,

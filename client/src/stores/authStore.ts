@@ -55,12 +55,13 @@ export const useAuthStore = create<AuthStore>()(
           const response = await SecureAPI.login(id, sifre, { id, sifre });
 
           // Check if 2FA is required
-          if ((response as any).requires2FA) {
+          const loginResponse = response as Record<string, unknown>;
+          if (loginResponse.requires2FA) {
             set({
               requires2FA: true,
               twoFactorSessionToken: null, // #10: Token is now in httpOnly cookie
-              twoFactorUser: (response as any).user,
-              twoFactorExpiresAt: (response as any).twoFactorExpiresAt || null, // #14: countdown
+              twoFactorUser: loginResponse.user as { id: string; adSoyad: string },
+              twoFactorExpiresAt: (loginResponse.twoFactorExpiresAt as number) || null, // #14: countdown
               isLoading: false,
               error: null,
               isAuthenticated: false,
@@ -77,7 +78,13 @@ export const useAuthStore = create<AuthStore>()(
           const user: User = {
             id: String(userData.id || ''),
             adSoyad: String(userData.adSoyad || ''),
-            rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli' | 'ziyaretci',
+            rol: String(userData.rol || '') as
+              | 'admin'
+              | 'teacher'
+              | 'student'
+              | 'parent'
+              | 'hizmetli'
+              | 'ziyaretci',
             ...(userData.email && { email: String(userData.email) }),
             emailVerified: Boolean(userData.emailVerified),
             twoFactorEnabled: Boolean(userData.twoFactorEnabled),
@@ -86,7 +93,7 @@ export const useAuthStore = create<AuthStore>()(
             ...(userData.oda && { oda: String(userData.oda) }),
             pansiyon: Boolean(userData.pansiyon),
             ...(userData.childrenSiniflar && { childrenSiniflar: userData.childrenSiniflar }),
-            ...(userData.childId && { childId: userData.childId })
+            ...(userData.childId && { childId: userData.childId }),
           };
 
           // Tokens are handled by SecureAPI.login internally if present
@@ -107,7 +114,13 @@ export const useAuthStore = create<AuthStore>()(
             const errObj = err as unknown as Record<string, unknown>;
             const resp = errObj['response'] as Record<string, unknown> | undefined;
             const respData = resp?.['data'] as Record<string, unknown> | undefined;
-            const messageFromResp = respData ? ((typeof respData['message'] === 'string' ? respData['message'] : (typeof respData['error'] === 'string' ? respData['error'] : undefined))) : undefined;
+            const messageFromResp = respData
+              ? typeof respData['message'] === 'string'
+                ? respData['message']
+                : typeof respData['error'] === 'string'
+                  ? respData['error']
+                  : undefined
+              : undefined;
             const status = resp?.['status'] as number | undefined;
 
             const config = errObj['config'] as Record<string, unknown> | undefined;
@@ -118,12 +131,18 @@ export const useAuthStore = create<AuthStore>()(
             if (typeof config?.['url'] === 'string') context.url = config['url'];
             if (typeof config?.['method'] === 'string') context.method = config['method'];
 
-            if (status === 400) return AppError.validation(messageFromResp || 'İstek doğrulama hatası', context);
-            if (status === 401) return AppError.unauthorized(messageFromResp || 'Yetkilendirme hatası', context);
-            if (status === 403) return AppError.forbidden(messageFromResp || 'Erişim yasak', context);
-            if (status === 404) return AppError.notFound(messageFromResp || 'Kaynak bulunamadı', context);
-            if (status === 429) return AppError.rateLimit(messageFromResp || 'Çok fazla istek', context);
-            if (status && status >= 500) return AppError.server(messageFromResp || 'Sunucu hatası oluştu', context);
+            if (status === 400)
+              return AppError.validation(messageFromResp || 'İstek doğrulama hatası', context);
+            if (status === 401)
+              return AppError.unauthorized(messageFromResp || 'Yetkilendirme hatası', context);
+            if (status === 403)
+              return AppError.forbidden(messageFromResp || 'Erişim yasak', context);
+            if (status === 404)
+              return AppError.notFound(messageFromResp || 'Kaynak bulunamadı', context);
+            if (status === 429)
+              return AppError.rateLimit(messageFromResp || 'Çok fazla istek', context);
+            if (status && status >= 500)
+              return AppError.server(messageFromResp || 'Sunucu hatası oluştu', context);
 
             const code = errObj['code'] as string | undefined;
             const msg = errObj['message'] as string | undefined;
@@ -136,7 +155,7 @@ export const useAuthStore = create<AuthStore>()(
               (errObj['type'] as string) || (errObj['code'] as string) || ErrorType.UNKNOWN,
               ErrorSeverity.MEDIUM,
               context,
-              err instanceof Error ? err : undefined
+              err instanceof Error ? err : undefined,
             );
           };
 
@@ -146,7 +165,7 @@ export const useAuthStore = create<AuthStore>()(
             user: null,
             isAuthenticated: false,
             isLoading: false,
-            error: appError
+            error: appError,
           });
 
           throw appError;
@@ -163,7 +182,7 @@ export const useAuthStore = create<AuthStore>()(
           user: null,
           isAuthenticated: false,
           error: null,
-          isLoading: false
+          isLoading: false,
         });
 
         try {
@@ -182,10 +201,16 @@ export const useAuthStore = create<AuthStore>()(
         try {
           set({ isLoading: true, error: null });
 
-          const buildUser = (userData: any): User => ({
+          const buildUser = (userData: Record<string, unknown>): User => ({
             id: String(userData.id || ''),
             adSoyad: String(userData.adSoyad || ''),
-            rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli' | 'ziyaretci',
+            rol: String(userData.rol || '') as
+              | 'admin'
+              | 'teacher'
+              | 'student'
+              | 'parent'
+              | 'hizmetli'
+              | 'ziyaretci',
             ...(userData.email && { email: String(userData.email) }),
             emailVerified: userData.emailVerified === true,
             twoFactorEnabled: Boolean(userData.twoFactorEnabled),
@@ -193,13 +218,15 @@ export const useAuthStore = create<AuthStore>()(
             ...(userData.sube && { sube: String(userData.sube) }),
             ...(userData.oda && { oda: String(userData.oda) }),
             pansiyon: Boolean(userData.pansiyon),
-            ...(userData.childrenSiniflar && { childrenSiniflar: userData.childrenSiniflar }),
-            ...(userData.childId && { childId: userData.childId })
+            ...(userData.childrenSiniflar && {
+              childrenSiniflar: userData.childrenSiniflar as string[],
+            }),
+            ...(userData.childId && { childId: userData.childId as string[] }),
           });
 
           // httpOnly cookie ile kullanıcı bilgisini al
           try {
-            const response = await SecureAPI.getCurrentUser() as AxiosResponse;
+            const response = (await SecureAPI.getCurrentUser()) as AxiosResponse;
             const userData = response.data?.user || response.data;
 
             if (userData && userData.rol) {
@@ -227,7 +254,7 @@ export const useAuthStore = create<AuthStore>()(
         const currentUser = get().user;
         if (currentUser) {
           set({
-            user: { ...currentUser, ...userData }
+            user: { ...currentUser, ...userData },
           });
         }
       },
@@ -237,12 +264,15 @@ export const useAuthStore = create<AuthStore>()(
           set({ isLoading: true, error: null });
 
           // #10: Session token is now in httpOnly cookie, not sent in body
-          const response = await SecureAPI.post<any>('/api/auth/verify-2fa', {
+          const response = await SecureAPI.post<Record<string, unknown>>('/api/auth/verify-2fa', {
             code,
             rememberDevice,
           });
 
-          const respData = (response as any).data || response;
+          const respData = ((response as Record<string, unknown>).data || response) as Record<
+            string,
+            unknown
+          >;
           const userData = respData.user;
 
           if (!userData || !userData.rol) {
@@ -254,7 +284,13 @@ export const useAuthStore = create<AuthStore>()(
           const user: User = {
             id: String(userData.id || ''),
             adSoyad: String(userData.adSoyad || ''),
-            rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli' | 'ziyaretci',
+            rol: String(userData.rol || '') as
+              | 'admin'
+              | 'teacher'
+              | 'student'
+              | 'parent'
+              | 'hizmetli'
+              | 'ziyaretci',
             ...(userData.email && { email: String(userData.email) }),
             emailVerified: Boolean(userData.emailVerified),
             twoFactorEnabled: Boolean(userData.twoFactorEnabled),
@@ -282,16 +318,15 @@ export const useAuthStore = create<AuthStore>()(
 
       // #13: Resend 2FA code
       resend2FA: async () => {
-        try {
-          // Session token is in httpOnly cookie, browser sends it automatically
-          const response = await SecureAPI.post<any>('/api/auth/resend-2fa', {});
-          const respData = (response as any).data || response;
-          set({
-            twoFactorExpiresAt: respData.twoFactorExpiresAt || null,
-          });
-        } catch (error) {
-          throw error;
-        }
+        // Session token is in httpOnly cookie, browser sends it automatically
+        const response = await SecureAPI.post<Record<string, unknown>>('/api/auth/resend-2fa', {});
+        const respData = ((response as Record<string, unknown>).data || response) as Record<
+          string,
+          unknown
+        >;
+        set({
+          twoFactorExpiresAt: respData.twoFactorExpiresAt || null,
+        });
       },
 
       cancel2FA: () => {
@@ -302,13 +337,13 @@ export const useAuthStore = create<AuthStore>()(
           twoFactorExpiresAt: null,
           error: null,
         });
-      }
+      },
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated })
-    }
-  )
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+    },
+  ),
 );
 
 // Individual selectors to prevent object recreation
@@ -352,5 +387,15 @@ export const useAuthActions = () => {
   const resend2FA = useResend2FA();
   const cancel2FA = useCancel2FA();
 
-  return { login, logout, checkAuth, clearError, setLoading, updateUser, verify2FA, resend2FA, cancel2FA };
+  return {
+    login,
+    logout,
+    checkAuth,
+    clearError,
+    setLoading,
+    updateUser,
+    verify2FA,
+    resend2FA,
+    cancel2FA,
+  };
 };

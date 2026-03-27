@@ -1,8 +1,5 @@
 import { SecureAPI } from './api';
-import {
-  handleResponse,
-  handleResponseArray
-} from './apiResponseHandler';
+import { handleResponse, handleResponseArray } from './apiResponseHandler';
 import { API_ENDPOINTS } from './apiEndpoints';
 import { User } from '../types/user';
 // Removed unused import
@@ -14,12 +11,9 @@ export class ApiService {
    */
   static async get<T>(
     endpoint: string,
-    config?: Record<string, unknown>
-  ): Promise<{ data: T; error: string | null }> {
-    return handleResponse(
-      SecureAPI.get(endpoint, config),
-      {} as T
-    );
+    config?: Record<string, unknown>,
+  ): Promise<{ data: T | null; error: string | null }> {
+    return handleResponse<T>(SecureAPI.get(endpoint, config), null as unknown as T);
   }
 
   /**
@@ -28,12 +22,9 @@ export class ApiService {
   static async post<T>(
     endpoint: string,
     data?: Record<string, unknown>,
-    config?: Record<string, unknown>
-  ): Promise<{ data: T; error: string | null }> {
-    return handleResponse(
-      SecureAPI.post(endpoint, data, config),
-      {} as T
-    );
+    config?: Record<string, unknown>,
+  ): Promise<{ data: T | null; error: string | null }> {
+    return handleResponse<T>(SecureAPI.post(endpoint, data, config), null as unknown as T);
   }
 
   /**
@@ -42,12 +33,9 @@ export class ApiService {
   static async put<T>(
     endpoint: string,
     data?: Record<string, unknown>,
-    config?: Record<string, unknown>
-  ): Promise<{ data: T; error: string | null }> {
-    return handleResponse(
-      SecureAPI.put(endpoint, data, config),
-      {} as T
-    );
+    config?: Record<string, unknown>,
+  ): Promise<{ data: T | null; error: string | null }> {
+    return handleResponse<T>(SecureAPI.put(endpoint, data, config), null as unknown as T);
   }
 
   /**
@@ -56,12 +44,9 @@ export class ApiService {
   static async patch<T>(
     endpoint: string,
     data?: Record<string, unknown>,
-    config?: Record<string, unknown>
-  ): Promise<{ data: T; error: string | null }> {
-    return handleResponse(
-      SecureAPI.patch(endpoint, data, config),
-      {} as T
-    );
+    config?: Record<string, unknown>,
+  ): Promise<{ data: T | null; error: string | null }> {
+    return handleResponse<T>(SecureAPI.patch(endpoint, data, config), null as unknown as T);
   }
 
   /**
@@ -69,12 +54,9 @@ export class ApiService {
    */
   static async delete<T>(
     endpoint: string,
-    config?: Record<string, unknown>
-  ): Promise<{ data: T; error: string | null }> {
-    return handleResponse(
-      SecureAPI.delete(endpoint, config),
-      {} as T
-    );
+    config?: Record<string, unknown>,
+  ): Promise<{ data: T | null; error: string | null }> {
+    return handleResponse<T>(SecureAPI.delete(endpoint, config), null as unknown as T);
   }
 
   /**
@@ -83,12 +65,9 @@ export class ApiService {
   static async upload<T>(
     endpoint: string,
     formData: FormData,
-    config?: Record<string, unknown>
-  ): Promise<{ data: T; error: string | null }> {
-    return handleResponse(
-      SecureAPI.upload(endpoint, formData, config),
-      {} as T
-    );
+    config?: Record<string, unknown>,
+  ): Promise<{ data: T | null; error: string | null }> {
+    return handleResponse<T>(SecureAPI.upload(endpoint, formData, config), null as unknown as T);
   }
 
   /**
@@ -96,12 +75,9 @@ export class ApiService {
    */
   static async getArray<T>(
     endpoint: string,
-    config?: Record<string, unknown>
+    config?: Record<string, unknown>,
   ): Promise<{ data: T[]; error: string | null }> {
-    return handleResponseArray(
-      SecureAPI.get(endpoint, config),
-      []
-    );
+    return handleResponseArray(SecureAPI.get(endpoint, config), []);
   }
 }
 
@@ -139,7 +115,6 @@ export class UserService {
     return ApiService.put(API_ENDPOINTS.USER.UPDATE(id), userData);
   }
 
-
   static async deleteUser(id: string) {
     return ApiService.delete(API_ENDPOINTS.USER.DELETE(id));
   }
@@ -154,14 +129,13 @@ export class UserService {
     return ApiService.post('/api/auth/verify-email', { code });
   }
 
-
   static async linkParentChild(parentId: string, childId: string) {
     return ApiService.post(API_ENDPOINTS.USER.PARENT_CHILD.LINK, { parentId, childId });
   }
 
   static async unlinkParentChild(parentId: string, childId: string) {
     return ApiService.delete(API_ENDPOINTS.USER.PARENT_CHILD.UNLINK, {
-      data: { parentId, childId }
+      data: { parentId, childId },
     });
   }
 
@@ -198,7 +172,10 @@ export class NotesService {
     return ApiService.delete(API_ENDPOINTS.NOTES.DELETE(id));
   }
 
-  static async bulkUpdateNotes(noteIds: string[], updates: Partial<{ subject: string; note: number; examType: string; date: string | Date }>) {
+  static async bulkUpdateNotes(
+    noteIds: string[],
+    updates: Partial<{ subject: string; note: number; examType: string; date: string | Date }>,
+  ) {
     return ApiService.put(API_ENDPOINTS.NOTES.BULK_UPDATE, { noteIds, updates });
   }
 
@@ -215,26 +192,75 @@ export class NotesService {
   }
 }
 
+// Homework types
+interface HomeworkItem {
+  _id: string;
+  title: string;
+  description: string;
+  dueDate: string | Date;
+  class?: string;
+  section?: string;
+  subject?: string;
+  teacherId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+interface HomeworksResponse {
+  homeworks: HomeworkItem[];
+  pagination?: PaginationInfo;
+}
+
+// Helper to extract homeworks from nested or flat response
+function extractHomeworks(result: { data: HomeworksResponse | null; error: string | null }): {
+  data: HomeworkItem[];
+  error: string | null;
+} {
+  if (result.data && 'homeworks' in result.data) {
+    return { data: result.data.homeworks, error: result.error };
+  }
+  if (Array.isArray(result.data)) {
+    return { data: result.data as HomeworkItem[], error: result.error };
+  }
+  return { data: [], error: result.error || 'Invalid response format' };
+}
+
 // Homework service
 export class HomeworkService {
   static async getHomeworks() {
-    const result = await ApiService.get<{ homeworks: any[]; pagination?: any }>(API_ENDPOINTS.HOMEWORKS.BASE);
-    // Handle nested response structure
-    if (result.data && 'homeworks' in result.data) {
-      return { data: result.data.homeworks, error: result.error };
-    }
-    // Handle array response
-    if (Array.isArray(result.data)) {
-      return { data: result.data, error: result.error };
-    }
-    return { data: [], error: result.error || 'Invalid response format' };
+    const result = await ApiService.get<HomeworksResponse>(API_ENDPOINTS.HOMEWORKS.BASE);
+    return extractHomeworks(result);
   }
 
-  static async createHomework(homeworkData: { title: string; description: string; dueDate: string | Date; class?: string; section?: string; subject?: string }) {
+  static async createHomework(homeworkData: {
+    title: string;
+    description: string;
+    dueDate: string | Date;
+    class?: string;
+    section?: string;
+    subject?: string;
+  }) {
     return ApiService.post(API_ENDPOINTS.HOMEWORKS.CREATE, homeworkData);
   }
 
-  static async updateHomework(id: string, homeworkData: Partial<{ title: string; description: string; dueDate: string | Date; class?: string; section?: string; subject?: string }>) {
+  static async updateHomework(
+    id: string,
+    homeworkData: Partial<{
+      title: string;
+      description: string;
+      dueDate: string | Date;
+      class?: string;
+      section?: string;
+      subject?: string;
+    }>,
+  ) {
     return ApiService.put(API_ENDPOINTS.HOMEWORKS.UPDATE(id), homeworkData);
   }
 
@@ -246,20 +272,11 @@ export class HomeworkService {
     const params = new URLSearchParams();
     if (classLevel) params.append('classLevel', classLevel);
     const query = params.toString();
-    const endpoint = query ? `${API_ENDPOINTS.HOMEWORKS.BASE}?${query}` : API_ENDPOINTS.HOMEWORKS.BASE;
-    const result = await ApiService.get<{ homeworks: any[]; pagination?: any }>(endpoint);
-
-    // Backend bu endpoint için { homeworks: [...], pagination? } döndürüyor.
-    if (result.data && 'homeworks' in result.data) {
-      return { data: result.data.homeworks, error: result.error };
-    }
-
-    // Eğer doğrudan dizi dönerse (geri uyumluluk)
-    if (Array.isArray(result.data)) {
-      return { data: result.data, error: result.error };
-    }
-
-    return { data: [], error: result.error || 'Invalid response format' };
+    const endpoint = query
+      ? `${API_ENDPOINTS.HOMEWORKS.BASE}?${query}`
+      : API_ENDPOINTS.HOMEWORKS.BASE;
+    const result = await ApiService.get<HomeworksResponse>(endpoint);
+    return extractHomeworks(result);
   }
 
   static async getHomeworksByTeacher(teacherId: string) {
@@ -269,16 +286,8 @@ export class HomeworkService {
   static async getHomeworksByClassLevels(classLevels: string[]) {
     const classLevelsParam = classLevels.join(',');
     const endpoint = `${API_ENDPOINTS.HOMEWORKS.BASE}?classLevels=${encodeURIComponent(classLevelsParam)}`;
-    const result = await ApiService.get<{ homeworks: any[]; pagination?: any }>(endpoint);
-    // Handle nested response structure
-    if (result.data && 'homeworks' in result.data) {
-      return { data: result.data.homeworks, error: result.error };
-    }
-    // Handle array response
-    if (Array.isArray(result.data)) {
-      return { data: result.data, error: result.error };
-    }
-    return { data: [], error: result.error || 'Invalid response format' };
+    const result = await ApiService.get<HomeworksResponse>(endpoint);
+    return extractHomeworks(result);
   }
 }
 
@@ -288,11 +297,26 @@ export class AnnouncementService {
     return ApiService.getArray(API_ENDPOINTS.ANNOUNCEMENTS.BASE);
   }
 
-  static async createAnnouncement(announcementData: { title: string; content: string; targetRoles?: string[]; targetClasses?: string[]; priority?: 'low' | 'medium' | 'high' }) {
+  static async createAnnouncement(announcementData: {
+    title: string;
+    content: string;
+    targetRoles?: string[];
+    targetClasses?: string[];
+    priority?: 'low' | 'medium' | 'high';
+  }) {
     return ApiService.post(API_ENDPOINTS.ANNOUNCEMENTS.CREATE, announcementData);
   }
 
-  static async updateAnnouncement(id: string, announcementData: Partial<{ title: string; content: string; targetRoles?: string[]; targetClasses?: string[]; priority?: 'low' | 'medium' | 'high' }>) {
+  static async updateAnnouncement(
+    id: string,
+    announcementData: Partial<{
+      title: string;
+      content: string;
+      targetRoles?: string[];
+      targetClasses?: string[];
+      priority?: 'low' | 'medium' | 'high';
+    }>,
+  ) {
     return ApiService.put(API_ENDPOINTS.ANNOUNCEMENTS.UPDATE(id), announcementData);
   }
 
@@ -391,7 +415,10 @@ export class CalendarService {
   }
 
   // Export/Import
-  static async exportCalendar(calendarId: string, params?: Record<string, string | number | boolean>) {
+  static async exportCalendar(
+    calendarId: string,
+    params?: Record<string, string | number | boolean>,
+  ) {
     const endpoint = params
       ? `${API_ENDPOINTS.CALENDAR.EXPORT.BASE(calendarId)}?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()}`
       : API_ENDPOINTS.CALENDAR.EXPORT.BASE(calendarId);
@@ -442,7 +469,11 @@ export class EvciService {
     return ApiService.patch(API_ENDPOINTS.EVCI.PARENT_APPROVAL(id), { action: 'reject', reason });
   }
 
-  static async adminApproveEvciRequest(id: string, action: 'approve' | 'reject', adminNote?: string) {
+  static async adminApproveEvciRequest(
+    id: string,
+    action: 'approve' | 'reject',
+    adminNote?: string,
+  ) {
     return ApiService.patch(API_ENDPOINTS.EVCI.ADMIN_APPROVAL(id), { action, adminNote });
   }
 
@@ -464,7 +495,9 @@ export class EvciService {
   static async exportEvciRequests(format: string, weekOf?: string) {
     const params = new URLSearchParams({ format });
     if (weekOf) params.append('weekOf', weekOf);
-    return SecureAPI.get(`${API_ENDPOINTS.EVCI.EXPORT}?${params.toString()}`, { responseType: 'blob' });
+    return SecureAPI.get(`${API_ENDPOINTS.EVCI.EXPORT}?${params.toString()}`, {
+      responseType: 'blob',
+    });
   }
 
   static async setWindowOverride(weekOf: string, isOpen: boolean, reason: string) {
@@ -515,8 +548,8 @@ export class RequestService {
         sube: requestData.newSection,
         currentClass: requestData.currentClass,
         currentSection: requestData.currentSection,
-        reason: requestData.reason
-      }
+        reason: requestData.reason,
+      },
     });
   }
 
@@ -532,26 +565,25 @@ export class RequestService {
       details: {
         oda: requestData.newRoom,
         currentRoom: requestData.currentRoom,
-        reason: requestData.reason
-      }
+        reason: requestData.reason,
+      },
     });
   }
 
   static async approveRequest(requestId: string, updates: Record<string, unknown>) {
     return ApiService.put(API_ENDPOINTS.REQUESTS.UPDATE(requestId), {
       status: 'approved',
-      ...updates
+      ...updates,
     });
   }
 
   static async rejectRequest(requestId: string, reason?: string) {
     return ApiService.put(API_ENDPOINTS.REQUESTS.UPDATE(requestId), {
       status: 'rejected',
-      rejectionReason: reason
+      rejectionReason: reason,
     });
   }
 }
-
 
 // Monitoring service
 export class MonitoringService {
@@ -583,12 +615,17 @@ export class MonitoringService {
 // File Management service
 // File Management service - REMOVED
 
-
 // Communication service
 export class CommunicationService {
   // Message methods
-  static async getMessages(conversationId: string, params?: Record<string, string | number | boolean>) {
-    return ApiService.get(API_ENDPOINTS.COMMUNICATION.MESSAGES.GET_BY_CONVERSATION(conversationId), { params });
+  static async getMessages(
+    conversationId: string,
+    params?: Record<string, string | number | boolean>,
+  ) {
+    return ApiService.get(
+      API_ENDPOINTS.COMMUNICATION.MESSAGES.GET_BY_CONVERSATION(conversationId),
+      { params },
+    );
   }
 
   static async createMessage(data: Record<string, unknown>) {
@@ -621,11 +658,16 @@ export class CommunicationService {
   }
 
   static async addParticipant(conversationId: string, userId: string, role?: string) {
-    return ApiService.post(API_ENDPOINTS.COMMUNICATION.CONVERSATIONS.PARTICIPANTS.ADD(conversationId), { userId, role });
+    return ApiService.post(
+      API_ENDPOINTS.COMMUNICATION.CONVERSATIONS.PARTICIPANTS.ADD(conversationId),
+      { userId, role },
+    );
   }
 
   static async removeParticipant(conversationId: string, userId: string) {
-    return ApiService.delete(API_ENDPOINTS.COMMUNICATION.CONVERSATIONS.PARTICIPANTS.REMOVE(conversationId, userId));
+    return ApiService.delete(
+      API_ENDPOINTS.COMMUNICATION.CONVERSATIONS.PARTICIPANTS.REMOVE(conversationId, userId),
+    );
   }
 
   // Email methods
@@ -682,7 +724,7 @@ export class CommunicationService {
   // Search and analytics
   static async searchMessages(query: string, filters?: Record<string, string | number | boolean>) {
     return ApiService.get(API_ENDPOINTS.COMMUNICATION.SEARCH, {
-      params: { q: query, ...filters }
+      params: { q: query, ...filters },
     });
   }
 
@@ -705,7 +747,7 @@ export class PerformanceService {
 
   static async getMetricsByType(type: string, limit?: number) {
     return ApiService.get(API_ENDPOINTS.PERFORMANCE.METRICS.GET_BY_TYPE(type), {
-      params: { limit }
+      params: { limit },
     });
   }
 
@@ -733,7 +775,7 @@ export class PerformanceService {
   // Configuration methods
   static async getConfigs(category?: string) {
     return ApiService.get(API_ENDPOINTS.PERFORMANCE.CONFIGS.BASE, {
-      params: { category }
+      params: { category },
     });
   }
 
@@ -808,7 +850,9 @@ export class DormitoryService {
   }
 
   static async downloadSupervisor(id: string) {
-    return SecureAPI.get(API_ENDPOINTS.DORMITORY.SUPERVISORS.DOWNLOAD(id), { responseType: 'blob' });
+    return SecureAPI.get(API_ENDPOINTS.DORMITORY.SUPERVISORS.DOWNLOAD(id), {
+      responseType: 'blob',
+    });
   }
 
   static async deleteSupervisor(id: string) {

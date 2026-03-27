@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/react';
-import { BrowserTracing } from '@sentry/tracing';
 
 // Performance monitoring interface
 interface PerformanceMetrics {
@@ -19,19 +18,17 @@ interface UserEvent {
 
 // Initialize Sentry
 export function initializeSentry() {
-  if (process.env.NODE_ENV === 'production') {
+  if (import.meta.env.PROD) {
     Sentry.init({
-      dsn: process.env.VITE_SENTRY_DSN || '',
+      dsn: import.meta.env.VITE_SENTRY_DSN || '',
       integrations: [
-        new BrowserTracing({
+        Sentry.browserTracingIntegration({
           tracePropagationTargets: ['localhost', 'your-domain.com'],
-        }) as any,
+        }),
       ],
       tracesSampleRate: 0.1,
-      environment: process.env.NODE_ENV,
+      environment: import.meta.env.MODE,
       beforeSend(event) {
-        // Filter out certain errors or add custom context
-        // Sentry event filtering
         return event;
       },
     });
@@ -52,14 +49,16 @@ export class PerformanceMonitor {
 
   measurePageLoad(): void {
     if (typeof window !== 'undefined' && 'performance' in window) {
-      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      
+      const navigation = performance.getEntriesByType(
+        'navigation',
+      )[0] as PerformanceNavigationTiming;
+
       if (navigation) {
         const pageLoadTime = navigation.loadEventEnd - navigation.loadEventStart;
-        
+
         // Measure Core Web Vitals
         this.measureCoreWebVitals();
-        
+
         this.metrics.push({
           pageLoadTime,
           firstContentfulPaint: 0,
@@ -102,7 +101,7 @@ export class PerformanceMonitor {
           }
         }
       });
-      
+
       paintObserver.observe({ entryTypes: ['paint'] });
     }
 
@@ -120,7 +119,7 @@ export class PerformanceMonitor {
           }
         }
       });
-      
+
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
     }
 
@@ -129,14 +128,15 @@ export class PerformanceMonitor {
       let clsValue = 0;
       const clsObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (!(entry as any).hadRecentInput) {
-            clsValue += (entry as any).value;
+          const layoutEntry = entry as PerformanceEntry & Record<string, unknown>;
+          if (!(layoutEntry['hadRecentInput'] as boolean)) {
+            clsValue += layoutEntry['value'] as number;
           }
         }
       });
-      
+
       clsObserver.observe({ entryTypes: ['layout-shift'] });
-      
+
       // Report CLS after page unload
       window.addEventListener('beforeunload', () => {
         if (process.env.NODE_ENV === 'production') {
@@ -178,7 +178,7 @@ export class Analytics {
     return Analytics.instance;
   }
 
-  trackEvent(event: string, properties?: Record<string, any>): void {
+  trackEvent(event: string, properties?: Record<string, unknown>): void {
     const userEvent: UserEvent = {
       event,
       properties: properties || {},
@@ -243,12 +243,10 @@ export class MemoryMonitor {
     if (typeof window !== 'undefined' && 'memory' in performance) {
       const memory = (performance as any).memory;
       const usedMB = Math.round(memory.usedJSHeapSize / 1024 / 1024);
-      const totalMB = Math.round(memory.totalJSHeapSize / 1024 / 1024);
       const limitMB = Math.round(memory.jsHeapSizeLimit / 1024 / 1024);
 
       // Warning if memory usage is high
       if (usedMB > limitMB * 0.8) {
-        
         if (process.env.NODE_ENV === 'production') {
           Sentry.captureMessage('High memory usage detected', 'warning');
         }
@@ -260,7 +258,7 @@ export class MemoryMonitor {
     const intervalId = setInterval(() => {
       this.checkMemoryUsage();
     }, interval);
-    
+
     // Return cleanup function
     return () => clearInterval(intervalId);
   }
@@ -273,7 +271,7 @@ export class NetworkMonitor {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           const resourceEntry = entry as PerformanceResourceTiming;
-          
+
           // Log slow requests
           if (resourceEntry.duration > 3000) {
             if (process.env.NODE_ENV === 'production') {
@@ -308,5 +306,4 @@ export function initializeMonitoring(): void {
 
   // Track initial page view
   analytics.trackPageView(window.location.pathname);
-
 }

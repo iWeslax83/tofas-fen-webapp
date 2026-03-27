@@ -20,7 +20,7 @@ class ErrorBoundary extends Component<Props, State> {
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     };
   }
 
@@ -35,7 +35,7 @@ class ErrorBoundary extends Component<Props, State> {
     return {
       hasError: true,
       error,
-      errorInfo: null
+      errorInfo: null,
     };
   }
 
@@ -44,11 +44,11 @@ class ErrorBoundary extends Component<Props, State> {
     ultraSafeErrorLog('Component stack:', errorInfo?.componentStack || 'No stack trace');
     this.setState({
       error,
-      errorInfo
+      errorInfo,
     });
 
     // Log error to monitoring service
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.PROD) {
       // Error logged to monitoring service
       ultraSafeErrorLog('Error logged:', error?.message || 'Unknown error');
     }
@@ -58,7 +58,7 @@ class ErrorBoundary extends Component<Props, State> {
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     });
   };
 
@@ -82,8 +82,8 @@ class ErrorBoundary extends Component<Props, State> {
             <p className="error-message">
               Beklenmeyen bir hata oluştu. Lütfen sayfayı yenilemeyi deneyin.
             </p>
-            
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+
+            {import.meta.env.DEV && this.state.error && (
               <details className="error-details">
                 <summary>Hata Detayları</summary>
                 <pre className="error-stack">
@@ -94,17 +94,11 @@ class ErrorBoundary extends Component<Props, State> {
             )}
 
             <div className="error-actions">
-              <button
-                onClick={this.handleRetry}
-                className="btn btn-primary"
-              >
+              <button onClick={this.handleRetry} className="btn btn-primary">
                 <RefreshCw size={16} />
                 Tekrar Dene
               </button>
-              <button
-                onClick={this.handleGoHome}
-                className="btn btn-secondary"
-              >
+              <button onClick={this.handleGoHome} className="btn btn-secondary">
                 <Home size={16} />
                 Ana Sayfaya Dön
               </button>

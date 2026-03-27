@@ -26,7 +26,7 @@ const ERROR_CATEGORIES: Record<ErrorType, ErrorCategory> = {
     recoveryAction: 'Ağ bağlantısını kontrol edin',
     shouldRetry: true,
     maxRetries: 3,
-    retryDelay: 2000
+    retryDelay: 2000,
   },
   [ErrorType.AUTHENTICATION]: {
     type: ErrorType.AUTHENTICATION,
@@ -35,7 +35,7 @@ const ERROR_CATEGORIES: Record<ErrorType, ErrorCategory> = {
     recoveryAction: 'Tekrar giriş yapın',
     shouldRetry: false,
     maxRetries: 0,
-    retryDelay: 0
+    retryDelay: 0,
   },
   [ErrorType.AUTHORIZATION]: {
     type: ErrorType.AUTHORIZATION,
@@ -44,7 +44,7 @@ const ERROR_CATEGORIES: Record<ErrorType, ErrorCategory> = {
     recoveryAction: 'Yöneticinizle iletişime geçin',
     shouldRetry: false,
     maxRetries: 0,
-    retryDelay: 0
+    retryDelay: 0,
   },
   [ErrorType.VALIDATION]: {
     type: ErrorType.VALIDATION,
@@ -53,7 +53,7 @@ const ERROR_CATEGORIES: Record<ErrorType, ErrorCategory> = {
     recoveryAction: 'Form bilgilerini düzeltin',
     shouldRetry: false,
     maxRetries: 0,
-    retryDelay: 0
+    retryDelay: 0,
   },
   [ErrorType.SERVER]: {
     type: ErrorType.SERVER,
@@ -62,7 +62,7 @@ const ERROR_CATEGORIES: Record<ErrorType, ErrorCategory> = {
     recoveryAction: 'Birkaç dakika sonra tekrar deneyin',
     shouldRetry: true,
     maxRetries: 2,
-    retryDelay: 5000
+    retryDelay: 5000,
   },
   [ErrorType.CLIENT]: {
     type: ErrorType.CLIENT,
@@ -71,16 +71,16 @@ const ERROR_CATEGORIES: Record<ErrorType, ErrorCategory> = {
     recoveryAction: 'Sayfayı yenileyin',
     shouldRetry: true,
     maxRetries: 1,
-    retryDelay: 1000
+    retryDelay: 1000,
   },
   [ErrorType.NOT_FOUND]: {
     type: ErrorType.NOT_FOUND,
     severity: ErrorSeverity.MEDIUM,
     userMessage: 'Aradığınız kaynak bulunamadı.',
-    recoveryAction: 'URL\'yi kontrol edin',
+    recoveryAction: "URL'yi kontrol edin",
     shouldRetry: false,
     maxRetries: 0,
-    retryDelay: 0
+    retryDelay: 0,
   },
   [ErrorType.TIMEOUT]: {
     type: ErrorType.TIMEOUT,
@@ -89,7 +89,7 @@ const ERROR_CATEGORIES: Record<ErrorType, ErrorCategory> = {
     recoveryAction: 'Tekrar deneyin',
     shouldRetry: true,
     maxRetries: 2,
-    retryDelay: 3000
+    retryDelay: 3000,
   },
   [ErrorType.RATE_LIMIT]: {
     type: ErrorType.RATE_LIMIT,
@@ -98,7 +98,7 @@ const ERROR_CATEGORIES: Record<ErrorType, ErrorCategory> = {
     recoveryAction: 'Biraz bekleyin',
     shouldRetry: true,
     maxRetries: 1,
-    retryDelay: 5000
+    retryDelay: 5000,
   },
   [ErrorType.PARSING]: {
     type: ErrorType.PARSING,
@@ -107,7 +107,7 @@ const ERROR_CATEGORIES: Record<ErrorType, ErrorCategory> = {
     recoveryAction: 'Sayfayı yenileyin',
     shouldRetry: true,
     maxRetries: 1,
-    retryDelay: 2000
+    retryDelay: 2000,
   },
   [ErrorType.STORAGE]: {
     type: ErrorType.STORAGE,
@@ -116,7 +116,7 @@ const ERROR_CATEGORIES: Record<ErrorType, ErrorCategory> = {
     recoveryAction: 'Tarayıcı ayarlarını kontrol edin',
     shouldRetry: true,
     maxRetries: 2,
-    retryDelay: 1000
+    retryDelay: 1000,
   },
   [ErrorType.UNKNOWN]: {
     type: ErrorType.UNKNOWN,
@@ -125,8 +125,8 @@ const ERROR_CATEGORIES: Record<ErrorType, ErrorCategory> = {
     recoveryAction: 'Tekrar deneyin',
     shouldRetry: true,
     maxRetries: 1,
-    retryDelay: 3000
-  }
+    retryDelay: 3000,
+  },
 };
 
 // Error Handler Class
@@ -147,52 +147,60 @@ export class ErrorHandler {
     let type = ErrorType.UNKNOWN;
     let message = 'Beklenmeyen bir hata oluştu';
 
+    const errObj =
+      typeof error === 'object' && error !== null ? (error as Record<string, unknown>) : null;
+    const errCode = errObj?.['code'] as string | undefined;
+    const errMessage = errObj?.['message'] as string | undefined;
+    const errName = errObj?.['name'] as string | undefined;
+    const errResponse = errObj?.['response'] as Record<string, unknown> | undefined;
+    const errStatus = errResponse?.['status'] as number | undefined;
+    const errData = errResponse?.['data'] as Record<string, unknown> | undefined;
+    const dataMessage = errData?.['message'] as string | undefined;
+
     // Network errors
-    if ((error as any).code === 'NETWORK_ERROR' || (error as any).message?.includes('Network Error')) {
+    if (errCode === 'NETWORK_ERROR' || errMessage?.includes('Network Error')) {
       type = ErrorType.NETWORK;
       message = 'İnternet bağlantısı hatası';
     }
     // HTTP status based categorization
-    else if ((error as any).response?.status) {
-      const status = (error as any).response.status;
-
-      switch (status) {
+    else if (errStatus) {
+      switch (errStatus) {
         case 401:
           type = ErrorType.AUTHENTICATION;
-          message = (error as any).response.data?.message || 'Kimlik doğrulama hatası';
+          message = dataMessage || 'Kimlik doğrulama hatası';
           break;
         case 403:
           type = ErrorType.AUTHORIZATION;
-          message = (error as any).response.data?.message || 'Yetki hatası';
+          message = dataMessage || 'Yetki hatası';
           break;
         case 400:
           type = ErrorType.VALIDATION;
-          message = (error as any).response.data?.message || 'Geçersiz istek';
+          message = dataMessage || 'Geçersiz istek';
           break;
         case 404:
           type = ErrorType.CLIENT;
-          message = (error as any).response.data?.message || 'Kaynak bulunamadı';
+          message = dataMessage || 'Kaynak bulunamadı';
           break;
         case 500:
         case 502:
         case 503:
           type = ErrorType.SERVER;
-          message = (error as any).response.data?.message || 'Sunucu hatası';
+          message = dataMessage || 'Sunucu hatası';
           break;
         default:
           type = ErrorType.UNKNOWN;
-          message = (error as any).response.data?.message || 'Bir hata oluştu';
+          message = dataMessage || 'Bir hata oluştu';
       }
     }
     // Validation errors
-    else if ((error as any).name === 'ValidationError' || (error as any).message?.includes('validation')) {
+    else if (errName === 'ValidationError' || errMessage?.includes('validation')) {
       type = ErrorType.VALIDATION;
-      message = (error as any).message || 'Doğrulama hatası';
+      message = errMessage || 'Doğrulama hatası';
     }
     // Client-side errors
-    else if ((error as any).name === 'TypeError' || (error as any).name === 'ReferenceError') {
+    else if (errName === 'TypeError' || errName === 'ReferenceError') {
       type = ErrorType.CLIENT;
-      message = (error as any).message || 'İstemci hatası';
+      message = errMessage || 'İstemci hatası';
     }
 
     const category = ERROR_CATEGORIES[type];
@@ -201,7 +209,7 @@ export class ErrorHandler {
       type,
       category?.severity || ErrorSeverity.MEDIUM,
       context,
-      error instanceof Error ? error : undefined
+      error instanceof Error ? error : undefined,
     );
   }
 
@@ -261,8 +269,8 @@ export class ErrorHandler {
         borderRadius: '8px',
         padding: '12px 16px',
         fontSize: '14px',
-        fontWeight: '500'
-      }
+        fontWeight: '500',
+      },
     };
 
     toast.error(category.userMessage, toastOptions);
@@ -271,35 +279,52 @@ export class ErrorHandler {
   // Get toast duration based on severity
   private getToastDuration(severity: ErrorSeverity): number {
     switch (severity) {
-      case ErrorSeverity.LOW: return 3000;
-      case ErrorSeverity.MEDIUM: return 5000;
-      case ErrorSeverity.HIGH: return 7000;
-      case ErrorSeverity.CRITICAL: return 10000;
-      default: return 5000;
+      case ErrorSeverity.LOW:
+        return 3000;
+      case ErrorSeverity.MEDIUM:
+        return 5000;
+      case ErrorSeverity.HIGH:
+        return 7000;
+      case ErrorSeverity.CRITICAL:
+        return 10000;
+      default:
+        return 5000;
     }
   }
 
   // Get toast icon based on error type
   private getToastIcon(type: ErrorType): string {
     switch (type) {
-      case ErrorType.NETWORK: return '🌐';
-      case ErrorType.AUTHENTICATION: return '🔐';
-      case ErrorType.AUTHORIZATION: return '🚫';
-      case ErrorType.VALIDATION: return '⚠️';
-      case ErrorType.SERVER: return '🖥️';
-      case ErrorType.CLIENT: return '💻';
-      default: return '❌';
+      case ErrorType.NETWORK:
+        return '🌐';
+      case ErrorType.AUTHENTICATION:
+        return '🔐';
+      case ErrorType.AUTHORIZATION:
+        return '🚫';
+      case ErrorType.VALIDATION:
+        return '⚠️';
+      case ErrorType.SERVER:
+        return '🖥️';
+      case ErrorType.CLIENT:
+        return '💻';
+      default:
+        return '❌';
     }
   }
 
   // Get toast background based on severity
   private getToastBackground(severity: ErrorSeverity): string {
     switch (severity) {
-      case ErrorSeverity.LOW: return '#f59e0b';
-      case ErrorSeverity.MEDIUM: return '#dc2626';
-      case ErrorSeverity.HIGH: return '#b91c1c';
-      case ErrorSeverity.CRITICAL: return '#7f1d1d';
-      default: return '#dc2626';
+      case ErrorSeverity.LOW:
+        return '#f59e0b';
+      case ErrorSeverity.MEDIUM:
+        return '#dc2626';
+      case ErrorSeverity.HIGH:
+        return '#b91c1c';
+      case ErrorSeverity.CRITICAL:
+        return '#7f1d1d';
+      default:
+        return '#dc2626';
     }
   }
 
@@ -310,7 +335,7 @@ export class ErrorHandler {
     analytics.trackError(error, {
       type: error.type,
       severity: error.severity,
-      ...error.context
+      ...error.context,
     });
   }
 
@@ -318,7 +343,7 @@ export class ErrorHandler {
   async retryOperation<T>(
     operation: () => Promise<T>,
     context?: Partial<ErrorContext>,
-    maxRetries?: number
+    maxRetries?: number,
   ): Promise<T> {
     let lastError: AppError;
     const retryCount = maxRetries || ERROR_CATEGORIES[ErrorType.UNKNOWN].maxRetries;
@@ -328,7 +353,7 @@ export class ErrorHandler {
         return await operation();
       } catch (error) {
         lastError = this.categorizeError(error, {
-          ...context
+          ...context,
         });
 
         const category = ERROR_CATEGORIES[lastError.type as ErrorType];
@@ -344,7 +369,7 @@ export class ErrorHandler {
         // Show retry notification
         if (attempt < retryCount) {
           toast.loading(`Tekrar deneniyor... (${attempt + 1}/${retryCount})`, {
-            duration: category.retryDelay
+            duration: category.retryDelay,
           });
         }
       }
@@ -355,7 +380,7 @@ export class ErrorHandler {
 
   // Utility delay function
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   // Get error recovery suggestion
@@ -371,14 +396,18 @@ export class ErrorHandler {
   }
 
   // Get error statistics
-  getErrorStats(): { total: number; byType: Record<ErrorType, number>; bySeverity: Record<ErrorSeverity, number> } {
+  getErrorStats(): {
+    total: number;
+    byType: Record<ErrorType, number>;
+    bySeverity: Record<ErrorSeverity, number>;
+  } {
     const stats = {
       total: this.errorQueue.length,
       byType: {} as Record<ErrorType, number>,
-      bySeverity: {} as Record<ErrorSeverity, number>
+      bySeverity: {} as Record<ErrorSeverity, number>,
     };
 
-    this.errorQueue.forEach(error => {
+    this.errorQueue.forEach((error) => {
       const errorType = error.type as ErrorType;
       const category = ERROR_CATEGORIES[errorType];
       if (category) {
@@ -408,7 +437,7 @@ export const useErrorHandler = () => {
   const retryOperation = <T>(
     operation: () => Promise<T>,
     context?: Partial<ErrorContext>,
-    maxRetries?: number
+    maxRetries?: number,
   ) => {
     return errorHandler.retryOperation(operation, context, maxRetries);
   };
@@ -417,7 +446,7 @@ export const useErrorHandler = () => {
     handleError,
     retryOperation,
     getRecoverySuggestion: (error: AppError) => errorHandler.getRecoverySuggestion(error),
-    shouldRetry: (error: AppError) => errorHandler.shouldRetry(error)
+    shouldRetry: (error: AppError) => errorHandler.shouldRetry(error),
   };
 };
 
@@ -438,7 +467,7 @@ export const useErrorBoundary = () => {
   return {
     error,
     handleError,
-    clearError
+    clearError,
   };
 };
 
