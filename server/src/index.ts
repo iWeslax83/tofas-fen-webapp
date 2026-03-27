@@ -5,13 +5,13 @@ import './config/environment';
 import { initializeTelemetry } from './utils/telemetry';
 initializeTelemetry();
 
-import express from "express";
-import path from "path";
-import fs from "fs";
-import helmet from "helmet";
-import compression from "compression";
-import cookieParser from "cookie-parser";
-import morgan from "morgan";
+import express from 'express';
+import path from 'path';
+import fs from 'fs';
+import helmet from 'helmet';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
+import morgan from 'morgan';
 
 // Modular config imports (extracted from monolithic index.ts)
 import { configureCors } from './config/cors';
@@ -20,15 +20,8 @@ import { setupUploadRoutes } from './config/upload';
 import { registerRoutes } from './config/routes';
 
 // Middleware imports
-import {
-  csrfProtection,
-  sessionCache
-} from './middleware';
-import {
-  preventSQLInjection,
-  preventXSS,
-  sanitizeInput
-} from './middleware/security';
+import { csrfProtection, sessionCache } from './middleware';
+import { preventSQLInjection, preventXSS, sanitizeInput } from './middleware/security';
 import { globalErrorHandler } from './middleware/errorHandler';
 import { wafMiddleware, cloudflareHeaders, initWafRedis } from './middleware/waf';
 import { initSecurityAlertRedis } from './services/SecurityAlertService';
@@ -39,9 +32,10 @@ import logger, { morganStream } from './utils/logger';
 import monitoringService from './utils/monitoring';
 import { validateConfig } from './config/environment';
 
-import { connectDB } from "./db";
+import mongoose from 'mongoose';
+import { connectDB } from './db';
 import { setupSwagger } from './utils/swagger';
-import { initializeWebSocket } from './utils/websocket';
+import { initializeWebSocket, getWebSocket } from './utils/websocket';
 import { SchedulerService } from './services/SchedulerService';
 import { migrateEvciRequests } from './models/EvciRequest';
 
@@ -60,27 +54,29 @@ app.use(cloudflareHeaders);
 app.use(wafMiddleware);
 
 // Security headers (Helmet)
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      scriptSrc: ["'self'"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "blob:", "https:"],
-      connectSrc: ["'self'", process.env.FRONTEND_URL || "http://localhost:5173"],
-      frameAncestors: ["'none'"],
-      baseUri: ["'self'"],
-      formAction: ["'self'"],
-      // CSP violation reporting
-      ...(process.env.CSP_REPORT_URI ? { reportUri: [process.env.CSP_REPORT_URI] } : {}),
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        scriptSrc: ["'self'"],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+        connectSrc: ["'self'", process.env.FRONTEND_URL || 'http://localhost:5173'],
+        frameAncestors: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        // CSP violation reporting
+        ...(process.env.CSP_REPORT_URI ? { reportUri: [process.env.CSP_REPORT_URI] } : {}),
+      },
     },
-  },
-  crossOriginEmbedderPolicy: false,
-  frameguard: { action: 'deny' },
-  noSniff: true,
-  xssFilter: true,
-}));
+    crossOriginEmbedderPolicy: false,
+    frameguard: { action: 'deny' },
+    noSniff: true,
+    xssFilter: true,
+  }),
+);
 
 // Compression middleware
 app.use(compression());
@@ -97,7 +93,7 @@ app.get('/status', (_req: express.Request, res: express.Response) => {
   res.json({
     title: 'Tofas Fen Webapp Status',
     timestamp: new Date().toISOString(),
-    metrics
+    metrics,
   });
 });
 
@@ -168,7 +164,7 @@ registerRoutes(app);
 setupUploadRoutes(app);
 
 // Prometheus metrics endpoint
-app.get("/metrics", async (_req: express.Request, res: express.Response) => {
+app.get('/metrics', async (_req: express.Request, res: express.Response) => {
   try {
     const { register } = await import('./utils/metrics');
     res.set('Content-Type', register.contentType);
@@ -181,7 +177,7 @@ app.get("/metrics", async (_req: express.Request, res: express.Response) => {
 });
 
 // Health check endpoint
-app.get("/health", async (_req: express.Request, res: express.Response) => {
+app.get('/health', async (_req: express.Request, res: express.Response) => {
   try {
     const healthCheck = await monitoringService.performHealthCheck();
     res.json(healthCheck);
@@ -197,8 +193,8 @@ app.get("/health", async (_req: express.Request, res: express.Response) => {
 });
 
 // Root endpoint
-app.get("/", (_req: express.Request, res: express.Response) => {
-  res.send("Backend running!");
+app.get('/', (_req: express.Request, res: express.Response) => {
+  res.send('Backend running!');
 });
 
 // Setup Swagger documentation
@@ -215,7 +211,9 @@ if (process.env.ENABLE_GRAPHQL === 'true' || process.env.NODE_ENV !== 'productio
       });
     })
     .catch((err) => {
-      logger.warn('GraphQL server could not be initialized (optional in dev)', { error: err.message });
+      logger.warn('GraphQL server could not be initialized (optional in dev)', {
+        error: err.message,
+      });
     });
 }
 
@@ -273,10 +271,66 @@ if (process.env.NODE_ENV !== 'test') {
         // Initialize scheduler for cron jobs (evci reminders etc.)
         SchedulerService.initialize();
         logger.info(`Scheduler service initialized`);
+
+        // Graceful shutdown handler
+        let isShuttingDown = false;
+        const gracefulShutdown = async (signal: string) => {
+          if (isShuttingDown) return;
+          isShuttingDown = true;
+
+          logger.info(`Received ${signal}. Starting graceful shutdown...`);
+
+          // 1. Close HTTP server (stop accepting new connections)
+          server.close(() => {
+            logger.info('HTTP server closed');
+          });
+
+          // 2. Close WebSocket connections
+          const ws = getWebSocket();
+          if (ws) {
+            ws.disconnectAll();
+            logger.info('WebSocket connections closed');
+          }
+
+          // 3. Close Redis connections
+          if (isRedisConfigured && cacheRedis) {
+            try {
+              await cacheRedis.quit();
+              logger.info('Redis connection closed');
+            } catch (err) {
+              const errMsg = err instanceof Error ? err.message : String(err);
+              logger.error('Error closing Redis connection', { error: errMsg });
+            }
+          }
+
+          // 4. Close MongoDB connection
+          try {
+            await mongoose.connection.close();
+            logger.info('MongoDB connection closed');
+          } catch (err) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            logger.error('Error closing MongoDB connection', { error: errMsg });
+          }
+
+          logger.info('Graceful shutdown complete');
+          process.exit(0);
+        };
+
+        // Force exit after 15 seconds if graceful shutdown stalls
+        const forceExit = (signal: string) => {
+          gracefulShutdown(signal);
+          setTimeout(() => {
+            logger.error('Forced shutdown after timeout');
+            process.exit(1);
+          }, 15000).unref();
+        };
+
+        process.on('SIGTERM', () => forceExit('SIGTERM'));
+        process.on('SIGINT', () => forceExit('SIGINT'));
       });
     })
     .catch((err) => {
-      logger.error("MongoDB connection failed", { error: err.message });
+      logger.error('MongoDB connection failed', { error: err.message });
       process.exit(1);
     });
 }

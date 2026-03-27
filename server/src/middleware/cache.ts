@@ -1,9 +1,40 @@
 import { Request, Response, NextFunction } from 'express';
-import Redis from 'ioredis';
+import Redis, { RedisOptions } from 'ioredis';
 import logger from '../utils/logger';
 
+// Node system error interface for Redis error handling
+interface NodeSystemError extends Error {
+  code?: string;
+  syscall?: string;
+  address?: string;
+  port?: number;
+}
+
+// Redis stub type for dev mode (no-op implementation)
+interface RedisStub {
+  get: (key: string) => Promise<string | null>;
+  setex: (key: string, ttl: number, val: string) => Promise<undefined>;
+  keys: (pattern: string) => Promise<string[]>;
+  del: (...keys: string[]) => Promise<number>;
+  info: (section?: string) => Promise<string>;
+  dbsize: () => Promise<number>;
+  quit: () => Promise<string>;
+  on: (event: string, cb: (...args: unknown[]) => void) => undefined;
+  mget: (keys: string[]) => Promise<(string | null)[]>;
+  mset: (keyValues: Record<string, string>) => Promise<undefined>;
+  ping: () => Promise<string>;
+  expire: (key: string, seconds: number) => Promise<number>;
+  pipeline: () => {
+    get: () => { exec: () => Promise<unknown[]> };
+    setex: (key: string, ttl: number, value: string) => { exec: () => Promise<unknown[]> };
+    del: (key: string) => { exec: () => Promise<unknown[]> };
+    exec: () => Promise<unknown[]>;
+  };
+  options: { host?: string; port?: number; db?: number };
+}
+
 // Enhanced Redis client configuration for production performance
-const redisConfig: any = {
+const redisConfig: RedisOptions = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
   password: process.env.REDIS_PASSWORD || undefined,
@@ -23,63 +54,75 @@ const redisConfig: any = {
   // Cluster support
   enableOfflineQueue: false,
   // Memory optimization
-  maxLoadingTimeout: 10000,
+  connectTimeout: 10000,
   // TLS support for production
   tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
   // Sentinel support
   sentinels: process.env.REDIS_SENTINELS ? JSON.parse(process.env.REDIS_SENTINELS) : undefined,
-  name: process.env.REDIS_SENTINEL_NAME || 'mymaster'
+  name: process.env.REDIS_SENTINEL_NAME || 'mymaster',
 };
 
 // Prefer REDIS_URL if provided, otherwise fall back to host/port
 const redisUrl = process.env.REDIS_URL;
 
 // Determine if Redis should be enabled
-const isRedisConfigured = Boolean(redisUrl || process.env.REDIS_HOST || process.env.REDIS_PORT) && process.env.NODE_ENV === 'production';
+const isRedisConfigured =
+  Boolean(redisUrl || process.env.REDIS_HOST || process.env.REDIS_PORT) &&
+  process.env.NODE_ENV === 'production';
 
 // Create Redis instance or a no-op stub in dev when not configured
-const redis: any = isRedisConfigured
-  ? (redisUrl ? new Redis(redisUrl, redisConfig) : new Redis(redisConfig))
+const redis: Redis | RedisStub = isRedisConfigured
+  ? redisUrl
+    ? new Redis(redisUrl, redisConfig)
+    : new Redis(redisConfig)
   : {
-    get: async (_key: string) => null,
-    setex: async (_key: string, _ttl: number, _val: string) => undefined,
-    keys: async (_pattern: string) => [] as string[],
-    del: async (..._keys: string[]) => 0,
-    info: async () => '',
-    dbsize: async () => 0,
-    on: (_event: string, _cb: (...args: any[]) => void) => undefined,
-    // Enhanced methods for performance
-    mget: async (_keys: string[]) => [],
-    mset: async (_keyValues: Record<string, string>) => undefined,
-    pipeline: () => ({
-      get: () => ({ exec: async () => [] }),
-      setex: () => ({ exec: async () => [] }),
-      del: () => ({ exec: async () => [] }),
-      exec: async () => []
-    })
-  };
+      get: async (_key: string) => null,
+      setex: async (_key: string, _ttl: number, _val: string) => undefined,
+      keys: async (_pattern: string) => [] as string[],
+      del: async (..._keys: string[]) => 0,
+      info: async () => '',
+      dbsize: async () => 0,
+      on: (_event: string, _cb: (...args: unknown[]) => void) => undefined,
+      ping: async () => 'PONG',
+      expire: async (_key: string, _seconds: number) => 0,
+      // Enhanced methods for performance
+      mget: async (_keys: string[]) => [],
+      mset: async (_keyValues: Record<string, string>) => undefined,
+      pipeline: () => ({
+        get: () => ({ exec: async () => [] }),
+        setex: (_key: string, _ttl: number, _value: string) => ({ exec: async () => [] }),
+        del: (_key: string) => ({ exec: async () => [] }),
+        exec: async () => [],
+      }),
+      quit: async () => 'OK',
+      options: {},
+    };
 
 if (!isRedisConfigured) {
-  logger.info('Redis caching disabled in development mode. Set NODE_ENV=production and REDIS_URL to enable caching.');
+  logger.info(
+    'Redis caching disabled in development mode. Set NODE_ENV=production and REDIS_URL to enable caching.',
+  );
 }
 
 // Enhanced Redis event handling
 if (isRedisConfigured) {
   redis.on('error', (err: Error) => {
+    const sysErr = err as NodeSystemError;
     logger.error('Redis connection error', {
       error: err instanceof Error ? err.message : err,
-      code: (err as any).code,
-      syscall: (err as any).syscall,
-      address: (err as any).address,
-      port: (err as any).port
+      code: sysErr.code,
+      syscall: sysErr.syscall,
+      address: sysErr.address,
+      port: sysErr.port,
     });
   });
 
   redis.on('connect', () => {
+    const opts = 'options' in redis ? redis.options : {};
     logger.info('Redis connected successfully', {
-      host: redis.options.host || 'unknown',
-      port: redis.options.port || 'unknown',
-      database: redis.options.db || 0
+      host: (opts as Record<string, unknown>).host || 'unknown',
+      port: (opts as Record<string, unknown>).port || 'unknown',
+      database: (opts as Record<string, unknown>).db || 0,
     });
   });
 
@@ -110,7 +153,7 @@ export const cache = (duration: number = 300) => {
       }
 
       // Skip caching for authenticated requests if configured
-      if (process.env.CACHE_SKIP_AUTH === 'true' && (req as any).user) {
+      if (process.env.CACHE_SKIP_AUTH === 'true' && req.user) {
         return next();
       }
 
@@ -138,19 +181,24 @@ export const cache = (duration: number = 300) => {
       res.set('X-Cache-TTL', duration.toString());
 
       // Override response.json to cache the response
-      const originalJson = res.json;
-      res.json = function (data: any) {
+      const originalJson = res.json.bind(res);
+      res.json = function (data: unknown) {
         // Cache the response data
-        redis.setex(cacheKey, duration, JSON.stringify(data))
-          .catch((err: unknown) => logger.error('Cache set error', { error: err instanceof Error ? (err as Error).message : err }));
+        redis
+          .setex(cacheKey, duration, JSON.stringify(data))
+          .catch((err: unknown) =>
+            logger.error('Cache set error', { error: err instanceof Error ? err.message : err }),
+          );
 
         // Call original method
-        return originalJson.call(this, data);
+        return originalJson(data);
       };
 
       next();
     } catch (error: unknown) {
-      logger.error('Cache middleware error', { error: error instanceof Error ? (error as Error).message : error });
+      logger.error('Cache middleware error', {
+        error: error instanceof Error ? error.message : error,
+      });
       next(); // Continue without caching on error
     }
   };
@@ -171,13 +219,19 @@ export const invalidateCache = async (pattern: string) => {
     }
     return 0;
   } catch (error: unknown) {
-    logger.error('Cache invalidation error', { error: error instanceof Error ? (error as Error).message : error });
+    logger.error('Cache invalidation error', {
+      error: error instanceof Error ? (error as Error).message : error,
+    });
     return 0;
   }
 };
 
 // Enhanced session cache with TTL
-export const sessionCache = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+export const sessionCache = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const sessionId = req.sessionID;
 
@@ -196,7 +250,9 @@ export const sessionCache = async (req: Request, _res: Response, next: NextFunct
 
     next();
   } catch (error: unknown) {
-    logger.error('Session cache error', { error: error instanceof Error ? (error as Error).message : error });
+    logger.error('Session cache error', {
+      error: error instanceof Error ? (error as Error).message : error,
+    });
     next();
   }
 };
@@ -208,7 +264,9 @@ export const cacheHelpers = {
     try {
       return await redis.mget(keys);
     } catch (error: unknown) {
-      logger.error('Cache mget error', { error: error instanceof Error ? (error as Error).message : error });
+      logger.error('Cache mget error', {
+        error: error instanceof Error ? (error as Error).message : error,
+      });
       return keys.map(() => null);
     }
   },
@@ -227,13 +285,15 @@ export const cacheHelpers = {
       }
       return true;
     } catch (error: unknown) {
-      logger.error('Cache mset error', { error: error instanceof Error ? (error as Error).message : error });
+      logger.error('Cache mset error', {
+        error: error instanceof Error ? (error as Error).message : error,
+      });
       return false;
     }
   },
 
   // User cache management
-  async setUser(userId: string, userData: any, duration: number = 3600) {
+  async setUser(userId: string, userData: Record<string, unknown>, duration: number = 3600) {
     try {
       const userKey = `user:${userId}`;
       const userProfileKey = `user:${userId}:profile`;
@@ -241,7 +301,7 @@ export const cacheHelpers = {
       const pipeline = redis.pipeline();
 
       // Cache user profile (without sensitive data)
-      const { sifre, ...profileData } = userData;
+      const { sifre: _sifre, ...profileData } = userData;
       pipeline.setex(userProfileKey, duration, JSON.stringify(profileData));
 
       // Set user key with TTL
@@ -252,7 +312,9 @@ export const cacheHelpers = {
       logger.info('User cached', { userId, durationSeconds: duration });
       return true;
     } catch (error: unknown) {
-      logger.error('Set user cache error', { error: error instanceof Error ? (error as Error).message : error });
+      logger.error('Set user cache error', {
+        error: error instanceof Error ? (error as Error).message : error,
+      });
       return false;
     }
   },
@@ -260,11 +322,7 @@ export const cacheHelpers = {
   // User cache invalidation
   async invalidateUser(userId: string) {
     try {
-      const patterns = [
-        `user:${userId}`,
-        `user:${userId}:*`,
-        `user:${userId}:profile`
-      ];
+      const patterns = [`user:${userId}`, `user:${userId}:*`, `user:${userId}:profile`];
 
       let totalInvalidated = 0;
       for (const pattern of patterns) {
@@ -274,13 +332,15 @@ export const cacheHelpers = {
       logger.info('User cache invalidated', { userId, keysCount: totalInvalidated });
       return totalInvalidated;
     } catch (error: unknown) {
-      logger.error('Invalidate user cache error', { error: error instanceof Error ? (error as Error).message : error });
+      logger.error('Invalidate user cache error', {
+        error: error instanceof Error ? (error as Error).message : error,
+      });
       return 0;
     }
   },
 
   // Bulk cache operations
-  async bulkSet(operations: Array<{ key: string; value: any; ttl: number }>) {
+  async bulkSet(operations: Array<{ key: string; value: unknown; ttl: number }>) {
     try {
       const pipeline = redis.pipeline();
 
@@ -293,7 +353,9 @@ export const cacheHelpers = {
       logger.info('Bulk cached items', { count: operations.length });
       return true;
     } catch (error: unknown) {
-      logger.error('Bulk cache set error', { error: error instanceof Error ? (error as Error).message : error });
+      logger.error('Bulk cache set error', {
+        error: error instanceof Error ? (error as Error).message : error,
+      });
       return false;
     }
   },
@@ -306,19 +368,21 @@ export const cacheHelpers = {
 
       return {
         dbsize,
-        info: info.split('\r\n').reduce((acc: any, line: string) => {
+        info: info.split('\r\n').reduce<Record<string, string>>((acc, line) => {
           const [key, value] = line.split(':');
           if (key && value) {
             acc[key] = value;
           }
           return acc;
-        }, {})
+        }, {}),
       };
     } catch (error: unknown) {
-      logger.error('Get cache stats error', { error: error instanceof Error ? (error as Error).message : error });
+      logger.error('Get cache stats error', {
+        error: error instanceof Error ? (error as Error).message : error,
+      });
       return null;
     }
-  }
+  },
 };
 
 // Cache cleanup function
@@ -339,7 +403,9 @@ export const cleanupCache = async () => {
 
     return 0;
   } catch (error: unknown) {
-    logger.error('Cache cleanup error', { error: error instanceof Error ? (error as Error).message : error });
+    logger.error('Cache cleanup error', {
+      error: error instanceof Error ? (error as Error).message : error,
+    });
     return 0;
   }
 };
@@ -358,15 +424,15 @@ export const checkCacheHealth = async () => {
       status: 'healthy',
       responseTime,
       dbsize: await redis.dbsize(),
-      info: await redis.info('memory')
+      info: await redis.info('memory'),
     };
   } catch (error: unknown) {
     return {
       status: 'unhealthy',
-      error: (error as Error).message
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 };
 
 // Export all cache functions
-export { redis, isRedisConfigured }; 
+export { redis, isRedisConfigured };

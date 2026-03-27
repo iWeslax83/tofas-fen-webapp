@@ -1,7 +1,8 @@
-import mongoose from "mongoose";
-import logger from "./utils/logger";
+import mongoose from 'mongoose';
+import logger from './utils/logger';
+import type { ConnectionPoolInfo } from './types';
 
-const MONGO_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/tofas-fen";
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/tofas-fen';
 
 // Enhanced database connection configuration for production performance
 const dbConfig: mongoose.ConnectOptions = {
@@ -18,20 +19,22 @@ const dbConfig: mongoose.ConnectOptions = {
   w: process.env.NODE_ENV === 'production' ? 'majority' : 1, // Majority for production
   journal: process.env.NODE_ENV === 'production', // Enable journal for production
   readPreference: 'primary',
-  readConcern: { level: 'local' } as any,
+  readConcern: { level: 'local' as const },
   monitorCommands: process.env.NODE_ENV === 'development',
   tls: process.env.NODE_ENV === 'production',
   tlsAllowInvalidCertificates: process.env.NODE_ENV !== 'production',
-  ...(process.env.NODE_ENV === 'production' && { authSource: process.env.MONGODB_AUTH_SOURCE || 'admin' }),
+  ...(process.env.NODE_ENV === 'production' && {
+    authSource: process.env.MONGODB_AUTH_SOURCE || 'admin',
+  }),
   ...(process.env.MONGODB_REPLICA_SET && { replicaSet: process.env.MONGODB_REPLICA_SET }),
   writeConcern: {
     w: process.env.NODE_ENV === 'production' ? 'majority' : 1,
     journal: process.env.NODE_ENV === 'production',
-    wtimeout: 15000
+    wtimeout: 15000,
   },
   // Index creation options
   autoIndex: process.env.NODE_ENV !== 'production', // Disable in production for performance
-  autoCreate: true // Automatically create collections
+  autoCreate: true, // Automatically create collections
 };
 
 export async function connectDB() {
@@ -39,7 +42,9 @@ export async function connectDB() {
     await mongoose.connect(MONGO_URI, dbConfig);
     logger.info('MongoDB connection established');
   } catch (error) {
-    logger.error('MongoDB connection failed', { error: error instanceof Error ? error.message : error });
+    logger.error('MongoDB connection failed', {
+      error: error instanceof Error ? error.message : error,
+    });
     throw error;
   }
 }
@@ -50,9 +55,11 @@ mongoose.connection.on('connected', () => {
 
   // Safely access pool and connection properties
   try {
-    if ((mongoose.connection as any).pool) {
-      const pool = (mongoose.connection as any).pool;
-      logger.info(`Connection pool size: ${pool.size}`);
+    const connWithPool = mongoose.connection as typeof mongoose.connection & {
+      pool?: { size?: number };
+    };
+    if (connWithPool.pool) {
+      logger.info(`Connection pool size: ${connWithPool.pool.size}`);
     }
     if (mongoose.connection.name) {
       logger.info(`Database: ${mongoose.connection.name}`);
@@ -74,15 +81,18 @@ mongoose.connection.on('error', (err) => {
     name: err.name,
     message: err.message,
     code: err.code,
-    codeName: err.codeName
+    codeName: err.codeName,
   });
 
   // Attempt to reconnect on error
   setTimeout(() => {
-    if (mongoose.connection.readyState === 0) { // disconnected
+    if (mongoose.connection.readyState === 0) {
+      // disconnected
       logger.info('Attempting to reconnect after error...');
-      connectDB().catch(reconnectErr => {
-        logger.error('Reconnection failed', { error: reconnectErr instanceof Error ? reconnectErr.message : reconnectErr });
+      connectDB().catch((reconnectErr) => {
+        logger.error('Reconnection failed', {
+          error: reconnectErr instanceof Error ? reconnectErr.message : reconnectErr,
+        });
       });
     }
   }, 5000); // Wait 5 seconds before reconnecting
@@ -106,7 +116,7 @@ mongoose.connection.on('poolCreated', (event) => {
   try {
     logger.info('Connection pool created', {
       size: event?.size || 'unknown',
-      maxSize: event?.maxSize || 'unknown'
+      maxSize: event?.maxSize || 'unknown',
     });
   } catch (error) {
     logger.info('Connection pool created');
@@ -117,7 +127,7 @@ mongoose.connection.on('poolReady', (event) => {
   try {
     logger.info('Connection pool ready', {
       size: event?.size || 'unknown',
-      maxSize: event?.maxSize || 'unknown'
+      maxSize: event?.maxSize || 'unknown',
     });
   } catch (error) {
     logger.info('Connection pool ready');
@@ -128,7 +138,7 @@ mongoose.connection.on('poolCleared', (event) => {
   try {
     logger.info('Connection pool cleared', {
       size: event?.size || 'unknown',
-      maxSize: event?.maxSize || 'unknown'
+      maxSize: event?.maxSize || 'unknown',
     });
   } catch (error) {
     logger.info('Connection pool cleared');
@@ -143,8 +153,9 @@ mongoose.connection.on('query', () => {
   queryCount++;
   const now = Date.now();
   const timeSinceLastQuery = now - lastQueryTime;
-  
-  if (timeSinceLastQuery > 1000) { // Log every second
+
+  if (timeSinceLastQuery > 1000) {
+    // Log every second
     logger.info(`Database queries: ${queryCount} in ${timeSinceLastQuery}ms`);
     queryCount = 0;
     lastQueryTime = now;
@@ -159,11 +170,13 @@ process.on('SIGINT', async () => {
     // Close all connections in the pool
     await mongoose.connection.close();
     logger.info('MongoDB connection closed through app termination');
-    
+
     // Force exit after cleanup
     process.exit(0);
   } catch (error) {
-    logger.error('Error during graceful shutdown', { error: error instanceof Error ? error.message : error });
+    logger.error('Error during graceful shutdown', {
+      error: error instanceof Error ? error.message : error,
+    });
     process.exit(1);
   }
 });
@@ -175,26 +188,33 @@ process.on('SIGTERM', async () => {
     // Close all connections in the pool
     await mongoose.connection.close();
     logger.info('MongoDB connection closed through SIGTERM');
-    
+
     // Force exit after cleanup
     process.exit(0);
   } catch (error) {
-    logger.error('Error during SIGTERM shutdown', { error: error instanceof Error ? error.message : error });
+    logger.error('Error during SIGTERM shutdown', {
+      error: error instanceof Error ? error.message : error,
+    });
     process.exit(1);
   }
 });
 
 // Enhanced error handling for uncaught exceptions
 process.on('uncaughtException', async (error) => {
-  logger.error('Uncaught Exception', { error: error instanceof Error ? error.message : error });
+  logger.error('Uncaught Exception', {
+    error: error instanceof Error ? error.message : error,
+    stack: error instanceof Error ? error.stack : undefined,
+  });
 
   try {
     await mongoose.connection.close();
     logger.info('MongoDB connection closed due to uncaught exception');
   } catch (closeError) {
-    logger.error('Error closing MongoDB connection', { error: closeError instanceof Error ? closeError.message : closeError });
+    logger.error('Error closing MongoDB connection', {
+      error: closeError instanceof Error ? closeError.message : closeError,
+    });
   }
-  
+
   // Don't exit in test environment
   if (process.env.NODE_ENV !== 'test') {
     process.exit(1);
@@ -208,9 +228,11 @@ process.on('unhandledRejection', async (reason, promise) => {
     await mongoose.connection.close();
     logger.info('MongoDB connection closed due to unhandled rejection');
   } catch (closeError) {
-    logger.error('Error closing MongoDB connection', { error: closeError instanceof Error ? closeError.message : closeError });
+    logger.error('Error closing MongoDB connection', {
+      error: closeError instanceof Error ? closeError.message : closeError,
+    });
   }
-  
+
   // Don't exit in test environment
   if (process.env.NODE_ENV !== 'test') {
     process.exit(1);
@@ -221,21 +243,29 @@ process.on('unhandledRejection', async (reason, promise) => {
 export async function checkDBHealth() {
   try {
     const startTime = Date.now();
-    
+
     // Ping the database
     await mongoose.connection.db.admin().ping();
-    
+
     const responseTime = Date.now() - startTime;
-    
+
     return {
       status: 'healthy',
       responseTime,
       connectionState: mongoose.connection.readyState,
-      poolSize: (mongoose.connection as any).pool?.size,
-      maxPoolSize: (mongoose.connection as any).pool?.maxSize,
+      poolSize: (
+        mongoose.connection as typeof mongoose.connection & {
+          pool?: { size?: number; maxSize?: number };
+        }
+      ).pool?.size,
+      maxPoolSize: (
+        mongoose.connection as typeof mongoose.connection & {
+          pool?: { size?: number; maxSize?: number };
+        }
+      ).pool?.maxSize,
       database: mongoose.connection.name,
       host: mongoose.connection.host,
-      port: mongoose.connection.port
+      port: mongoose.connection.port,
     };
   } catch (error) {
     return {
@@ -244,7 +274,7 @@ export async function checkDBHealth() {
       connectionState: mongoose.connection.readyState,
       database: mongoose.connection.name,
       host: mongoose.connection.host,
-      port: mongoose.connection.port
+      port: mongoose.connection.port,
     };
   }
 }
@@ -253,7 +283,7 @@ export async function checkDBHealth() {
 export async function getDBStats() {
   try {
     const stats = await mongoose.connection.db.stats();
-    
+
     return {
       collections: stats.collections,
       views: stats.views,
@@ -266,18 +296,23 @@ export async function getDBStats() {
       totalSize: stats.totalSize,
       scaleFactor: stats.scaleFactor,
       fsUsedSize: stats.fsUsedSize,
-      fsTotalSize: stats.fsTotalSize
+      fsTotalSize: stats.fsTotalSize,
     };
   } catch (error) {
-    logger.error('Error getting database stats', { error: error instanceof Error ? error.message : error });
+    logger.error('Error getting database stats', {
+      error: error instanceof Error ? error.message : error,
+    });
     return null;
   }
 }
 
 // Connection pool management
-export function getConnectionPoolInfo() {
-  const pool = (mongoose.connection as any).pool || {};
-  
+export function getConnectionPoolInfo(): ConnectionPoolInfo {
+  const connWithPool = mongoose.connection as typeof mongoose.connection & {
+    pool?: ConnectionPoolInfo;
+  };
+  const pool = connWithPool.pool || ({} as ConnectionPoolInfo);
+
   return {
     size: pool.size,
     maxSize: pool.maxSize,
@@ -285,7 +320,7 @@ export function getConnectionPoolInfo() {
     available: pool.available,
     pending: pool.pending,
     created: pool.created,
-    destroyed: pool.destroyed
+    destroyed: pool.destroyed,
   };
 }
 
@@ -295,10 +330,12 @@ export async function closeDB() {
     await mongoose.connection.close();
     logger.info('Database connection closed');
   } catch (error) {
-    logger.error('Error closing database connection', { error: error instanceof Error ? error.message : error });
+    logger.error('Error closing database connection', {
+      error: error instanceof Error ? error.message : error,
+    });
     throw error;
   }
 }
 
 // Export connection for testing
-export { mongoose }; 
+export { mongoose };
