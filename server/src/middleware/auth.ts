@@ -14,7 +14,7 @@ export const requireAuth = authenticateJWT;
 // Role-based authorization middleware
 export const requireRole = (allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const user = (req as any).user;
+    const user = req.user;
 
     if (!user) {
       res.status(401).json({ error: 'Oturum açmanız gerekiyor' });
@@ -29,10 +29,6 @@ export const requireRole = (allowedRoles: string[]) => {
     next();
   };
 };
-
-
-
-
 
 // Admin middleware
 export const requireAdmin = requireRole(['admin']);
@@ -53,18 +49,22 @@ export const requireService = requireRole(['hizmetli', 'admin']);
 export const requireVisitor = requireRole(['ziyaretci']);
 
 // Optional authentication - kullanıcı giriş yapmışsa bilgilerini ekle
-export const optionalAuth = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+export const optionalAuth = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
-    if (req.session && (req.session as any).userId) {
-      const user = await User.findOne({ id: (req.session as any).userId });
+    if (req.session && req.session.userId) {
+      const user = await User.findOne({ id: req.session.userId });
       if (user) {
-        (req as any).user = user;
+        req.user = { userId: user.id, role: user.rol, email: user.email };
       }
     }
     next();
   } catch (error) {
     logger.error('Optional auth middleware error', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     next(); // Hata olsa bile devam et
   }
@@ -126,7 +126,7 @@ export const createRateLimiter = (windowMs: number, max: number, message: string
 // Session security middleware
 export const sessionSecurity = (req: Request, res: Response, next: NextFunction): void => {
   // Session hijacking koruması
-  if (req.session && (req.session as any).userId && req.headers['user-agent']) {
+  if (req.session && req.session.userId && req.headers['user-agent']) {
     if (!req.session.userAgent) {
       req.session.userAgent = req.headers['user-agent'];
     } else if (req.session.userAgent !== req.headers['user-agent']) {
@@ -134,7 +134,7 @@ export const sessionSecurity = (req: Request, res: Response, next: NextFunction)
       req.session.destroy((err) => {
         if (err) {
           logger.error('Session destroy error', {
-            error: err instanceof Error ? err.message : String(err)
+            error: err instanceof Error ? err.message : String(err),
           });
         }
       });

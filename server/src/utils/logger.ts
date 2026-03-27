@@ -1,5 +1,7 @@
 import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 import path from 'path';
+import { Request, Response } from 'express';
 
 // Log seviyeleri
 const levels = {
@@ -25,9 +27,7 @@ winston.addColors(colors);
 const format = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
   winston.format.colorize({ all: true }),
-  winston.format.printf(
-    (info) => `${info.timestamp} ${info.level}: ${info.message}`,
-  ),
+  winston.format.printf((info) => `${info.timestamp} ${info.level}: ${info.message}`),
 );
 
 // Dosya formatı (JSON)
@@ -37,32 +37,44 @@ const fileFormat = winston.format.combine(
   winston.format.json(),
 );
 
+const logsDir = path.join('logs');
+
+// Daily rotate transport options
+const dailyRotateDefaults = {
+  dirname: logsDir,
+  datePattern: 'YYYY-MM-DD',
+  zippedArchive: true,
+  maxSize: '20m',
+  maxFiles: '30d',
+  format: fileFormat,
+};
+
 // Transport'lar
-const transports = [
+const transports: winston.transport[] = [
   // Console transport
   new winston.transports.Console({
     format,
     level: process.env.LOG_LEVEL || 'info',
   }),
-  
-  // Error log dosyası
-  new winston.transports.File({
-    filename: path.join('logs', 'error.log'),
+
+  // Error log - daily rotation
+  new DailyRotateFile({
+    ...dailyRotateDefaults,
+    filename: 'error-%DATE%.log',
     level: 'error',
-    format: fileFormat,
   }),
-  
-  // Combined log dosyası
-  new winston.transports.File({
-    filename: path.join('logs', 'combined.log'),
-    format: fileFormat,
+
+  // Combined log - daily rotation
+  new DailyRotateFile({
+    ...dailyRotateDefaults,
+    filename: 'combined-%DATE%.log',
   }),
-  
-  // HTTP request log dosyası
-  new winston.transports.File({
-    filename: path.join('logs', 'http.log'),
+
+  // HTTP request log - daily rotation
+  new DailyRotateFile({
+    ...dailyRotateDefaults,
+    filename: 'http-%DATE%.log',
     level: 'http',
-    format: fileFormat,
   }),
 ];
 
@@ -92,7 +104,7 @@ export const logError = (error: Error, context?: string) => {
   });
 };
 
-export const logRequest = (req: any, res: any, responseTime: number) => {
+export const logRequest = (req: Request, res: Response, responseTime: number) => {
   logger.http({
     method: req.method,
     url: req.url,
@@ -100,8 +112,11 @@ export const logRequest = (req: any, res: any, responseTime: number) => {
     responseTime: `${responseTime}ms`,
     userAgent: req.get('User-Agent'),
     ip: req.ip,
-    userId: req.session?.userId || 'anonymous',
-  });
+    userId: (req as unknown as Record<string, unknown>).session
+      ? ((req as unknown as Record<string, unknown>).session as Record<string, unknown>)?.userId ||
+        'anonymous'
+      : 'anonymous',
+  } as unknown as string);
 };
 
 export const logDatabase = (operation: string, collection: string, duration: number) => {
@@ -110,7 +125,7 @@ export const logDatabase = (operation: string, collection: string, duration: num
     operation,
     collection,
     duration: `${duration}ms`,
-  });
+  } as unknown as string);
 };
 
 export const logCache = (operation: string, key: string, hit: boolean) => {
@@ -119,17 +134,17 @@ export const logCache = (operation: string, key: string, hit: boolean) => {
     operation,
     key,
     hit,
-  });
+  } as unknown as string);
 };
 
-export const logSecurity = (event: string, details: any) => {
+export const logSecurity = (event: string, details: Record<string, unknown>) => {
   logger.warn({
     type: 'security',
     event,
     details,
     ip: details.ip,
     userId: details.userId,
-  });
+  } as unknown as string);
 };
 
-export default logger; 
+export default logger;

@@ -7,4 +7,8 @@ declare module 'express-session' {
     userRole: string;
     userAgent?: string;
   }
+
+  interface Session {
+    userAgent?: string;
+  }
 }

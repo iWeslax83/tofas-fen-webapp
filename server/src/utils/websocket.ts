@@ -5,7 +5,7 @@ import logger from './logger';
 interface NotificationMessage {
   type: 'new_notification' | 'notification_read' | 'notification_archived';
   userId: string;
-  notification?: any;
+  notification?: Record<string, unknown>;
   notificationId?: string;
 }
 
@@ -14,9 +14,9 @@ class NotificationWebSocket {
   private clients: Map<string, WebSocket> = new Map();
 
   constructor(server: Server) {
-    this.wss = new WebSocketServer({ 
+    this.wss = new WebSocketServer({
       server,
-      path: '/notifications'
+      path: '/notifications',
     });
 
     this.setupWebSocket();
@@ -26,7 +26,7 @@ class NotificationWebSocket {
   private setupWebSocket() {
     this.wss.on('connection', (ws: WebSocket, request) => {
       const userId = this.extractUserId(request.url);
-      
+
       if (!userId) {
         ws.close(1008, 'User ID required');
         return;
@@ -38,11 +38,13 @@ class NotificationWebSocket {
       logger.info(`WebSocket connected for user: ${userId}`);
 
       // Send welcome message
-      ws.send(JSON.stringify({
-        type: 'connected',
-        message: 'Notification connection established',
-        userId
-      }));
+      ws.send(
+        JSON.stringify({
+          type: 'connected',
+          message: 'Notification connection established',
+          userId,
+        }),
+      );
 
       // Handle client disconnect
       ws.on('close', () => {
@@ -70,7 +72,7 @@ class NotificationWebSocket {
 
   private extractUserId(url: string | undefined): string | null {
     if (!url) return null;
-    
+
     const match = url.match(/\/notifications\/(.+)$/);
     return match ? match[1] : null;
   }
@@ -81,12 +83,14 @@ class NotificationWebSocket {
         // Handle notification read acknowledgment
         logger.info(`Notification read acknowledged for user ${userId}: ${message.notificationId}`);
         break;
-      
+
       case 'notification_archived':
         // Handle notification archive acknowledgment
-        logger.info(`Notification archived acknowledged for user ${userId}: ${message.notificationId}`);
+        logger.info(
+          `Notification archived acknowledged for user ${userId}: ${message.notificationId}`,
+        );
         break;
-      
+
       default:
         logger.warn(`Unknown message type from user ${userId}: ${message.type}`);
     }
@@ -95,14 +99,14 @@ class NotificationWebSocket {
   /**
    * Send notification to specific user
    */
-  public sendNotification(userId: string, notification: any) {
+  public sendNotification(userId: string, notification: Record<string, unknown>) {
     const client = this.clients.get(userId);
-    
+
     if (client && client.readyState === WebSocket.OPEN) {
       const message: NotificationMessage = {
         type: 'new_notification',
         userId,
-        notification
+        notification,
       };
 
       try {
@@ -113,15 +117,17 @@ class NotificationWebSocket {
         this.clients.delete(userId);
       }
     } else {
-      logger.debug(`User ${userId} not connected, notification will be delivered on next connection`);
+      logger.debug(
+        `User ${userId} not connected, notification will be delivered on next connection`,
+      );
     }
   }
 
   /**
    * Send notification to multiple users
    */
-  public sendBulkNotifications(userIds: string[], notification: any) {
-    userIds.forEach(userId => {
+  public sendBulkNotifications(userIds: string[], notification: Record<string, unknown>) {
+    userIds.forEach((userId) => {
       this.sendNotification(userId, notification);
     });
   }
@@ -129,11 +135,11 @@ class NotificationWebSocket {
   /**
    * Send notification to all connected users
    */
-  public broadcastNotification(notification: any) {
+  public broadcastNotification(notification: Record<string, unknown>) {
     const message: NotificationMessage = {
       type: 'new_notification',
       userId: 'broadcast',
-      notification
+      notification,
     };
 
     this.wss.clients.forEach((client) => {
@@ -204,7 +210,7 @@ class NotificationWebSocket {
       totalConnections: this.wss.clients.size,
       activeConnections: this.clients.size,
       connectedUsers: this.getConnectedUsers(),
-      uptime: process.uptime()
+      uptime: process.uptime(),
     };
   }
 }
