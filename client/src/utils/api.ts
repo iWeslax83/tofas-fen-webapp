@@ -69,7 +69,7 @@ const createSecureApiClient = (): AxiosInstance => {
     },
     (error) => {
       return Promise.reject(error);
-    }
+    },
   );
 
   // Response interceptor for token refresh and error handling
@@ -84,7 +84,11 @@ const createSecureApiClient = (): AxiosInstance => {
       return response;
     },
     async (error) => {
-      const originalRequest = (error as any)?.config;
+      const originalRequest = (
+        error as ApiError & {
+          config?: AxiosRequestConfig & { _retry?: boolean; _retryCount?: number };
+        }
+      )?.config;
 
       // Normalize error into a consistent shape for consumers
       const normalizeApiError = (err: unknown): ApiError => {
@@ -92,11 +96,13 @@ const createSecureApiClient = (): AxiosInstance => {
 
         // Axios errors
         if (axios.isAxiosError(err)) {
-          const axErr = err as any;
-          normalized.message = axErr.message || 'API isteği başarısız';
-          normalized.code = axErr.code || undefined;
-          if (axErr.response) {
-            normalized.response = { status: axErr.response.status, data: axErr.response.data };
+          normalized.message = err.message || 'API isteği başarısız';
+          normalized.code = err.code || undefined;
+          if (err.response) {
+            normalized.response = {
+              status: err.response.status,
+              data: err.response.data as { error?: string; message?: string },
+            };
           }
         } else if (err instanceof Error) {
           normalized.message = err.message;
@@ -148,7 +154,7 @@ const createSecureApiClient = (): AxiosInstance => {
             {},
             {
               withCredentials: true,
-            }
+            },
           );
 
           isRefreshing = false;
@@ -181,10 +187,12 @@ const createSecureApiClient = (): AxiosInstance => {
         if (retryCount < maxRetries) {
           originalRequest._retryCount = retryCount + 1;
           const retryAfter = error.response.data?.retryAfter || Math.pow(2, retryCount);
-          console.warn(`Çok fazla istek. ${retryCount + 1}/${maxRetries} yeniden deneme ${retryAfter} saniye sonra...`);
+          console.warn(
+            `Çok fazla istek. ${retryCount + 1}/${maxRetries} yeniden deneme ${retryAfter} saniye sonra...`,
+          );
 
           // Exponential backoff
-          await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+          await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
           return client(originalRequest);
         } else {
           console.error('Oran limiti için maksimum yeniden deneme aşıldı');
@@ -193,7 +201,7 @@ const createSecureApiClient = (): AxiosInstance => {
       }
 
       return Promise.reject(apiError);
-    }
+    },
   );
 
   return client;
@@ -208,7 +216,7 @@ function subscribeToTokenRefresh(callback: (success: boolean) => void) {
 }
 
 function onRefreshComplete(success: boolean) {
-  refreshSubscribers.forEach(cb => cb(success));
+  refreshSubscribers.forEach((cb) => cb(success));
   refreshSubscribers = [];
 }
 
@@ -222,9 +230,13 @@ export class SecureAPI {
   private static readonly LOGIN_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
   // Authentication methods
-  static async login(_id: string, _sifre: string, credentials: { id: string; sifre: string; }) {
+  static async login(_id: string, _sifre: string, credentials: { id: string; sifre: string }) {
     // Check rate limit
-    const rateLimitResult = RateLimiter.checkLimit(this.LOGIN_ATTEMPTS_KEY, this.LOGIN_MAX_ATTEMPTS, this.LOGIN_WINDOW_MS);
+    const rateLimitResult = RateLimiter.checkLimit(
+      this.LOGIN_ATTEMPTS_KEY,
+      this.LOGIN_MAX_ATTEMPTS,
+      this.LOGIN_WINDOW_MS,
+    );
     if (!rateLimitResult.allowed) {
       throw new Error('Çok fazla giriş denemesi. Lütfen 5 dakika sonra tekrar deneyin.');
     }
@@ -260,21 +272,32 @@ export class SecureAPI {
         return { user: otherData };
       }
     } catch (error: unknown) {
-
       // Normalize and extract a human-friendly message
       const { extractError } = await import('./apiResponseHandler');
       const errorMessage = extractError(error);
 
-      const apiError = error as ApiError & { response?: any };
-      const respData = apiError.response?.data;
+      const apiError = error as ApiError;
+      const respData = apiError.response?.data as Record<string, unknown> | undefined;
 
       // Prefer explicit message locations, and handle nested `error: { message: '...' }`
       let apiErrorMessage: string | undefined;
       if (respData) {
-        if (typeof respData.error === 'string') apiErrorMessage = respData.error;
-        else if (respData.error && typeof respData.error === 'object' && typeof respData.error.message === 'string') apiErrorMessage = respData.error.message;
-        else if (typeof respData.message === 'string') apiErrorMessage = respData.message;
-        else if (Array.isArray(respData.errors) && respData.errors.length > 0) apiErrorMessage = respData.errors.map((e: any) => (typeof e === 'string' ? e : e?.message)).filter(Boolean).join(', ');
+        const respError = respData.error;
+        if (typeof respError === 'string') apiErrorMessage = respError;
+        else if (
+          respError &&
+          typeof respError === 'object' &&
+          typeof (respError as Record<string, unknown>).message === 'string'
+        )
+          apiErrorMessage = (respError as Record<string, unknown>).message as string;
+        else if (typeof respData.message === 'string') apiErrorMessage = respData.message as string;
+        else if (Array.isArray(respData.errors) && respData.errors.length > 0)
+          apiErrorMessage = (respData.errors as unknown[])
+            .map((e: unknown) =>
+              typeof e === 'string' ? e : (e as Record<string, unknown>)?.message,
+            )
+            .filter(Boolean)
+            .join(', ');
       }
 
       if (apiErrorMessage) {

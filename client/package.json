@@ -1,5 +1,5 @@
 {
-  "name": "tofas-fen-webapp",
+  "name": "client",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -45,7 +45,6 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.12",
     "@sentry/react": "^9.43.0",
-    "@sentry/tracing": "^7.120.4",
     "@tailwindcss/postcss": "^4.1.18",
     "@tanstack/react-query": "^5.83.0",
     "@types/dompurify": "^3.0.5",
