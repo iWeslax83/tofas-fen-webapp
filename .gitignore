@@ -38,6 +38,9 @@ scripts/generated-secrets.txt
 scripts/secrets-output.txt
 scripts/*secret*.txt
 
+# Turbo
+.turbo/
+
 # Build outputs
 dist/
 build/
@@ -54,6 +57,9 @@ yarn-error.log*
 lerna-debug.log*
 server/logs/
 client/logs/
+
+# Screenshots (test/review artifacts)
+*.png
 
 # Coverage
 coverage/
