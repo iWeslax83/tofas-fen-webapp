@@ -20,3 +20,8 @@ export * from './noteQueries';
 // Dormitory
 export * from './dormitoryQueries';
 
+// Calendar
+export * from './calendarQueries';
+
+// Schedule
+export * from './scheduleQueries';

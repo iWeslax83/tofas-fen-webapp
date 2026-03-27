@@ -1,9 +1,13 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, X, Save, Upload, FileSpreadsheet, Link2 } from 'lucide-react';
+import { Users, Plus, X, Save, FileSpreadsheet, Link2 } from 'lucide-react';
 import { UserService } from '../../utils/apiService';
-import { useAuthContext } from "../../contexts/AuthContext";
+import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import BulkUserImportSection from './BulkUserImportSection';
+import BulkLinkSection from './BulkLinkSection';
+import AddUserModal from './AddUserModal';
+import EditUserModal from './EditUserModal';
 
 import './SenkronizasyonPage.css';
 
@@ -21,6 +25,29 @@ interface UserType {
   meslek?: string;
   departman?: string;
   _showPassword?: boolean;
+}
+
+interface BulkImportPreview {
+  valid: number;
+  total: number;
+  errors?: { row: number; message: string }[];
+  rows?: { id: string; adSoyad: string; rol: string; sinif?: string; sube?: string }[];
+}
+
+interface BulkImportResult {
+  imported: number;
+  failed: number;
+  duplicates?: string[];
+}
+
+interface BulkLinkPreview {
+  total: number;
+  links?: { parentId: string; childId: string }[];
+}
+
+interface BulkLinkResult {
+  linked: number;
+  errors?: { parentId: string; childId: string; message: string }[];
 }
 
 const ROLES = [
@@ -48,25 +75,7 @@ export default function SenkronizasyonPage() {
   const [manualAssignId, setManualAssignId] = useState('');
   const [manualAssignError, setManualAssignError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({
-    id: '',
-    adSoyad: '',
-    rol: '',
-    sifre: '',
-    sinif: '',
-    sube: '',
-    oda: '',
-    pansiyon: false,
-    childId: ''
-  });
-  const [addLoading, setAddLoading] = useState(false);
-  const [addError, setAddError] = useState('');
-  const [addSuccess, setAddSuccess] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [editUser, setEditUser] = useState<UserType | null>(null);
-  const [editForm, setEditForm] = useState<Partial<UserType>>({});
-  const [editLoading, setEditLoading] = useState(false);
-  const [editError, setEditError] = useState('');
 
   // Student search and filter states
   const [studentSearch, setStudentSearch] = useState('');
@@ -75,20 +84,18 @@ export default function SenkronizasyonPage() {
   // Bulk import states
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [bulkFile, setBulkFile] = useState<File | null>(null);
-  const [bulkPreview, setBulkPreview] = useState<any>(null);
+  const [bulkPreview, setBulkPreview] = useState<BulkImportPreview | null>(null);
   const [bulkLoading, setBulkLoading] = useState(false);
-  const [bulkResult, setBulkResult] = useState<any>(null);
+  const [bulkResult, setBulkResult] = useState<BulkImportResult | null>(null);
   const [bulkError, setBulkError] = useState('');
-  const bulkFileRef = useRef<HTMLInputElement>(null);
 
   // Bulk parent-child link states
   const [showBulkLink, setShowBulkLink] = useState(false);
   const [linkFile, setLinkFile] = useState<File | null>(null);
-  const [linkPreview, setLinkPreview] = useState<any>(null);
+  const [linkPreview, setLinkPreview] = useState<BulkLinkPreview | null>(null);
   const [linkLoading, setLinkLoading] = useState(false);
-  const [linkResult, setLinkResult] = useState<any>(null);
+  const [linkResult, setLinkResult] = useState<BulkLinkResult | null>(null);
   const [linkError, setLinkError] = useState('');
-  const linkFileRef = useRef<HTMLInputElement>(null);
 
   // Only allow admins
   useEffect(() => {
@@ -113,7 +120,7 @@ export default function SenkronizasyonPage() {
       if (error) {
         setError(error);
       } else {
-        setUsers(Array.isArray(data) ? data as UserType[] : []);
+        setUsers(Array.isArray(data) ? (data as UserType[]) : []);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -128,20 +135,23 @@ export default function SenkronizasyonPage() {
   }, [fetchUsers]);
 
   // Filtered and searched users
-  const filteredUsers = users.filter(u =>
-    (!filter || u.rol === filter) &&
-    (!search || u.adSoyad.toLowerCase().includes(search.toLowerCase()))
+  const filteredUsers = users.filter(
+    (u) =>
+      (!filter || u.rol === filter) &&
+      (!search || u.adSoyad.toLowerCase().includes(search.toLowerCase())),
   );
 
   // Filter students for parent-child matching
-  const filteredStudents = users.filter(u => u.rol === 'student').filter(student => {
-    const matchesSearch = studentSearch === '' || student.adSoyad.toLowerCase().includes(studentSearch.toLowerCase());
-    const matchesClass = studentClassFilter === '' || student.sinif === studentClassFilter;
-    return matchesSearch && matchesClass;
-  });
+  const filteredStudents = users
+    .filter((u) => u.rol === 'student')
+    .filter((student) => {
+      const matchesSearch =
+        studentSearch === '' || student.adSoyad.toLowerCase().includes(studentSearch.toLowerCase());
+      const matchesClass = studentClassFilter === '' || student.sinif === studentClassFilter;
+      return matchesSearch && matchesClass;
+    });
 
   // Select parent and load their children
-  // Not used currently
   const handleSelectParent = (parent: UserType) => {
     setSelectedParent(parent);
     setSelectedChildren(parent.childId || []);
@@ -150,14 +160,8 @@ export default function SenkronizasyonPage() {
     setError('');
   };
 
-  const handleEditUser = (user: UserType) => {
-    setEditUser(user);
-    setEditForm({ ...user });
-    setEditError('');
-  };
-
   const handleDeleteUser = async (userId: string) => {
-    const userToDelete = users.find(u => u.id === userId);
+    const userToDelete = users.find((u) => u.id === userId);
     if (!userToDelete) return;
 
     const confirmMessage = `"${userToDelete.adSoyad}" kullanıcısını silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz!`;
@@ -169,17 +173,13 @@ export default function SenkronizasyonPage() {
         console.error('Kullanıcı silinirken hata oluştu:', error);
         alert('Kullanıcı silinirken hata oluştu: ' + error);
       } else {
-        setUsers(users => users.filter(u => u.id !== userId));
-        // Eğer silinen kullanıcı seçili parent ise, seçimi temizle
+        setUsers((users) => users.filter((u) => u.id !== userId));
         if (selectedParent?.id === userId) {
           setSelectedParent(null);
           setSelectedChildren([]);
         }
-        // Eğer silinen kullanıcı edit ediliyorsa, edit'i temizle
         if (editUser?.id === userId) {
           setEditUser(null);
-          setEditForm({});
-          setEditError('');
         }
         alert('Kullanıcı başarıyla silindi.');
       }
@@ -191,7 +191,7 @@ export default function SenkronizasyonPage() {
 
   // Manual assignment by ID
   const handleManualAssign = () => {
-    const student = users.find(u => u.id === manualAssignId && u.rol === 'student');
+    const student = users.find((u) => u.id === manualAssignId && u.rol === 'student');
     if (!student) {
       setManualAssignError('Geçersiz öğrenci ID!');
       return;
@@ -200,17 +200,15 @@ export default function SenkronizasyonPage() {
       setManualAssignError('Bu öğrenci zaten ekli.');
       return;
     }
-    setSelectedChildren(prev => [...prev, student.id]);
+    setSelectedChildren((prev) => [...prev, student.id]);
     setManualAssignId('');
     setManualAssignError('');
   };
 
   // Toggle child selection
   const handleToggleChild = (studentId: string) => {
-    setSelectedChildren(prev =>
-      prev.includes(studentId)
-        ? prev.filter(id => id !== studentId)
-        : [...prev, studentId]
+    setSelectedChildren((prev) =>
+      prev.includes(studentId) ? prev.filter((id) => id !== studentId) : [...prev, studentId],
     );
   };
 
@@ -219,13 +217,15 @@ export default function SenkronizasyonPage() {
     if (!selectedParent) return;
     setSaving(true);
     try {
-      const { error } = await UserService.updateUser(selectedParent.id, { childId: selectedChildren });
+      const { error } = await UserService.updateUser(selectedParent.id, {
+        childId: selectedChildren,
+      });
       if (error) {
         setError(error);
       } else {
-        setUsers(users => users.map(u =>
-          u.id === selectedParent.id ? { ...u, childId: selectedChildren } : u
-        ));
+        setUsers((users) =>
+          users.map((u) => (u.id === selectedParent.id ? { ...u, childId: selectedChildren } : u)),
+        );
         setSelectedParent(null);
         setSelectedChildren([]);
         setError('');
@@ -236,153 +236,22 @@ export default function SenkronizasyonPage() {
     setSaving(false);
   };
 
-  // Save edited user
-  const handleSaveEdit = async () => {
-    if (!editUser) return;
-    setEditLoading(true);
-    try {
-      const { error } = await UserService.updateUser(editUser.id, editForm);
-      if (error) {
-        setEditError(error);
-      } else {
-        setUsers(users => users.map(u =>
-          u.id === editUser.id ? { ...u, ...editForm } : u
-        ));
-        setEditUser(null);
-        setEditForm({});
-        setEditError('');
-      }
-    } catch (e: any) {
-      setEditError('Kullanıcı güncellenirken hata oluştu.');
-    }
-    setEditLoading(false);
-  };
-
-  // Cancel edit
-  const handleCancelEdit = () => {
-    setEditUser(null);
-    setEditForm({});
-    setEditError('');
-  };
-
-  // Bulk import handlers
-  const handleBulkPreview = async () => {
-    if (!bulkFile) return;
-    setBulkLoading(true);
-    setBulkError('');
-    setBulkPreview(null);
-    try {
-      const formData = new FormData();
-      formData.append('file', bulkFile);
-      const { data, error } = await UserService.bulkImportUsers(formData, true);
-      if (error) {
-        setBulkError(error);
-      } else {
-        setBulkPreview(data);
-      }
-    } catch {
-      setBulkError('Önizleme sırasında hata oluştu');
-    }
-    setBulkLoading(false);
-  };
-
-  const handleBulkImport = async () => {
-    if (!bulkFile) return;
-    setBulkLoading(true);
-    setBulkError('');
-    setBulkResult(null);
-    try {
-      const formData = new FormData();
-      formData.append('file', bulkFile);
-      const { data, error } = await UserService.bulkImportUsers(formData, false);
-      if (error) {
-        setBulkError(error);
-      } else {
-        setBulkResult(data);
-        fetchUsers(); // Refresh user list
-      }
-    } catch {
-      setBulkError('Aktarım sırasında hata oluştu');
-    }
-    setBulkLoading(false);
-  };
-
-  const handleBulkLinkPreview = async () => {
-    if (!linkFile) return;
-    setLinkLoading(true);
-    setLinkError('');
-    setLinkPreview(null);
-    try {
-      const formData = new FormData();
-      formData.append('file', linkFile);
-      const { data, error } = await UserService.bulkLinkParentChild(formData, true);
-      if (error) {
-        setLinkError(error);
-      } else {
-        setLinkPreview(data);
-      }
-    } catch {
-      setLinkError('Önizleme sırasında hata oluştu');
-    }
-    setLinkLoading(false);
-  };
-
-  const handleBulkLink = async () => {
-    if (!linkFile) return;
-    setLinkLoading(true);
-    setLinkError('');
-    setLinkResult(null);
-    try {
-      const formData = new FormData();
-      formData.append('file', linkFile);
-      const { data, error } = await UserService.bulkLinkParentChild(formData, false);
-      if (error) {
-        setLinkError(error);
-      } else {
-        setLinkResult(data);
-        fetchUsers(); // Refresh user list
-      }
-    } catch {
-      setLinkError('Eşleştirme sırasında hata oluştu');
-    }
-    setLinkLoading(false);
-  };
-
-  const resetBulkImport = () => {
-    setBulkFile(null);
-    setBulkPreview(null);
-    setBulkResult(null);
-    setBulkError('');
-    if (bulkFileRef.current) bulkFileRef.current.value = '';
-  };
-
-  const resetBulkLink = () => {
-    setLinkFile(null);
-    setLinkPreview(null);
-    setLinkResult(null);
-    setLinkError('');
-    if (linkFileRef.current) linkFileRef.current.value = '';
-  };
-
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${user?.rol || 'admin'}` },
-    { label: 'Senkronizasyon Yönetimi' }
+    { label: 'Senkronizasyon Yönetimi' },
   ];
 
   return (
-    <ModernDashboardLayout
-      pageTitle="Senkronizasyon Yönetimi"
-      breadcrumb={breadcrumb}
-    >
+    <ModernDashboardLayout pageTitle="Senkronizasyon Yönetimi" breadcrumb={breadcrumb}>
       <div className="senkronizasyon-page">
         <div className="content-section">
           <div className="filter-bar">
             <select
               value={filter}
-              onChange={e => setFilter(e.target.value)}
+              onChange={(e) => setFilter(e.target.value)}
               className="form-control filter-select"
             >
-              {ROLES.map(r => (
+              {ROLES.map((r) => (
                 <option key={r.value} value={r.value}>
                   {r.label}
                 </option>
@@ -392,13 +261,10 @@ export default function SenkronizasyonPage() {
               type="text"
               placeholder="İsim ile ara..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="form-control search-input"
             />
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="btn btn-primary"
-            >
+            <button onClick={() => setShowAddModal(true)} className="btn btn-primary">
               <Plus size={16} className="btn-icon" />
               Yeni Kullanıcı Ekle
             </button>
@@ -408,14 +274,20 @@ export default function SenkronizasyonPage() {
           <div className="bulk-actions-bar">
             <button
               className={`btn ${showBulkImport ? 'btn-secondary' : 'btn-success'}`}
-              onClick={() => { setShowBulkImport(!showBulkImport); setShowBulkLink(false); }}
+              onClick={() => {
+                setShowBulkImport(!showBulkImport);
+                setShowBulkLink(false);
+              }}
             >
               <FileSpreadsheet size={16} />
               Toplu Kullanıcı Aktar
             </button>
             <button
               className={`btn ${showBulkLink ? 'btn-secondary' : 'btn-warning'}`}
-              onClick={() => { setShowBulkLink(!showBulkLink); setShowBulkImport(false); }}
+              onClick={() => {
+                setShowBulkLink(!showBulkLink);
+                setShowBulkImport(false);
+              }}
             >
               <Link2 size={16} />
               Toplu Veli-Öğrenci Eşleştir
@@ -432,139 +304,38 @@ export default function SenkronizasyonPage() {
 
           {/* Bulk User Import Panel */}
           {showBulkImport && (
-            <div className="bulk-import-panel">
-              <h3 className="bulk-panel-title">
-                <Upload size={20} />
-                Toplu Kullanıcı Aktarımı
-              </h3>
-              <p className="bulk-panel-desc">
-                Excel (.xlsx) veya CSV dosyası yükleyin. Beklenen sütunlar: id, adSoyad, rol, sinif, sube, sifre (opsiyonel: parentId, oda, pansiyon, tckn)
-              </p>
-
-              <div className="bulk-file-row">
-                <input
-                  ref={bulkFileRef}
-                  type="file"
-                  accept=".xlsx,.csv,.xls"
-                  onChange={e => { setBulkFile(e.target.files?.[0] || null); setBulkPreview(null); setBulkResult(null); setBulkError(''); }}
-                  className="form-input bulk-file-input"
-                />
-                <button className="btn btn-secondary" onClick={handleBulkPreview} disabled={!bulkFile || bulkLoading}>
-                  Önizle
-                </button>
-                <button className="btn btn-success" onClick={handleBulkImport} disabled={!bulkFile || bulkLoading}>
-                  {bulkLoading ? 'İşleniyor...' : 'Aktar'}
-                </button>
-                <button className="btn btn-secondary" onClick={() => { resetBulkImport(); setShowBulkImport(false); }}>
-                  <X size={14} /> Kapat
-                </button>
-              </div>
-
-              {bulkError && <div className="bulk-error">{bulkError}</div>}
-
-              {bulkPreview && (
-                <div className="result-section">
-                  <h4>Önizleme: {bulkPreview.valid} geçerli / {bulkPreview.total} toplam</h4>
-                  {bulkPreview.errors?.length > 0 && (
-                    <div className="bulk-error">
-                      {bulkPreview.errors.length} hata: {bulkPreview.errors.slice(0, 5).map((e: any) => `Satır ${e.row}: ${e.message}`).join('; ')}
-                      {bulkPreview.errors.length > 5 && ` ...ve ${bulkPreview.errors.length - 5} daha`}
-                    </div>
-                  )}
-                  {bulkPreview.rows?.length > 0 && (
-                    <div className="preview-table-wrapper">
-                      <table className="preview-table">
-                        <thead>
-                          <tr><th>ID</th><th>Ad Soyad</th><th>Rol</th><th>Sınıf</th><th>Şube</th></tr>
-                        </thead>
-                        <tbody>
-                          {bulkPreview.rows.slice(0, 20).map((r: any, i: number) => (
-                            <tr key={i}><td>{r.id}</td><td>{r.adSoyad}</td><td>{r.rol}</td><td>{r.sinif || '-'}</td><td>{r.sube || '-'}</td></tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      {bulkPreview.rows.length > 20 && <p className="preview-more">...ve {bulkPreview.rows.length - 20} satır daha</p>}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {bulkResult && (
-                <div className="result-section">
-                  <h4>Aktarım Sonucu</h4>
-                  <p className="bulk-success">{bulkResult.imported} kullanıcı başarıyla eklendi.</p>
-                  {bulkResult.failed > 0 && <p className="bulk-error">{bulkResult.failed} kullanıcı eklenemedi.</p>}
-                  {bulkResult.duplicates?.length > 0 && <p className="bulk-warning">Tekrarlanan ID'ler: {bulkResult.duplicates.join(', ')}</p>}
-                </div>
-              )}
-            </div>
+            <BulkUserImportSection
+              bulkFile={bulkFile}
+              setBulkFile={setBulkFile}
+              bulkPreview={bulkPreview}
+              setBulkPreview={setBulkPreview}
+              bulkLoading={bulkLoading}
+              setBulkLoading={setBulkLoading}
+              bulkResult={bulkResult}
+              setBulkResult={setBulkResult}
+              bulkError={bulkError}
+              setBulkError={setBulkError}
+              onImportComplete={fetchUsers}
+              onClose={() => setShowBulkImport(false)}
+            />
           )}
 
           {/* Bulk Parent-Child Link Panel */}
           {showBulkLink && (
-            <div className="bulk-import-panel">
-              <h3 className="bulk-panel-title">
-                <Link2 size={20} />
-                Toplu Veli-Öğrenci Eşleştirme
-              </h3>
-              <p className="bulk-panel-desc">
-                CSV veya Excel dosyası yükleyin. Beklenen sütunlar: parentId, childId
-              </p>
-
-              <div className="bulk-file-row">
-                <input
-                  ref={linkFileRef}
-                  type="file"
-                  accept=".xlsx,.csv,.xls"
-                  onChange={e => { setLinkFile(e.target.files?.[0] || null); setLinkPreview(null); setLinkResult(null); setLinkError(''); }}
-                  className="form-input bulk-file-input"
-                />
-                <button className="btn btn-secondary" onClick={handleBulkLinkPreview} disabled={!linkFile || linkLoading}>
-                  Önizle
-                </button>
-                <button className="btn btn-warning" onClick={handleBulkLink} disabled={!linkFile || linkLoading}>
-                  {linkLoading ? 'İşleniyor...' : 'Eşleştir'}
-                </button>
-                <button className="btn btn-secondary" onClick={() => { resetBulkLink(); setShowBulkLink(false); }}>
-                  <X size={14} /> Kapat
-                </button>
-              </div>
-
-              {linkError && <div className="bulk-error">{linkError}</div>}
-
-              {linkPreview && (
-                <div className="result-section">
-                  <h4>Önizleme: {linkPreview.total} eşleştirme bulundu</h4>
-                  {linkPreview.links?.length > 0 && (
-                    <div className="preview-table-wrapper">
-                      <table className="preview-table">
-                        <thead>
-                          <tr><th>Veli ID</th><th>Öğrenci ID</th></tr>
-                        </thead>
-                        <tbody>
-                          {linkPreview.links.slice(0, 20).map((l: any, i: number) => (
-                            <tr key={i}><td>{l.parentId}</td><td>{l.childId}</td></tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      {linkPreview.links.length > 20 && <p className="preview-more">...ve {linkPreview.links.length - 20} eşleştirme daha</p>}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {linkResult && (
-                <div className="result-section">
-                  <h4>Eşleştirme Sonucu</h4>
-                  <p className="bulk-success">{linkResult.linked} eşleştirme başarıyla yapıldı.</p>
-                  {linkResult.errors?.length > 0 && (
-                    <div className="bulk-error">
-                      {linkResult.errors.length} hata: {linkResult.errors.slice(0, 5).map((e: any) => `${e.parentId}-${e.childId}: ${e.message}`).join('; ')}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <BulkLinkSection
+              linkFile={linkFile}
+              setLinkFile={setLinkFile}
+              linkPreview={linkPreview}
+              setLinkPreview={setLinkPreview}
+              linkLoading={linkLoading}
+              setLinkLoading={setLinkLoading}
+              linkResult={linkResult}
+              setLinkResult={setLinkResult}
+              linkError={linkError}
+              setLinkError={setLinkError}
+              onLinkComplete={fetchUsers}
+              onClose={() => setShowBulkLink(false)}
+            />
           )}
 
           {loading ? (
@@ -574,22 +345,31 @@ export default function SenkronizasyonPage() {
             </div>
           ) : (
             <div className="user-grid">
-              {filteredUsers.map(u => (
-                <div key={u.id} className={`user-card ${selectedParent?.id === u.id ? 'selected' : ''}`}>
+              {filteredUsers.map((u) => (
+                <div
+                  key={u.id}
+                  className={`user-card ${selectedParent?.id === u.id ? 'selected' : ''}`}
+                >
                   <div className="user-card-header">
                     <div className="user-info">
-                      <div className="user-avatar">
-                        {u.adSoyad.charAt(0).toUpperCase()}
-                      </div>
+                      <div className="user-avatar">{u.adSoyad.charAt(0).toUpperCase()}</div>
                       <div className="user-details">
                         <h3>{u.adSoyad}</h3>
                         <p>ID: {u.id}</p>
                         <span className={`user-role role-${u.rol}`}>
-                          {u.rol === 'admin' ? 'Yönetici' :
-                            u.rol === 'teacher' ? 'Öğretmen' :
-                              u.rol === 'student' ? `Öğrenci ${u.pansiyon ? '(Yatılı)' : '(Gündüzlü)'}` :
-                                u.rol === 'parent' ? 'Veli' :
-                                  u.rol === 'hizmetli' ? 'Hizmetli' : u.rol}
+                          {u.rol === 'admin'
+                            ? 'Yönetici'
+                            : u.rol === 'teacher'
+                              ? 'Öğretmen'
+                              : u.rol === 'student'
+                                ? `Öğrenci ${u.pansiyon ? '(Yatılı)' : '(Gündüzlü)'}`
+                                : u.rol === 'parent'
+                                  ? 'Veli'
+                                  : u.rol === 'hizmetli'
+                                    ? 'Hizmetli'
+                                    : u.rol === 'ziyaretci'
+                                      ? 'Ziyaretçi'
+                                      : u.rol}
                         </span>
                       </div>
                     </div>
@@ -618,10 +398,7 @@ export default function SenkronizasyonPage() {
                       )}
                     </div>
                     <div className="user-actions">
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => handleEditUser(u)}
-                      >
+                      <button className="btn btn-secondary btn-sm" onClick={() => setEditUser(u)}>
                         Düzenle
                       </button>
                       {u.rol === 'parent' && (
@@ -644,6 +421,7 @@ export default function SenkronizasyonPage() {
               ))}
             </div>
           )}
+
           {selectedParent && (
             <div className="parent-child-matching-panel">
               <div className="matching-header">
@@ -652,34 +430,32 @@ export default function SenkronizasyonPage() {
                   Veli: {selectedParent.adSoyad}
                 </h3>
                 <p className="matching-description">
-                  Aşağıdan bu veliye ait çocuk(ları) seçin. Kaydet butonuna basınca veritabanına işlenecek.
+                  Aşağıdan bu veliye ait çocuk(ları) seçin. Kaydet butonuna basınca veritabanına
+                  işlenecek.
                 </p>
               </div>
 
               {/* Manual assign by ID */}
               <div className="manual-assign-section">
                 <div className="manual-assign-header">
-                  <span className="manual-assign-label">Hangi çocuğa (ID) eşleştirmek istersiniz?</span>
+                  <span className="manual-assign-label">
+                    Hangi çocuğa (ID) eşleştirmek istersiniz?
+                  </span>
                   <div className="manual-assign-input-group">
                     <input
                       type="text"
                       className="form-input manual-assign-input"
                       placeholder="Öğrenci ID girin"
                       value={manualAssignId}
-                      onChange={e => setManualAssignId(e.target.value)}
+                      onChange={(e) => setManualAssignId(e.target.value)}
                     />
-                    <button
-                      className="btn btn-primary"
-                      onClick={handleManualAssign}
-                    >
+                    <button className="btn btn-primary" onClick={handleManualAssign}>
                       <Plus size={16} />
                       Ekle
                     </button>
                   </div>
                 </div>
-                {manualAssignError && (
-                  <div className="error-message">{manualAssignError}</div>
-                )}
+                {manualAssignError && <div className="error-message">{manualAssignError}</div>}
               </div>
 
               {/* Student selection */}
@@ -708,7 +484,7 @@ export default function SenkronizasyonPage() {
                   </div>
                 </div>
                 <div className="senkronizasyon-student-grid">
-                  {filteredStudents.map(student => (
+                  {filteredStudents.map((student) => (
                     <label key={student.id} className="student-checkbox-item">
                       <input
                         type="checkbox"
@@ -718,10 +494,10 @@ export default function SenkronizasyonPage() {
                       />
                       <div className="student-info">
                         <span className="student-name">{student.adSoyad}</span>
-                        <span className="student-class">{student.sinif || '-'}/{student.sube || '-'}</span>
-                        {student.pansiyon && (
-                          <span className="student-dormitory">Yatılı</span>
-                        )}
+                        <span className="student-class">
+                          {student.sinif || '-'}/{student.sube || '-'}
+                        </span>
+                        {student.pansiyon && <span className="student-dormitory">Yatılı</span>}
                       </div>
                     </label>
                   ))}
@@ -738,12 +514,14 @@ export default function SenkronizasyonPage() {
                 <div className="selected-children-summary">
                   <h4 className="section-subtitle">Seçilen Çocuklar ({selectedChildren.length})</h4>
                   <div className="selected-children-list">
-                    {selectedChildren.map(childId => {
-                      const child = users.find(u => u.id === childId);
+                    {selectedChildren.map((childId) => {
+                      const child = users.find((u) => u.id === childId);
                       return child ? (
                         <div key={childId} className="selected-child-item">
                           <span className="child-name">{child.adSoyad}</span>
-                          <span className="child-class">{child.sinif || '-'}/{child.sube || '-'}</span>
+                          <span className="child-class">
+                            {child.sinif || '-'}/{child.sube || '-'}
+                          </span>
                           <button
                             className="remove-child-btn"
                             onClick={() => handleToggleChild(childId)}
@@ -762,11 +540,7 @@ export default function SenkronizasyonPage() {
 
               {/* Action buttons */}
               <div className="matching-actions">
-                <button
-                  className="btn btn-primary"
-                  onClick={handleSave}
-                  disabled={saving}
-                >
+                <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
                   {saving ? (
                     <>
                       <div className="loading-spinner"></div>
@@ -781,7 +555,11 @@ export default function SenkronizasyonPage() {
                 </button>
                 <button
                   className="btn btn-secondary"
-                  onClick={() => { setSelectedParent(null); setSelectedChildren([]); setError(''); }}
+                  onClick={() => {
+                    setSelectedParent(null);
+                    setSelectedChildren([]);
+                    setError('');
+                  }}
                 >
                   <X size={16} />
                   İptal
@@ -790,255 +568,28 @@ export default function SenkronizasyonPage() {
             </div>
           )}
         </div>
+
         {showAddModal && (
-          <div style={{ position: 'fixed', inset: 0, background: 'var(--opacity-40)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--z-modal)' }}>
-            <div style={{ background: 'var(--white)', borderRadius: 'var(--radius-xl)', padding: 'var(--space-8)', minWidth: 340, maxWidth: 400, width: '90vw', boxShadow: 'var(--shadow-2xl)', position: 'relative' }}>
-              <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--primary-red)', marginBottom: 'var(--space-4)' }}>Yeni Kullanıcı Ekle</h2>
-              <form onSubmit={async e => {
-                e.preventDefault();
-                setAddError(''); setAddSuccess(''); setAddLoading(true);
-                // Validasyon
-                if (!addForm.id || !addForm.adSoyad || !addForm.rol || !addForm.sifre) {
-                  setAddError('ID, Ad Soyad, Rol ve Şifre zorunludur.'); setAddLoading(false); return;
-                }
-                if (addForm.sifre.length < 4) {
-                  setAddError('Şifre en az 4 karakter olmalı.'); setAddLoading(false); return;
-                }
-
-                try {
-                  const payload: any = {
-                    id: addForm.id,
-                    adSoyad: addForm.adSoyad,
-                    rol: addForm.rol,
-                    sifre: addForm.sifre,
-                  };
-                  if (addForm.rol === 'student') {
-                    payload.sinif = addForm.sinif;
-                    payload.sube = addForm.sube;
-                    payload.oda = addForm.oda;
-                    payload.pansiyon = addForm.pansiyon;
-                  }
-                  if (addForm.rol === 'parent') {
-                    payload.childId = addForm.childId.split(',').map(s => s.trim()).filter(Boolean);
-                  }
-                  const { data, error } = await UserService.createUser(payload);
-                  if (error) {
-                    setAddError(error);
-                  } else {
-                    setUsers(users => [data as UserType, ...users]);
-                    setAddSuccess('Kullanıcı başarıyla eklendi!');
-                    setTimeout(() => { setShowAddModal(false); setAddForm({ id: '', adSoyad: '', rol: '', sifre: '', sinif: '', sube: '', oda: '', pansiyon: false, childId: '' }); setAddSuccess(''); }, 1200);
-                  }
-                } catch (err: any) {
-                  setAddError('Kullanıcı eklenemedi.');
-                } finally {
-                  setAddLoading(false);
-                }
-              }} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <input placeholder="ID" value={addForm.id || ''} onChange={e => setAddForm(f => ({ ...f, id: e.target.value }))} style={{ border: '1.5px solid #d1d5db', borderRadius: 8, padding: '8px 12px', fontSize: 15 }} required />
-                <input placeholder="Ad Soyad" value={addForm.adSoyad} onChange={e => setAddForm(f => ({ ...f, adSoyad: e.target.value }))} style={{ border: '1.5px solid #d1d5db', borderRadius: 8, padding: '8px 12px', fontSize: 15 }} required />
-                <select value={addForm.rol} onChange={e => setAddForm(f => ({ ...f, rol: e.target.value }))} style={{ border: '1.5px solid #d1d5db', borderRadius: 8, padding: '8px 12px', fontSize: 15 }} required>
-                  <option value="">Rol Seç</option>
-                  <option value="student">Öğrenci</option>
-                  <option value="parent">Veli</option>
-                  <option value="teacher">Öğretmen</option>
-                  <option value="admin">Yönetici</option>
-                  <option value="hizmetli">Hizmetli</option>
-                </select>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input type={showPassword ? 'text' : 'password'} placeholder="Şifre" value={addForm.sifre} onChange={e => setAddForm(f => ({ ...f, sifre: e.target.value }))} style={{ border: '1.5px solid #d1d5db', borderRadius: 8, padding: '8px 12px', fontSize: 15, flex: 1 }} required />
-                  <button type="button" onClick={() => setShowPassword(v => !v)} style={{ background: 'none', border: 'none', color: 'var(--primary-red)', fontWeight: 600, cursor: 'pointer' }}>{showPassword ? 'Gizle' : 'Göster'}</button>
-                </div>
-                {addForm.rol === 'student' && (
-                  <>
-                    <input placeholder="Sınıf (örn: 9)" value={addForm.sinif} onChange={e => setAddForm(f => ({ ...f, sinif: e.target.value }))} style={{ border: '1.5px solid #d1d5db', borderRadius: 8, padding: '8px 12px', fontSize: 15 }} required />
-                    <input placeholder="Şube (örn: A)" value={addForm.sube} onChange={e => setAddForm(f => ({ ...f, sube: e.target.value }))} style={{ border: '1.5px solid #d1d5db', borderRadius: 8, padding: '8px 12px', fontSize: 15 }} required />
-                    <label style={{ color: "var(--primary-red)", display: 'flex', alignItems: 'center', gap: 8, fontSize: 15 }}>
-                      <input type="checkbox" checked={addForm.pansiyon} onChange={e => setAddForm(f => ({ ...f, pansiyon: e.target.checked, oda: e.target.checked ? f.oda : '' }))} /> Yatılı mı?
-                    </label>
-                    {addForm.pansiyon && (
-                      <input placeholder="Oda (zorunlu)" value={addForm.oda} onChange={e => setAddForm(f => ({ ...f, oda: e.target.value }))} style={{ border: '1.5px solid #d1d5db', borderRadius: 8, padding: '8px 12px', fontSize: 15 }} required />
-                    )}
-                  </>
-                )}
-                {addForm.rol === 'parent' && (
-                  <input placeholder="Çocuk ID'leri (virgülle ayır)" value={addForm.childId} onChange={e => setAddForm(f => ({ ...f, childId: e.target.value }))} style={{ border: '1.5px solid #d1d5db', borderRadius: 8, padding: '8px 12px', fontSize: 15 }} />
-                )}
-                {addError && <div style={{ color: '#b91c1c', fontWeight: 600 }}>{addError}</div>}
-                {addSuccess && <div style={{ color: '#16a34a', fontWeight: 600 }}>{addSuccess}</div>}
-                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
-                  <button type="button" onClick={() => { setShowAddModal(false); setAddForm({ id: '', adSoyad: '', rol: '', sifre: '', sinif: '', sube: '', oda: '', pansiyon: false, childId: '' }); setAddError(''); setAddSuccess(''); }} style={{ padding: '8px 18px', borderRadius: 8, background: '#eee', color: 'var(--primary-red)', fontWeight: 600, border: 'none', fontSize: 15, cursor: 'pointer' }}>İptal</button>
-                  <button type="submit" disabled={addLoading} style={{ padding: '8px 18px', borderRadius: 8, background: '#16a34a', color: '#fff', fontWeight: 700, border: 'none', fontSize: 15, cursor: 'pointer', opacity: addLoading ? 0.7 : 1 }}>{addLoading ? 'Ekleniyor...' : 'Ekle'}</button>
-                </div>
-              </form>
-            </div>
-          </div>
+          <AddUserModal
+            onUserAdded={(newUser) => {
+              setUsers((users) => [newUser, ...users]);
+            }}
+            onClose={() => setShowAddModal(false)}
+          />
         )}
+
         {editUser && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h2 className="modal-title">Kullanıcıyı Düzenle</h2>
-                <button className="modal-close" onClick={handleCancelEdit}>×</button>
-              </div>
-              <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }}>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Ad Soyad</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={editForm.adSoyad || ''}
-                      onChange={e => setEditForm(prev => ({ ...prev, adSoyad: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">E-posta</label>
-                    <input
-                      type="email"
-                      className="form-input"
-                      value={editForm.email || ''}
-                      onChange={e => setEditForm(prev => ({ ...prev, email: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                {editUser.rol === 'student' && (
-                  <>
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label className="form-label">Sınıf</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={editForm.sinif || ''}
-                          onChange={e => setEditForm(prev => ({ ...prev, sinif: e.target.value }))}
-                          placeholder="9"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Şube</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={editForm.sube || ''}
-                          onChange={e => setEditForm(prev => ({ ...prev, sube: e.target.value }))}
-                          placeholder="A"
-                        />
-                      </div>
-                    </div>
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label className="form-label">Pansiyon</label>
-                        <select
-                          className="form-select"
-                          value={editForm.pansiyon ? 'true' : 'false'}
-                          onChange={e => {
-                            const isPansiyon = e.target.value === 'true';
-                            setEditForm(prev => ({
-                              ...prev,
-                              pansiyon: isPansiyon,
-                              oda: isPansiyon ? (prev.oda || '') : '' // Eğer gündüzlü yapılırsa oda bilgisini temizle
-                            }));
-                          }}
-                        >
-                          <option value="false">Gündüzlü</option>
-                          <option value="true">Yatılı</option>
-                        </select>
-                      </div>
-                      {editForm.pansiyon && (
-                        <div className="form-group">
-                          <label className="form-label">Oda <span style={{ color: 'var(--gray-600)' }}>*</span></label>
-                          <input
-                            type="text"
-                            className="form-input"
-                            value={editForm.oda || ''}
-                            onChange={e => setEditForm(prev => ({ ...prev, oda: e.target.value }))}
-                            placeholder="101"
-                            required
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {editUser.rol === 'teacher' && (
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">Meslek</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={editForm.meslek || ''}
-                        onChange={e => setEditForm(prev => ({ ...prev, meslek: e.target.value }))}
-                        placeholder="Öğretmen"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Departman</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={editForm.departman || ''}
-                        onChange={e => setEditForm(prev => ({ ...prev, departman: e.target.value }))}
-                        placeholder="Matematik"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {editUser.rol === 'parent' && (
-                  <div className="form-group full-width">
-                    <label className="form-label">Çocuk ID'leri (virgülle ayırın)</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={editForm.childId ? (Array.isArray(editForm.childId) ? editForm.childId.join(', ') : editForm.childId) : ''}
-                      onChange={e => setEditForm(prev => ({
-                        ...prev,
-                        childId: e.target.value.split(',').map(id => id.trim()).filter(Boolean)
-                      }))}
-                      placeholder="12345, 67890"
-                    />
-                  </div>
-                )}
-
-                {editError && (
-                  <div style={{ color: '#b91c1c', fontWeight: 600, marginBottom: '15px' }}>
-                    {editError}
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={handleCancelEdit}
-                  >
-                    İptal
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={editLoading}
-                  >
-                    {editLoading ? (
-                      <>
-                        <div className="loading-spinner"></div>
-                        Kaydediliyor...
-                      </>
-                    ) : (
-                      'Kaydet'
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+          <EditUserModal
+            user={editUser}
+            onUserUpdated={(userId, updatedFields) => {
+              setUsers((users) =>
+                users.map((u) => (u.id === userId ? { ...u, ...updatedFields } : u)),
+              );
+            }}
+            onClose={() => setEditUser(null)}
+          />
         )}
       </div>
     </ModernDashboardLayout>
   );
-};
+}

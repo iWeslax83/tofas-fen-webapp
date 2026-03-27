@@ -1,5 +1,18 @@
 // Central config for dashboard panel buttons, routes, roles, and permissions
-import { BookOpen, ClipboardList, Utensils, Wrench, House, MessageSquareWarning, Megaphone, NotebookText, BarChart3, UserPlus, CalendarDays, MessageCircle } from 'lucide-react';
+import {
+  BookOpen,
+  ClipboardList,
+  Utensils,
+  Wrench,
+  House,
+  MessageSquareWarning,
+  Megaphone,
+  NotebookText,
+  BarChart3,
+  UserPlus,
+  CalendarDays,
+  MessageCircle,
+} from 'lucide-react';
 
 export type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli' | 'ziyaretci';
 
@@ -19,7 +32,7 @@ export interface DashboardButton {
 export const dashboardButtons: DashboardButton[] = [
   // STUDENT PRIORITY BUTTONS (Most Important First)
   // STUDENT PRIORITY BUTTONS (Most Important First)
-    {
+  {
     key: 'student-assignments',
     title: 'Ödevler',
     description: 'Ödev oluştur ve yönet',
@@ -191,7 +204,6 @@ export const dashboardButtons: DashboardButton[] = [
     actionText: 'Dilekçe Oluştur',
   },
 
-
   // Admin & Hizmetli
   {
     key: 'meal-list',
@@ -282,46 +294,46 @@ export const dashboardButtons: DashboardButton[] = [
   // Admin: Yeni Kayıt ve Randevu Yönetimi
   {
     key: 'admin-registrations',
-    title: 'Yeni Kayit Basvurulari',
-    description: 'Yeni kayit basvurularini incele ve yonet',
+    title: 'Yeni Kayıt Başvuruları',
+    description: 'Yeni kayıt başvurularını incele ve yönet',
     route: '/admin/yeni-kayit-basvurulari',
     roles: ['admin'],
     icon: UserPlus,
-    actionText: 'Basvurulari Gor',
+    actionText: 'Başvuruları Gör',
   },
   {
     key: 'admin-appointments',
-    title: 'Randevu Basvurulari',
-    description: 'Okul randevu taleplerini yonet',
+    title: 'Randevu Başvuruları',
+    description: 'Okul randevu taleplerini yönet',
     route: '/admin/randevu-basvurulari',
     roles: ['admin'],
     icon: CalendarDays,
-    actionText: 'Randevulari Gor',
+    actionText: 'Randevuları Gör',
   },
   {
     key: 'admin-visitor-chat',
-    title: 'Ziyaretci Sohbetleri',
-    description: 'Yeni kayit ziyaretcileri ile mesajlas',
+    title: 'Ziyaretçi Sohbetleri',
+    description: 'Yeni kayıt ziyaretçileri ile mesajlaş',
     route: '/admin/ziyaretci-sohbet',
     roles: ['admin'],
     icon: MessageCircle,
-    actionText: 'Sohbetleri Gor',
+    actionText: 'Sohbetleri Gör',
   },
 
   // Ziyaretci Buttons
   {
     key: 'visitor-chat',
-    title: 'Yonetici ile Sohbet',
-    description: 'Okul yoneticileri ile mesajlasin',
+    title: 'Yönetici ile Sohbet',
+    description: 'Okul yöneticileri ile mesajlaşın',
     route: '/ziyaretci/sohbet',
     roles: ['ziyaretci'],
     icon: MessageCircle,
-    actionText: 'Sohbeti Ac',
+    actionText: 'Sohbeti Aç',
   },
   {
     key: 'visitor-appointment',
     title: 'Randevu Al',
-    description: 'Okula ziyaret icin randevu alin',
+    description: 'Okula ziyaret için randevu alın',
     route: '/ziyaretci/randevu',
     roles: ['ziyaretci'],
     icon: CalendarDays,
