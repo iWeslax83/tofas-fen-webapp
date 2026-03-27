@@ -25,12 +25,12 @@ router.get(
       startDate,
       endDate,
       page,
-      limit
+      limit,
     } = req.query;
 
-    const filters: any = {
+    const filters: Record<string, unknown> = {
       page: page ? parseInt(page as string) : 1,
-      limit: limit ? parseInt(limit as string) : 50
+      limit: limit ? parseInt(limit as string) : 50,
     };
 
     if (userId) filters.userId = userId as string;
@@ -46,14 +46,14 @@ router.get(
 
     // Log this access
     await AuditLogService.log(req, 'view', 'system', {
-      details: { filters }
+      details: { filters },
     });
 
     res.json({
       success: true,
-      ...result
+      ...result,
     });
-  })
+  }),
 );
 
 /**
@@ -71,9 +71,9 @@ router.get(
 
     res.json({
       success: true,
-      logs
+      logs,
     });
-  })
+  }),
 );
 
 /**
@@ -91,9 +91,9 @@ router.get(
 
     res.json({
       success: true,
-      logs
+      logs,
     });
-  })
+  }),
 );
 
 /**
@@ -103,7 +103,7 @@ router.get(
   '/me',
   authenticateJWT,
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user?.id || (req as any).user?.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
@@ -115,10 +115,9 @@ router.get(
 
     res.json({
       success: true,
-      logs
+      logs,
     });
-  })
+  }),
 );
 
 export default router;
-
