@@ -125,8 +125,20 @@ const createSecureApiClient = (): AxiosInstance => {
         const url = originalRequest.url || '';
         const isLoginRequest = url.includes('/auth/login');
         const isRefreshRequest = url.includes('/auth/refresh-token');
+        const isAuthCheck = url.includes('/auth/me');
 
         if (isLoginRequest || isRefreshRequest) {
+          return Promise.reject(apiError);
+        }
+
+        // Don't attempt token refresh on the login page — no valid session is expected
+        if (window.location.pathname === '/login') {
+          return Promise.reject(apiError);
+        }
+
+        // Don't attempt refresh for auth check if there's no refresh token cookie
+        // (browser won't expose httpOnly cookies, but if we're not authenticated, skip)
+        if (isAuthCheck && !document.cookie.includes('accessToken')) {
           return Promise.reject(apiError);
         }
 
@@ -183,19 +195,24 @@ const createSecureApiClient = (): AxiosInstance => {
       if (apiError.response?.status === 429) {
         const retryCount = originalRequest._retryCount || 0;
         const maxRetries = 3;
+        const serverRetryAfter = error.response?.data?.retryAfter;
+
+        // If server says to wait more than 30 seconds, don't auto-retry — surface the error
+        if (serverRetryAfter && serverRetryAfter > 30) {
+          return Promise.reject(apiError);
+        }
 
         if (retryCount < maxRetries) {
           originalRequest._retryCount = retryCount + 1;
-          const retryAfter = error.response.data?.retryAfter || Math.pow(2, retryCount);
+          const retryAfter = Math.min(serverRetryAfter || Math.pow(2, retryCount), 10);
           console.warn(
             `Çok fazla istek. ${retryCount + 1}/${maxRetries} yeniden deneme ${retryAfter} saniye sonra...`,
           );
 
-          // Exponential backoff
+          // Exponential backoff capped at 10 seconds
           await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
           return client(originalRequest);
         } else {
-          console.error('Oran limiti için maksimum yeniden deneme aşıldı');
           return Promise.reject(apiError);
         }
       }
