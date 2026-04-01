@@ -50,7 +50,9 @@ export const useAuthStore = create<AuthStore>()(
       // Actions
       login: async (id: string, sifre: string) => {
         try {
-          set({ isLoading: true, error: null });
+          // Clear stale auth state before attempting new login
+          TokenManager.clearTokens();
+          set({ isLoading: true, error: null, user: null, isAuthenticated: false });
 
           const response = await SecureAPI.login(id, sifre, { id, sifre });
 
