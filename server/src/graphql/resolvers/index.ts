@@ -10,13 +10,18 @@ import Announcement from '../../models/Announcement';
 import { Homework } from '../../models/Homework';
 import Note from '../../models/Note';
 import { EvciRequest } from '../../models/EvciRequest';
+import {
+  sanitizeGraphQLInput,
+  validateAnnouncementInput,
+  validateEvciRequestInput,
+} from '../utils/validateInput';
 
 // DataLoaders for batch loading
 export const createUserLoader = () => {
   return new DataLoader(async (userIds: readonly string[]) => {
     const users = await User.find({ _id: { $in: userIds } });
-    const userMap = new Map(users.map(user => [user._id.toString(), user]));
-    return userIds.map(id => userMap.get(id) || null);
+    const userMap = new Map(users.map((user) => [user._id.toString(), user]));
+    return userIds.map((id) => userMap.get(id) || null);
   });
 };
 
@@ -195,8 +200,11 @@ export const resolvers: IResolvers = {
     createAnnouncement: async (_parent, { input }, context: GraphQLContext) => {
       if (!context.user) throw new Error('Not authenticated');
 
+      const sanitized = sanitizeGraphQLInput(input);
+      validateAnnouncementInput(sanitized);
+
       const announcement = new Announcement({
-        ...input,
+        ...sanitized,
         createdBy: context.user._id,
       });
       return announcement.save();
@@ -205,8 +213,11 @@ export const resolvers: IResolvers = {
     createEvciRequest: async (_parent, { input }, context: GraphQLContext) => {
       if (!context.user) throw new Error('Not authenticated');
 
+      const sanitized = sanitizeGraphQLInput(input);
+      validateEvciRequestInput(sanitized);
+
       const request = new EvciRequest({
-        ...input,
+        ...sanitized,
         studentId: context.user._id,
         status: 'pending',
       });
@@ -227,9 +238,8 @@ export const resolvers: IResolvers = {
     },
     assignedTo: async (parent, _args, context: GraphQLContext) => {
       return Promise.all(
-        parent.assignedTo.map((id: string) => context.dataLoaders.user.load(id.toString()))
+        parent.assignedTo.map((id: string) => context.dataLoaders.user.load(id.toString())),
       );
     },
   },
 };
-
