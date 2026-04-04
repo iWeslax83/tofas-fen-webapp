@@ -1,26 +1,43 @@
 import cors from 'cors';
-import logger from '../utils/logger';
 
 /**
  * CORS configuration - extracted from index.ts for modularity.
  */
 export function createCorsOptions() {
-  return {
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      const allowedOrigins = [
-        process.env.CORS_ORIGIN || 'http://localhost:5173',
-        'http://localhost:3000',
-        'http://localhost:5173',
-        'http://127.0.0.1:3000',
-        'http://127.0.0.1:5173',
-      ];
+  const isProduction = process.env.NODE_ENV === 'production';
 
-      if (process.env.NODE_ENV === 'development') {
+  if (isProduction && !process.env.CORS_ORIGIN) {
+    throw new Error('CORS_ORIGIN environment variable is required in production');
+  }
+
+  const allowedOrigins: string[] = [];
+
+  if (process.env.CORS_ORIGIN) {
+    allowedOrigins.push(process.env.CORS_ORIGIN);
+  }
+
+  if (!isProduction) {
+    allowedOrigins.push(
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173',
+    );
+  }
+
+  return {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!isProduction) {
         let isLocalOrigin = false;
         if (origin) {
           try {
             const url = new URL(origin);
-            isLocalOrigin = (url.hostname === 'localhost' || url.hostname === '127.0.0.1') && url.protocol === 'http:';
+            isLocalOrigin =
+              (url.hostname === 'localhost' || url.hostname === '127.0.0.1') &&
+              url.protocol === 'http:';
           } catch {
             isLocalOrigin = false;
           }
