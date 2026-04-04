@@ -13,7 +13,7 @@ import { AppError } from '../../../utils/AppError';
 const handleValidationErrors = (req: Request, _res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    const errorMessages = errors.array().map(error => error.msg);
+    const errorMessages = errors.array().map((error) => error.msg);
     throw AppError.validation(`Validation failed: ${errorMessages.join(', ')}`);
   }
   next();
@@ -29,14 +29,14 @@ export const validateLogin = [
     .isLength({ min: 1, max: 50 })
     .withMessage('ID 1-50 karakter arasında olmalıdır')
     .trim(),
-  
+
   body('sifre')
     .notEmpty()
     .withMessage('Şifre gereklidir')
     .isLength({ min: 1, max: 100 })
     .withMessage('Şifre 1-100 karakter arasında olmalıdır'),
-  
-  handleValidationErrors
+
+  handleValidationErrors,
 ];
 
 /**
@@ -48,8 +48,8 @@ export const validateRefreshToken = [
     .withMessage('Refresh token gereklidir')
     .isJWT()
     .withMessage('Geçerli bir refresh token formatı gereklidir'),
-  
-  handleValidationErrors
+
+  handleValidationErrors,
 ];
 
 /**
@@ -61,7 +61,7 @@ export const validateChangePassword = [
     .withMessage('Mevcut şifre gereklidir')
     .isLength({ min: 1, max: 100 })
     .withMessage('Mevcut şifre 1-100 karakter arasında olmalıdır'),
-  
+
   body('newPassword')
     .notEmpty()
     .withMessage('Yeni şifre gereklidir')
@@ -69,8 +69,8 @@ export const validateChangePassword = [
     .withMessage('Yeni şifre 6-100 karakter arasında olmalıdır')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Yeni şifre en az bir küçük harf, bir büyük harf ve bir rakam içermelidir'),
-  
-  handleValidationErrors
+
+  handleValidationErrors,
 ];
 
 /**
@@ -85,8 +85,8 @@ export const validateRequestPasswordReset = [
     .normalizeEmail()
     .isLength({ max: 100 })
     .withMessage('Email adresi 100 karakterden kısa olmalıdır'),
-  
-  handleValidationErrors
+
+  handleValidationErrors,
 ];
 
 /**
@@ -98,7 +98,7 @@ export const validateResetPassword = [
     .withMessage('Token gereklidir')
     .isLength({ min: 32, max: 64 })
     .withMessage('Token 32-64 karakter arasında olmalıdır'),
-  
+
   body('newPassword')
     .notEmpty()
     .withMessage('Yeni şifre gereklidir')
@@ -106,23 +106,36 @@ export const validateResetPassword = [
     .withMessage('Yeni şifre 6-100 karakter arasında olmalıdır')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Yeni şifre en az bir küçük harf, bir büyük harf ve bir rakam içermelidir'),
-  
-  handleValidationErrors
+
+  handleValidationErrors,
+];
+
+/**
+ * Logout validation rules
+ */
+/**
+ * Unlock account validation rules
+ */
+export const validateUnlockAccount = [
+  body('userId')
+    .trim()
+    .notEmpty()
+    .withMessage('Kullanıcı ID gerekli')
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Geçersiz kullanıcı ID'),
+  handleValidationErrors,
 ];
 
 /**
  * Logout validation rules
  */
 export const validateLogout = [
-  body('accessToken')
-    .optional()
-    .isJWT()
-    .withMessage('Geçerli bir access token formatı gereklidir'),
-  
+  body('accessToken').optional().isJWT().withMessage('Geçerli bir access token formatı gereklidir'),
+
   body('refreshToken')
     .optional()
     .isJWT()
     .withMessage('Geçerli bir refresh token formatı gereklidir'),
-  
-  handleValidationErrors
+
+  handleValidationErrors,
 ];

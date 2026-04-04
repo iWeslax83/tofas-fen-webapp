@@ -1,6 +1,7 @@
 import logger from '../utils/logger';
 import { User } from '../models/User';
 import { NotificationService } from './NotificationService';
+import { AlertEmailService } from './AlertEmailService';
 
 /**
  * Security anomaly detection and alerting service.
@@ -19,15 +20,15 @@ interface SecurityEvent {
 
 // Thresholds for anomaly detection
 const THRESHOLDS = {
-  MASS_LOGIN_FAILURES: 20,      // in 5 minutes
+  MASS_LOGIN_FAILURES: 20, // in 5 minutes
   MASS_LOGIN_FAILURE_WINDOW: 5 * 60 * 1000,
-  DATA_EXPORT_SPIKE: 5,         // exports per user in 1 hour
+  DATA_EXPORT_SPIKE: 5, // exports per user in 1 hour
   DATA_EXPORT_WINDOW: 60 * 60 * 1000,
-  OFF_HOURS_ADMIN_START: 23,    // 11 PM
-  OFF_HOURS_ADMIN_END: 6,       // 6 AM
-  ROLE_CHANGE_SPIKE: 3,         // role changes in 10 minutes
+  OFF_HOURS_ADMIN_START: 23, // 11 PM
+  OFF_HOURS_ADMIN_END: 6, // 6 AM
+  ROLE_CHANGE_SPIKE: 3, // role changes in 10 minutes
   ROLE_CHANGE_WINDOW: 10 * 60 * 1000,
-  BRUTE_FORCE_IPS: 5,           // different IPs with failures for same user
+  BRUTE_FORCE_IPS: 5, // different IPs with failures for same user
   BRUTE_FORCE_WINDOW: 15 * 60 * 1000,
 };
 
@@ -67,7 +68,8 @@ export class SecurityAlertService {
         const userKey = `secalert:login_failures:user:${userId}`;
         const userIpSetKey = `secalert:login_ips:${userId}`;
 
-        await redis.multi()
+        await redis
+          .multi()
           // Global login failures
           .zadd(globalKey, now, `${ip}:${userId}:${now}`)
           .zremrangebyscore(globalKey, '-inf', now - THRESHOLDS.MASS_LOGIN_FAILURE_WINDOW)
@@ -85,7 +87,11 @@ export class SecurityAlertService {
         const failureCount = await redis.zcard(globalKey);
         if (failureCount >= THRESHOLDS.MASS_LOGIN_FAILURES) {
           // Get unique IPs and users from recent failures
-          const entries: string[] = await redis.zrangebyscore(globalKey, now - THRESHOLDS.MASS_LOGIN_FAILURE_WINDOW, '+inf');
+          const entries: string[] = await redis.zrangebyscore(
+            globalKey,
+            now - THRESHOLDS.MASS_LOGIN_FAILURE_WINDOW,
+            '+inf',
+          );
           const uniqueIPs = new Set(entries.map((e: string) => e.split(':')[0]));
           const uniqueUsers = new Set(entries.map((e: string) => e.split(':')[1]));
 
@@ -124,9 +130,12 @@ export class SecurityAlertService {
 
         return;
       } catch (err) {
-        logger.warn('SecurityAlertService: Redis error in trackLoginFailure, falling back to memory', {
-          error: err instanceof Error ? err.message : String(err),
-        });
+        logger.warn(
+          'SecurityAlertService: Redis error in trackLoginFailure, falling back to memory',
+          {
+            error: err instanceof Error ? err.message : String(err),
+          },
+        );
       }
     }
 
@@ -145,16 +154,16 @@ export class SecurityAlertService {
         details: {
           failureCount: memLoginFailures.length,
           windowMinutes: THRESHOLDS.MASS_LOGIN_FAILURE_WINDOW / 60000,
-          uniqueIPs: new Set(memLoginFailures.map(f => f.ip)).size,
-          uniqueUsers: new Set(memLoginFailures.map(f => f.userId)).size,
+          uniqueIPs: new Set(memLoginFailures.map((f) => f.ip)).size,
+          uniqueUsers: new Set(memLoginFailures.map((f) => f.userId)).size,
         },
         timestamp: new Date(),
         severity: 'critical',
       });
     }
 
-    const userFailures = memLoginFailures.filter(f => f.userId === userId);
-    const uniqueIPs = new Set(userFailures.map(f => f.ip));
+    const userFailures = memLoginFailures.filter((f) => f.userId === userId);
+    const uniqueIPs = new Set(userFailures.map((f) => f.ip));
     if (uniqueIPs.size >= THRESHOLDS.BRUTE_FORCE_IPS) {
       this.triggerAlert({
         type: 'distributed_brute_force',
@@ -181,7 +190,8 @@ export class SecurityAlertService {
         const key = `secalert:data_exports:${userId}`;
         const windowSec = Math.floor(THRESHOLDS.DATA_EXPORT_WINDOW / 1000);
 
-        await redis.multi()
+        await redis
+          .multi()
           .zadd(key, now, `${now}`)
           .zremrangebyscore(key, '-inf', now - THRESHOLDS.DATA_EXPORT_WINDOW)
           .expire(key, windowSec + 60)
@@ -203,9 +213,12 @@ export class SecurityAlertService {
 
         return;
       } catch (err) {
-        logger.warn('SecurityAlertService: Redis error in trackDataExport, falling back to memory', {
-          error: err instanceof Error ? err.message : String(err),
-        });
+        logger.warn(
+          'SecurityAlertService: Redis error in trackDataExport, falling back to memory',
+          {
+            error: err instanceof Error ? err.message : String(err),
+          },
+        );
       }
     }
 
@@ -214,7 +227,7 @@ export class SecurityAlertService {
     userExports.push(now);
 
     const cutoff = now - THRESHOLDS.DATA_EXPORT_WINDOW;
-    const filtered = userExports.filter(t => t > cutoff);
+    const filtered = userExports.filter((t) => t > cutoff);
     memDataExports.set(userId, filtered);
 
     if (filtered.length >= THRESHOLDS.DATA_EXPORT_SPIKE) {
@@ -239,7 +252,10 @@ export class SecurityAlertService {
     // Check for Turkey timezone (UTC+3)
     const turkeyHour = (now.getUTCHours() + 3) % 24;
 
-    if (turkeyHour >= THRESHOLDS.OFF_HOURS_ADMIN_START || turkeyHour < THRESHOLDS.OFF_HOURS_ADMIN_END) {
+    if (
+      turkeyHour >= THRESHOLDS.OFF_HOURS_ADMIN_START ||
+      turkeyHour < THRESHOLDS.OFF_HOURS_ADMIN_END
+    ) {
       this.triggerAlert({
         type: 'off_hours_admin_access',
         userId,
@@ -266,7 +282,8 @@ export class SecurityAlertService {
         const key = 'secalert:role_changes';
         const windowSec = Math.floor(THRESHOLDS.ROLE_CHANGE_WINDOW / 1000);
 
-        await redis.multi()
+        await redis
+          .multi()
           .zadd(key, now, `${userId}:${changedBy}:${now}`)
           .zremrangebyscore(key, '-inf', now - THRESHOLDS.ROLE_CHANGE_WINDOW)
           .expire(key, windowSec + 60)
@@ -289,9 +306,12 @@ export class SecurityAlertService {
 
         return;
       } catch (err) {
-        logger.warn('SecurityAlertService: Redis error in trackRoleChange, falling back to memory', {
-          error: err instanceof Error ? err.message : String(err),
-        });
+        logger.warn(
+          'SecurityAlertService: Redis error in trackRoleChange, falling back to memory',
+          {
+            error: err instanceof Error ? err.message : String(err),
+          },
+        );
       }
     }
 
@@ -378,23 +398,23 @@ export class SecurityAlertService {
       const admins = await User.find({ rol: 'admin', isActive: true }).select('id').lean();
       const adminIds = admins.map((a: any) => a.id);
 
+      const severityEmoji: Record<string, string> = {
+        low: 'Bilgi',
+        medium: 'Uyari',
+        high: 'Onemli',
+        critical: 'Kritik',
+      };
+
+      const messages: Record<string, string> = {
+        mass_login_failures: `Son ${THRESHOLDS.MASS_LOGIN_FAILURE_WINDOW / 60000} dakikada ${event.details.failureCount} basarisiz giris denemesi tespit edildi.`,
+        distributed_brute_force: `Kullanici ${event.userId} icin ${event.details.uniqueIPs} farkli IP'den brute force saldirisi tespit edildi.`,
+        data_export_spike: `Kullanici ${event.userId} son 1 saatte ${event.details.exportCount} kez veri disa aktarimi yapti.`,
+        off_hours_admin_access: `Admin ${event.userId} mesai saatleri disinda (saat ${event.details.localHour}:00) islem yapti: ${event.details.action}`,
+        role_change_spike: `Son ${THRESHOLDS.ROLE_CHANGE_WINDOW / 60000} dakikada ${event.details.changeCount} rol degisikligi yapildi.`,
+        suspicious_token_usage: `Supheli token kullanimi: ${event.details.reason} (Kullanici: ${event.userId})`,
+      };
+
       if (adminIds.length > 0) {
-        const severityEmoji: Record<string, string> = {
-          low: 'Bilgi',
-          medium: 'Uyari',
-          high: 'Onemli',
-          critical: 'Kritik',
-        };
-
-        const messages: Record<string, string> = {
-          mass_login_failures: `Son ${THRESHOLDS.MASS_LOGIN_FAILURE_WINDOW / 60000} dakikada ${event.details.failureCount} basarisiz giris denemesi tespit edildi.`,
-          distributed_brute_force: `Kullanici ${event.userId} icin ${event.details.uniqueIPs} farkli IP'den brute force saldirisi tespit edildi.`,
-          data_export_spike: `Kullanici ${event.userId} son 1 saatte ${event.details.exportCount} kez veri disa aktarimi yapti.`,
-          off_hours_admin_access: `Admin ${event.userId} mesai saatleri disinda (saat ${event.details.localHour}:00) islem yapti: ${event.details.action}`,
-          role_change_spike: `Son ${THRESHOLDS.ROLE_CHANGE_WINDOW / 60000} dakikada ${event.details.changeCount} rol degisikligi yapildi.`,
-          suspicious_token_usage: `Supheli token kullanimi: ${event.details.reason} (Kullanici: ${event.userId})`,
-        };
-
         for (const adminId of adminIds) {
           await NotificationService.createNotification({
             userId: adminId,
@@ -406,6 +426,25 @@ export class SecurityAlertService {
           });
         }
       }
+
+      // Send email alert
+      const emailSeverity = event.severity === 'critical' ? 'critical' : 'warning';
+      const alertMessage = messages[event.type] || `Güvenlik olayı: ${event.type}`;
+      const emailBody = [
+        `Olay: ${event.type}`,
+        `Detay: ${alertMessage}`,
+        `IP: ${event.ip || 'Bilinmiyor'}`,
+        `Kullanıcı: ${event.userId || 'Bilinmiyor'}`,
+        event.details ? `Ek bilgi: ${JSON.stringify(event.details)}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      await AlertEmailService.sendAlert(
+        `Güvenlik Alarmı: ${event.type}`,
+        emailBody,
+        emailSeverity as 'warning' | 'critical',
+      );
     } catch (error) {
       logger.error('Failed to send security alert notifications', {
         error: error instanceof Error ? error.message : String(error),
@@ -432,7 +471,9 @@ export class SecurityAlertService {
         ]);
 
         const uniqueIPs = new Set((failureEntries as string[]).map((e: string) => e.split(':')[0]));
-        const uniqueUsers = new Set((failureEntries as string[]).map((e: string) => e.split(':')[1]));
+        const uniqueUsers = new Set(
+          (failureEntries as string[]).map((e: string) => e.split(':')[1]),
+        );
 
         return {
           recentLoginFailures: failureCount,
@@ -442,27 +483,30 @@ export class SecurityAlertService {
           redisEnabled: true,
         };
       } catch (err) {
-        logger.warn('SecurityAlertService: Redis error in getSecurityStatus, falling back to memory', {
-          error: err instanceof Error ? err.message : String(err),
-        });
+        logger.warn(
+          'SecurityAlertService: Redis error in getSecurityStatus, falling back to memory',
+          {
+            error: err instanceof Error ? err.message : String(err),
+          },
+        );
       }
     }
 
     // In-memory fallback
     const recentFailures = memLoginFailures.filter(
-      f => f.timestamp > now - THRESHOLDS.MASS_LOGIN_FAILURE_WINDOW
+      (f) => f.timestamp > now - THRESHOLDS.MASS_LOGIN_FAILURE_WINDOW,
     );
 
     return {
       recentLoginFailures: recentFailures.length,
-      uniqueFailedIPs: new Set(recentFailures.map(f => f.ip)).size,
-      uniqueFailedUsers: new Set(recentFailures.map(f => f.userId)).size,
+      uniqueFailedIPs: new Set(recentFailures.map((f) => f.ip)).size,
+      uniqueFailedUsers: new Set(recentFailures.map((f) => f.userId)).size,
       recentRoleChanges: memRoleChanges.filter(
-        r => r.timestamp > now - THRESHOLDS.ROLE_CHANGE_WINDOW
+        (r) => r.timestamp > now - THRESHOLDS.ROLE_CHANGE_WINDOW,
       ).length,
-      activeDataExportUsers: Array.from(memDataExports.entries())
-        .filter(([, times]) => times.some(t => t > now - THRESHOLDS.DATA_EXPORT_WINDOW))
-        .length,
+      activeDataExportUsers: Array.from(memDataExports.entries()).filter(([, times]) =>
+        times.some((t) => t > now - THRESHOLDS.DATA_EXPORT_WINDOW),
+      ).length,
       activeAlertCooldowns: memAlertCooldowns.size,
       redisEnabled: false,
     };

@@ -19,6 +19,7 @@ export enum SecurityEvent {
   LOGOUT = 'LOGOUT',
   PASSWORD_CHANGED = 'PASSWORD_CHANGED',
   ROLE_CHANGED = 'ROLE_CHANGED',
+  ACCOUNT_UNLOCKED = 'ACCOUNT_UNLOCKED',
 }
 
 interface SecurityLogEntry {

@@ -1,5 +1,8 @@
 import rateLimit from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
+import { createClient } from 'redis';
 import express from 'express';
+import logger from '../utils/logger';
 
 /**
  * All rate limiter configurations - extracted from index.ts.
@@ -68,11 +71,13 @@ export const mealsLimiter = rateLimit({
   },
 });
 
-const AUTH_RATE_LIMIT_WINDOW_MS = Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS || RATE_LIMIT_WINDOW_MS);
+const AUTH_RATE_LIMIT_WINDOW_MS = Number(
+  process.env.AUTH_RATE_LIMIT_WINDOW_MS || RATE_LIMIT_WINDOW_MS,
+);
 const AUTH_RATE_LIMIT_MAX = Number(
   process.env.NODE_ENV === 'production'
-    ? (process.env.AUTH_RATE_LIMIT_MAX || 5)
-    : (process.env.AUTH_RATE_LIMIT_MAX || 100)
+    ? process.env.AUTH_RATE_LIMIT_MAX || 5
+    : process.env.AUTH_RATE_LIMIT_MAX || 100,
 );
 
 export const authLimiter = rateLimit({
@@ -86,7 +91,9 @@ export const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const UPLOAD_RATE_LIMIT_WINDOW_MS = Number(process.env.UPLOAD_RATE_LIMIT_WINDOW_MS || 60 * 60 * 1000);
+const UPLOAD_RATE_LIMIT_WINDOW_MS = Number(
+  process.env.UPLOAD_RATE_LIMIT_WINDOW_MS || 60 * 60 * 1000,
+);
 const UPLOAD_RATE_LIMIT_MAX = Number(process.env.UPLOAD_RATE_LIMIT_MAX || 10);
 
 export const uploadLimiter = rateLimit({
@@ -122,6 +129,45 @@ export const devReadOnlyLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+let redisStoreClient: ReturnType<typeof createClient> | null = null;
+
+export function createRedisRateLimitStore(): RedisStore | undefined {
+  // Skip Redis in test/development without explicit REDIS_URL
+  if (process.env.NODE_ENV === 'test') return undefined;
+  if (process.env.NODE_ENV !== 'production' && !process.env.REDIS_URL) return undefined;
+
+  try {
+    const redisUrl =
+      process.env.REDIS_URL ||
+      `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || '6379'}`;
+    if (!redisStoreClient) {
+      redisStoreClient = createClient({ url: redisUrl });
+      redisStoreClient.connect().catch(() => {
+        logger.warn('Redis not available for rate limiting, using in-memory store');
+        redisStoreClient = null;
+      });
+    }
+    if (!redisStoreClient) return undefined;
+    return new RedisStore({
+      sendCommand: (...args: string[]) => (redisStoreClient as any).sendCommand(args),
+    });
+  } catch {
+    logger.warn('Failed to create Redis rate limit store, using in-memory fallback');
+    return undefined;
+  }
+}
+
+export function createEndpointLimiter(opts: { windowMs: number; max: number; message: string }) {
+  return rateLimit({
+    windowMs: opts.windowMs,
+    max: opts.max,
+    message: { error: opts.message },
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: createRedisRateLimitStore() as any,
+  });
+}
 
 /**
  * Apply rate limiters to the Express app.
