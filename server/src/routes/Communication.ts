@@ -6,7 +6,21 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
+import { createEndpointLimiter } from '../config/rateLimiters';
+
 const router = express.Router();
+
+const messageLimiter = createEndpointLimiter({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: 'Çok fazla mesaj gönderildi. Lütfen bir dakika bekleyin.',
+});
+
+const commUploadLimiter = createEndpointLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: 'Çok fazla dosya yükleme isteği.',
+});
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -18,9 +32,9 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
+  },
 });
 
 const upload = multer({
@@ -30,27 +44,38 @@ const upload = multer({
   },
   fileFilter: (_req, file, cb) => {
     const allowedTypes = [
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain', 'audio/mpeg', 'audio/wav', 'video/mp4', 'video/webm'
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'audio/mpeg',
+      'audio/wav',
+      'video/mp4',
+      'video/webm',
     ];
-    
+
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
       cb(new Error('Invalid file type'));
     }
-  }
+  },
 });
 
 // Validation middleware
 const validateMessageCreate = [
   body('conversationId').isString().notEmpty(),
   body('content').isString().notEmpty().isLength({ max: 5000 }),
-  body('contentType').optional().isIn(['text', 'image', 'file', 'audio', 'video', 'location', 'system']),
+  body('contentType')
+    .optional()
+    .isIn(['text', 'image', 'file', 'audio', 'video', 'location', 'system']),
   body('priority').optional().isIn(['low', 'normal', 'high', 'urgent']),
   body('replyTo').optional().isString(),
-  body('metadata').optional().isObject()
+  body('metadata').optional().isObject(),
 ];
 
 const validateConversationCreate = [
@@ -63,7 +88,7 @@ const validateConversationCreate = [
   body('admins.*').isString(),
   body('moderators').optional().isArray(),
   body('moderators.*').isString(),
-  body('settings').optional().isObject()
+  body('settings').optional().isObject(),
 ];
 
 const validateEmailCreate = [
@@ -75,14 +100,16 @@ const validateEmailCreate = [
   body('content').isString().notEmpty(),
   body('contentType').optional().isIn(['text', 'html']),
   body('priority').optional().isIn(['low', 'normal', 'high']),
-  body('replyTo').optional().isString()
+  body('replyTo').optional().isString(),
 ];
 
 const validateChatRoomCreate = [
   body('name').isString().notEmpty().isLength({ max: 100 }),
   body('description').optional().isString().isLength({ max: 500 }),
   body('type').optional().isIn(['public', 'private', 'restricted']),
-  body('category').optional().isIn(['general', 'academic', 'social', 'announcements', 'support', 'events']),
+  body('category')
+    .optional()
+    .isIn(['general', 'academic', 'social', 'announcements', 'support', 'events']),
   body('maxParticipants').optional().isInt({ min: 1, max: 1000 }),
   body('admins').optional().isArray(),
   body('admins.*').isString(),
@@ -90,7 +117,7 @@ const validateChatRoomCreate = [
   body('moderators.*').isString(),
   body('rules').optional().isArray(),
   body('rules.*').isString(),
-  body('settings').optional().isObject()
+  body('settings').optional().isObject(),
 ];
 
 const validateContactCreate = [
@@ -103,220 +130,264 @@ const validateContactCreate = [
   body('tags').optional().isArray(),
   body('tags.*').isString(),
   body('groups').optional().isArray(),
-  body('groups.*').isString()
+  body('groups.*').isString(),
 ];
 
 // Message Routes
-router.post('/messages', requireAuth, validateMessageCreate, async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+router.post(
+  '/messages',
+  requireAuth,
+  messageLimiter as any,
+  validateMessageCreate,
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const messageData = {
+        ...req.body,
+        senderId: req.user.id,
+      };
+
+      const message = await CommunicationService.createMessage(messageData);
+      return res.status(201).json(message);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const messageData = {
-      ...req.body,
-      senderId: req.user.id
-    };
+router.get(
+  '/messages/:conversationId',
+  requireAuth,
+  [
+    param('conversationId').isString().notEmpty(),
+    query('page').optional().isInt({ min: 1 }),
+    query('limit').optional().isInt({ min: 1, max: 100 }),
+  ],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-    const message = await CommunicationService.createMessage(messageData);
-    return res.status(201).json(message);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+      const { conversationId } = req.params;
+      const { page = 1, limit = 50 } = req.query;
 
-router.get('/messages/:conversationId', requireAuth, [
-  param('conversationId').isString().notEmpty(),
-  query('page').optional().isInt({ min: 1 }),
-  query('limit').optional().isInt({ min: 1, max: 100 })
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const result = await CommunicationService.getMessages(
+        conversationId,
+        req.user.id,
+        parseInt(page as string),
+        parseInt(limit as string),
+      );
+
+      return res.json(result);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const { conversationId } = req.params;
-    const { page = 1, limit = 50 } = req.query;
+router.put(
+  '/messages/:messageId',
+  requireAuth,
+  [
+    param('messageId').isString().notEmpty(),
+    body('content').isString().notEmpty().isLength({ max: 5000 }),
+  ],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-    const result = await CommunicationService.getMessages(
-      conversationId,
-      req.user.id,
-      parseInt(page as string),
-      parseInt(limit as string)
-    );
+      const { messageId } = req.params;
+      const updates = { content: req.body.content };
 
-    return res.json(result);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
-
-router.put('/messages/:messageId', requireAuth, [
-  param('messageId').isString().notEmpty(),
-  body('content').isString().notEmpty().isLength({ max: 5000 })
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const message = await CommunicationService.updateMessage(messageId, req.user.id, updates);
+      return res.json(message);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const { messageId } = req.params;
-    const updates = { content: req.body.content };
+router.delete(
+  '/messages/:messageId',
+  requireAuth,
+  [param('messageId').isString().notEmpty()],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-    const message = await CommunicationService.updateMessage(messageId, req.user.id, updates);
-    return res.json(message);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
-
-router.delete('/messages/:messageId', requireAuth, [
-  param('messageId').isString().notEmpty()
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const { messageId } = req.params;
+      await CommunicationService.deleteMessage(messageId, req.user.id);
+      return res.status(204).send();
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const { messageId } = req.params;
-    await CommunicationService.deleteMessage(messageId, req.user.id);
-    return res.status(204).send();
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+router.post(
+  '/messages/:messageId/reactions',
+  requireAuth,
+  [
+    param('messageId').isString().notEmpty(),
+    body('emoji').isString().notEmpty().isLength({ max: 10 }),
+  ],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-router.post('/messages/:messageId/reactions', requireAuth, [
-  param('messageId').isString().notEmpty(),
-  body('emoji').isString().notEmpty().isLength({ max: 10 })
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const { messageId } = req.params;
+      const { emoji } = req.body;
+
+      const message = await CommunicationService.addReaction(messageId, req.user.id, emoji);
+      return res.json(message);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
-
-    const { messageId } = req.params;
-    const { emoji } = req.body;
-
-    const message = await CommunicationService.addReaction(messageId, req.user.id, emoji);
-    return res.json(message);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+  },
+);
 
 // Conversation Routes
-router.post('/conversations', requireAuth, validateConversationCreate, async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+router.post(
+  '/conversations',
+  requireAuth,
+  validateConversationCreate,
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const conversationData = {
+        ...req.body,
+        participants: [...new Set([req.user.id, ...req.body.participants])], // Ensure current user is included
+      };
+
+      const conversation = await CommunicationService.createConversation(conversationData);
+      return res.status(201).json(conversation);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const conversationData = {
-      ...req.body,
-      participants: [...new Set([req.user.id, ...req.body.participants])] // Ensure current user is included
-    };
+router.get(
+  '/conversations',
+  requireAuth,
+  [
+    query('type').optional().isIn(['direct', 'group', 'broadcast', 'announcement']),
+    query('isActive').optional().isBoolean(),
+    query('isArchived').optional().isBoolean(),
+    query('hasUnread').optional().isBoolean(),
+  ],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-    const conversation = await CommunicationService.createConversation(conversationData);
-    return res.status(201).json(conversation);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+      const filters = {
+        type: req.query.type as string,
+        isActive: req.query.isActive === 'true',
+        isArchived: req.query.isArchived === 'true',
+        hasUnread: req.query.hasUnread === 'true',
+      };
 
-router.get('/conversations', requireAuth, [
-  query('type').optional().isIn(['direct', 'group', 'broadcast', 'announcement']),
-  query('isActive').optional().isBoolean(),
-  query('isArchived').optional().isBoolean(),
-  query('hasUnread').optional().isBoolean()
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const conversations = await CommunicationService.getConversations(req.user.id, filters);
+      return res.json(conversations);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const filters = {
-      type: req.query.type as string,
-      isActive: req.query.isActive === 'true',
-      isArchived: req.query.isArchived === 'true',
-      hasUnread: req.query.hasUnread === 'true'
-    };
+router.get(
+  '/conversations/:conversationId',
+  requireAuth,
+  [param('conversationId').isString().notEmpty()],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-    const conversations = await CommunicationService.getConversations(req.user.id, filters);
-    return res.json(conversations);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+      const { conversationId } = req.params;
+      const conversations = await CommunicationService.getConversations(req.user.id);
+      const conversation = conversations.find((c) => c.id === conversationId);
 
-router.get('/conversations/:conversationId', requireAuth, [
-  param('conversationId').isString().notEmpty()
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      if (!conversation) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
+
+      return res.json(conversation);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const { conversationId } = req.params;
-    const conversations = await CommunicationService.getConversations(req.user.id);
-    const conversation = conversations.find(c => c.id === conversationId);
+router.post(
+  '/conversations/:conversationId/participants',
+  requireAuth,
+  [
+    param('conversationId').isString().notEmpty(),
+    body('userId').isString().notEmpty(),
+    body('role').optional().isIn(['admin', 'moderator', 'member', 'readonly']),
+  ],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-    if (!conversation) {
-      return res.status(404).json({ error: 'Conversation not found' });
+      const { conversationId } = req.params;
+      const { userId, role = 'member' } = req.body;
+
+      const conversation = await CommunicationService.addParticipant(conversationId, userId, role);
+      return res.json(conversation);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    return res.json(conversation);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+router.delete(
+  '/conversations/:conversationId/participants/:userId',
+  requireAuth,
+  [param('conversationId').isString().notEmpty(), param('userId').isString().notEmpty()],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-router.post('/conversations/:conversationId/participants', requireAuth, [
-  param('conversationId').isString().notEmpty(),
-  body('userId').isString().notEmpty(),
-  body('role').optional().isIn(['admin', 'moderator', 'member', 'readonly'])
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const { conversationId, userId } = req.params;
+      const conversation = await CommunicationService.removeParticipant(conversationId, userId);
+      return res.json(conversation);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
-
-    const { conversationId } = req.params;
-    const { userId, role = 'member' } = req.body;
-
-    const conversation = await CommunicationService.addParticipant(conversationId, userId, role);
-    return res.json(conversation);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
-
-router.delete('/conversations/:conversationId/participants/:userId', requireAuth, [
-  param('conversationId').isString().notEmpty(),
-  param('userId').isString().notEmpty()
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { conversationId, userId } = req.params;
-    const conversation = await CommunicationService.removeParticipant(conversationId, userId);
-    return res.json(conversation);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+  },
+);
 
 // Email Routes
 router.post('/emails', requireAuth, validateEmailCreate, async (req: any, res: any) => {
@@ -331,8 +402,8 @@ router.post('/emails', requireAuth, validateEmailCreate, async (req: any, res: a
       from: {
         userId: req.user.id,
         email: req.user.email,
-        name: req.user.name
-      }
+        name: req.user.name,
+      },
     };
 
     const email = await CommunicationService.createEmail(emailData);
@@ -342,48 +413,56 @@ router.post('/emails', requireAuth, validateEmailCreate, async (req: any, res: a
   }
 });
 
-router.post('/emails/:emailId/send', requireAuth, [
-  param('emailId').isString().notEmpty()
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+router.post(
+  '/emails/:emailId/send',
+  requireAuth,
+  [param('emailId').isString().notEmpty()],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { emailId } = req.params;
+      const email = await CommunicationService.sendEmail(emailId);
+      res.json(email);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const { emailId } = req.params;
-    const email = await CommunicationService.sendEmail(emailId);
-    res.json(email);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+router.get(
+  '/emails',
+  requireAuth,
+  [
+    query('type').optional().isIn(['sent', 'received']),
+    query('page').optional().isInt({ min: 1 }),
+    query('limit').optional().isInt({ min: 1, max: 100 }),
+  ],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-router.get('/emails', requireAuth, [
-  query('type').optional().isIn(['sent', 'received']),
-  query('page').optional().isInt({ min: 1 }),
-  query('limit').optional().isInt({ min: 1, max: 100 })
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const { type = 'received', page = 1, limit = 20 } = req.query;
+
+      const result = await CommunicationService.getEmails(
+        req.user.id,
+        type as 'sent' | 'received',
+        parseInt(page as string),
+        parseInt(limit as string),
+      );
+
+      return res.json(result);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
-
-    const { type = 'received', page = 1, limit = 20 } = req.query;
-
-    const result = await CommunicationService.getEmails(
-      req.user.id,
-      type as 'sent' | 'received',
-      parseInt(page as string),
-      parseInt(limit as string)
-    );
-
-    return res.json(result);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+  },
+);
 
 // Chat Room Routes
 router.post('/chatrooms', requireAuth, validateChatRoomCreate, async (req: any, res: any) => {
@@ -395,7 +474,7 @@ router.post('/chatrooms', requireAuth, validateChatRoomCreate, async (req: any, 
 
     const chatRoomData = {
       ...req.body,
-      admins: req.body.admins || [req.user.id]
+      admins: req.body.admins || [req.user.id],
     };
 
     const chatRoom = await CommunicationService.createChatRoom(chatRoomData);
@@ -405,63 +484,76 @@ router.post('/chatrooms', requireAuth, validateChatRoomCreate, async (req: any, 
   }
 });
 
-router.get('/chatrooms', requireAuth, [
-  query('type').optional().isIn(['public', 'private', 'restricted']),
-  query('category').optional().isIn(['general', 'academic', 'social', 'announcements', 'support', 'events']),
-  query('isActive').optional().isBoolean()
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+router.get(
+  '/chatrooms',
+  requireAuth,
+  [
+    query('type').optional().isIn(['public', 'private', 'restricted']),
+    query('category')
+      .optional()
+      .isIn(['general', 'academic', 'social', 'announcements', 'support', 'events']),
+    query('isActive').optional().isBoolean(),
+  ],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const filters = {
+        type: req.query.type as string,
+        category: req.query.category as string,
+        isActive: req.query.isActive === 'true',
+      };
+
+      const chatRooms = await CommunicationService.getChatRooms(filters);
+      res.json(chatRooms);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const filters = {
-      type: req.query.type as string,
-      category: req.query.category as string,
-      isActive: req.query.isActive === 'true'
-    };
+router.post(
+  '/chatrooms/:roomId/join',
+  requireAuth,
+  [param('roomId').isString().notEmpty()],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-    const chatRooms = await CommunicationService.getChatRooms(filters);
-    res.json(chatRooms);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
-
-router.post('/chatrooms/:roomId/join', requireAuth, [
-  param('roomId').isString().notEmpty()
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const { roomId } = req.params;
+      const chatRoom = await CommunicationService.joinChatRoom(roomId, req.user.id);
+      res.json(chatRoom);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const { roomId } = req.params;
-    const chatRoom = await CommunicationService.joinChatRoom(roomId, req.user.id);
-    res.json(chatRoom);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+router.post(
+  '/chatrooms/:roomId/leave',
+  requireAuth,
+  [param('roomId').isString().notEmpty()],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-router.post('/chatrooms/:roomId/leave', requireAuth, [
-  param('roomId').isString().notEmpty()
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const { roomId } = req.params;
+      const chatRoom = await CommunicationService.leaveChatRoom(roomId, req.user.id);
+      res.json(chatRoom);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
-
-    const { roomId } = req.params;
-    const chatRoom = await CommunicationService.leaveChatRoom(roomId, req.user.id);
-    res.json(chatRoom);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+  },
+);
 
 // Contact Routes
 router.post('/contacts', requireAuth, validateContactCreate, async (req: any, res: any) => {
@@ -473,7 +565,7 @@ router.post('/contacts', requireAuth, validateContactCreate, async (req: any, re
 
     const contactData = {
       ...req.body,
-      userId: req.user.id
+      userId: req.user.id,
     };
 
     const contact = await CommunicationService.createContact(contactData);
@@ -483,122 +575,149 @@ router.post('/contacts', requireAuth, validateContactCreate, async (req: any, re
   }
 });
 
-router.get('/contacts', requireAuth, [
-  query('isFavorite').optional().isBoolean(),
-  query('isBlocked').optional().isBoolean(),
-  query('tags').optional().isArray(),
-  query('tags.*').isString()
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+router.get(
+  '/contacts',
+  requireAuth,
+  [
+    query('isFavorite').optional().isBoolean(),
+    query('isBlocked').optional().isBoolean(),
+    query('tags').optional().isArray(),
+    query('tags.*').isString(),
+  ],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const filters = {
+        isFavorite: req.query.isFavorite === 'true',
+        isBlocked: req.query.isBlocked === 'true',
+        tags: req.query.tags as string[],
+      };
+
+      const contacts = await CommunicationService.getContacts(req.user.id, filters);
+      res.json(contacts);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const filters = {
-      isFavorite: req.query.isFavorite === 'true',
-      isBlocked: req.query.isBlocked === 'true',
-      tags: req.query.tags as string[]
-    };
+router.put(
+  '/contacts/:contactId/status',
+  requireAuth,
+  [
+    param('contactId').isString().notEmpty(),
+    body('status').isIn(['online', 'offline', 'away', 'busy', 'invisible']),
+  ],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-    const contacts = await CommunicationService.getContacts(req.user.id, filters);
-    res.json(contacts);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+      const { contactId } = req.params;
+      const { status } = req.body;
 
-router.put('/contacts/:contactId/status', requireAuth, [
-  param('contactId').isString().notEmpty(),
-  body('status').isIn(['online', 'offline', 'away', 'busy', 'invisible'])
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const contact = await CommunicationService.updateContactStatus(contactId, status);
+      res.json(contact);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const { contactId } = req.params;
-    const { status } = req.body;
+router.post(
+  '/contacts/:contactId/block',
+  requireAuth,
+  [
+    param('contactId').isString().notEmpty(),
+    body('reason').optional().isString().isLength({ max: 200 }),
+  ],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-    const contact = await CommunicationService.updateContactStatus(contactId, status);
-    res.json(contact);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+      const { contactId } = req.params;
+      const { reason } = req.body;
 
-router.post('/contacts/:contactId/block', requireAuth, [
-  param('contactId').isString().notEmpty(),
-  body('reason').optional().isString().isLength({ max: 200 })
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const contact = await CommunicationService.blockContact(contactId, reason);
+      res.json(contact);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
+  },
+);
 
-    const { contactId } = req.params;
-    const { reason } = req.body;
+router.post(
+  '/contacts/:contactId/unblock',
+  requireAuth,
+  [param('contactId').isString().notEmpty()],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-    const contact = await CommunicationService.blockContact(contactId, reason);
-    res.json(contact);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
-
-router.post('/contacts/:contactId/unblock', requireAuth, [
-  param('contactId').isString().notEmpty()
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      const { contactId } = req.params;
+      const contact = await CommunicationService.unblockContact(contactId);
+      res.json(contact);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
-
-    const { contactId } = req.params;
-    const contact = await CommunicationService.unblockContact(contactId);
-    res.json(contact);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+  },
+);
 
 // Search and Analytics Routes
-router.get('/search', requireAuth, [
-  query('q').isString().notEmpty().isLength({ min: 2 }),
-  query('conversationId').optional().isString(),
-  query('senderId').optional().isString(),
-  query('contentType').optional().isString(),
-  query('priority').optional().isString(),
-  query('dateFrom').optional().isISO8601(),
-  query('dateTo').optional().isISO8601(),
-  query('hasAttachments').optional().isBoolean()
-], async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+router.get(
+  '/search',
+  requireAuth,
+  [
+    query('q').isString().notEmpty().isLength({ min: 2 }),
+    query('conversationId').optional().isString(),
+    query('senderId').optional().isString(),
+    query('contentType').optional().isString(),
+    query('priority').optional().isString(),
+    query('dateFrom').optional().isISO8601(),
+    query('dateTo').optional().isISO8601(),
+    query('hasAttachments').optional().isBoolean(),
+  ],
+  async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { q, ...filters } = req.query;
+      const searchFilters = {
+        conversationId: filters.conversationId as string,
+        senderId: filters.senderId as string,
+        contentType: filters.contentType as string,
+        priority: filters.priority as string,
+        dateFrom: filters.dateFrom ? new Date(filters.dateFrom as string) : undefined,
+        dateTo: filters.dateTo ? new Date(filters.dateTo as string) : undefined,
+        hasAttachments: filters.hasAttachments === 'true',
+      };
+
+      const messages = await CommunicationService.searchMessages(
+        req.user.id,
+        q as string,
+        searchFilters,
+      );
+      res.json(messages);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
-
-    const { q, ...filters } = req.query;
-    const searchFilters = {
-      conversationId: filters.conversationId as string,
-      senderId: filters.senderId as string,
-      contentType: filters.contentType as string,
-      priority: filters.priority as string,
-      dateFrom: filters.dateFrom ? new Date(filters.dateFrom as string) : undefined,
-      dateTo: filters.dateTo ? new Date(filters.dateTo as string) : undefined,
-      hasAttachments: filters.hasAttachments === 'true'
-    };
-
-    const messages = await CommunicationService.searchMessages(req.user.id, q as string, searchFilters);
-    res.json(messages);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+  },
+);
 
 router.get('/stats', requireAuth, async (req: any, res: any) => {
   try {
@@ -610,24 +729,30 @@ router.get('/stats', requireAuth, async (req: any, res: any) => {
 });
 
 // File Upload Route
-router.post('/upload', requireAuth, upload.array('attachments', 10), async (req: any, res: any) => {
-  try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ error: 'No files uploaded' });
+router.post(
+  '/upload',
+  requireAuth,
+  commUploadLimiter as any,
+  upload.array('attachments', 10),
+  async (req: any, res: any) => {
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: 'No files uploaded' });
+      }
+
+      const uploadedFiles = (req.files as Express.Multer.File[]).map((file) => ({
+        filename: file.filename,
+        originalName: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+        url: `/uploads/communication/${file.filename}`,
+      }));
+
+      res.json({ files: uploadedFiles });
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
-
-    const uploadedFiles = (req.files as Express.Multer.File[]).map(file => ({
-      filename: file.filename,
-      originalName: file.originalname,
-      mimeType: file.mimetype,
-      size: file.size,
-      url: `/uploads/communication/${file.filename}`
-    }));
-
-    res.json({ files: uploadedFiles });
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+  },
+);
 
 export default router;

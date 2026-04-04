@@ -6,7 +6,15 @@ import { requireOwnership } from '../middleware/ownershipCheck';
 import { sendMail } from '../mailService';
 import logger from '../utils/logger';
 
+import { createEndpointLimiter } from '../config/rateLimiters';
+
 const router = Router();
+
+const bulkNotifLimiter = createEndpointLimiter({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: 'Çok fazla toplu bildirim isteği.',
+});
 
 // Apply authentication middleware to all routes
 router.use(requireAuth);
@@ -108,7 +116,7 @@ router.patch('/:id/read', async (req, res) => {
 });
 
 // Mark multiple notifications as read - IDOR protected
-router.patch('/bulk-read', async (req, res) => {
+router.patch('/bulk-read', bulkNotifLimiter, async (req, res) => {
   try {
     const { notificationIds } = req.body;
 
