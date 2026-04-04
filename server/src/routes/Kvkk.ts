@@ -6,7 +6,15 @@ import { requireOwnership } from '../middleware/ownershipCheck';
 import { AuditLogService } from '../services/auditLogService';
 import logger from '../utils/logger';
 
+import { createEndpointLimiter } from '../config/rateLimiters';
+
 const router = Router();
+
+const dataExportLimiter = createEndpointLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: 'Çok fazla veri dışa aktarma isteği. Lütfen daha sonra tekrar deneyin.',
+});
 
 // All routes require authentication
 router.use(authenticateJWT);
@@ -23,8 +31,8 @@ router.get('/consents', async (req: Request, res: Response) => {
 
     // Return all consent types with their status
     const consentTypes = ['data_processing', 'data_sharing', 'marketing', 'cookies', 'profiling'];
-    const consentMap = consentTypes.map(type => {
-      const existing = consents.find(c => c.consentType === type);
+    const consentMap = consentTypes.map((type) => {
+      const existing = consents.find((c) => c.consentType === type);
       return {
         consentType: type,
         granted: existing?.granted ?? false,
@@ -36,7 +44,9 @@ router.get('/consents', async (req: Request, res: Response) => {
 
     res.json({ success: true, consents: consentMap });
   } catch (error) {
-    logger.error('Error fetching KVKK consents', { error: error instanceof Error ? error.message : error });
+    logger.error('Error fetching KVKK consents', {
+      error: error instanceof Error ? error.message : error,
+    });
     res.status(500).json({ error: 'Onam bilgileri alınamadı' });
   }
 });
@@ -92,7 +102,7 @@ router.post('/consents', async (req: Request, res: Response) => {
     await KvkkConsent.findOneAndUpdate(
       { userId, consentType },
       { $set: updateData },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     AuditLogService.log(req, granted ? 'create' : 'delete', 'kvkk_consent' as any, {
@@ -101,7 +111,9 @@ router.post('/consents', async (req: Request, res: Response) => {
 
     res.json({ success: true, message: granted ? 'Onam verildi' : 'Onam geri çekildi' });
   } catch (error) {
-    logger.error('Error updating KVKK consent', { error: error instanceof Error ? error.message : error });
+    logger.error('Error updating KVKK consent', {
+      error: error instanceof Error ? error.message : error,
+    });
     res.status(500).json({ error: 'Onam güncellenemedi' });
   }
 });
@@ -109,7 +121,7 @@ router.post('/consents', async (req: Request, res: Response) => {
 /**
  * GET /api/kvkk/my-data — Export user's personal data (KVKK right of access)
  */
-router.get('/my-data', async (req: Request, res: Response) => {
+router.get('/my-data', dataExportLimiter, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
     if (!userId) return res.status(401).json({ error: 'Authentication required' });
@@ -118,7 +130,8 @@ router.get('/my-data', async (req: Request, res: Response) => {
     if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
 
     // Strip sensitive fields
-    const { sifre, twoFactorCode, twoFactorExpiry, emailVerificationCode, ...safeUser } = user as any;
+    const { sifre, twoFactorCode, twoFactorExpiry, emailVerificationCode, ...safeUser } =
+      user as any;
 
     // Mask TCKN
     if (safeUser.tckn) {
@@ -147,7 +160,9 @@ router.get('/my-data', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    logger.error('Error exporting user data', { error: error instanceof Error ? error.message : error });
+    logger.error('Error exporting user data', {
+      error: error instanceof Error ? error.message : error,
+    });
     res.status(500).json({ error: 'Kişisel veriler dışa aktarılamadı' });
   }
 });
@@ -155,7 +170,7 @@ router.get('/my-data', async (req: Request, res: Response) => {
 /**
  * POST /api/kvkk/deletion-request — Request data deletion (right to be forgotten)
  */
-router.post('/deletion-request', async (req: Request, res: Response) => {
+router.post('/deletion-request', dataExportLimiter, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
     if (!userId) return res.status(401).json({ error: 'Authentication required' });
@@ -163,7 +178,10 @@ router.post('/deletion-request', async (req: Request, res: Response) => {
     const { reason } = req.body;
 
     // Check for existing pending request
-    const existing = await DataDeletionRequest.findOne({ userId, status: { $in: ['pending', 'processing'] } });
+    const existing = await DataDeletionRequest.findOne({
+      userId,
+      status: { $in: ['pending', 'processing'] },
+    });
     if (existing) {
       return res.status(409).json({ error: 'Zaten bekleyen bir silme talebiniz bulunmaktadır' });
     }
@@ -187,7 +205,9 @@ router.post('/deletion-request', async (req: Request, res: Response) => {
       status: request.status,
     });
   } catch (error) {
-    logger.error('Error creating deletion request', { error: error instanceof Error ? error.message : error });
+    logger.error('Error creating deletion request', {
+      error: error instanceof Error ? error.message : error,
+    });
     res.status(500).json({ error: 'Silme talebi oluşturulamadı' });
   }
 });
@@ -204,7 +224,9 @@ router.get('/deletion-request', async (req: Request, res: Response) => {
 
     res.json({ success: true, requests });
   } catch (error) {
-    logger.error('Error fetching deletion requests', { error: error instanceof Error ? error.message : error });
+    logger.error('Error fetching deletion requests', {
+      error: error instanceof Error ? error.message : error,
+    });
     res.status(500).json({ error: 'Silme talepleri alınamadı' });
   }
 });
@@ -212,96 +234,108 @@ router.get('/deletion-request', async (req: Request, res: Response) => {
 /**
  * Admin: List all deletion requests
  */
-router.get('/admin/deletion-requests', authorizeRoles(['admin']), async (req: Request, res: Response) => {
-  try {
-    const status = req.query.status as string;
-    const filter: any = {};
-    if (status) filter.status = status;
+router.get(
+  '/admin/deletion-requests',
+  authorizeRoles(['admin']),
+  async (req: Request, res: Response) => {
+    try {
+      const status = req.query.status as string;
+      const filter: any = {};
+      if (status) filter.status = status;
 
-    const requests = await DataDeletionRequest.find(filter).sort({ requestedAt: -1 }).lean();
+      const requests = await DataDeletionRequest.find(filter).sort({ requestedAt: -1 }).lean();
 
-    res.json({ success: true, requests });
-  } catch (error) {
-    logger.error('Error fetching admin deletion requests', { error: error instanceof Error ? error.message : error });
-    res.status(500).json({ error: 'Silme talepleri alınamadı' });
-  }
-});
+      res.json({ success: true, requests });
+    } catch (error) {
+      logger.error('Error fetching admin deletion requests', {
+        error: error instanceof Error ? error.message : error,
+      });
+      res.status(500).json({ error: 'Silme talepleri alınamadı' });
+    }
+  },
+);
 
 /**
  * Admin: Process a deletion request
  */
-router.patch('/admin/deletion-requests/:id', authorizeRoles(['admin']), async (req: Request, res: Response) => {
-  try {
-    const { action, rejectionReason, retainedData, retainReason } = req.body;
+router.patch(
+  '/admin/deletion-requests/:id',
+  authorizeRoles(['admin']),
+  async (req: Request, res: Response) => {
+    try {
+      const { action, rejectionReason, retainedData, retainReason } = req.body;
 
-    if (!action || !['approve', 'reject'].includes(action)) {
-      return res.status(400).json({ error: "action 'approve' veya 'reject' olmalıdır" });
-    }
+      if (!action || !['approve', 'reject'].includes(action)) {
+        return res.status(400).json({ error: "action 'approve' veya 'reject' olmalıdır" });
+      }
 
-    const request = await DataDeletionRequest.findById(req.params.id);
-    if (!request) {
-      return res.status(404).json({ error: 'Silme talebi bulunamadı' });
-    }
+      const request = await DataDeletionRequest.findById(req.params.id);
+      if (!request) {
+        return res.status(404).json({ error: 'Silme talebi bulunamadı' });
+      }
 
-    if (request.status !== 'pending') {
-      return res.status(400).json({ error: 'Bu talep zaten işleme alınmış' });
-    }
+      if (request.status !== 'pending') {
+        return res.status(400).json({ error: 'Bu talep zaten işleme alınmış' });
+      }
 
-    if (action === 'reject') {
-      request.status = 'rejected';
-      request.rejectionReason = rejectionReason || 'Yasal saklama yükümlülüğü';
-      request.processedAt = new Date();
-      request.processedBy = req.user?.userId;
+      if (action === 'reject') {
+        request.status = 'rejected';
+        request.rejectionReason = rejectionReason || 'Yasal saklama yükümlülüğü';
+        request.processedAt = new Date();
+        request.processedBy = req.user?.userId;
+        await request.save();
+
+        return res.json({ success: true, message: 'Silme talebi reddedildi', request });
+      }
+
+      // Process deletion
+      request.status = 'processing';
       await request.save();
 
-      return res.json({ success: true, message: 'Silme talebi reddedildi', request });
+      const deletedCollections: string[] = [];
+
+      // Anonymize user data instead of hard delete (legal retention)
+      const user = await User.findOne({ id: request.userId });
+      if (user) {
+        user.adSoyad = 'Silinmiş Kullanıcı';
+        user.email = undefined;
+        user.tckn = undefined;
+        user.trustedDevices = [];
+        user.isActive = false;
+        await user.save();
+        deletedCollections.push('users (anonymized)');
+      }
+
+      // Delete consents
+      await KvkkConsent.deleteMany({ userId: request.userId });
+      deletedCollections.push('kvkk_consents');
+
+      request.status = 'completed';
+      request.processedAt = new Date();
+      request.processedBy = req.user?.userId;
+      request.deletedData = deletedCollections;
+      request.retainedData = retainedData || ['audit_logs (yasal zorunluluk)'];
+      request.retainReason = retainReason || 'KVKK Madde 28 - Yasal saklama yükümlülüğü';
+      await request.save();
+
+      AuditLogService.log(req, 'delete', 'kvkk_deletion' as any, {
+        resourceId: String(request._id),
+        details: { userId: request.userId, deletedCollections },
+      });
+
+      res.json({
+        success: true,
+        message: 'Veri silme işlemi tamamlandı',
+        request,
+      });
+    } catch (error) {
+      logger.error('Error processing deletion request', {
+        error: error instanceof Error ? error.message : error,
+      });
+      res.status(500).json({ error: 'Silme talebi işlenemedi' });
     }
-
-    // Process deletion
-    request.status = 'processing';
-    await request.save();
-
-    const deletedCollections: string[] = [];
-
-    // Anonymize user data instead of hard delete (legal retention)
-    const user = await User.findOne({ id: request.userId });
-    if (user) {
-      user.adSoyad = 'Silinmiş Kullanıcı';
-      user.email = undefined;
-      user.tckn = undefined;
-      user.trustedDevices = [];
-      user.isActive = false;
-      await user.save();
-      deletedCollections.push('users (anonymized)');
-    }
-
-    // Delete consents
-    await KvkkConsent.deleteMany({ userId: request.userId });
-    deletedCollections.push('kvkk_consents');
-
-    request.status = 'completed';
-    request.processedAt = new Date();
-    request.processedBy = req.user?.userId;
-    request.deletedData = deletedCollections;
-    request.retainedData = retainedData || ['audit_logs (yasal zorunluluk)'];
-    request.retainReason = retainReason || 'KVKK Madde 28 - Yasal saklama yükümlülüğü';
-    await request.save();
-
-    AuditLogService.log(req, 'delete', 'kvkk_deletion' as any, {
-      resourceId: String(request._id),
-      details: { userId: request.userId, deletedCollections },
-    });
-
-    res.json({
-      success: true,
-      message: 'Veri silme işlemi tamamlandı',
-      request,
-    });
-  } catch (error) {
-    logger.error('Error processing deletion request', { error: error instanceof Error ? error.message : error });
-    res.status(500).json({ error: 'Silme talebi işlenemedi' });
-  }
-});
+  },
+);
 
 /**
  * GET /api/kvkk/privacy-policy — Return current privacy policy version info
