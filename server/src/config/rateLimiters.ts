@@ -133,6 +133,10 @@ export const devReadOnlyLimiter = rateLimit({
 let redisStoreClient: ReturnType<typeof createClient> | null = null;
 
 export function createRedisRateLimitStore(): RedisStore | undefined {
+  // Skip Redis in test/development without explicit REDIS_URL
+  if (process.env.NODE_ENV === 'test') return undefined;
+  if (process.env.NODE_ENV !== 'production' && !process.env.REDIS_URL) return undefined;
+
   try {
     const redisUrl =
       process.env.REDIS_URL ||
