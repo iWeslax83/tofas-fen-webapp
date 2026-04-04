@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, useLocation } from 'react-router-dom';
+import * as Sentry from '@sentry/react';
 import ErrorBoundary from './components/ErrorBoundary';
 import AuthProvider from './contexts/AuthContext';
 import AppRoutes from './routes/AppRoutes';
@@ -24,7 +25,8 @@ function App() {
     if (theme === 'system') {
       const mq = window.matchMedia('(prefers-color-scheme: dark)');
       root.setAttribute('data-theme', mq.matches ? 'dark' : 'light');
-      const handler = (e: MediaQueryListEvent) => root.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+      const handler = (e: MediaQueryListEvent) =>
+        root.setAttribute('data-theme', e.matches ? 'dark' : 'light');
       mq.addEventListener('change', handler);
       return () => mq.removeEventListener('change', handler);
     } else {
@@ -41,4 +43,4 @@ function App() {
   );
 }
 
-export default App;
+export default Sentry.withProfiler(App);

@@ -29,6 +29,45 @@ export function initializeSentry() {
       tracesSampleRate: 0.1,
       environment: import.meta.env.MODE,
       beforeSend(event) {
+        const sensitiveKeys = [
+          'tckn',
+          'tcknhash',
+          'password',
+          'sifre',
+          'token',
+          'refreshtoken',
+          'secret',
+          'authorization',
+        ];
+
+        function scrubObject(obj: Record<string, any>): Record<string, any> {
+          const cleaned: Record<string, any> = {};
+          for (const [key, value] of Object.entries(obj)) {
+            if (sensitiveKeys.includes(key.toLowerCase())) {
+              cleaned[key] = '[REDACTED]';
+            } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+              cleaned[key] = scrubObject(value);
+            } else {
+              cleaned[key] = value;
+            }
+          }
+          return cleaned;
+        }
+
+        if (event.extra) {
+          event.extra = scrubObject(event.extra as Record<string, any>);
+        }
+        if (event.contexts) {
+          event.contexts = scrubObject(event.contexts as Record<string, any>);
+        }
+        if (event.breadcrumbs) {
+          for (const crumb of event.breadcrumbs) {
+            if (crumb.data?.headers) {
+              delete crumb.data.headers.Authorization;
+              delete crumb.data.headers.authorization;
+            }
+          }
+        }
         return event;
       },
     });
