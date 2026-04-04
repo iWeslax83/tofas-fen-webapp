@@ -24,7 +24,12 @@ export class AuthService {
   /**
    * Authenticate user with ID and password
    */
-  static async authenticateUser(id: string, password: string, trustedDeviceToken?: string, meta?: { ip?: string; userAgent?: string }): Promise<{
+  static async authenticateUser(
+    id: string,
+    password: string,
+    trustedDeviceToken?: string,
+    meta?: { ip?: string; userAgent?: string },
+  ): Promise<{
     user: any;
     tokens?: any;
     requires2FA?: boolean;
@@ -36,7 +41,10 @@ export class AuthService {
     if (!user) {
       // Timing-safe: Kullanıcı bulunamasa bile bcrypt karşılaştırması yap
       // Bu sayede kullanıcı var/yok ayrımı zamanlama ile tespit edilemez
-      await bcrypt.compare(password, '$2a$12$placeholder.hash.to.prevent.timing.attacks.xxxxxxxxxxxx');
+      await bcrypt.compare(
+        password,
+        '$2a$12$placeholder.hash.to.prevent.timing.attacks.xxxxxxxxxxxx',
+      );
       throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
     }
 
@@ -44,8 +52,15 @@ export class AuthService {
     if (user.lockUntil && user.lockUntil > new Date()) {
       const remainingMs = user.lockUntil.getTime() - Date.now();
       const remainingMin = Math.ceil(remainingMs / 60000);
-      logSecurityEvent({ event: SecurityEvent.ACCOUNT_LOCKED, userId: user.id, ip: meta?.ip, userAgent: meta?.userAgent });
-      throw AppError.unauthorized(`Hesap geçici olarak kilitlendi. ${remainingMin} dakika sonra tekrar deneyin.`);
+      logSecurityEvent({
+        event: SecurityEvent.ACCOUNT_LOCKED,
+        userId: user.id,
+        ip: meta?.ip,
+        userAgent: meta?.userAgent,
+      });
+      throw AppError.unauthorized(
+        `Hesap geçici olarak kilitlendi. ${remainingMin} dakika sonra tekrar deneyin.`,
+      );
     }
 
     // Check password: prefer bcrypt hashed `sifre` if present, fall back to TCKN
@@ -77,10 +92,21 @@ export class AuthService {
       user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
       if (user.failedLoginAttempts >= MAX_LOGIN_ATTEMPTS) {
         user.lockUntil = new Date(Date.now() + LOCK_DURATION_MS);
-        logSecurityEvent({ event: SecurityEvent.ACCOUNT_LOCKED, userId: user.id, ip: meta?.ip, userAgent: meta?.userAgent, details: { attempts: user.failedLoginAttempts } });
+        logSecurityEvent({
+          event: SecurityEvent.ACCOUNT_LOCKED,
+          userId: user.id,
+          ip: meta?.ip,
+          userAgent: meta?.userAgent,
+          details: { attempts: user.failedLoginAttempts },
+        });
       }
       await user.save();
-      logSecurityEvent({ event: SecurityEvent.LOGIN_FAILED, userId: user.id, ip: meta?.ip, userAgent: meta?.userAgent });
+      logSecurityEvent({
+        event: SecurityEvent.LOGIN_FAILED,
+        userId: user.id,
+        ip: meta?.ip,
+        userAgent: meta?.userAgent,
+      });
 
       // Track for CAPTCHA and security alerts
       if (meta?.ip) {
@@ -103,7 +129,8 @@ export class AuthService {
     }
 
     // Check if 2FA is required
-    const requires2FA = (user.rol === 'admin' || user.rol === 'teacher') &&
+    const requires2FA =
+      (user.rol === 'admin' || user.rol === 'teacher') &&
       user.emailVerified &&
       user.twoFactorEnabled;
 
@@ -116,7 +143,12 @@ export class AuthService {
           user.lastLogin = new Date();
           user.loginCount = (user.loginCount || 0) + 1;
           await user.save();
-          logSecurityEvent({ event: SecurityEvent.LOGIN_SUCCESS, userId: user.id, ip: meta?.ip, details: { trustedDevice: true } });
+          logSecurityEvent({
+            event: SecurityEvent.LOGIN_SUCCESS,
+            userId: user.id,
+            ip: meta?.ip,
+            details: { trustedDevice: true },
+          });
 
           const tokens = generateTokenPair(user.id, user.rol, user.email, user.tokenVersion);
           return {
@@ -131,9 +163,9 @@ export class AuthService {
               sube: user.sube,
               oda: user.oda,
               pansiyon: user.pansiyon,
-              lastLogin: user.lastLogin
+              lastLogin: user.lastLogin,
             },
-            tokens
+            tokens,
           };
         }
       }
@@ -153,14 +185,23 @@ export class AuthService {
       try {
         if (user.email) {
           await sendTwoFactorEmail(user.email, code, user.adSoyad);
-          logSecurityEvent({ event: SecurityEvent.TWO_FACTOR_CODE_SENT, userId: user.id, ip: meta?.ip });
+          logSecurityEvent({
+            event: SecurityEvent.TWO_FACTOR_CODE_SENT,
+            userId: user.id,
+            ip: meta?.ip,
+          });
         }
       } catch (emailErr) {
         // Clear the code since user never received it
         user.twoFactorCode = undefined as any;
         user.twoFactorExpiry = undefined as any;
         await user.save();
-        logSecurityEvent({ event: SecurityEvent.EMAIL_SEND_FAILED, userId: user.id, ip: meta?.ip, details: { type: '2fa', error: (emailErr as Error).message } });
+        logSecurityEvent({
+          event: SecurityEvent.EMAIL_SEND_FAILED,
+          userId: user.id,
+          ip: meta?.ip,
+          details: { type: '2fa', error: (emailErr as Error).message },
+        });
         throw AppError.internal('Doğrulama kodu gönderilemedi. Lütfen daha sonra tekrar deneyin.');
       }
 
@@ -168,7 +209,7 @@ export class AuthService {
       const twoFactorSessionToken = jwt.sign(
         { userId: user.id, purpose: '2fa' },
         config.JWT_SECRET,
-        { expiresIn: '5m' }
+        { expiresIn: '5m' },
       );
 
       return {
@@ -178,7 +219,7 @@ export class AuthService {
         user: {
           id: user.id,
           adSoyad: user.adSoyad,
-        }
+        },
       };
     }
 
@@ -215,16 +256,21 @@ export class AuthService {
         sube: user.sube,
         oda: user.oda,
         pansiyon: user.pansiyon,
-        lastLogin: user.lastLogin
+        lastLogin: user.lastLogin,
       },
-      tokens
+      tokens,
     };
   }
 
   /**
    * Verify 2FA code and complete login
    */
-  static async verifyTwoFactorCode(sessionToken: string, code: string, requestTrustedDevice: boolean, meta?: { ip?: string; userAgent?: string }): Promise<{
+  static async verifyTwoFactorCode(
+    sessionToken: string,
+    code: string,
+    requestTrustedDevice: boolean,
+    meta?: { ip?: string; userAgent?: string },
+  ): Promise<{
     user: any;
     tokens: any;
     trustedDeviceToken?: string;
@@ -259,7 +305,7 @@ export class AuthService {
         $set: { twoFactorAttempts: 0, lastLogin: new Date() },
         $inc: { loginCount: 1 },
       },
-      { new: true }
+      { new: true },
     );
 
     if (!user) {
@@ -272,17 +318,36 @@ export class AuthService {
         checkUser.twoFactorCode = undefined as any;
         checkUser.twoFactorExpiry = undefined as any;
         await checkUser.save();
-        logSecurityEvent({ event: SecurityEvent.TWO_FACTOR_FAILED, userId: checkUser.id, ip: meta?.ip, details: { reason: 'max_attempts' } });
+        logSecurityEvent({
+          event: SecurityEvent.TWO_FACTOR_FAILED,
+          userId: checkUser.id,
+          ip: meta?.ip,
+          details: { reason: 'max_attempts' },
+        });
         throw AppError.unauthorized('Çok fazla başarısız deneme. Lütfen tekrar giriş yapın.');
       }
-      if (!checkUser.twoFactorCode || !checkUser.twoFactorExpiry || checkUser.twoFactorExpiry < new Date()) {
-        logSecurityEvent({ event: SecurityEvent.TWO_FACTOR_FAILED, userId: checkUser.id, ip: meta?.ip, details: { reason: 'expired' } });
+      if (
+        !checkUser.twoFactorCode ||
+        !checkUser.twoFactorExpiry ||
+        checkUser.twoFactorExpiry < new Date()
+      ) {
+        logSecurityEvent({
+          event: SecurityEvent.TWO_FACTOR_FAILED,
+          userId: checkUser.id,
+          ip: meta?.ip,
+          details: { reason: 'expired' },
+        });
         throw AppError.validation('Doğrulama kodunun süresi dolmuş. Lütfen tekrar giriş yapın.');
       }
       // Code didn't match — increment attempts
       checkUser.twoFactorAttempts = (checkUser.twoFactorAttempts || 0) + 1;
       await checkUser.save();
-      logSecurityEvent({ event: SecurityEvent.TWO_FACTOR_FAILED, userId: checkUser.id, ip: meta?.ip, details: { reason: 'wrong_code', attempts: checkUser.twoFactorAttempts } });
+      logSecurityEvent({
+        event: SecurityEvent.TWO_FACTOR_FAILED,
+        userId: checkUser.id,
+        ip: meta?.ip,
+        details: { reason: 'wrong_code', attempts: checkUser.twoFactorAttempts },
+      });
       throw AppError.validation('Geçersiz doğrulama kodu');
     }
 
@@ -302,7 +367,11 @@ export class AuthService {
       }
       user.trustedDevices.push(hashedToken);
       await user.save();
-      logSecurityEvent({ event: SecurityEvent.TRUSTED_DEVICE_ADDED, userId: user.id, ip: meta?.ip });
+      logSecurityEvent({
+        event: SecurityEvent.TRUSTED_DEVICE_ADDED,
+        userId: user.id,
+        ip: meta?.ip,
+      });
     }
 
     // Generate tokens
@@ -320,17 +389,20 @@ export class AuthService {
         sube: user.sube,
         oda: user.oda,
         pansiyon: user.pansiyon,
-        lastLogin: user.lastLogin
+        lastLogin: user.lastLogin,
       },
       tokens,
-      trustedDeviceToken
+      trustedDeviceToken,
     };
   }
 
   /**
    * #13: Resend 2FA code using existing session token
    */
-  static async resendTwoFactorCode(sessionToken: string, meta?: { ip?: string; userAgent?: string }): Promise<{
+  static async resendTwoFactorCode(
+    sessionToken: string,
+    meta?: { ip?: string; userAgent?: string },
+  ): Promise<{
     twoFactorSessionToken: string;
     twoFactorExpiresAt: number;
   }> {
@@ -362,21 +434,28 @@ export class AuthService {
 
     try {
       await sendTwoFactorEmail(user.email, code, user.adSoyad);
-      logSecurityEvent({ event: SecurityEvent.TWO_FACTOR_CODE_RESENT, userId: user.id, ip: meta?.ip });
+      logSecurityEvent({
+        event: SecurityEvent.TWO_FACTOR_CODE_RESENT,
+        userId: user.id,
+        ip: meta?.ip,
+      });
     } catch (emailErr) {
       user.twoFactorCode = undefined as any;
       user.twoFactorExpiry = undefined as any;
       await user.save();
-      logSecurityEvent({ event: SecurityEvent.EMAIL_SEND_FAILED, userId: user.id, ip: meta?.ip, details: { type: '2fa_resend' } });
+      logSecurityEvent({
+        event: SecurityEvent.EMAIL_SEND_FAILED,
+        userId: user.id,
+        ip: meta?.ip,
+        details: { type: '2fa_resend' },
+      });
       throw AppError.internal('Doğrulama kodu gönderilemedi. Lütfen daha sonra tekrar deneyin.');
     }
 
     // Issue a fresh 2FA session token
-    const newSessionToken = jwt.sign(
-      { userId: user.id, purpose: '2fa' },
-      config.JWT_SECRET,
-      { expiresIn: '5m' }
-    );
+    const newSessionToken = jwt.sign({ userId: user.id, purpose: '2fa' }, config.JWT_SECRET, {
+      expiresIn: '5m',
+    });
 
     return {
       twoFactorSessionToken: newSessionToken,
@@ -387,18 +466,26 @@ export class AuthService {
   /**
    * Toggle 2FA for admin/teacher users
    */
-  static async toggleTwoFactor(userId: string, enabled: boolean, meta?: { ip?: string }): Promise<void> {
+  static async toggleTwoFactor(
+    userId: string,
+    enabled: boolean,
+    meta?: { ip?: string },
+  ): Promise<void> {
     const user = await User.findOne({ id: userId, isActive: true });
     if (!user) {
       throw AppError.notFound('Kullanıcı bulunamadı');
     }
 
     if (user.rol !== 'admin' && user.rol !== 'teacher') {
-      throw AppError.forbidden('İki faktörlü doğrulama sadece yönetici ve öğretmenler için kullanılabilir');
+      throw AppError.forbidden(
+        'İki faktörlü doğrulama sadece yönetici ve öğretmenler için kullanılabilir',
+      );
     }
 
     if (enabled && !user.emailVerified) {
-      throw AppError.validation('İki faktörlü doğrulamayı açmak için e-posta adresinizi doğrulamanız gerekiyor');
+      throw AppError.validation(
+        'İki faktörlü doğrulamayı açmak için e-posta adresinizi doğrulamanız gerekiyor',
+      );
     }
 
     user.twoFactorEnabled = enabled;
@@ -437,7 +524,7 @@ export class AuthService {
       oda: user.oda,
       pansiyon: user.pansiyon,
       lastLogin: user.lastLogin,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
     };
   }
 
@@ -519,7 +606,7 @@ export class AuthService {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -553,25 +640,25 @@ export class AuthService {
 
     const usersByRole = await User.aggregate([
       { $match: { isActive: true } },
-      { $group: { _id: '$rol', count: { $sum: 1 } } }
+      { $group: { _id: '$rol', count: { $sum: 1 } } },
     ]);
 
     const roleStats: Record<string, number> = {};
-    usersByRole.forEach(stat => {
+    usersByRole.forEach((stat) => {
       roleStats[stat._id] = stat.count;
     });
 
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const recentLogins = await User.countDocuments({
       lastLogin: { $gte: oneDayAgo },
-      isActive: true
+      isActive: true,
     });
 
     return {
       totalUsers,
       activeUsers,
       usersByRole: roleStats,
-      recentLogins
+      recentLogins,
     };
   }
 
@@ -579,7 +666,10 @@ export class AuthService {
    * Rotate a refresh token (use once, issue new one in same family).
    * If a used token is presented (replay attack), invalidate the entire family.
    */
-  static async rotateRefreshToken(oldRefreshToken: string, meta?: { ip?: string; userAgent?: string }): Promise<{
+  static async rotateRefreshToken(
+    oldRefreshToken: string,
+    meta?: { ip?: string; userAgent?: string },
+  ): Promise<{
     tokens: any;
     user: any;
   }> {
@@ -595,23 +685,20 @@ export class AuthService {
       // SECURITY: Invalidate entire token family
       await RefreshToken.updateMany(
         { familyId: storedToken.familyId },
-        { $set: { isRevoked: true } }
+        { $set: { isRevoked: true } },
       );
 
       SecurityAlertService.trackSuspiciousTokenUsage(
         storedToken.userId,
         'Refresh token replay attack detected - token family invalidated',
-        meta?.ip
+        meta?.ip,
       );
 
       // Increment user's tokenVersion to invalidate all JWTs
-      await User.findOneAndUpdate(
-        { id: storedToken.userId },
-        { $inc: { tokenVersion: 1 } }
-      );
+      await User.findOneAndUpdate({ id: storedToken.userId }, { $inc: { tokenVersion: 1 } });
 
       logSecurityEvent({
-        event: SecurityEvent.TOKEN_REUSE_DETECTED || 'TOKEN_REUSE_DETECTED' as any,
+        event: SecurityEvent.TOKEN_REUSE_DETECTED || ('TOKEN_REUSE_DETECTED' as any),
         userId: storedToken.userId,
         ip: meta?.ip,
         details: { familyId: storedToken.familyId },
@@ -662,6 +749,36 @@ export class AuthService {
   }
 
   /**
+   * Unlock a locked user account
+   */
+  static async unlockAccount(userId: string, unlockedBy: string): Promise<void> {
+    const user = await User.findOne({ id: userId });
+    if (!user) {
+      throw new Error('Kullanıcı bulunamadı');
+    }
+
+    const isCurrentlyLocked = user.isLocked || (user.lockUntil && user.lockUntil > new Date());
+    if (!isCurrentlyLocked && user.failedLoginAttempts === 0) {
+      throw new Error('Bu hesap kilitli değil');
+    }
+
+    user.failedLoginAttempts = 0;
+    user.lockUntil = undefined as any;
+    user.isLocked = false;
+    user.lockReason = undefined as any;
+    await user.save();
+
+    logSecurityEvent({
+      event: SecurityEvent.ACCOUNT_UNLOCKED,
+      userId,
+      details: {
+        unlockedBy,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }
+
+  /**
    * Register a new user
    */
   static async registerUser(userData: {
@@ -685,7 +802,7 @@ export class AuthService {
       ...userData,
       sifre: hashedPassword,
       isActive: true,
-      tokenVersion: 0
+      tokenVersion: 0,
     });
 
     await newUser.save();
@@ -694,7 +811,7 @@ export class AuthService {
       id: newUser.id,
       adSoyad: newUser.adSoyad,
       rol: newUser.rol,
-      email: newUser.email
+      email: newUser.email,
     };
   }
 }

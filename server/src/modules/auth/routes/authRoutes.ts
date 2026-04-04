@@ -1,8 +1,11 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { AuthController } from '../controllers/authController';
+import { AuthService } from '../services/authService';
 import { authenticateJWT, authorizeRoles } from '../../../utils/jwt';
 import { authLimiter } from '../../../middleware/rateLimiter';
 import { captchaMiddleware } from '../../../middleware/captcha';
+import { validateUnlockAccount } from '../validators/authValidators';
+import { User } from '../../../models/User';
 
 const router = Router();
 
@@ -267,5 +270,32 @@ router.post('/verify-2fa', authLimiter, AuthController.verifyTwoFactor);
 // #13: Resend 2FA code route
 router.post('/resend-2fa', authLimiter, AuthController.resendTwoFactor);
 router.post('/toggle-2fa', authenticateJWT, AuthController.toggleTwoFactor);
+
+// Account unlock route (admin or parent of the target user)
+router.post(
+  '/unlock-account',
+  authLimiter,
+  authenticateJWT,
+  validateUnlockAccount,
+  async (req: Request, res: Response) => {
+    try {
+      const authUser = (req as any).user;
+      const { userId } = req.body;
+
+      if (authUser.role !== 'admin') {
+        const parentUser = await User.findOne({ id: authUser.userId });
+        if (!parentUser || authUser.role !== 'parent' || !parentUser.childId?.includes(userId)) {
+          return res.status(403).json({ error: 'Bu işlem için yetkiniz yok' });
+        }
+      }
+
+      await AuthService.unlockAccount(userId, authUser.userId);
+      res.json({ success: true, message: 'Hesap kilidi açıldı' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Hesap kilidi açılamadı';
+      res.status(400).json({ error: message });
+    }
+  },
+);
 
 export default router;

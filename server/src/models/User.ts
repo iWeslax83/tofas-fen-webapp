@@ -27,6 +27,8 @@ export interface IUser extends Document {
   trustedDevices?: string[];
   failedLoginAttempts: number;
   lockUntil?: Date;
+  isLocked: boolean;
+  lockReason?: 'failed_attempts' | 'admin_action' | 'security_alert';
   lastLogin?: Date;
   loginCount: number;
   isActive: boolean;
@@ -39,128 +41,135 @@ export interface IUser extends Document {
   getMaskedTckn(): string;
 }
 
-const UserSchema = new Schema<IUser>({
-  id: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true // Primary lookup field
-  },
-  adSoyad: {
-    type: String,
-    required: true,
-    index: true // For name-based searches
-  },
-  tckn: {
-    type: String,
-    unique: true,
-    sparse: true, // Allow multiple null values
-    index: true,
-    // Validation removed since encrypted values won't be 11 digits
-  },
-  tcknHash: {
-    type: String,
-    sparse: true,
-    index: true, // For searching by TCKN without decrypting
-  },
-  sifre: {
-    type: String,
-    // Deprecated - artık TCKN kullanılacak, geriye dönük uyumluluk için bırakıldı
-    // Şifre validasyonu kaldırıldı
-  },
-  rol: {
-    type: String,
-    enum: ['student', 'teacher', 'parent', 'admin', 'hizmetli', 'ziyaretci'],
-    required: true,
-    index: true // For role-based queries
-  },
-  sinif: {
-    type: String,
-    enum: ['9', '10', '11', '12'],
-    index: true // For class-based queries
-  },
-  sube: {
-    type: String,
-    enum: ['A', 'B', 'C', 'D', 'E', 'F'],
-    index: true // For section-based queries
-  },
-  oda: {
-    type: String,
-    index: true // For room-based queries
-  },
-  email: {
-    type: String,
-    unique: true,
-    sparse: true, // Allow multiple null values
-    index: true, // For email-based lookups
-    validate: {
-      validator: function (v: string) {
-        if (!v) return true; // Email optional
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+const UserSchema = new Schema<IUser>(
+  {
+    id: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true, // Primary lookup field
+    },
+    adSoyad: {
+      type: String,
+      required: true,
+      index: true, // For name-based searches
+    },
+    tckn: {
+      type: String,
+      unique: true,
+      sparse: true, // Allow multiple null values
+      index: true,
+      // Validation removed since encrypted values won't be 11 digits
+    },
+    tcknHash: {
+      type: String,
+      sparse: true,
+      index: true, // For searching by TCKN without decrypting
+    },
+    sifre: {
+      type: String,
+      // Deprecated - artık TCKN kullanılacak, geriye dönük uyumluluk için bırakıldı
+      // Şifre validasyonu kaldırıldı
+    },
+    rol: {
+      type: String,
+      enum: ['student', 'teacher', 'parent', 'admin', 'hizmetli', 'ziyaretci'],
+      required: true,
+      index: true, // For role-based queries
+    },
+    sinif: {
+      type: String,
+      enum: ['9', '10', '11', '12'],
+      index: true, // For class-based queries
+    },
+    sube: {
+      type: String,
+      enum: ['A', 'B', 'C', 'D', 'E', 'F'],
+      index: true, // For section-based queries
+    },
+    oda: {
+      type: String,
+      index: true, // For room-based queries
+    },
+    email: {
+      type: String,
+      unique: true,
+      sparse: true, // Allow multiple null values
+      index: true, // For email-based lookups
+      validate: {
+        validator: function (v: string) {
+          if (!v) return true; // Email optional
+          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+        },
+        message: 'Geçerli bir email adresi giriniz',
       },
-      message: 'Geçerli bir email adresi giriniz'
-    }
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+      index: true, // For verification status queries
+    },
+    emailVerificationCode: {
+      type: String,
+    },
+    emailVerificationExpiry: {
+      type: Date,
+    },
+    parentId: {
+      type: String,
+      index: true, // For parent-child relationship queries
+    },
+    pansiyon: {
+      type: Boolean,
+      default: false,
+      index: true, // For dormitory-related queries
+    },
+    childId: [
+      {
+        type: String,
+        index: true, // For parent-child relationship queries
+      },
+    ],
+    tokenVersion: {
+      type: Number,
+      default: 0,
+      index: true, // For token invalidation
+    },
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorCode: String,
+    twoFactorExpiry: Date,
+    twoFactorAttempts: { type: Number, default: 0 },
+    trustedDevices: [{ type: String }],
+    failedLoginAttempts: { type: Number, default: 0 },
+    lockUntil: Date,
+    isLocked: { type: Boolean, default: false },
+    lockReason: { type: String, enum: ['failed_attempts', 'admin_action', 'security_alert'] },
+    lastLogin: {
+      type: Date,
+      index: true, // For user activity tracking
+    },
+    loginCount: {
+      type: Number,
+      default: 0,
+      index: true, // For user engagement metrics
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true, // For active user queries
+    },
+    kvkkConsent: {
+      type: Boolean,
+      default: false,
+    },
+    kvkkConsentDate: {
+      type: Date,
+    },
   },
-  emailVerified: {
-    type: Boolean,
-    default: false,
-    index: true // For verification status queries
+  {
+    timestamps: true,
   },
-  emailVerificationCode: {
-    type: String,
-  },
-  emailVerificationExpiry: {
-    type: Date,
-  },
-  parentId: {
-    type: String,
-    index: true // For parent-child relationship queries
-  },
-  pansiyon: {
-    type: Boolean,
-    default: false,
-    index: true // For dormitory-related queries
-  },
-  childId: [{
-    type: String,
-    index: true // For parent-child relationship queries
-  }],
-  tokenVersion: {
-    type: Number,
-    default: 0,
-    index: true // For token invalidation
-  },
-  twoFactorEnabled: { type: Boolean, default: false },
-  twoFactorCode: String,
-  twoFactorExpiry: Date,
-  twoFactorAttempts: { type: Number, default: 0 },
-  trustedDevices: [{ type: String }],
-  failedLoginAttempts: { type: Number, default: 0 },
-  lockUntil: Date,
-  lastLogin: {
-    type: Date,
-    index: true // For user activity tracking
-  },
-  loginCount: {
-    type: Number,
-    default: 0,
-    index: true // For user engagement metrics
-  },
-  isActive: {
-    type: Boolean,
-    default: true,
-    index: true // For active user queries
-  },
-  kvkkConsent: {
-    type: Boolean,
-    default: false,
-  },
-  kvkkConsentDate: {
-    type: Date,
-  },
-}, {
-  timestamps: true
-});
+);
 
 // Pre-save hook: Encrypt TCKN before saving
 UserSchema.pre('save', function (next) {
@@ -209,16 +218,19 @@ UserSchema.index({ tokenVersion: 1, isActive: 1 }); // Token invalidation querie
 UserSchema.index({ parentId: 1, rol: 1 }); // For parent-child queries
 
 // Text index for full-text search
-UserSchema.index({
-  adSoyad: 'text',
-  email: 'text'
-}, {
-  weights: {
-    adSoyad: 10, // Name has higher weight
-    email: 5
+UserSchema.index(
+  {
+    adSoyad: 'text',
+    email: 'text',
   },
-  name: 'user_text_search'
-});
+  {
+    weights: {
+      adSoyad: 10, // Name has higher weight
+      email: 5,
+    },
+    name: 'user_text_search',
+  },
+);
 
 // Removed partial indexes - they're covered by compound indexes above
 
@@ -274,7 +286,7 @@ UserSchema.statics.findParentsByStudent = function (studentId: string) {
   return this.find({
     childId: studentId,
     rol: 'parent',
-    isActive: true
+    isActive: true,
   });
 };
 
@@ -282,7 +294,7 @@ UserSchema.statics.findStudentsByParent = function (parentId: string) {
   return this.find({
     parentId,
     rol: 'student',
-    isActive: true
+    isActive: true,
   });
 };
 
@@ -290,7 +302,7 @@ UserSchema.statics.findDormitoryStudents = function () {
   return this.find({
     rol: 'student',
     pansiyon: true,
-    isActive: true
+    isActive: true,
   });
 };
 
@@ -305,14 +317,14 @@ UserSchema.statics.getUserStats = function () {
         _id: '$rol',
         count: { $sum: 1 },
         activeCount: {
-          $sum: { $cond: ['$isActive', 1, 0] }
+          $sum: { $cond: ['$isActive', 1, 0] },
         },
-        avgLoginCount: { $avg: '$loginCount' }
-      }
+        avgLoginCount: { $avg: '$loginCount' },
+      },
     },
     {
-      $sort: { count: -1 }
-    }
+      $sort: { count: -1 },
+    },
   ]);
 };
 
@@ -321,25 +333,27 @@ UserSchema.statics.getClassDistribution = function () {
     {
       $match: {
         rol: 'student',
-        sinif: { $exists: true }
-      }
+        sinif: { $exists: true },
+      },
     },
     {
       $group: {
         _id: { sinif: '$sinif', sube: '$sube' },
-        count: { $sum: 1 }
-      }
+        count: { $sum: 1 },
+      },
     },
     {
-      $sort: { '_id.sinif': 1, '_id.sube': 1 }
-    }
+      $sort: { '_id.sinif': 1, '_id.sube': 1 },
+    },
   ]);
 };
 
 // Ensure indexes are created
 UserSchema.on('index', function (error) {
   if (error) {
-    logger.error('User index creation error', { error: error instanceof Error ? error.message : error });
+    logger.error('User index creation error', {
+      error: error instanceof Error ? error.message : error,
+    });
   } else {
     logger.info('User indexes created successfully');
   }
