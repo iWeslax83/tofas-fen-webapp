@@ -9,8 +9,15 @@ import { Dilekce } from '../models/Dilekce';
 import { User } from '../models/User';
 import { AuditLogService } from '../services/auditLogService';
 import { asyncHandler } from '../middleware/errorHandler';
+import { createEndpointLimiter } from '../config/rateLimiters';
 
 const router = Router();
+
+const uploadLimiter = createEndpointLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: 'Çok fazla dosya yükleme isteği. Lütfen daha sonra tekrar deneyin.',
+});
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
@@ -50,13 +57,14 @@ const upload = multer({
 router.post(
   '/',
   authenticateJWT,
+  uploadLimiter as any,
   upload.array('attachments', 5), // Max 5 files
   asyncHandler(async (req: Request, res: Response) => {
     const { type, subject, content, priority, category } = req.body;
 
     if (!type || !subject || !content) {
       res.status(400).json({
-        error: 'Tür, konu ve içerik gereklidir'
+        error: 'Tür, konu ve içerik gereklidir',
       });
       return;
     }
@@ -75,9 +83,9 @@ router.post(
     }
 
     // Get file paths
-    const attachments = (req.files as Express.Multer.File[])?.map(file =>
-      `/uploads/dilekce/${file.filename}`
-    ) || [];
+    const attachments =
+      (req.files as Express.Multer.File[])?.map((file) => `/uploads/dilekce/${file.filename}`) ||
+      [];
 
     const dilekce = new Dilekce({
       userId: user.userId,
@@ -90,7 +98,7 @@ router.post(
       attachments,
       priority: priority || 'medium',
       category,
-      status: 'pending'
+      status: 'pending',
     });
 
     await dilekce.save();
@@ -98,15 +106,15 @@ router.post(
     // Log the creation
     await AuditLogService.log(req, 'create', 'dilekce', {
       resourceId: dilekce._id.toString(),
-      details: { type, subject, priority }
+      details: { type, subject, priority },
     });
 
     res.status(201).json({
       success: true,
       message: 'Dilekçe oluşturuldu',
-      dilekce
+      dilekce,
     });
-  })
+  }),
 );
 
 /**
@@ -116,15 +124,7 @@ router.get(
   '/',
   authenticateJWT,
   asyncHandler(async (req: Request, res: Response) => {
-    const {
-      userId,
-      type,
-      status,
-      priority,
-      page = '1',
-      limit = '50',
-      includeChildren
-    } = req.query;
+    const { userId, type, status, priority, page = '1', limit = '50', includeChildren } = req.query;
 
     const authUser = (req as any).user as {
       userId: string;
@@ -144,13 +144,13 @@ router.get(
       const parentId = authUser.userId;
 
       if (includeChildren === 'true') {
-        const children = await User.find({
+        const children = (await User.find({
           parentId,
           rol: 'student',
-          isActive: true
+          isActive: true,
         })
           .select('id')
-          .lean() as any[];
+          .lean()) as any[];
 
         const childIds = children.map((child) => child.id);
 
@@ -174,12 +174,8 @@ router.get(
     const skip = (pageNum - 1) * limitNum;
 
     const [dilekceler, total] = await Promise.all([
-      Dilekce.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limitNum)
-        .lean(),
-      Dilekce.countDocuments(query)
+      Dilekce.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+      Dilekce.countDocuments(query),
     ]);
 
     res.json({
@@ -189,10 +185,10 @@ router.get(
         page: pageNum,
         limit: limitNum,
         total,
-        pages: Math.ceil(total / limitNum)
-      }
+        pages: Math.ceil(total / limitNum),
+      },
     });
-  })
+  }),
 );
 
 /**
@@ -219,9 +215,9 @@ router.get(
 
     res.json({
       success: true,
-      dilekce
+      dilekce,
     });
-  })
+  }),
 );
 
 /**
@@ -264,15 +260,15 @@ router.put(
     // Log the update
     await AuditLogService.log(req, 'update', 'dilekce', {
       resourceId: id,
-      details: { status, reviewNote }
+      details: { status, reviewNote },
     });
 
     res.json({
       success: true,
       message: 'Dilekçe durumu güncellendi',
-      dilekce
+      dilekce,
     });
-  })
+  }),
 );
 
 /**
@@ -313,15 +309,15 @@ router.put(
     // Log the update
     await AuditLogService.log(req, 'update', 'dilekce', {
       resourceId: id,
-      details: { subject, content }
+      details: { subject, content },
     });
 
     res.json({
       success: true,
       message: 'Dilekçe güncellendi',
-      dilekce
+      dilekce,
     });
-  })
+  }),
 );
 
 /**
@@ -353,14 +349,16 @@ router.delete(
 
     // Delete attached files (async to avoid blocking event loop)
     if (dilekce.attachments && dilekce.attachments.length > 0) {
-      await Promise.all(dilekce.attachments.map(async (filePath: string) => {
-        const fullPath = path.join(__dirname, '../../', filePath);
-        try {
-          await fs.unlink(fullPath);
-        } catch {
-          // File may already be deleted, ignore
-        }
-      }));
+      await Promise.all(
+        dilekce.attachments.map(async (filePath: string) => {
+          const fullPath = path.join(__dirname, '../../', filePath);
+          try {
+            await fs.unlink(fullPath);
+          } catch {
+            // File may already be deleted, ignore
+          }
+        }),
+      );
     }
 
     await Dilekce.findByIdAndDelete(id);
@@ -368,15 +366,14 @@ router.delete(
     // Log the deletion
     await AuditLogService.log(req, 'delete', 'dilekce', {
       resourceId: id,
-      details: { userId: dilekce.userId }
+      details: { userId: dilekce.userId },
     });
 
     res.json({
       success: true,
-      message: 'Dilekçe silindi'
+      message: 'Dilekçe silindi',
     });
-  })
+  }),
 );
 
 export default router;
-

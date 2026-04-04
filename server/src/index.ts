@@ -26,6 +26,7 @@ import { globalErrorHandler } from './middleware/errorHandler';
 import { wafMiddleware, cloudflareHeaders, initWafRedis } from './middleware/waf';
 import { initSecurityAlertRedis } from './services/SecurityAlertService';
 import { redis as cacheRedis, isRedisConfigured } from './middleware/cache';
+import { requestTiming } from './middleware/performance';
 
 // Monitoring and logging imports
 import logger, { morganStream } from './utils/logger';
@@ -80,6 +81,9 @@ app.use(
 
 // Compression middleware
 app.use(compression());
+
+// Request timing middleware (tracks request IDs and slow requests)
+app.use(requestTiming);
 
 // Logs directory
 const logsDir = path.join(__dirname, '../logs');

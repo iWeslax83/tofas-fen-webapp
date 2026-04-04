@@ -1,21 +1,22 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import './styles/theme.css'
-import App from './App.tsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import './styles/theme.css';
+import App from './App.tsx';
 // axios import removed - using SecureAPI instead
 // React imports removed as they're not used
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import toast, { Toaster } from 'react-hot-toast';
 import { initializeMonitoring } from './utils/monitoring';
+import * as Sentry from '@sentry/react';
 
 // Fix for "process is not defined" error
 if (typeof window !== 'undefined' && !(window as any).process) {
   (window as any).process = {
     env: {
-      NODE_ENV: import.meta.env.MODE || 'development'
-    }
+      NODE_ENV: import.meta.env.MODE || 'development',
+    },
   };
 }
 
@@ -47,6 +48,19 @@ const queryClient = new QueryClient({
 
 // Initialize monitoring and analytics
 initializeMonitoring();
+
+// Capture uncaught errors globally
+window.addEventListener('error', (event) => {
+  if (import.meta.env.PROD) {
+    Sentry.captureException(event.error);
+  }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  if (import.meta.env.PROD) {
+    Sentry.captureException(event.reason);
+  }
+});
 
 // Register service worker for PWA and offline support
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
@@ -85,7 +99,7 @@ if (import.meta.env.PROD) {
           non_interaction: true,
         });
       }
-      
+
       // Log to console in development
       if (import.meta.env.DEV) {
         console.log(`[Performance] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`);
@@ -98,7 +112,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />
-      <Toaster 
+      <Toaster
         position="top-right"
         toastOptions={{
           duration: 4000,
@@ -126,4 +140,4 @@ createRoot(document.getElementById('root')!).render(
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   </StrictMode>,
-)
+);
