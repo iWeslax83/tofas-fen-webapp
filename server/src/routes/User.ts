@@ -271,6 +271,13 @@ router.post('/parent-child-link', authenticateJWT, async (req, res) => {
  */
 router.get('/parent/:parentId/children', authenticateJWT, async (req, res) => {
   const { parentId } = req.params;
+  const authUser = (req as any).user;
+
+  const allowedRoles = ['admin', 'teacher'];
+  if (!allowedRoles.includes(authUser.role) && authUser.userId !== parentId) {
+    return res.status(403).json({ error: 'Bu işlem için yetkiniz yok' });
+  }
+
   const parent = await User.findOne({ id: parentId });
   if (!parent) {
     res.status(404).json({ error: 'Parent not found' });
