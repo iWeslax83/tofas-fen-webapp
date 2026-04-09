@@ -1,0 +1,129 @@
+# NetworkPolicies (I-C3)
+#
+# Default posture: deny-all for ingress and egress in the namespace, then
+# explicitly allow the flows this app actually needs. This is the minimum
+# required to prevent lateral movement — any compromised pod would otherwise
+# have unrestricted access to every other pod and port in the cluster.
+#
+# Apply with: kubectl apply -f k8s/network-policy.yaml -n tofas-fen
+
+# --- 1. Default deny for every pod in the namespace --------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: tofas-fen
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+# --- 2. DNS egress (every pod needs kube-dns) --------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: tofas-fen
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+---
+# --- 3. Frontend ingress: allow the ingress controller to reach :8080 --------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-frontend
+  namespace: tofas-fen
+spec:
+  podSelector:
+    matchLabels:
+      app: tofas-frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# --- 4. Backend ingress: only frontend and ingress-nginx can reach :3001 -----
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: tofas-fen
+spec:
+  podSelector:
+    matchLabels:
+      app: tofas-backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: tofas-frontend
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3001
+
+---
+# --- 5. Backend egress: MongoDB, Redis, SMTP, HTTPS --------------------------
+# Adjust CIDR blocks / service names to match your actual data tier.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-egress
+  namespace: tofas-fen
+spec:
+  podSelector:
+    matchLabels:
+      app: tofas-backend
+  policyTypes:
+    - Egress
+  egress:
+    # MongoDB (in-cluster) — adjust the selector if you use a managed service.
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mongodb
+      ports:
+        - protocol: TCP
+          port: 27017
+    # Redis (in-cluster)
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Outbound HTTPS for Sentry, VAPID, SMTP (implicit STARTTLS), MEB API, etc.
+    - ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 587 # SMTP submission
+        - protocol: TCP
+          port: 465 # SMTPS

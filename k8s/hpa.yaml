@@ -11,18 +11,20 @@ spec:
   minReplicas: 3
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          # Dropped from 80% per I-H2 — 80% is too late: by the time the scale-up
+          # triggers, pods are already near OOM.
+          averageUtilization: 60
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -37,15 +39,17 @@ spec:
   minReplicas: 2
   maxReplicas: 5
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          # Dropped from 80% per I-H2 — 80% is too late: by the time the scale-up
+          # triggers, pods are already near OOM.
+          averageUtilization: 60

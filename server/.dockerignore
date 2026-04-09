@@ -1,0 +1,55 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Dependencies (built fresh inside the image)
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist
+build
+.turbo
+
+# Test + coverage
+coverage
+.nyc_output
+*.test.ts
+*.spec.ts
+src/test
+
+# Env files - never ship real secrets into the image
+.env
+.env.*
+!.env.example
+
+# Runtime artifacts that must not be baked into the image
+logs
+uploads
+thumbnails
+backups
+*.log
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+*.swp
+
+# CI / tooling
+.github
+.husky
+.eslintcache
+
+# Docs
+README.md
+CHANGELOG.md
+docs
+
+# Docker
+Dockerfile*
+.dockerignore

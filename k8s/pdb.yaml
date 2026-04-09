@@ -1,0 +1,26 @@
+# PodDisruptionBudgets (I-H18)
+# Prevent voluntary disruptions (node drain, autoscaler consolidation) from
+# taking every replica down at once. minAvailable: 1 means at least one pod
+# must remain available during any voluntary disruption; combined with
+# maxReplicas in the HPA this still allows rolling updates to proceed.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tofas-backend-pdb
+  namespace: tofas-fen
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: tofas-backend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tofas-frontend-pdb
+  namespace: tofas-fen
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: tofas-frontend

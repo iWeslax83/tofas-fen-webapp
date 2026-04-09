@@ -13,55 +13,88 @@ spec:
       labels:
         app: tofas-backend
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: backend
-        image: ghcr.io/your-username/tofas-fen-backend:latest
-        ports:
-        - containerPort: 3001
-        env:
-        - name: NODE_ENV
-          valueFrom:
-            configMapKeyRef:
-              name: tofas-config
-              key: NODE_ENV
-        - name: PORT
-          valueFrom:
-            configMapKeyRef:
-              name: tofas-config
-              key: PORT
-        - name: MONGODB_URI
-          valueFrom:
-            secretKeyRef:
-              name: tofas-secrets
-              key: MONGODB_URI
-        - name: JWT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: tofas-secrets
-              key: JWT_SECRET
-        - name: JWT_REFRESH_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: tofas-secrets
-              key: JWT_REFRESH_SECRET
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 3001
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 3001
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: backend
+          image: ghcr.io/your-username/tofas-fen-backend:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop: [ALL]
+          ports:
+            - containerPort: 3001
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: app-logs
+              mountPath: /app/logs
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: tofas-config
+                  key: NODE_ENV
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: tofas-config
+                  key: PORT
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: tofas-secrets
+                  key: MONGODB_URI
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tofas-secrets
+                  key: JWT_SECRET
+            - name: JWT_REFRESH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tofas-secrets
+                  key: JWT_REFRESH_SECRET
+            # ENCRYPTION_KEY is required in production (B-C5). Never derive from
+            # JWT_SECRET — a JWT_SECRET leak would otherwise compromise TCKNs at rest.
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tofas-secrets
+                  key: ENCRYPTION_KEY
+          resources:
+            # Bumped from 256Mi/250m per I-H1 — Node + Mongoose + Apollo + Sharp
+            # regularly OOMs inside the old envelope.
+            requests:
+              memory: '512Mi'
+              cpu: '500m'
+            limits:
+              memory: '1Gi'
+              cpu: '1000m'
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: app-logs
+          emptyDir: {}
       imagePullSecrets:
-      - name: ghcr-secret
+        - name: ghcr-secret

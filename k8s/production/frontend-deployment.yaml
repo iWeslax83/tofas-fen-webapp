@@ -17,41 +17,69 @@ spec:
         app: frontend
         version: v1
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: frontend
-        image: ghcr.io/your-org/tofas-fen-webapp-client:latest
-        ports:
-        - containerPort: 80
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 80
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: API_URL
-          value: "https://api.tofasfen.com"
+        - name: frontend
+          image: ghcr.io/your-org/tofas-fen-webapp-client:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 101
+            capabilities:
+              drop: [ALL]
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: '128Mi'
+              cpu: '100m'
+            limits:
+              memory: '256Mi'
+              cpu: '200m'
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          env:
+            - name: NODE_ENV
+              value: 'production'
+            - name: API_URL
+              value: 'https://api.tofasfen.com'
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
       imagePullSecrets:
-      - name: ghcr-secret
+        - name: ghcr-secret
 ---
 apiVersion: v1
 kind: Service
@@ -62,7 +90,7 @@ spec:
   selector:
     app: frontend
   ports:
-  - port: 80
-    targetPort: 80
-    protocol: TCP
+    - port: 80
+      targetPort: 8080 # nginx container runs unprivileged on 8080
+      protocol: TCP
   type: ClusterIP

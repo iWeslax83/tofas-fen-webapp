@@ -7,9 +7,9 @@ spec:
   selector:
     app: tofas-backend
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 3001
+    - protocol: TCP
+      port: 80
+      targetPort: 3001
   type: ClusterIP
 ---
 apiVersion: v1
@@ -21,7 +21,7 @@ spec:
   selector:
     app: tofas-frontend
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
+    - protocol: TCP
+      port: 80
+      targetPort: 8080 # nginx container now runs unprivileged on 8080
   type: ClusterIP
