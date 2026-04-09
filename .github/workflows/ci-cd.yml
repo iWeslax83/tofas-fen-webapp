@@ -202,7 +202,7 @@ jobs:
           cd ../server && npm audit --omit=dev --audit-level=high
 
       - name: Run dependency review
-        uses: actions/dependency-review-action@v3
+        uses: actions/dependency-review-action@v4
         if: github.event_name == 'pull_request'
 
       # I-H8: Snyk was previously `continue-on-error: true`, turning the whole
