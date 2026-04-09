@@ -42,7 +42,11 @@ spec:
           port: 53
 
 ---
-# --- 3. Frontend ingress: allow the ingress controller to reach :8080 --------
+# --- 3. Frontend ingress: ingress controller + cert-manager ACME HTTP-01 -----
+#
+# cert-manager's HTTP-01 solver pods live in the `cert-manager` namespace and
+# need to reach the frontend on :8080 (well, the ACME challenge path it serves
+# behind the ingress). Without this allow, TLS cert issuance silently fails.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -59,12 +63,19 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: ingress-nginx
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cert-manager
       ports:
         - protocol: TCP
           port: 8080
 
 ---
-# --- 4. Backend ingress: only frontend and ingress-nginx can reach :3001 -----
+# --- 4. Backend ingress: frontend + ingress-nginx + Prometheus scraper -------
+#
+# Prometheus lives in the `monitoring` namespace and scrapes :3001/metrics.
+# Blocking it would mean the alerts defined in monitoring/alerts.yml fire
+# blind because the metrics silently vanish.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -84,6 +95,9 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: ingress-nginx
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
       ports:
         - protocol: TCP
           port: 3001

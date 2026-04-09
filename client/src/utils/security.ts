@@ -66,7 +66,14 @@ export class InputSanitizer {
 
   static sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
     const sanitized: Record<string, unknown> = {};
-    const sensitiveKeys = ['sifre', 'password', 'passwordConfirm', 'newPassword', 'currentPassword', 'oldPassword'];
+    const sensitiveKeys = [
+      'sifre',
+      'password',
+      'passwordConfirm',
+      'newPassword',
+      'currentPassword',
+      'oldPassword',
+    ];
 
     for (const [key, value] of Object.entries(obj)) {
       if (sensitiveKeys.includes(key)) {
@@ -76,14 +83,14 @@ export class InputSanitizer {
         // Remove HTML tags completely and trim whitespace
         sanitized[key] = DOMPurify.sanitize(value, { ALLOWED_TAGS: [] }).trim();
       } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      sanitized[key] = this.sanitizeObject(value as Record<string, unknown>);
+        sanitized[key] = this.sanitizeObject(value as Record<string, unknown>);
       } else if (Array.isArray(value)) {
-        sanitized[key] = value.map(item =>
+        sanitized[key] = value.map((item) =>
           typeof item === 'string'
             ? DOMPurify.sanitize(item, { ALLOWED_TAGS: [] }).trim()
             : typeof item === 'object' && item !== null
               ? this.sanitizeObject(item)
-              : item
+              : item,
         );
       } else {
         sanitized[key] = value as unknown;
@@ -120,7 +127,7 @@ export class PasswordPolicy {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -151,7 +158,7 @@ export class XSSProtection {
   static sanitizeHtml(html: string): string {
     return DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br'],
-      ALLOWED_ATTR: ['href', 'target']
+      ALLOWED_ATTR: ['href', 'target'],
     });
   }
 
@@ -166,27 +173,44 @@ export class XSSProtection {
 }
 
 // CSRF Protection
+//
+// B-H2: the backend now issues a non-httpOnly `csrfToken` cookie on every
+// login/refresh/verify-2fa response. We read it from `document.cookie` and
+// echo it in the `X-CSRF-Token` header for every state-changing request.
+// The server middleware then compares header === cookie (double-submit).
+//
+// This used to read from sessionStorage, which meant the token was never
+// populated (nothing wrote to it on login) and the double-submit branch on
+// the server was effectively a no-op.
 export class CSRFProtection {
-  private static readonly CSRF_TOKEN_KEY = 'csrf_token';
+  private static readonly CSRF_COOKIE_NAME = 'csrfToken';
 
-  static setToken(token: string) {
-    sessionStorage.setItem(this.CSRF_TOKEN_KEY, token);
-  }
-
+  /** Read the csrfToken cookie set by the server at login/refresh time. */
   static getToken(): string | null {
-    return sessionStorage.getItem(this.CSRF_TOKEN_KEY);
+    if (typeof document === 'undefined') return null;
+    const match = document.cookie
+      .split(';')
+      .map((c) => c.trim())
+      .find((c) => c.startsWith(`${this.CSRF_COOKIE_NAME}=`));
+    return match ? decodeURIComponent(match.slice(this.CSRF_COOKIE_NAME.length + 1)) : null;
   }
 
+  /**
+   * @deprecated The server is the source of truth for the CSRF token now.
+   * Kept for backward compatibility with any caller still importing it.
+   */
+  static setToken(_token: string) {
+    /* no-op: server issues via Set-Cookie */
+  }
+
+  /** Clear the local copy of the token (server clears the cookie on logout). */
   static clearToken() {
-    sessionStorage.removeItem(this.CSRF_TOKEN_KEY);
+    /* no-op: server clears the cookie via Set-Cookie on logout */
   }
 
+  /** @deprecated Server issues tokens now. */
   static generateToken(): string {
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    const token = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
-    this.setToken(token);
-    return token;
+    return this.getToken() ?? '';
   }
 
   static validateToken(token: string): boolean {
@@ -199,7 +223,11 @@ export class CSRFProtection {
 export class RateLimiter {
   private static attempts: Map<string, { count: number; resetTime: number }> = new Map();
 
-  static checkLimit(key: string, maxAttempts: number, windowMs: number): { allowed: boolean; remaining: number } {
+  static checkLimit(
+    key: string,
+    maxAttempts: number,
+    windowMs: number,
+  ): { allowed: boolean; remaining: number } {
     const now = Date.now();
     const attempt = this.attempts.get(key);
 
