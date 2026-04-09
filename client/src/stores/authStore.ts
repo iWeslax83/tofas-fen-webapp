@@ -18,6 +18,12 @@ interface AuthState {
   isLoading: boolean;
   error: AppError | string | null;
   isAuthenticated: boolean;
+  // F-C1: true once the initial checkAuth() has resolved. Route guards must
+  // wait on this before making any redirect decision — otherwise the very
+  // first render sees `user: null` and `isLoading: false` at the same time,
+  // producing a flash of the login screen (or worse, flash of admin chrome
+  // for a user who actually IS admin).
+  initialized: boolean;
   requires2FA: boolean;
   twoFactorSessionToken: string | null; // Deprecated: now in httpOnly cookie
   twoFactorUser: { id: string; adSoyad: string } | null;
@@ -61,6 +67,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
   isLoading: false,
   error: null,
   isAuthenticated: false,
+  initialized: false,
   requires2FA: false,
   twoFactorSessionToken: null,
   twoFactorUser: null,
@@ -267,6 +274,11 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       }
     } catch (error) {
       set({ isLoading: false, isAuthenticated: false, user: null, error: 'Auth check failed' });
+    } finally {
+      // F-C1: flip `initialized` so route guards know they can safely make
+      // redirect decisions. This runs in every code path (success, 401,
+      // network error) so no route ever sees the pre-bootstrap null state.
+      set({ initialized: true });
     }
   },
 
@@ -429,9 +441,12 @@ export const useAuth = () => {
   const isLoading = useIsLoading();
   const error = useError();
   const isAuthenticated = useIsAuthenticated();
+  const initialized = useAuthStore((state) => state.initialized);
 
-  return { user, isLoading, error, isAuthenticated };
+  return { user, isLoading, error, isAuthenticated, initialized };
 };
+
+export const useInitialized = () => useAuthStore((state) => state.initialized);
 
 export const useAuthActions = () => {
   const login = useLogin();

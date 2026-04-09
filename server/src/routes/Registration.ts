@@ -4,7 +4,6 @@ import { User } from '../models/User';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import { NotificationService } from '../services/NotificationService';
 import { sendMail } from '../mailService';
-import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import logger from '../utils/logger';
@@ -202,36 +201,61 @@ router.put(
       registration.reviewedAt = new Date();
       if (rejectionReason) registration.rejectionReason = rejectionReason;
 
-      // If approved, create a ziyaretci user account
+      // If approved, create a ziyaretci user account.
+      //
+      // B-H4: previously we generated a plaintext temp password and emailed
+      // it to the applicant. That's bad because (a) email isn't encrypted
+      // at rest, (b) the password showed up in inbox search and backups, and
+      // (c) Nodemailer logs could capture it on failure.
+      //
+      // Now we leave sifre unset, generate a one-time reset token, store
+      // only its SHA-256 hash with a 1-hour expiry, and email a single-use
+      // reset URL. The applicant sets their own password via the reset flow.
       if (status === 'approved' && !registration.createdUserId) {
         const userId = `ZYR-${Date.now()}`;
-        const tempPassword = crypto.randomBytes(6).toString('base64url') + 'A1!';
-        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        // 32-byte random token; base64url-encoded for URL safety.
+        const resetToken = crypto.randomBytes(32).toString('base64url');
+        const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+        const resetExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
         const newUser = new User({
           id: userId,
           adSoyad: registration.applicantName,
-          sifre: hashedPassword,
+          // sifre intentionally unset — user sets it via the reset link.
           rol: 'ziyaretci',
           email: registration.applicantEmail,
           isActive: true,
+          passwordResetTokenHash: resetTokenHash,
+          passwordResetExpiry: resetExpiry,
         });
 
         await newUser.save();
         registration.createdUserId = userId;
 
-        // Send credentials via email
+        // Build the reset URL. FRONTEND_URL must be set in production.
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const resetUrl =
+          `${frontendUrl}/reset-password?token=${encodeURIComponent(resetToken)}` +
+          `&id=${encodeURIComponent(userId)}`;
+
+        // Note: the URL itself is only ever in the recipient's inbox.
+        // The raw token is NOT logged, audit-recorded, or stored anywhere
+        // on the server side beyond the hash.
         const emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 12px;">
-          <h2 style="color: #1e293b; text-align: center;">Tofas Fen Lisesi - Hesap Bilgileri</h2>
+          <h2 style="color: #1e293b; text-align: center;">Tofas Fen Lisesi - Hesap Oluşturuldu</h2>
           <div style="background: #ffffff; border-radius: 8px; padding: 24px;">
-            <p>Sayin ${registration.applicantName},</p>
-            <p>Kayıt başvurunuz onaylandı. Sisteme giris bilgileriniz:</p>
-            <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 16px 0;">
-              <p><strong>Kullanici ID:</strong> ${userId}</p>
-              <p><strong>Sifre:</strong> ${tempPassword}</p>
+            <p>Sayın ${registration.applicantName},</p>
+            <p>Kayıt başvurunuz onaylandı. Hesabınızı aktifleştirmek için aşağıdaki bağlantıya tıklayarak şifrenizi belirleyin:</p>
+            <div style="text-align: center; margin: 24px 0;">
+              <a href="${resetUrl}"
+                 style="display: inline-block; background: #0f766e; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600;">
+                Şifremi Belirle
+              </a>
             </div>
-            <p style="color: #64748b; font-size: 13px;">Sisteme giris yaparak soru sorabilir ve randevu alabilirsiniz.</p>
+            <p style="color: #64748b; font-size: 13px;">Kullanıcı ID'niz: <strong>${userId}</strong></p>
+            <p style="color: #64748b; font-size: 13px;">Bu bağlantı 1 saat içinde geçerliliğini yitirecektir. Eğer siz talep etmediyseniz bu e-postayı yok sayabilirsiniz.</p>
           </div>
         </div>
       `;
@@ -239,12 +263,14 @@ router.put(
         try {
           await sendMail(
             registration.applicantEmail,
-            'Hesap Bilgileri - Tofas Fen Lisesi',
+            'Hesabınızı Aktifleştirin - Tofas Fen Lisesi',
             emailHtml,
           );
         } catch (emailErr) {
-          logger.error('Failed to send credentials email', {
+          logger.error('Failed to send account activation email', {
+            // Never log the token or reset URL.
             error: emailErr instanceof Error ? emailErr.message : emailErr,
+            userId,
           });
         }
       }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../stores/authStore';
+import { useAuthStore } from '../stores/authStore';
 
 interface ProtectedRouteProps {
   children: React.ReactElement;
@@ -8,13 +8,25 @@ interface ProtectedRouteProps {
 }
 
 /**
- * Client-side route guard: Kullanıcının rolünü kontrol eder.
- * İzin verilen roller arasında değilse, kullanıcıyı kendi dashboard'una veya login'e yönlendirir.
+ * Client-side route guard. Checks the user's role against `allowedRoles`
+ * and redirects unauthorized users to their own dashboard or /login.
+ *
+ * F-C1: we MUST wait for `initialized` (set in authStore.checkAuth's finally
+ * block) before making any redirect decision. Without this, the first render
+ * after a hard reload sees `user: null` and `isLoading: false` at the same
+ * time, so the guard redirects to /login for a split second even when the
+ * user's session cookie is perfectly valid — that's the "flash of login"
+ * the report flagged as a CRITICAL UX and security issue.
+ *
+ * NOTE: client-side guarding is UX only. The API layer MUST enforce the
+ * same role checks; see B-C2 in the code review report.
  */
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
-  const { user, isLoading } = useAuth();
+  const user = useAuthStore((s) => s.user);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const initialized = useAuthStore((s) => s.initialized);
 
-  if (isLoading) {
+  if (!initialized || isLoading) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
@@ -30,7 +42,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   const userRole = user.rol || '';
 
   if (!allowedRoles.includes(userRole)) {
-    // Yetkisiz kullanıcıyı kendi dashboard'una yönlendir
+    // Redirect unauthorized user to their own dashboard
     return <Navigate to={`/${userRole}`} replace />;
   }
 

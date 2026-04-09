@@ -87,9 +87,12 @@ const isDev = import.meta.env.DEV;
 
 // Root redirect component
 function RootRedirect() {
-  const { user, isLoading } = useAuth();
+  // F-C1: wait on `initialized` before deciding where to send the user.
+  // Otherwise the first render sees no user and flashes to /login for one
+  // frame even when the session cookie is valid.
+  const { user, isLoading, initialized } = useAuth();
 
-  if (isLoading) {
+  if (!initialized || isLoading) {
     return <LoadingSpinner />;
   }
 

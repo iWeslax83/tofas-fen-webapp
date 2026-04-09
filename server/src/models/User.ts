@@ -20,6 +20,11 @@ export interface IUser extends Document {
   pansiyon: boolean;
   childId: string[];
   tokenVersion: number;
+  // B-H4: password reset via emailed one-time token. The token itself is
+  // never stored in plaintext — only its SHA-256 hash is persisted, so a
+  // database dump can't be used to mint new reset URLs.
+  passwordResetTokenHash?: string;
+  passwordResetExpiry?: Date;
   twoFactorEnabled: boolean;
   twoFactorCode?: string;
   twoFactorExpiry?: Date;
@@ -135,6 +140,11 @@ const UserSchema = new Schema<IUser>(
       default: 0,
       index: true, // For token invalidation
     },
+    // B-H4: password reset one-time token. We store only a SHA-256 hash so a
+    // DB dump does not grant password-reset capability. expiry is short
+    // (~1h) and the token is single-use (cleared on successful reset).
+    passwordResetTokenHash: { type: String, index: true, sparse: true },
+    passwordResetExpiry: { type: Date, index: true, sparse: true },
     twoFactorEnabled: { type: Boolean, default: false },
     twoFactorCode: String,
     twoFactorExpiry: Date,
