@@ -11,8 +11,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High error rate detected"
-          description: "Error rate is {{ $value }} errors/sec for the last 5 minutes"
+          summary: 'High error rate detected'
+          description: 'Error rate is {{ $value }} errors/sec for the last 5 minutes'
 
       # High response time
       - alert: HighResponseTime
@@ -21,8 +21,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High response time detected"
-          description: "95th percentile response time is {{ $value }}s"
+          summary: 'High response time detected'
+          description: '95th percentile response time is {{ $value }}s'
 
       # High memory usage
       - alert: HighMemoryUsage
@@ -31,18 +31,22 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "High memory usage"
-          description: "Memory usage is above 90%"
+          summary: 'High memory usage'
+          description: 'Memory usage is above 90%'
 
-      # Database connection issues
+      # Database connection issues — uses the `status` label on
+      # db_queries_total. A dedicated db_query_errors_total counter was never
+      # created in server/src/utils/metrics.ts (I-M8/M9 mismatch), so the
+      # original alert was silently evaluating against an empty series and
+      # could never fire.
       - alert: DatabaseConnectionIssues
-        expr: rate(db_query_errors_total[5m]) > 0.05
+        expr: rate(db_queries_total{status="error"}[5m]) > 0.05
         for: 5m
         labels:
           severity: critical
         annotations:
-          summary: "Database connection issues"
-          description: "High rate of database query errors"
+          summary: 'Database connection issues'
+          description: 'High rate of database query errors'
 
       # WebSocket connection issues
       - alert: WebSocketConnectionIssues
@@ -51,8 +55,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "No active WebSocket connections"
-          description: "No active WebSocket connections for 10 minutes"
+          summary: 'No active WebSocket connections'
+          description: 'No active WebSocket connections for 10 minutes'
 
       # Low cache hit rate
       - alert: LowCacheHitRate
@@ -61,8 +65,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Low cache hit rate"
-          description: "Cache hit rate is below 50%"
+          summary: 'Low cache hit rate'
+          description: 'Cache hit rate is below 50%'
 
   - name: business_alerts
     interval: 1m
@@ -74,6 +78,5 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High number of failed authentication attempts"
-          description: "Rate of failed auth attempts is {{ $value }}/sec"
-
+          summary: 'High number of failed authentication attempts'
+          description: 'Rate of failed auth attempts is {{ $value }}/sec'
