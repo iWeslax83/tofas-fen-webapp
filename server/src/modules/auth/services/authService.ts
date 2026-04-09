@@ -17,6 +17,27 @@ const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 /**
+ * bcrypt cost factor. Production uses 13 (roughly 2x the CPU cost of 12).
+ * Tests/dev use 10 so that test suites don't spend seconds per hash.
+ * See B-H3 in CODE_REVIEW_REPORT.md.
+ */
+const BCRYPT_COST =
+  process.env.NODE_ENV === 'production' ? 13 : process.env.NODE_ENV === 'test' ? 4 : 10;
+
+/**
+ * B-M3 / B-M8: pre-compute a real bcrypt hash at module load so the
+ * "user not found" branch exercises the same bcrypt.compare code path as a
+ * legitimate check. The previous "$2a$12$placeholder..." string was not a
+ * valid bcrypt hash and bcrypt.compare short-circuited instantly, leaking
+ * user-existence via timing. Using a real hash at the same cost factor closes
+ * the side channel.
+ */
+const DUMMY_BCRYPT_HASH = bcrypt.hashSync(
+  'this-is-not-a-real-password-it-is-only-used-for-timing-safety',
+  BCRYPT_COST,
+);
+
+/**
  * Authentication Service
  * Business logic for authentication operations
  */
@@ -39,12 +60,10 @@ export class AuthService {
     // Find user by ID
     const user = await User.findOne({ id, isActive: true });
     if (!user) {
-      // Timing-safe: Kullanıcı bulunamasa bile bcrypt karşılaştırması yap
-      // Bu sayede kullanıcı var/yok ayrımı zamanlama ile tespit edilemez
-      await bcrypt.compare(
-        password,
-        '$2a$12$placeholder.hash.to.prevent.timing.attacks.xxxxxxxxxxxx',
-      );
+      // Timing-safe: compare against a REAL bcrypt hash pre-computed at module
+      // load. The previous placeholder string was not a valid bcrypt hash, so
+      // bcrypt.compare short-circuited immediately and leaked user-existence.
+      await bcrypt.compare(password, DUMMY_BCRYPT_HASH);
       throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
     }
 
@@ -81,7 +100,7 @@ export class AuthService {
         authenticated = true;
         // Migrate plaintext TCKN to bcrypt hash if user has no custom password
         if (!user.sifre) {
-          user.sifre = await bcrypt.hash(password, 12);
+          user.sifre = await bcrypt.hash(password, BCRYPT_COST);
           logSecurityEvent({ event: SecurityEvent.TCKN_MIGRATED, userId: user.id, ip: meta?.ip });
         }
       }
@@ -290,15 +309,16 @@ export class AuthService {
     // #3: Hash the input code for timing-safe comparison
     const inputCodeHash = crypto.createHash('sha256').update(code).digest('hex');
 
-    // #6: Use atomic findOneAndUpdate to prevent race conditions / replay attacks
-    // Only match if twoFactorCode exists and matches
+    // #6: Use atomic findOneAndUpdate to prevent race conditions / replay attacks.
+    // Only match if twoFactorCode exists, matches, and attempts are under the limit.
+    const MAX_2FA_ATTEMPTS = 5;
     const user = await User.findOneAndUpdate(
       {
         id: payload.userId,
         isActive: true,
         twoFactorCode: inputCodeHash,
         twoFactorExpiry: { $gt: new Date() },
-        twoFactorAttempts: { $lt: 5 },
+        twoFactorAttempts: { $lt: MAX_2FA_ATTEMPTS },
       },
       {
         $unset: { twoFactorCode: 1, twoFactorExpiry: 1 },
@@ -309,44 +329,59 @@ export class AuthService {
     );
 
     if (!user) {
-      // Determine the specific failure reason
-      const checkUser = await User.findOne({ id: payload.userId, isActive: true });
-      if (!checkUser) {
+      // B-C3 fix: the previous implementation followed the failing match with a
+      // separate non-atomic findOne/save that incremented attempts. Between
+      // those two calls, a parallel request could still slip a valid code
+      // through because the attempt counter wasn't monotonic under concurrency.
+      //
+      // Instead, atomically increment attempts in a single operation and act on
+      // the post-update state. $inc is document-level atomic in MongoDB, so
+      // concurrent failures can never share the same attempt number.
+      const updated = await User.findOneAndUpdate(
+        { id: payload.userId, isActive: true },
+        { $inc: { twoFactorAttempts: 1 } },
+        { new: true },
+      );
+
+      if (!updated) {
         throw AppError.notFound('Kullanıcı bulunamadı');
       }
-      if (checkUser.twoFactorAttempts >= 5) {
-        checkUser.twoFactorCode = undefined as any;
-        checkUser.twoFactorExpiry = undefined as any;
-        await checkUser.save();
+
+      if (updated.twoFactorAttempts >= MAX_2FA_ATTEMPTS) {
+        // Atomically clear the code so no further attempts can succeed, even
+        // if the caller retries with a fresh session token for the same user.
+        await User.updateOne(
+          { id: updated.id },
+          { $unset: { twoFactorCode: 1, twoFactorExpiry: 1 } },
+        );
         logSecurityEvent({
           event: SecurityEvent.TWO_FACTOR_FAILED,
-          userId: checkUser.id,
+          userId: updated.id,
           ip: meta?.ip,
-          details: { reason: 'max_attempts' },
+          details: { reason: 'max_attempts', attempts: updated.twoFactorAttempts },
         });
         throw AppError.unauthorized('Çok fazla başarısız deneme. Lütfen tekrar giriş yapın.');
       }
+
       if (
-        !checkUser.twoFactorCode ||
-        !checkUser.twoFactorExpiry ||
-        checkUser.twoFactorExpiry < new Date()
+        !updated.twoFactorCode ||
+        !updated.twoFactorExpiry ||
+        updated.twoFactorExpiry < new Date()
       ) {
         logSecurityEvent({
           event: SecurityEvent.TWO_FACTOR_FAILED,
-          userId: checkUser.id,
+          userId: updated.id,
           ip: meta?.ip,
           details: { reason: 'expired' },
         });
         throw AppError.validation('Doğrulama kodunun süresi dolmuş. Lütfen tekrar giriş yapın.');
       }
-      // Code didn't match — increment attempts
-      checkUser.twoFactorAttempts = (checkUser.twoFactorAttempts || 0) + 1;
-      await checkUser.save();
+
       logSecurityEvent({
         event: SecurityEvent.TWO_FACTOR_FAILED,
-        userId: checkUser.id,
+        userId: updated.id,
         ip: meta?.ip,
-        details: { reason: 'wrong_code', attempts: checkUser.twoFactorAttempts },
+        details: { reason: 'wrong_code', attempts: updated.twoFactorAttempts },
       });
       throw AppError.validation('Geçersiz doğrulama kodu');
     }
@@ -795,7 +830,7 @@ export class AuthService {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(userData.sifre, 12);
+    const hashedPassword = await bcrypt.hash(userData.sifre, BCRYPT_COST);
 
     // Create new user
     const newUser = new User({

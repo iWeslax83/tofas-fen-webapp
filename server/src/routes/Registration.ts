@@ -8,6 +8,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import logger from '../utils/logger';
+import { logSecurityEvent, SecurityEvent } from '../utils/securityLogger';
 
 const router = Router();
 
@@ -93,6 +94,17 @@ router.post('/', registrationLimiter, async (req: Request, res: Response) => {
         emailSubject: 'Yeni Kayıt Başvurusu - Tofaş Fen Lisesi',
       });
     }
+
+    logSecurityEvent({
+      event: SecurityEvent.REGISTRATION_SUBMITTED,
+      ip: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+      details: {
+        registrationId: String(registration._id),
+        applicantEmail,
+        targetClass,
+      },
+    });
 
     res.status(201).json({ success: true, message: 'Başvurunuz başarıyla alındı.' });
   } catch (error) {
@@ -238,6 +250,29 @@ router.put(
       }
 
       await registration.save();
+
+      // B-M1: admin approval/rejection decisions must be audit-logged.
+      const eventMap: Record<string, SecurityEvent | undefined> = {
+        approved: SecurityEvent.REGISTRATION_APPROVED,
+        rejected: SecurityEvent.REGISTRATION_REJECTED,
+        interview: SecurityEvent.REGISTRATION_INTERVIEW,
+      };
+      const auditEvent = eventMap[status];
+      if (auditEvent) {
+        logSecurityEvent({
+          event: auditEvent,
+          userId: authUser.userId,
+          ip: req.ip,
+          userAgent: req.get('user-agent') || undefined,
+          details: {
+            registrationId: String(registration._id),
+            applicantEmail: registration.applicantEmail,
+            createdUserId: registration.createdUserId,
+            rejectionReason: rejectionReason || undefined,
+          },
+        });
+      }
+
       res.json({ success: true, registration });
     } catch (error) {
       logger.error('Registration status update error', {

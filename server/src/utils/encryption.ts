@@ -6,9 +6,14 @@ const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
 const SALT_LENGTH = 32;
 
+let warnedAboutJwtFallback = false;
+
 /**
  * Get or generate the encryption key from environment.
- * Uses ENCRYPTION_KEY env var (hex-encoded 32 bytes) or derives from JWT_SECRET.
+ * Production REQUIRES a dedicated ENCRYPTION_KEY (hex-encoded 32 bytes).
+ * Non-production environments may fall back to deriving from JWT_SECRET to
+ * ease local development, but this is never allowed in production because a
+ * JWT_SECRET leak would otherwise compromise every encrypted TCKN at rest.
  */
 function getEncryptionKey(): Buffer {
   if (process.env.ENCRYPTION_KEY) {
@@ -19,10 +24,26 @@ function getEncryptionKey(): Buffer {
     return key;
   }
 
-  // Derive from JWT_SECRET as fallback
+  // Fail-closed in production: never derive from JWT_SECRET.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'ENCRYPTION_KEY is required in production. Generate one with: ' +
+        'node -e "console.log(crypto.randomBytes(32).toString(\'hex\'))"',
+    );
+  }
+
+  // Derive from JWT_SECRET as a dev-only fallback
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('ENCRYPTION_KEY or JWT_SECRET required for encryption');
+  }
+
+  if (!warnedAboutJwtFallback) {
+    warnedAboutJwtFallback = true;
+    logger.warn(
+      'ENCRYPTION_KEY not set; deriving from JWT_SECRET (dev-only). ' +
+        'This MUST NOT be used in production.',
+    );
   }
 
   return crypto.pbkdf2Sync(secret, 'tofas-fen-tckn-salt', 100000, 32, 'sha256');
@@ -46,7 +67,9 @@ export function encrypt(plaintext: string): string {
 
     return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
   } catch (error) {
-    logger.error('Encryption failed', { error: error instanceof Error ? error.message : String(error) });
+    logger.error('Encryption failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw new Error('Encryption failed');
   }
 }
@@ -62,12 +85,16 @@ export function decrypt(encryptedData: string): string {
     return encryptedData;
   }
 
-  try {
-    const parts = encryptedData.split(':');
-    if (parts.length !== 3) {
-      return encryptedData; // Not encrypted data
-    }
+  const parts = encryptedData.split(':');
+  if (parts.length !== 3) {
+    return encryptedData; // Not encrypted data (legacy plain value)
+  }
 
+  // Beyond this point the data LOOKS encrypted (iv:authTag:ciphertext). If we
+  // cannot decrypt it, we MUST NOT return the raw ciphertext - downstream code
+  // would treat it as plaintext and leak an opaque-but-stable ID into UIs,
+  // exports, and audit logs. Fail closed instead.
+  try {
     const key = getEncryptionKey();
     const iv = Buffer.from(parts[0], 'hex');
     const authTag = Buffer.from(parts[1], 'hex');
@@ -81,11 +108,11 @@ export function decrypt(encryptedData: string): string {
 
     return decrypted;
   } catch (error) {
-    // If decryption fails, the data might be unencrypted (legacy)
-    logger.warn('Decryption failed, returning raw value', {
+    logger.error('Decryption failed (fail-closed)', {
       error: error instanceof Error ? error.message : String(error),
+      // Never log the ciphertext itself
     });
-    return encryptedData;
+    return '';
   }
 }
 
@@ -97,7 +124,7 @@ export function isEncrypted(value: string): boolean {
   const parts = value.split(':');
   if (parts.length !== 3) return false;
   // Check if all parts are valid hex
-  return parts.every(p => /^[0-9a-f]+$/i.test(p));
+  return parts.every((p) => /^[0-9a-f]+$/i.test(p));
 }
 
 /**
@@ -118,8 +145,5 @@ export function maskTckn(tckn: string): string {
  */
 export function hashTckn(tckn: string): string {
   if (!tckn) return '';
-  return crypto
-    .createHmac('sha256', getEncryptionKey())
-    .update(tckn)
-    .digest('hex');
+  return crypto.createHmac('sha256', getEncryptionKey()).update(tckn).digest('hex');
 }

@@ -157,8 +157,14 @@ export const cache = (duration: number = 300) => {
         return next();
       }
 
-      // Create cache key with query parameters
-      const cacheKey = `cache:${req.originalUrl}:${JSON.stringify(req.query)}`;
+      // B-M7: segment cache key by user identity and role. Without this, a
+      // response shaped per-user (like /api/notes filtered by studentId) can
+      // be served to another user who happens to hit the same URL. Including
+      // userId+role partitions the cache so one user can never read another's
+      // personalised response.
+      const userId = req.user?.userId ?? 'anon';
+      const role = req.user?.role ?? 'anon';
+      const cacheKey = `cache:${userId}:${role}:${req.originalUrl}:${JSON.stringify(req.query)}`;
 
       // Try to get from cache
       const cachedData = await redis.get(cacheKey);

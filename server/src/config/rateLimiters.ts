@@ -91,6 +91,23 @@ export const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// B-H6: dedicated limiter for the GraphQL endpoint. Depth/complexity limits
+// handle a single expensive query, but without a rate limit a client can still
+// hammer the resolver with many cheap queries. 60/min/IP is generous for a
+// legitimate dashboard while cutting runaway bots.
+const GRAPHQL_RATE_LIMIT_WINDOW_MS = Number(process.env.GRAPHQL_RATE_LIMIT_WINDOW_MS || 60 * 1000);
+const GRAPHQL_RATE_LIMIT_MAX = Number(process.env.GRAPHQL_RATE_LIMIT_MAX || 60);
+
+export const graphqlLimiter = rateLimit({
+  windowMs: GRAPHQL_RATE_LIMIT_WINDOW_MS,
+  max: GRAPHQL_RATE_LIMIT_MAX,
+  message: {
+    error: 'GraphQL isteği limiti aşıldı. Lütfen daha sonra tekrar deneyin.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 const UPLOAD_RATE_LIMIT_WINDOW_MS = Number(
   process.env.UPLOAD_RATE_LIMIT_WINDOW_MS || 60 * 60 * 1000,
 );
