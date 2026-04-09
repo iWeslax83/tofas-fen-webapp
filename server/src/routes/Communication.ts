@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs';
 
 import { createEndpointLimiter } from '../config/rateLimiters';
+import { verifyUploadedFiles } from '../config/upload';
 
 const router = express.Router();
 
@@ -734,6 +735,7 @@ router.post(
   requireAuth,
   commUploadLimiter as any,
   upload.array('attachments', 10),
+  verifyUploadedFiles,
   async (req: any, res: any) => {
     try {
       if (!req.files || req.files.length === 0) {

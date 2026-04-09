@@ -10,6 +10,7 @@ import { User } from '../models/User';
 import { AuditLogService } from '../services/auditLogService';
 import { asyncHandler } from '../middleware/errorHandler';
 import { createEndpointLimiter } from '../config/rateLimiters';
+import { verifyUploadedFiles } from '../config/upload';
 
 const router = Router();
 
@@ -59,6 +60,7 @@ router.post(
   authenticateJWT,
   uploadLimiter as any,
   upload.array('attachments', 5), // Max 5 files
+  verifyUploadedFiles,
   asyncHandler(async (req: Request, res: Response) => {
     const { type, subject, content, priority, category } = req.body;
 

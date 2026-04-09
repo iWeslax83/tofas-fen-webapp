@@ -29,67 +29,78 @@ export function initWafRedis(redis: any): void {
 
 // Suspicious patterns in request paths and query strings
 const SUSPICIOUS_PATTERNS = [
-  /\.\.\//,                    // Directory traversal
-  /<script/i,                  // XSS attempt
-  /union\s+select/i,           // SQL injection
-  /\bexec\b.*\(/i,             // Command injection
-  /\bdrop\b.*\btable\b/i,     // SQL drop table
+  /\.\.\//, // Directory traversal
+  /<script/i, // XSS attempt
+  /union\s+select/i, // SQL injection
+  /\bexec\b.*\(/i, // Command injection
+  /\bdrop\b.*\btable\b/i, // SQL drop table
   /\b(cmd|powershell|bash)\b/i, // Shell injection
-  /\/etc\/passwd/i,            // Path traversal
-  /\/proc\/self/i,             // Linux proc traversal
-  /\beval\s*\(/i,              // Code injection
-  /\$\{.*\}/,                  // Template injection
-  /\bphpinfo\b/i,              // PHP probing
-  /\.env\b/,                   // Env file probing
-  /wp-admin|wp-login/i,        // WordPress probing
-  /\.git\//,                   // Git directory probing
+  /\/etc\/passwd/i, // Path traversal
+  /\/proc\/self/i, // Linux proc traversal
+  /\beval\s*\(/i, // Code injection
+  /\$\{.*\}/, // Template injection
+  /\bphpinfo\b/i, // PHP probing
+  /\.env\b/, // Env file probing
+  /wp-admin|wp-login/i, // WordPress probing
+  /\.git\//, // Git directory probing
 ];
 
 /**
  * Check if a string contains suspicious patterns.
  */
 function hasSuspiciousPattern(input: string): boolean {
-  return SUSPICIOUS_PATTERNS.some(pattern => pattern.test(input));
+  return SUSPICIOUS_PATTERNS.some((pattern) => pattern.test(input));
 }
 
 /**
- * Check if IP is blocked (Redis first, then memory fallback).
+ * Check if IP is blocked in Redis. Returns null if Redis is unavailable so
+ * callers can distinguish "not blocked" from "Redis down, fall back to memory".
  */
-async function isIPBlocked(ip: string): Promise<boolean> {
-  if (redisClient) {
-    try {
-      const blocked = await redisClient.get(`waf:blocked:${ip}`);
-      return blocked === '1';
-    } catch {
-      // Fall through to memory
-    }
+async function isIPBlockedInRedis(ip: string): Promise<boolean | null> {
+  if (!redisClient) return null;
+  try {
+    const blocked = await redisClient.get(`waf:blocked:${ip}`);
+    return blocked === '1';
+  } catch (err) {
+    logger.warn('WAF: Redis block-check failed, falling back to in-memory list', {
+      ip,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
   }
-  return memoryBlockedIPs.has(ip);
 }
 
 /**
  * WAF middleware - blocks suspicious requests.
+ *
+ * Block decisions consult the in-memory deny list synchronously first, then
+ * await the Redis deny list. Awaiting Redis (rather than fire-and-forget) is
+ * required so that the very first request from a distributed-blocked IP is
+ * actually rejected instead of slipping through while memory catches up.
+ * Redis failures fall back to in-memory and are logged, not swallowed.
  */
-export function wafMiddleware(req: Request, res: Response, next: NextFunction): void {
+export async function wafMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   const clientIP = req.ip || req.socket.remoteAddress || 'unknown';
 
-  // 1. Check if IP is blocked (async with sync fallback)
-  const memBlocked = memoryBlockedIPs.has(clientIP);
-
-  if (memBlocked) {
-    logger.warn('WAF: Blocked IP attempted access', { ip: clientIP, path: req.path });
+  // 1a. Fast path: in-memory deny list
+  if (memoryBlockedIPs.has(clientIP)) {
+    logger.warn('WAF: Blocked IP attempted access (memory)', { ip: clientIP, path: req.path });
     res.status(403).json({ error: 'Erişim engellendi' });
     return;
   }
 
-  // Async Redis check (non-blocking for first request from IP)
-  if (redisClient) {
-    isIPBlocked(clientIP).then(blocked => {
-      if (blocked && !memoryBlockedIPs.has(clientIP)) {
-        // Sync memory with Redis for faster future checks
-        memoryBlockedIPs.add(clientIP);
-      }
-    }).catch(() => { /* ignore Redis errors */ });
+  // 1b. Distributed deny list (Redis). Await so blocks are enforced on the
+  // first request, not the second.
+  const redisBlocked = await isIPBlockedInRedis(clientIP);
+  if (redisBlocked === true) {
+    memoryBlockedIPs.add(clientIP); // sync memory for faster subsequent checks
+    logger.warn('WAF: Blocked IP attempted access (redis)', { ip: clientIP, path: req.path });
+    res.status(403).json({ error: 'Erişim engellendi' });
+    return;
   }
 
   // 2. Check request path for suspicious patterns
@@ -123,7 +134,8 @@ export function wafMiddleware(req: Request, res: Response, next: NextFunction): 
 
   // 5. Check for oversized requests (beyond Express limits)
   const contentLength = parseInt(req.get('content-length') || '0', 10);
-  if (contentLength > 50 * 1024 * 1024) { // 50MB absolute max
+  if (contentLength > 50 * 1024 * 1024) {
+    // 50MB absolute max
     logger.warn('WAF: Oversized request blocked', { ip: clientIP, contentLength });
     res.status(413).json({ error: 'İstek boyutu çok büyük' });
     return;
@@ -144,7 +156,7 @@ function trackSuspiciousActivity(ip: string, type: string, detail: string): void
   const now = Date.now();
   const entry = memorySuspiciousIPCounts.get(ip);
 
-  if (entry && (now - entry.firstSeen) < SUSPICIOUS_WINDOW_MS) {
+  if (entry && now - entry.firstSeen < SUSPICIOUS_WINDOW_MS) {
     entry.count++;
     if (entry.count >= SUSPICIOUS_THRESHOLD) {
       // Block in memory
@@ -158,7 +170,12 @@ function trackSuspiciousActivity(ip: string, type: string, detail: string): void
       // Block in Redis for distributed awareness
       if (redisClient) {
         const blockDurationSec = Math.floor(BLOCK_DURATION_MS / 1000);
-        redisClient.setex(`waf:blocked:${ip}`, blockDurationSec, '1').catch(() => {});
+        redisClient.setex(`waf:blocked:${ip}`, blockDurationSec, '1').catch((err: unknown) =>
+          logger.warn('WAF: Redis setex failed while recording block', {
+            ip,
+            error: err instanceof Error ? err.message : String(err),
+          }),
+        );
       }
 
       // Auto-unblock from memory after duration
@@ -175,11 +192,17 @@ function trackSuspiciousActivity(ip: string, type: string, detail: string): void
   // Track in Redis for distributed counting
   if (redisClient) {
     const key = `waf:suspicious:${ip}`;
-    redisClient.multi()
+    redisClient
+      .multi()
       .incr(key)
       .expire(key, Math.floor(SUSPICIOUS_WINDOW_MS / 1000))
       .exec()
-      .catch(() => {});
+      .catch((err: unknown) =>
+        logger.warn('WAF: Redis multi() failed while tracking suspicious activity', {
+          ip,
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
   }
 }
 
@@ -192,7 +215,12 @@ export function blockIP(ip: string, durationMs?: number): void {
 
   if (redisClient) {
     const ttl = durationMs ? Math.floor(durationMs / 1000) : Math.floor(BLOCK_DURATION_MS / 1000);
-    redisClient.setex(`waf:blocked:${ip}`, ttl, '1').catch(() => {});
+    redisClient.setex(`waf:blocked:${ip}`, ttl, '1').catch((err: unknown) =>
+      logger.warn('WAF: Redis setex failed during manual block', {
+        ip,
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    );
   }
 
   if (durationMs) {
@@ -212,7 +240,12 @@ export function unblockIP(ip: string): void {
   logger.info('WAF: IP manually unblocked', { ip });
 
   if (redisClient) {
-    redisClient.del(`waf:blocked:${ip}`, `waf:suspicious:${ip}`).catch(() => {});
+    redisClient.del(`waf:blocked:${ip}`, `waf:suspicious:${ip}`).catch((err: unknown) =>
+      logger.warn('WAF: Redis del failed during manual unblock', {
+        ip,
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    );
   }
 }
 

@@ -3,8 +3,8 @@
  * This migration creates essential indexes for performance optimization
  */
 
-import mongoose from 'mongoose';
 import { User } from '../models/User';
+import logger from '../utils/logger';
 
 export interface Migration {
   name: string;
@@ -16,7 +16,7 @@ const migration: Migration = {
   name: '001-create-indexes',
 
   async up() {
-    console.log('Running migration: 001-create-indexes (up)');
+    logger.info('Running migration: 001-create-indexes (up)');
 
     const safeCreateIndex = async (collection: any, spec: any, options: any) => {
       try {
@@ -24,7 +24,7 @@ const migration: Migration = {
       } catch (error: any) {
         // Skip if index already exists (code 85 = IndexOptionsConflict, code 86 = IndexKeySpecsConflict)
         if (error.code === 85 || error.code === 86) {
-          console.log(`⏭️  Index ${options.name} already exists, skipping`);
+          logger.info(`⏭️  Index ${options.name} already exists, skipping`);
         } else {
           throw error;
         }
@@ -65,15 +65,15 @@ const migration: Migration = {
         { name: 'adSoyad_text', default_language: 'turkish' },
       );
 
-      console.log('✅ Indexes created successfully');
+      logger.info('✅ Indexes created successfully');
     } catch (error) {
-      console.error('❌ Error creating indexes:', error);
+      logger.error('❌ Error creating indexes:', error);
       throw error;
     }
   },
 
   async down() {
-    console.log('Running migration: 001-create-indexes (down)');
+    logger.info('Running migration: 001-create-indexes (down)');
 
     try {
       // Drop indexes
@@ -87,9 +87,9 @@ const migration: Migration = {
       await User.collection.dropIndex('parentId_index');
       await User.collection.dropIndex('adSoyad_text');
 
-      console.log('✅ Indexes dropped successfully');
+      logger.info('✅ Indexes dropped successfully');
     } catch (error) {
-      console.error('❌ Error dropping indexes:', error);
+      logger.error('❌ Error dropping indexes:', error);
       throw error;
     }
   },

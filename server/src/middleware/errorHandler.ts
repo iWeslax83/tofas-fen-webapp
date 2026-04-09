@@ -10,7 +10,7 @@ export const globalErrorHandler = (
   error: Error | AppError,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   // If response was already sent, delegate to default Express error handler
   if (res.headersSent) {
@@ -23,15 +23,16 @@ export const globalErrorHandler = (
   if (error instanceof AppError) {
     appError = error;
   } else {
-    // Convert unknown errors to AppError
-    const status = (error instanceof SyntaxError && (error as any).status === 400) ? 400 : 500;
+    // Convert unknown errors to AppError. JSON parsing errors from
+    // body-parser surface as SyntaxError with a 400 status field.
+    const statusCode = error instanceof SyntaxError && (error as any).status === 400 ? 400 : 500;
     appError = new AppError(
       error.message || 'An unexpected error occurred',
-      status,
+      statusCode,
       false,
       req.path,
       req.method,
-      (req as any).user?.userId
+      (req as any).user?.userId,
     );
   }
 
@@ -52,8 +53,8 @@ export const globalErrorHandler = (
     type: getErrorType(appError.statusCode),
     additionalData: {
       originalError: error.name,
-      stack: error.stack
-    }
+      stack: error.stack,
+    },
   };
 
   // Log the error
@@ -77,15 +78,24 @@ function getErrorSeverity(statusCode: number): ErrorSeverity {
  */
 function getErrorType(statusCode: number): ErrorType {
   switch (statusCode) {
-    case 400: return ErrorType.VALIDATION;
-    case 401: return ErrorType.AUTHENTICATION;
-    case 403: return ErrorType.AUTHORIZATION;
-    case 404: return ErrorType.NOT_FOUND;
-    case 409: return ErrorType.CONFLICT;
-    case 429: return ErrorType.RATE_LIMIT;
-    case 500: return ErrorType.INTERNAL;
-    case 503: return ErrorType.SERVICE_UNAVAILABLE;
-    default: return ErrorType.INTERNAL;
+    case 400:
+      return ErrorType.VALIDATION;
+    case 401:
+      return ErrorType.AUTHENTICATION;
+    case 403:
+      return ErrorType.AUTHORIZATION;
+    case 404:
+      return ErrorType.NOT_FOUND;
+    case 409:
+      return ErrorType.CONFLICT;
+    case 429:
+      return ErrorType.RATE_LIMIT;
+    case 500:
+      return ErrorType.INTERNAL;
+    case 503:
+      return ErrorType.SERVICE_UNAVAILABLE;
+    default:
+      return ErrorType.INTERNAL;
   }
 }
 
@@ -96,7 +106,7 @@ function logError(appError: AppError, context: ErrorContext): void {
   const logData = {
     error: appError.toJSON(),
     context,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 
   if (appError.statusCode >= 500) {
@@ -112,7 +122,11 @@ function logError(appError: AppError, context: ErrorContext): void {
  * Send error response to client
  */
 function sendErrorResponse(res: Response, appError: AppError, req: Request): void {
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  // B-M5: stack traces must NEVER leak in production, even if a misbuilt
+  // image somehow carries NODE_ENV=development. Require both NODE_ENV to be
+  // exactly 'development' AND an explicit EXPOSE_ERROR_DETAILS=true flag.
+  const isDevelopment =
+    process.env.NODE_ENV === 'development' && process.env.EXPOSE_ERROR_DETAILS === 'true';
 
   // Prepare response data
   const responseData: any = {
@@ -120,11 +134,11 @@ function sendErrorResponse(res: Response, appError: AppError, req: Request): voi
     error: {
       message: appError.message,
       statusCode: appError.statusCode,
-      timestamp: appError.timestamp
-    }
+      timestamp: appError.timestamp,
+    },
   };
 
-  // Add additional details in development
+  // Add additional details in development (gated)
   if (isDevelopment && responseData.error) {
     const errObj = responseData.error as Record<string, any>;
     responseData.error = {
@@ -132,7 +146,7 @@ function sendErrorResponse(res: Response, appError: AppError, req: Request): voi
       name: appError.name,
       stack: appError.stack,
       path: appError.path,
-      method: appError.method
+      method: appError.method,
     };
   }
 
@@ -152,7 +166,7 @@ export const handleUnhandledRejection = (reason: unknown, promise: Promise<unkno
   logger.error('Unhandled Promise Rejection', {
     reason,
     promise,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 
   // In production, you might want to exit the process
@@ -168,7 +182,7 @@ export const handleUncaughtException = (error: Error): void => {
   logger.error('Uncaught Exception', {
     error: error.message,
     stack: error.stack,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 
   // In production, you might want to exit the process
@@ -180,7 +194,9 @@ export const handleUncaughtException = (error: Error): void => {
 /**
  * Async error wrapper for route handlers
  */
-export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => {
+export const asyncHandler = (
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>,
+) => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };

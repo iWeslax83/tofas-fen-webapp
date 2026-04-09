@@ -6,6 +6,11 @@ import { initializeTelemetry } from './utils/telemetry';
 initializeTelemetry();
 
 import express from 'express';
+// Monkey-patch Express 4 to forward async route errors to next() automatically.
+// Without this, a rejected promise in any async route handler crashes the
+// process (Express 4 does not propagate async rejections). Must be imported
+// once, after express, before any routes are mounted.
+import 'express-async-errors';
 import path from 'path';
 import fs from 'fs';
 import helmet from 'helmet';
@@ -206,6 +211,12 @@ setupSwagger(app);
 
 // Setup GraphQL server (BFF layer)
 if (process.env.ENABLE_GRAPHQL === 'true' || process.env.NODE_ENV !== 'production') {
+  // B-H6: rate-limit the GraphQL endpoint before Apollo middleware sees it.
+  // Depth/complexity limits handle one expensive query, not sustained cheap ones.
+  import('./config/rateLimiters').then(({ graphqlLimiter }) => {
+    app.use('/graphql', graphqlLimiter);
+  });
+
   import('./graphql/server')
     .then(({ createApolloServer }) => {
       const apolloServer = createApolloServer();

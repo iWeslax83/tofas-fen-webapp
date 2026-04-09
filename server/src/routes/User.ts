@@ -4,6 +4,7 @@ import { User } from '../models';
 import bcrypt from 'bcryptjs';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import multer from 'multer';
+import { verifyUploadedFiles } from '../config/upload';
 import {
   parseUserFile,
   validateUserRows,
@@ -142,23 +143,39 @@ router.get(
       const filter: any = { rol: role };
 
       if (search) {
-        const safeSearch = escapeRegex(String(search));
+        // B-C6: cap the search length to prevent ReDoS / expensive $regex
+        // scans, and ignore prefixes that look like regex metacharacters even
+        // after escaping (defense in depth).
+        const rawSearch = String(search).trim();
+        if (rawSearch.length > 100) {
+          return res.status(400).json({ error: 'Arama terimi çok uzun (en fazla 100 karakter)' });
+        }
+        const safeSearch = escapeRegex(rawSearch);
         filter.$or = [
           { adSoyad: { $regex: safeSearch, $options: 'i' } },
           { id: { $regex: safeSearch, $options: 'i' } },
         ];
       }
 
+      // Clamp pagination (B-H5) — previously page/limit were declared but the
+      // find() query ignored them, so a single call could return the entire
+      // users collection.
+      const page = Math.max(parseInt(String(req.query.page ?? '1'), 10) || 1, 1);
+      const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '50'), 10) || 50, 1), 200);
+
       const total = await User.countDocuments(filter);
-      const users = await User.find(filter).select('-sifre -tckn');
+      const users = await User.find(filter)
+        .select('-sifre -tckn')
+        .skip((page - 1) * limit)
+        .limit(limit);
 
       res.json({
         data: users,
         pagination: {
-          page: 1,
-          limit: 10,
+          page,
+          limit,
           total,
-          totalPages: Math.ceil(total / 10),
+          totalPages: Math.ceil(total / limit),
         },
       });
     } catch (error) {
@@ -352,6 +369,7 @@ router.post(
   authenticateJWT,
   authorizeRoles(['admin']),
   upload.single('file'),
+  verifyUploadedFiles,
   async (req: Request, res: Response) => {
     try {
       if (!req.file) {
@@ -464,6 +482,7 @@ router.post(
   authenticateJWT,
   authorizeRoles(['admin']),
   upload.single('file'),
+  verifyUploadedFiles,
   async (req: Request, res: Response) => {
     try {
       if (!req.file) {

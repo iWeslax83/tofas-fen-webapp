@@ -70,45 +70,99 @@ export const optionalAuth = async (
   }
 };
 
-// CSRF protection middleware - double-submit cookie pattern
+// B-H2 fix: CSRF protection — Origin allowlist + double-submit cookie.
+//
+// The previous implementation had two bypass paths: if Origin was absent OR
+// if the csrfToken cookie/header pair was missing, the check was skipped.
+// Together that meant an attacker who suppressed either header sailed past.
+//
+// New rule (state-changing methods only):
+//   1. Skip entirely if the request carries no auth cookie — there's no
+//      session to ride, so there's nothing to forge. This keeps bootstrap
+//      endpoints (login, register, refresh) and bearer-token API clients
+//      unaffected.
+//   2. Otherwise require a valid Origin (or Referer fallback) matching the
+//      allowlist. Browsers set Origin on cross-origin fetches and scripts
+//      cannot override it.
+//   3. If a csrfToken cookie is set, the matching X-CSRF-Token header is
+//      mandatory (defense in depth against sub-domain takeover).
+//
+// The per-route allowlist below is also applied so login/register/etc. never
+// trigger the check even if they somehow present a stale auth cookie.
+const CSRF_EXEMPT_PATHS = new Set<string>([
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/refresh',
+  '/api/auth/refresh-token',
+  '/api/auth/logout',
+  '/api/auth/verify-2fa',
+  '/api/auth/resend-2fa',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/registration', // public registration submission
+]);
+
 export const csrfProtection = (req: Request, res: Response, next: NextFunction): void => {
-  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
-    // 1. Origin kontrolü
-    const origin = req.get('Origin');
-    if (origin) {
-      const allowedOrigins = [
-        process.env.FRONTEND_URL || 'http://localhost:5173',
-        'http://localhost:3000',
-        'http://localhost:5173',
-        'http://127.0.0.1:3000',
-        'http://127.0.0.1:5173',
-      ];
-      if (!allowedOrigins.includes(origin)) {
-        res.status(403).json({ error: 'CSRF koruması: Geçersiz origin' });
-        return;
-      }
-    }
+  // Safe methods don't mutate state.
+  if (!['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return next();
+  }
 
-    // 2. Double-submit cookie doğrulaması
-    // Cookie'deki CSRF token ile header'daki eşleşmeli
-    const cookieToken = req.cookies?.csrfToken;
+  // Bootstrap/auth endpoints predate any session.
+  const reqPath = req.path || req.originalUrl?.split('?')[0] || '';
+  if (CSRF_EXEMPT_PATHS.has(reqPath)) {
+    return next();
+  }
+
+  // CSRF only matters when the browser attaches ambient credentials. If the
+  // caller has no auth cookie, they must be using a bearer token — skip.
+  const hasAuthCookie =
+    Boolean(req.cookies?.accessToken) ||
+    Boolean(req.cookies?.refreshToken) ||
+    Boolean(req.cookies?.sessionToken);
+  if (!hasAuthCookie) {
+    return next();
+  }
+
+  const allowedOrigins = [
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5173',
+  ].filter(Boolean);
+
+  const origin = req.get('Origin');
+  const referer = req.get('Referer');
+
+  let sourceOk = false;
+  if (origin) {
+    sourceOk = allowedOrigins.includes(origin);
+  } else if (referer) {
+    try {
+      const refererOrigin = new URL(referer).origin;
+      sourceOk = allowedOrigins.includes(refererOrigin);
+    } catch {
+      sourceOk = false;
+    }
+  }
+
+  if (!sourceOk) {
+    res.status(403).json({ error: 'CSRF koruması: Geçersiz origin' });
+    return;
+  }
+
+  // Double-submit cookie: if a csrfToken cookie is set, the matching header
+  // must be present.
+  const cookieToken = req.cookies?.csrfToken;
+  if (cookieToken) {
     const headerToken = req.get('X-CSRF-Token');
-
-    if (cookieToken && headerToken) {
-      if (cookieToken !== headerToken) {
-        res.status(403).json({ error: 'CSRF koruması: Token uyuşmazlığı' });
-        return;
-      }
-    }
-
-    // 3. X-Requested-With kontrolü (AJAX isteklerini doğrula)
-    const xRequestedWith = req.get('X-Requested-With');
-    if (!xRequestedWith && !origin) {
-      // Ne Origin ne de X-Requested-With varsa, potansiyel CSRF
-      res.status(403).json({ error: 'CSRF koruması: Geçersiz istek' });
+    if (!headerToken || headerToken !== cookieToken) {
+      res.status(403).json({ error: 'CSRF koruması: Token uyuşmazlığı' });
       return;
     }
   }
+
   next();
 };
 

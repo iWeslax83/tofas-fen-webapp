@@ -47,48 +47,48 @@ describe('WAF Middleware', () => {
   beforeEach(() => {
     // Unblock all IPs
     const status = getWafStatus();
-    status.blockedIPs.forEach(ip => unblockIP(ip));
+    status.blockedIPs.forEach((ip) => unblockIP(ip));
   });
 
   describe('wafMiddleware', () => {
-    it('should allow normal requests', () => {
+    it('should allow normal requests', async () => {
       const req = createMockReq();
       const { res } = createMockRes();
       const next = vi.fn();
 
-      wafMiddleware(req as Request, res as Response, next);
+      await wafMiddleware(req as Request, res as Response, next);
       expect(next).toHaveBeenCalled();
     });
 
-    it('should block directory traversal in path', () => {
+    it('should block directory traversal in path', async () => {
       const req = createMockReq({ originalUrl: '/api/../../etc/passwd' });
       const { res } = createMockRes();
       const next = vi.fn();
 
-      wafMiddleware(req as Request, res as Response, next);
+      await wafMiddleware(req as Request, res as Response, next);
       expect(next).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(403);
     });
 
-    it('should block XSS attempts in path', () => {
+    it('should block XSS attempts in path', async () => {
       const req = createMockReq({ originalUrl: '/api/test?q=<script>alert(1)</script>' });
       const { res } = createMockRes();
       const next = vi.fn();
 
-      wafMiddleware(req as Request, res as Response, next);
+      await wafMiddleware(req as Request, res as Response, next);
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should block SQL injection in query params', () => {
+    it('should block SQL injection in query params', async () => {
       const req = createMockReq({ query: { search: 'UNION SELECT * FROM users' } });
       const { res } = createMockRes();
       const next = vi.fn();
 
-      wafMiddleware(req as Request, res as Response, next);
+      await wafMiddleware(req as Request, res as Response, next);
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should block command injection in body', () => {
+    it('should block command injection in body', async () => {
       const req = createMockReq({
         method: 'POST',
         body: { name: 'test; exec("rm -rf /")' },
@@ -96,38 +96,38 @@ describe('WAF Middleware', () => {
       const { res } = createMockRes();
       const next = vi.fn();
 
-      wafMiddleware(req as Request, res as Response, next);
+      await wafMiddleware(req as Request, res as Response, next);
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should block .env file probing', () => {
+    it('should block .env file probing', async () => {
       const req = createMockReq({ originalUrl: '/.env' });
       const { res } = createMockRes();
       const next = vi.fn();
 
-      wafMiddleware(req as Request, res as Response, next);
+      await wafMiddleware(req as Request, res as Response, next);
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should block WordPress probing', () => {
+    it('should block WordPress probing', async () => {
       const req = createMockReq({ originalUrl: '/wp-admin/login.php' });
       const { res } = createMockRes();
       const next = vi.fn();
 
-      wafMiddleware(req as Request, res as Response, next);
+      await wafMiddleware(req as Request, res as Response, next);
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should block .git directory access', () => {
+    it('should block .git directory access', async () => {
       const req = createMockReq({ originalUrl: '/.git/config' });
       const { res } = createMockRes();
       const next = vi.fn();
 
-      wafMiddleware(req as Request, res as Response, next);
+      await wafMiddleware(req as Request, res as Response, next);
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should block oversized requests', () => {
+    it('should block oversized requests', async () => {
       const req = createMockReq({
         get: vi.fn().mockImplementation((header: string) => {
           if (header === 'content-length') return String(100 * 1024 * 1024);
@@ -138,18 +138,18 @@ describe('WAF Middleware', () => {
       const { res } = createMockRes();
       const next = vi.fn();
 
-      wafMiddleware(req as Request, res as Response, next);
+      await wafMiddleware(req as Request, res as Response, next);
       expect(next).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(413);
     });
 
-    it('should block already-blocked IPs', () => {
+    it('should block already-blocked IPs', async () => {
       blockIP('10.0.0.99');
       const req = createMockReq({ ip: '10.0.0.99' });
       const { res } = createMockRes();
       const next = vi.fn();
 
-      wafMiddleware(req as Request, res as Response, next);
+      await wafMiddleware(req as Request, res as Response, next);
       expect(next).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(403);
 
