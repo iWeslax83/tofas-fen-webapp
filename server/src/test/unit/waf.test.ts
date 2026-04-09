@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // Mock logger before importing WAF
 vi.mock('../../utils/logger', () => ({
@@ -10,7 +10,13 @@ vi.mock('../../utils/logger', () => ({
   },
 }));
 
-import { wafMiddleware, blockIP, unblockIP, getWafStatus } from '../../middleware/waf';
+import {
+  wafMiddleware,
+  blockIP,
+  unblockIP,
+  getWafStatus,
+  initWafRedis,
+} from '../../middleware/waf';
 import { Request, Response } from 'express';
 
 function createMockReq(overrides: Partial<Request> = {}): Partial<Request> {
@@ -154,6 +160,63 @@ describe('WAF Middleware', () => {
       expect(res.status).toHaveBeenCalledWith(403);
 
       unblockIP('10.0.0.99');
+    });
+  });
+
+  describe('wafMiddleware with Redis', () => {
+    afterEach(() => {
+      // Reset Redis client between tests so state doesn't leak.
+      initWafRedis(null);
+    });
+
+    it('should reject the FIRST request from a distributed-blocked IP', async () => {
+      // Minimal Redis client mock — only the methods WAF calls.
+      const mockRedis = {
+        get: vi.fn().mockResolvedValue('1'), // IP is blocked distributed-wide
+        setex: vi.fn().mockResolvedValue('OK'),
+        multi: vi.fn().mockReturnValue({
+          incr: vi.fn().mockReturnThis(),
+          expire: vi.fn().mockReturnThis(),
+          exec: vi.fn().mockResolvedValue([]),
+        }),
+        del: vi.fn().mockResolvedValue(1),
+      };
+      initWafRedis(mockRedis);
+
+      const req = createMockReq({ ip: '10.0.0.200' });
+      const { res } = createMockRes();
+      const next = vi.fn();
+
+      await wafMiddleware(req as Request, res as Response, next);
+
+      // B-C4 regression guard: the first request must be rejected, not the
+      // second. Previously the Redis check was fire-and-forget so the first
+      // hit slipped through.
+      expect(mockRedis.get).toHaveBeenCalledWith('waf:blocked:10.0.0.200');
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    it('should fall back to memory when Redis throws', async () => {
+      const mockRedis = {
+        get: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+        setex: vi.fn(),
+        multi: vi.fn().mockReturnValue({
+          incr: vi.fn().mockReturnThis(),
+          expire: vi.fn().mockReturnThis(),
+          exec: vi.fn().mockResolvedValue([]),
+        }),
+        del: vi.fn(),
+      };
+      initWafRedis(mockRedis);
+
+      const req = createMockReq({ ip: '10.0.0.201' });
+      const { res } = createMockRes();
+      const next = vi.fn();
+
+      // Not in in-memory block list -> should proceed with a warn log.
+      await wafMiddleware(req as Request, res as Response, next);
+      expect(next).toHaveBeenCalled();
     });
   });
 
