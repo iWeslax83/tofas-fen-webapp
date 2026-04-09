@@ -2,6 +2,22 @@ import { Request, Response, NextFunction } from 'express';
 import Redis, { RedisOptions } from 'ioredis';
 import logger from '../utils/logger';
 
+/**
+ * Build a user-segmented cache key. ALL cache writers must use this helper
+ * (or produce keys with the same `cache:<user>:<role>:<url>:<query>` shape)
+ * so that per-user segmentation is consistent and invalidateCache('cache:*')
+ * patterns don't leak across users.
+ */
+export function buildCacheKey(parts: {
+  userId: string;
+  role: string;
+  url: string;
+  query?: Record<string, unknown>;
+}): string {
+  const query = parts.query ? JSON.stringify(parts.query) : '';
+  return `cache:${parts.userId}:${parts.role}:${parts.url}:${query}`;
+}
+
 // Node system error interface for Redis error handling
 interface NodeSystemError extends Error {
   code?: string;
@@ -157,14 +173,15 @@ export const cache = (duration: number = 300) => {
         return next();
       }
 
-      // B-M7: segment cache key by user identity and role. Without this, a
-      // response shaped per-user (like /api/notes filtered by studentId) can
-      // be served to another user who happens to hit the same URL. Including
-      // userId+role partitions the cache so one user can never read another's
-      // personalised response.
-      const userId = req.user?.userId ?? 'anon';
-      const role = req.user?.role ?? 'anon';
-      const cacheKey = `cache:${userId}:${role}:${req.originalUrl}:${JSON.stringify(req.query)}`;
+      // B-M7: segment cache key by user identity and role. Use the exported
+      // buildCacheKey helper so any other writer in the tree produces a
+      // compatible shape and invalidateCache() patterns stay consistent.
+      const cacheKey = buildCacheKey({
+        userId: req.user?.userId ?? 'anon',
+        role: req.user?.role ?? 'anon',
+        url: req.originalUrl,
+        query: req.query as Record<string, unknown>,
+      });
 
       // Try to get from cache
       const cachedData = await redis.get(cacheKey);

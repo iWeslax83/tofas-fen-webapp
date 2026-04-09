@@ -32,8 +32,13 @@ export function initializeSentry() {
         // F-H3: match sensitive keys via regex so variations like `tcknHash`,
         // `student_tckn`, `refresh_token`, `sifreHash`, `notesPayload` are also
         // scrubbed. The old exact-lowercase list was leaky.
+        //
+        // Narrow-match tokens (`card`, `iban`) use word boundaries so they
+        // don't false-positive on `cardinalDirection`, `librarian`, etc.
+        // Broader tokens (`tckn`, `password`, `token`) intentionally substring
+        // match so variations like `tcknHash` / `refresh_token` are caught.
         const SENSITIVE_KEY =
-          /(tckn|password|sifre|token|secret|authorization|cookie|session|api[-_]?key|credit|card|cvv|iban)/i;
+          /(tckn|password|sifre|token|secret|authorization|cookie|session|api[-_]?key|credit|\bcard\b|cvv|\biban\b)/i;
         // Any key containing one of these hints likely carries a full request
         // or response body — redact the whole value.
         const BODY_LIKE_KEY = /^(body|payload|data|response|request|params|query)$/i;
