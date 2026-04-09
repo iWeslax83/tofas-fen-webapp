@@ -188,37 +188,38 @@ export default function AdminEvciListPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Bu talebi silmek istediğinize emin misiniz?')) {
-      try {
-        const { error } = await EvciService.deleteEvciRequest(id);
-
-        if (error) {
-          toast.error(error);
-        } else {
-          setRequests((reqs) => reqs.filter((r) => r._id !== id));
-          setSelectedIds((prev) => {
-            const next = new Set(prev);
-            next.delete(id);
-            return next;
-          });
-          toast.success('Evci talebi başarıyla silindi');
-        }
-      } catch (error) {
-        console.error('Error deleting evci request:', error);
-        toast.error('Evci talebi silinirken hata oluştu');
+  // F-M6: memoize row-level handlers so row components (Trash button,
+  // checkbox) get a stable function identity and don't re-render on every
+  // parent state change (filters, pagination, etc).
+  const handleDelete = useCallback(async (id: string) => {
+    if (!window.confirm('Bu talebi silmek istediğinize emin misiniz?')) return;
+    try {
+      const { error } = await EvciService.deleteEvciRequest(id);
+      if (error) {
+        toast.error(error);
+      } else {
+        setRequests((reqs) => reqs.filter((r) => r._id !== id));
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        toast.success('Evci talebi başarıyla silindi');
       }
+    } catch (error) {
+      console.error('Error deleting evci request:', error);
+      toast.error('Evci talebi silinirken hata oluştu');
     }
-  };
+  }, []);
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
-  };
+  }, []);
 
   const toggleSelectAll = () => {
     if (selectedIds.size === filteredRequests.length) {

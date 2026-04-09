@@ -36,15 +36,105 @@ if (appPassword) {
   );
 }
 
-// Create collections
-db.createCollection('users');
+// Create collections.
+//
+// I-L1: attach $jsonSchema validators to the security-critical collections
+// (users, notes, homeworks, evci_requests) so a direct-mongo write (e.g. an
+// attacker who bypasses the app layer) still has to produce a document that
+// passes schema validation. We use `validationLevel: 'moderate'` so already-
+// present documents with unusual shapes are not invalidated retroactively,
+// and `validationAction: 'error'` so bad inserts are rejected.
+//
+// These schemas intentionally match ONLY the minimum required fields that
+// every valid document must have. Mongoose does the richer application-level
+// validation; this is just the final safety net.
+
+db.createCollection('users', {
+  validator: {
+    $jsonSchema: {
+      bsonType: 'object',
+      required: ['id', 'adSoyad', 'rol'],
+      properties: {
+        id: {
+          bsonType: 'string',
+          description: 'primary user id - required string',
+        },
+        adSoyad: {
+          bsonType: 'string',
+          minLength: 1,
+          description: 'display name - required non-empty string',
+        },
+        rol: {
+          enum: ['student', 'teacher', 'parent', 'admin', 'hizmetli', 'ziyaretci'],
+          description: 'user role - must be one of the allowed values',
+        },
+        email: {
+          bsonType: ['string', 'null'],
+          description: 'email - string or null',
+        },
+      },
+    },
+  },
+  validationLevel: 'moderate',
+  validationAction: 'error',
+});
+
 db.createCollection('announcements');
 db.createCollection('clubs');
-db.createCollection('notes');
-db.createCollection('homeworks');
+
+db.createCollection('notes', {
+  validator: {
+    $jsonSchema: {
+      bsonType: 'object',
+      required: ['studentId', 'lesson'],
+      properties: {
+        studentId: { bsonType: 'string' },
+        lesson: { bsonType: 'string' },
+        semester: { bsonType: ['string', 'null'] },
+        academicYear: { bsonType: ['int', 'long', 'double', 'number', 'null'] },
+      },
+    },
+  },
+  validationLevel: 'moderate',
+  validationAction: 'error',
+});
+
+db.createCollection('homeworks', {
+  validator: {
+    $jsonSchema: {
+      bsonType: 'object',
+      required: ['title', 'subject'],
+      properties: {
+        title: { bsonType: 'string', minLength: 1 },
+        subject: { bsonType: 'string', minLength: 1 },
+        classLevel: { bsonType: ['string', 'null'] },
+        classSection: { bsonType: ['string', 'null'] },
+      },
+    },
+  },
+  validationLevel: 'moderate',
+  validationAction: 'error',
+});
 db.createCollection('notifications');
 db.createCollection('requests');
-db.createCollection('evci_requests');
+db.createCollection('evci_requests', {
+  validator: {
+    $jsonSchema: {
+      bsonType: 'object',
+      required: ['studentId', 'startDate', 'endDate'],
+      properties: {
+        studentId: { bsonType: 'string' },
+        startDate: { bsonType: ['date', 'string'] },
+        endDate: { bsonType: ['date', 'string'] },
+        parentApproval: {
+          enum: ['pending', 'approved', 'rejected', null],
+        },
+      },
+    },
+  },
+  validationLevel: 'moderate',
+  validationAction: 'error',
+});
 db.createCollection('maintenance_requests');
 db.createCollection('meal_lists');
 db.createCollection('supervisor_lists');
