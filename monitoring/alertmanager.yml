@@ -1,0 +1,82 @@
+# Alertmanager configuration (I-M7)
+#
+# Routes alerts produced by Prometheus (see ./alerts.yml) to pager / email /
+# chat destinations. Secrets are pulled from env vars via envsubst or a
+# sealed-secret wrapper at deploy time — NEVER commit real webhook URLs here.
+
+global:
+  resolve_timeout: 5m
+  # Set at deploy time:
+  #   smtp_from
+  #   smtp_smarthost
+  #   smtp_auth_username / smtp_auth_password
+
+route:
+  # Default receiver — used when no child route matches.
+  receiver: default-email
+  # Group alerts by alertname + severity so a burst of related alerts
+  # becomes one page, not one-per-instance.
+  group_by: [alertname, severity]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  routes:
+    # CRITICAL: page oncall immediately via pagerduty/opsgenie.
+    - matchers:
+        - severity = "critical"
+      receiver: pager
+      group_wait: 10s
+      repeat_interval: 1h
+      continue: true
+
+    # HIGH: slack alert channel, no paging.
+    - matchers:
+        - severity = "high"
+      receiver: slack-alerts
+
+    # INFO: low-volume digest.
+    - matchers:
+        - severity = "info"
+      receiver: slack-info
+      repeat_interval: 24h
+
+receivers:
+  - name: default-email
+    email_configs:
+      - to: ${ONCALL_EMAIL:-ops@tofasfen.com}
+        send_resolved: true
+
+  - name: pager
+    # Configure one of pagerduty_configs, opsgenie_configs, or webhook_configs
+    # at deploy time by substituting the real URL / key. Kept as a stub here
+    # so committing a real secret isn't possible.
+    webhook_configs:
+      - url: ${PAGER_WEBHOOK_URL:-http://placeholder/invalid}
+        send_resolved: true
+
+  - name: slack-alerts
+    slack_configs:
+      - api_url: ${SLACK_WEBHOOK_ALERTS:-http://placeholder/invalid}
+        channel: '#alerts'
+        send_resolved: true
+        title: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+        text: >-
+          {{ range .Alerts }}
+          *{{ .Labels.severity }}* - {{ .Annotations.summary }}
+          {{ .Annotations.description }}
+          {{ end }}
+
+  - name: slack-info
+    slack_configs:
+      - api_url: ${SLACK_WEBHOOK_INFO:-http://placeholder/invalid}
+        channel: '#alerts-info'
+        send_resolved: false
+
+# Inhibition rules — don't spam with child alerts when a parent is firing.
+inhibit_rules:
+  - source_matchers:
+      - severity = "critical"
+    target_matchers:
+      - severity =~ "high|info"
+    equal: [alertname]

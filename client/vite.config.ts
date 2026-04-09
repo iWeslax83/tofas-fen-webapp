@@ -59,6 +59,14 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src')
     }
   },
+  // F-H8: strip all console.* calls from production builds. The codebase
+  // still uses raw `console.error(...)` in many files and rewriting each is
+  // out of scope here; letting esbuild drop them at build time achieves the
+  // same effect (no info leakage via browser console) without touching every
+  // page. `debugger` statements are dropped too. Dev builds keep them.
+  esbuild: {
+    drop: ['console', 'debugger'],
+  },
   build: {
     sourcemap: false,
     minify: 'esbuild',

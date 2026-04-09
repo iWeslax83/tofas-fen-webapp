@@ -42,10 +42,18 @@ export const safeStringify = (value: unknown): string => {
   }
 };
 
+// F-H8: in production we silence all dev-level console output to avoid
+// leaking information via the browser console. Real errors should be routed
+// through Sentry (which has its own scrubbing); these helpers are for local
+// debugging only.
+const IS_DEV = typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV === true;
+
 /**
- * Safe console.error that prevents object-to-primitive conversion errors
+ * Safe console.error that prevents object-to-primitive conversion errors.
+ * No-op in production builds.
  */
 export const safeConsoleError = (message: string, error?: unknown): void => {
+  if (!IS_DEV) return;
   try {
     if (error !== undefined) {
       const errorString = safeStringify(error);
@@ -69,9 +77,11 @@ export const safeConsoleError = (message: string, error?: unknown): void => {
 };
 
 /**
- * Safe console.warn that prevents object-to-primitive conversion errors
+ * Safe console.warn that prevents object-to-primitive conversion errors.
+ * No-op in production builds.
  */
 export const safeConsoleWarn = (message: string, data?: unknown): void => {
+  if (!IS_DEV) return;
   try {
     if (data !== undefined) {
       const dataString = safeStringify(data);

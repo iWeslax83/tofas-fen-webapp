@@ -5,7 +5,11 @@
 
 import { ApolloServer } from 'apollo-server-express';
 import depthLimit from 'graphql-depth-limit';
-import { createComplexityRule, fieldExtensionsEstimator, simpleEstimator } from 'graphql-query-complexity';
+import {
+  createComplexityRule,
+  fieldExtensionsEstimator,
+  simpleEstimator,
+} from 'graphql-query-complexity';
 import jwt from 'jsonwebtoken';
 import { typeDefs } from './schema';
 import { resolvers } from './resolvers';
@@ -86,13 +90,19 @@ export function createApolloServer() {
             async didResolveOperation(requestContext: any) {
               const { request } = requestContext;
               const complexity = (requestContext as any).operationComplexity;
-              logger.debug(`GraphQL Operation: ${request.operationName}, Complexity: ${complexity}`);
+              logger.debug(
+                `GraphQL Operation: ${request.operationName}, Complexity: ${complexity}`,
+              );
             },
           };
         },
       },
     ],
-    introspection: process.env.NODE_ENV !== 'production',
+    // B-L2: gate introspection on an explicit env flag instead of
+    // NODE_ENV !== 'production'. A misbuilt image with NODE_ENV unset would
+    // otherwise expose the full schema in production.
+    introspection:
+      process.env.GRAPHQL_INTROSPECTION === 'true' ||
+      (process.env.NODE_ENV === 'development' && process.env.GRAPHQL_INTROSPECTION !== 'false'),
   });
 }
-
