@@ -14,6 +14,31 @@ function extractMeta(req: Request) {
 }
 
 /**
+ * B-H2: Issue a CSRF token cookie alongside any auth-cookie-setting response.
+ *
+ * The double-submit cookie pattern requires a token that:
+ *   1. Is NOT httpOnly (so our JS can read it and echo in X-CSRF-Token).
+ *   2. Has SameSite=strict to prevent cross-site attachment.
+ *   3. Is unpredictable (crypto.randomBytes).
+ *
+ * The backend's csrfProtection middleware then requires `X-CSRF-Token` to
+ * match `req.cookies.csrfToken` on every state-changing request that carries
+ * an auth cookie. Without this issuance step, the double-submit branch never
+ * fires and the guard collapses to Origin-allowlist only.
+ */
+function issueCsrfToken(res: Response, lifetimeMs: number): void {
+  const token = crypto.randomBytes(32).toString('hex');
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.cookie('csrfToken', token, {
+    httpOnly: false, // must be readable by the SPA
+    secure: isProduction,
+    sameSite: 'strict',
+    maxAge: lifetimeMs,
+    path: '/',
+  });
+}
+
+/**
  * Authentication Controller
  * Handles all authentication-related operations
  */
@@ -37,7 +62,12 @@ export class AuthController {
     const trustedDeviceToken = req.cookies?.trustedDevice;
 
     // #19: Pass IP/UA meta to service
-    const result = await AuthService.authenticateUser(id, sifre, trustedDeviceToken, extractMeta(req));
+    const result = await AuthService.authenticateUser(
+      id,
+      sifre,
+      trustedDeviceToken,
+      extractMeta(req),
+    );
 
     // If 2FA is required, return early with 2FA session token in httpOnly cookie
     if (result.requires2FA) {
@@ -60,7 +90,7 @@ export class AuthController {
         user: {
           id: result.user.id,
           adSoyad: result.user.adSoyad,
-        }
+        },
       });
       return;
     }
@@ -86,6 +116,9 @@ export class AuthController {
       path: '/',
     });
 
+    // Issue CSRF double-submit token (B-H2)
+    issueCsrfToken(res, tokens.refreshExpiresIn * 1000);
+
     res.json({
       success: true,
       message: 'Giriş başarılı',
@@ -100,13 +133,13 @@ export class AuthController {
         sube: user.sube,
         oda: user.oda,
         pansiyon: user.pansiyon,
-        lastLogin: user.lastLogin
+        lastLogin: user.lastLogin,
       },
       expiresIn: tokens.expiresIn,
       refreshExpiresIn: tokens.refreshExpiresIn,
       // Backward compatibility for frontend migration
       accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken
+      refreshToken: tokens.refreshToken,
     });
   });
 
@@ -125,7 +158,7 @@ export class AuthController {
     res.status(201).json({
       success: true,
       message: 'Kullanıcı başarıyla oluşturuldu',
-      user
+      user,
     });
   });
 
@@ -162,10 +195,18 @@ export class AuthController {
     res.clearCookie('trustedDevice', cookieOpts);
     // Also clear any lingering 2FA session cookie
     res.clearCookie('twoFactorSession', cookieOpts);
+    // B-H2: clear the CSRF double-submit cookie (not httpOnly, so same opts
+    // minus httpOnly flag)
+    res.clearCookie('csrfToken', {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: 'strict' as const,
+      path: '/',
+    });
 
     res.json({
       success: true,
-      message: 'Çıkış başarılı'
+      message: 'Çıkış başarılı',
     });
   });
 
@@ -215,11 +256,14 @@ export class AuthController {
       path: '/',
     });
 
+    // Rotate CSRF double-submit token alongside refresh (B-H2)
+    issueCsrfToken(res, tokens.refreshExpiresIn * 1000);
+
     res.json({
       success: true,
       message: 'Token yenilendi',
       expiresIn: tokens.expiresIn,
-      refreshExpiresIn: tokens.refreshExpiresIn
+      refreshExpiresIn: tokens.refreshExpiresIn,
     });
   });
 
@@ -252,8 +296,8 @@ export class AuthController {
         oda: user.oda,
         pansiyon: user.pansiyon,
         lastLogin: user.lastLogin,
-        createdAt: user.createdAt
-      }
+        createdAt: user.createdAt,
+      },
     });
   });
 
@@ -284,163 +328,179 @@ export class AuthController {
       oda: user.oda,
       pansiyon: user.pansiyon,
       lastLogin: user.lastLogin,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
     });
   });
 
   /**
    * Verify 2FA code
    */
-  static verifyTwoFactor = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    // #12: CSRF check — require X-Requested-With header
-    if (req.get('X-Requested-With') !== 'XMLHttpRequest') {
-      throw AppError.forbidden('Geçersiz istek kaynağı');
-    }
+  static verifyTwoFactor = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      // #12: CSRF check — require X-Requested-With header
+      if (req.get('X-Requested-With') !== 'XMLHttpRequest') {
+        throw AppError.forbidden('Geçersiz istek kaynağı');
+      }
 
-    // #10: Read session token from httpOnly cookie (not body)
-    const sessionToken = req.cookies?.twoFactorSession;
-    const { code, rememberDevice } = req.body;
+      // #10: Read session token from httpOnly cookie (not body)
+      const sessionToken = req.cookies?.twoFactorSession;
+      const { code, rememberDevice } = req.body;
 
-    if (!sessionToken) {
-      throw AppError.unauthorized('2FA oturumu bulunamadı. Lütfen tekrar giriş yapın.');
-    }
+      if (!sessionToken) {
+        throw AppError.unauthorized('2FA oturumu bulunamadı. Lütfen tekrar giriş yapın.');
+      }
 
-    if (!code) {
-      throw AppError.validation('Doğrulama kodu gereklidir');
-    }
+      if (!code) {
+        throw AppError.validation('Doğrulama kodu gereklidir');
+      }
 
-    // #19: Pass meta to service
-    const result = await AuthService.verifyTwoFactorCode(sessionToken, code, rememberDevice === true, extractMeta(req));
+      // #19: Pass meta to service
+      const result = await AuthService.verifyTwoFactorCode(
+        sessionToken,
+        code,
+        rememberDevice === true,
+        extractMeta(req),
+      );
 
-    const isProduction = process.env.NODE_ENV === 'production';
+      const isProduction = process.env.NODE_ENV === 'production';
 
-    // Set auth cookies
-    res.cookie('accessToken', result.tokens.accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
-      maxAge: result.tokens.expiresIn * 1000,
-      path: '/',
-    });
-
-    res.cookie('refreshToken', result.tokens.refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
-      maxAge: result.tokens.refreshExpiresIn * 1000,
-      path: '/',
-    });
-
-    // Clear 2FA session cookie after successful verification
-    res.clearCookie('twoFactorSession', {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
-      path: '/',
-    });
-
-    // Set trusted device cookie if requested
-    if (result.trustedDeviceToken) {
-      res.cookie('trustedDevice', result.trustedDeviceToken, {
+      // Set auth cookies
+      res.cookie('accessToken', result.tokens.accessToken, {
         httpOnly: true,
         secure: isProduction,
         sameSite: 'strict',
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        maxAge: result.tokens.expiresIn * 1000,
         path: '/',
       });
-    }
 
-    res.json({
-      success: true,
-      message: 'Giriş başarılı',
-      user: result.user,
-      expiresIn: result.tokens.expiresIn,
-      refreshExpiresIn: result.tokens.refreshExpiresIn,
-      accessToken: result.tokens.accessToken,
-      refreshToken: result.tokens.refreshToken,
-    });
-  });
+      res.cookie('refreshToken', result.tokens.refreshToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'strict',
+        maxAge: result.tokens.refreshExpiresIn * 1000,
+        path: '/',
+      });
+
+      // Issue CSRF double-submit token after successful 2FA (B-H2)
+      issueCsrfToken(res, result.tokens.refreshExpiresIn * 1000);
+
+      // Clear 2FA session cookie after successful verification
+      res.clearCookie('twoFactorSession', {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'strict',
+        path: '/',
+      });
+
+      // Set trusted device cookie if requested
+      if (result.trustedDeviceToken) {
+        res.cookie('trustedDevice', result.trustedDeviceToken, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: 'strict',
+          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+          path: '/',
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Giriş başarılı',
+        user: result.user,
+        expiresIn: result.tokens.expiresIn,
+        refreshExpiresIn: result.tokens.refreshExpiresIn,
+        accessToken: result.tokens.accessToken,
+        refreshToken: result.tokens.refreshToken,
+      });
+    },
+  );
 
   /**
    * #13: Resend 2FA code
    */
-  static resendTwoFactor = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    // #12: CSRF check
-    if (req.get('X-Requested-With') !== 'XMLHttpRequest') {
-      throw AppError.forbidden('Geçersiz istek kaynağı');
-    }
+  static resendTwoFactor = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      // #12: CSRF check
+      if (req.get('X-Requested-With') !== 'XMLHttpRequest') {
+        throw AppError.forbidden('Geçersiz istek kaynağı');
+      }
 
-    // #10: Read session token from httpOnly cookie
-    const sessionToken = req.cookies?.twoFactorSession;
+      // #10: Read session token from httpOnly cookie
+      const sessionToken = req.cookies?.twoFactorSession;
 
-    if (!sessionToken) {
-      throw AppError.unauthorized('2FA oturumu bulunamadı. Lütfen tekrar giriş yapın.');
-    }
+      if (!sessionToken) {
+        throw AppError.unauthorized('2FA oturumu bulunamadı. Lütfen tekrar giriş yapın.');
+      }
 
-    // #19: Pass meta to service
-    const result = await AuthService.resendTwoFactorCode(sessionToken, extractMeta(req));
+      // #19: Pass meta to service
+      const result = await AuthService.resendTwoFactorCode(sessionToken, extractMeta(req));
 
-    const isProduction = process.env.NODE_ENV === 'production';
+      const isProduction = process.env.NODE_ENV === 'production';
 
-    // Update 2FA session cookie with new token
-    res.cookie('twoFactorSession', result.twoFactorSessionToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
-      maxAge: 5 * 60 * 1000,
-      path: '/',
-    });
+      // Update 2FA session cookie with new token
+      res.cookie('twoFactorSession', result.twoFactorSessionToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'strict',
+        maxAge: 5 * 60 * 1000,
+        path: '/',
+      });
 
-    res.json({
-      success: true,
-      message: 'Doğrulama kodu tekrar gönderildi',
-      twoFactorExpiresAt: result.twoFactorExpiresAt,
-    });
-  });
+      res.json({
+        success: true,
+        message: 'Doğrulama kodu tekrar gönderildi',
+        twoFactorExpiresAt: result.twoFactorExpiresAt,
+      });
+    },
+  );
 
   /**
    * Toggle 2FA setting
    */
-  static toggleTwoFactor = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const userId = (req as any).user?.userId;
-    const { enabled } = req.body;
+  static toggleTwoFactor = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const userId = (req as any).user?.userId;
+      const { enabled } = req.body;
 
-    if (!userId) {
-      throw AppError.unauthorized('Kullanıcı bilgisi bulunamadı');
-    }
+      if (!userId) {
+        throw AppError.unauthorized('Kullanıcı bilgisi bulunamadı');
+      }
 
-    if (typeof enabled !== 'boolean') {
-      throw AppError.validation('enabled alanı boolean olmalıdır');
-    }
+      if (typeof enabled !== 'boolean') {
+        throw AppError.validation('enabled alanı boolean olmalıdır');
+      }
 
-    // #19: Pass meta
-    await AuthService.toggleTwoFactor(userId, enabled, extractMeta(req));
+      // #19: Pass meta
+      await AuthService.toggleTwoFactor(userId, enabled, extractMeta(req));
 
-    res.json({
-      success: true,
-      message: enabled
-        ? 'İki faktörlü doğrulama aktif edildi'
-        : 'İki faktörlü doğrulama deaktif edildi'
-    });
-  });
+      res.json({
+        success: true,
+        message: enabled
+          ? 'İki faktörlü doğrulama aktif edildi'
+          : 'İki faktörlü doğrulama deaktif edildi',
+      });
+    },
+  );
 
   /**
    * Send email verification code
    */
-  static sendVerification = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
-    const userId = (req as any).user?.userId;
+  static sendVerification = asyncHandler(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const userId = (req as any).user?.userId;
 
-    if (!userId) {
-      throw AppError.unauthorized('Kullanıcı bilgisi bulunamadı');
-    }
+      if (!userId) {
+        throw AppError.unauthorized('Kullanıcı bilgisi bulunamadı');
+      }
 
-    await AuthService.sendEmailVerification(userId);
+      await AuthService.sendEmailVerification(userId);
 
-    res.json({
-      success: true,
-      message: 'Doğrulama kodu e-posta adresinize gönderildi'
-    });
-  });
+      res.json({
+        success: true,
+        message: 'Doğrulama kodu e-posta adresinize gönderildi',
+      });
+    },
+  );
 
   /**
    * Verify email with code
@@ -461,8 +521,7 @@ export class AuthController {
 
     res.json({
       success: true,
-      message: 'E-posta başarıyla doğrulandı'
+      message: 'E-posta başarıyla doğrulandı',
     });
   });
-
 }
