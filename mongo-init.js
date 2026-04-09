@@ -1,5 +1,40 @@
 // MongoDB initialization script
+//
+// I-H11: the application must NOT connect as the root admin user. Create a
+// dedicated per-database user with the minimum role it needs (readWrite on
+// tofas-fen only). Set MONGO_APP_PASSWORD in the container environment so the
+// password never appears inline in this file.
+//
+// This script runs inside the mongo container at first boot. `process.env`
+// is available in the bundled shell via `--eval`. If MONGO_APP_PASSWORD is
+// unset we skip user creation and log a warning — compose file should ensure
+// it's always set in production.
+
 db = db.getSiblingDB('tofas-fen');
+
+const appPassword = process.env.MONGO_APP_PASSWORD;
+if (appPassword) {
+  try {
+    db.createUser({
+      user: 'tofas_app',
+      pwd: appPassword,
+      roles: [{ role: 'readWrite', db: 'tofas-fen' }],
+    });
+    print('Created app user tofas_app with readWrite on tofas-fen');
+  } catch (err) {
+    // Idempotent: ignore "user already exists"
+    if (err && err.code !== 51003) {
+      print('Failed to create app user: ' + err.message);
+      throw err;
+    }
+    print('App user tofas_app already exists, skipping');
+  }
+} else {
+  print(
+    'WARNING: MONGO_APP_PASSWORD not set — the application will have to connect as root admin. ' +
+      'This is acceptable for local dev only.',
+  );
+}
 
 // Create collections
 db.createCollection('users');

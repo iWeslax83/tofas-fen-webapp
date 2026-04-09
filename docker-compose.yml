@@ -14,11 +14,11 @@ services:
       - mongodb_data:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     ports:
-      - "27017:27017"
+      - '27017:27017'
     networks:
       - tofas-network
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -45,7 +45,7 @@ services:
       RATE_LIMIT_WINDOW_MS: 900000
       RATE_LIMIT_MAX_REQUESTS: 100
     ports:
-      - "3001:3001"
+      - '3001:3001'
     depends_on:
       mongodb:
         condition: service_healthy
@@ -56,7 +56,7 @@ services:
     volumes:
       - ./logs:/app/logs
     healthcheck:
-      test: ["CMD", "node", "dist/health-check.js"]
+      test: ['CMD', 'node', 'dist/health-check.js']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -69,7 +69,8 @@ services:
     container_name: tofas-frontend
     restart: unless-stopped
     ports:
-      - "3000:80"
+      # Container listens on 8080 (non-root nginx); expose as 3000 externally.
+      - '3000:8080'
     depends_on:
       backend:
         condition: service_healthy
@@ -79,7 +80,8 @@ services:
       - VITE_API_URL=http://localhost:3001
       - VITE_WS_URL=ws://localhost:3001
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      # nginx:alpine ships BusyBox wget, not curl
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:8080/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -90,8 +92,8 @@ services:
     container_name: tofas-nginx
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
@@ -109,14 +111,19 @@ services:
     container_name: tofas-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     networks:
       - tofas-network
+    environment:
+      # REDISCLI_AUTH is the documented way to pass the password to redis-cli
+      # without exposing it on argv, where it would leak into `ps` output,
+      # `docker inspect`, and container logs. See I-C12 in CODE_REVIEW_REPORT.md.
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?REDIS_PASSWORD environment variable is required}
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD environment variable is required}
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 30s
       timeout: 10s
       retries: 3

@@ -17,73 +17,102 @@ spec:
         app: backend
         version: v1
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: backend
-        image: ghcr.io/your-org/tofas-fen-webapp-server:latest
-        ports:
-        - containerPort: 3001
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "200m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 3001
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 3001
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: PORT
-          value: "3001"
-        - name: MONGODB_URI
-          valueFrom:
-            secretKeyRef:
-              name: mongodb-secret
-              key: uri
-        - name: REDIS_URL
-          valueFrom:
-            secretKeyRef:
-              name: redis-secret
-              key: url
-        - name: JWT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: jwt-secret
-              key: secret
-        - name: JWT_REFRESH_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: jwt-secret
-              key: refresh-secret
-        volumeMounts:
-        - name: uploads
-          mountPath: /app/uploads
-        - name: logs
-          mountPath: /app/logs
+        - name: backend
+          image: ghcr.io/your-org/tofas-fen-webapp-server:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop: [ALL]
+          ports:
+            - containerPort: 3001
+          resources:
+            # Bumped from 256Mi/200m per I-H1 — Node + Mongoose + Apollo + Sharp
+            # regularly OOMs inside the old envelope.
+            requests:
+              memory: '512Mi'
+              cpu: '500m'
+            limits:
+              memory: '1Gi'
+              cpu: '1000m'
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            # Bumped from 5s per I-M12 — tight timeouts were flapping under CPU load.
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          env:
+            - name: NODE_ENV
+              value: 'production'
+            - name: PORT
+              value: '3001'
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: uri
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: url
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: secret
+            - name: JWT_REFRESH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: refresh-secret
+            # ENCRYPTION_KEY is required in production (see B-C5 fix in
+            # server/src/utils/encryption.ts). Source it from its own secret so a
+            # JWT_SECRET leak does not compromise TCKNs at rest.
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: encryption-secret
+                  key: key
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: uploads
+              mountPath: /app/uploads
+            - name: logs
+              mountPath: /app/logs
       volumes:
-      - name: uploads
-        persistentVolumeClaim:
-          claimName: uploads-pvc
-      - name: logs
-        persistentVolumeClaim:
-          claimName: logs-pvc
+        - name: tmp
+          emptyDir: {}
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: uploads-pvc
+        - name: logs
+          persistentVolumeClaim:
+            claimName: logs-pvc
       imagePullSecrets:
-      - name: ghcr-secret
+        - name: ghcr-secret
 ---
 apiVersion: v1
 kind: Service
@@ -94,7 +123,7 @@ spec:
   selector:
     app: backend
   ports:
-  - port: 3001
-    targetPort: 3001
-    protocol: TCP
+    - port: 3001
+      targetPort: 3001
+      protocol: TCP
   type: ClusterIP

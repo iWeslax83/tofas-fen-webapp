@@ -13,40 +13,69 @@ spec:
       labels:
         app: tofas-frontend
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101 # nginx user in nginx:alpine
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-      - name: frontend
-        image: ghcr.io/your-username/tofas-fen-frontend:latest
-        ports:
-        - containerPort: 80
-        env:
-        - name: VITE_API_URL
-          valueFrom:
-            configMapKeyRef:
-              name: tofas-config
-              key: VITE_API_URL
-        - name: VITE_WS_URL
-          valueFrom:
-            configMapKeyRef:
-              name: tofas-config
-              key: VITE_WS_URL
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 80
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: frontend
+          image: ghcr.io/your-username/tofas-fen-frontend:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: VITE_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tofas-config
+                  key: VITE_API_URL
+            - name: VITE_WS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tofas-config
+                  key: VITE_WS_URL
+          resources:
+            requests:
+              memory: '128Mi'
+              cpu: '100m'
+            limits:
+              memory: '256Mi'
+              cpu: '200m'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 101
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            # Nginx needs writable tmp/cache/run dirs when root FS is read-only.
+            - name: tmp
+              mountPath: /tmp
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
       imagePullSecrets:
-      - name: ghcr-secret
+        - name: ghcr-secret

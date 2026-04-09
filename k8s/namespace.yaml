@@ -4,3 +4,45 @@ metadata:
   name: tofas-fen
   labels:
     name: tofas-fen
+    # Enforces Pod Security "restricted" — blocks runAsRoot, host networking,
+    # unsafe caps, etc. Any Deployment without securityContext will be rejected
+    # at admission time, catching regressions in review instead of prod.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+---
+# I-H19: cap the namespace's aggregate resource consumption so a runaway pod
+# (or misconfigured HPA) can't starve the cluster. Sized for ~3 backend + 2
+# frontend replicas with headroom for 2x during rollouts.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tofas-fen-quota
+  namespace: tofas-fen
+spec:
+  hard:
+    requests.cpu: '4'
+    requests.memory: 8Gi
+    limits.cpu: '8'
+    limits.memory: 16Gi
+    pods: '30'
+    persistentvolumeclaims: '10'
+    services.loadbalancers: '2'
+---
+# Default request/limit for pods that forget to set their own.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: tofas-fen-limits
+  namespace: tofas-fen
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 500m
+        memory: 512Mi
+      defaultRequest:
+        cpu: 100m
+        memory: 128Mi
+      max:
+        cpu: '2'
+        memory: 2Gi
