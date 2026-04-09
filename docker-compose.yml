@@ -55,6 +55,13 @@ services:
       - tofas-network
     volumes:
       - ./logs:/app/logs
+    # I-H16: read-only root FS + no-new-privileges. Writable state lives in
+    # the explicit volumes and tmpfs below.
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ['CMD', 'node', 'dist/health-check.js']
       interval: 30s
@@ -79,6 +86,16 @@ services:
     environment:
       - VITE_API_URL=http://localhost:3001
       - VITE_WS_URL=ws://localhost:3001
+    # I-H16: read-only root FS. Nginx needs writable /tmp (pid), cache, and
+    # runtime dirs — mounted as tmpfs so they live in memory and vanish with
+    # the container.
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+      - /var/cache/nginx:rw,noexec,nosuid,size=64m
+      - /var/run:rw,noexec,nosuid,size=8m
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       # nginx:alpine ships BusyBox wget, not curl
       test: ['CMD', 'wget', '-qO-', 'http://localhost:8080/health']

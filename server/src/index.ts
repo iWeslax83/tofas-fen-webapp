@@ -56,6 +56,11 @@ app.use(morgan('combined', { stream: morganStream }));
 // Cloudflare headers (if behind Cloudflare)
 app.use(cloudflareHeaders);
 
+// B-L3: request ID generation must happen BEFORE any middleware that logs,
+// so WAF blocks, rate-limit rejections, and error responses all carry the
+// same ID that'll correlate across Sentry, Winston, and OpenTelemetry.
+app.use(requestTiming);
+
 // WAF middleware - basic request filtering and IP blocking
 app.use(wafMiddleware);
 
@@ -86,9 +91,6 @@ app.use(
 
 // Compression middleware
 app.use(compression());
-
-// Request timing middleware (tracks request IDs and slow requests)
-app.use(requestTiming);
 
 // Logs directory
 const logsDir = path.join(__dirname, '../logs');
