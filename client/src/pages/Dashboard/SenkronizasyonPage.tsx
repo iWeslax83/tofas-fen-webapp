@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Plus, X, Save, FileSpreadsheet, Link2 } from 'lucide-react';
 import { UserService } from '../../utils/apiService';
@@ -112,26 +112,36 @@ export default function SenkronizasyonPage() {
     }
   }, [user, authLoading, navigate]);
 
-  // Fetch users
+  // Fetch users (F-M7: guard setState against unmount).
+  // UserService.getUsers() doesn't accept an AbortSignal today, so we use a
+  // ref-backed mounted flag instead of AbortController. Same effect, no
+  // "setState on unmounted component" warnings.
+  const isMountedRef = useRef(true);
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error } = await UserService.getUsers();
+      if (!isMountedRef.current) return;
       if (error) {
         setError(error);
       } else {
         setUsers(Array.isArray(data) ? (data as UserType[]) : []);
       }
     } catch (error) {
+      if (!isMountedRef.current) return;
       console.error('Error fetching users:', error);
       setError('Kullanıcılar yüklenirken bir hata oluştu');
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchUsers();
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [fetchUsers]);
 
   // Filtered and searched users

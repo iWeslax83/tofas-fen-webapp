@@ -6,6 +6,11 @@ import { User } from '../types/user';
 import { TokenManager } from '../utils/security';
 import { AxiosResponse } from 'axios';
 
+// F-H7: module-level in-flight lock for the 2FA resend flow. Prevents a
+// double-click from racing two requests where the second one could clobber
+// `twoFactorExpiresAt` with stale server state.
+let resend2FAInFlight: Promise<void> | null = null;
+
 // httpOnly cookies are now used for authentication
 // No need to check token expiration from localStorage
 
@@ -254,11 +259,36 @@ export const useAuthStore = create<AuthStore>()(
 
       updateUser: (userData: Partial<User>) => {
         const currentUser = get().user;
-        if (currentUser) {
-          set({
-            user: { ...currentUser, ...userData },
-          });
-        }
+        if (!currentUser) return;
+        // F-H4: deep-merge plain objects so nested updates like
+        // `updateUser({ preferences: { theme: 'dark' } })` don't blow away
+        // unrelated keys under `preferences`. Arrays are still replaced
+        // wholesale because merging arrays has no single correct semantic.
+        const deepMerge = <T extends Record<string, unknown>>(base: T, patch: Partial<T>): T => {
+          const out: Record<string, unknown> = { ...base };
+          for (const [key, val] of Object.entries(patch)) {
+            const cur = (base as Record<string, unknown>)[key];
+            if (
+              val !== null &&
+              typeof val === 'object' &&
+              !Array.isArray(val) &&
+              cur !== null &&
+              typeof cur === 'object' &&
+              !Array.isArray(cur)
+            ) {
+              out[key] = deepMerge(cur as Record<string, unknown>, val as Record<string, unknown>);
+            } else {
+              out[key] = val;
+            }
+          }
+          return out as T;
+        };
+        set({
+          user: deepMerge(
+            currentUser as unknown as Record<string, unknown>,
+            userData as unknown as Record<string, unknown>,
+          ) as unknown as User,
+        });
       },
 
       verify2FA: async (code: string, rememberDevice: boolean) => {
@@ -318,17 +348,30 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      // #13: Resend 2FA code
+      // #13: Resend 2FA code (F-H7: reuse in-flight promise on concurrent calls)
       resend2FA: async () => {
-        // Session token is in httpOnly cookie, browser sends it automatically
-        const response = await SecureAPI.post<Record<string, unknown>>('/api/auth/resend-2fa', {});
-        const respData = ((response as Record<string, unknown>).data || response) as Record<
-          string,
-          unknown
-        >;
-        set({
-          twoFactorExpiresAt: respData.twoFactorExpiresAt || null,
-        });
+        if (resend2FAInFlight) {
+          return resend2FAInFlight;
+        }
+        resend2FAInFlight = (async () => {
+          try {
+            // Session token is in httpOnly cookie, browser sends it automatically
+            const response = await SecureAPI.post<Record<string, unknown>>(
+              '/api/auth/resend-2fa',
+              {},
+            );
+            const respData = ((response as Record<string, unknown>).data || response) as Record<
+              string,
+              unknown
+            >;
+            set({
+              twoFactorExpiresAt: respData.twoFactorExpiresAt || null,
+            });
+          } finally {
+            resend2FAInFlight = null;
+          }
+        })();
+        return resend2FAInFlight;
       },
 
       cancel2FA: () => {

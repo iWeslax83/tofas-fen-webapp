@@ -31,8 +31,33 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
   };
 }
 
-// API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// API Configuration (F-M13: fail-loud on misbuilt prod images).
+//
+// A silent fallback to http://localhost:3001 is fine for local dev, but if a
+// production build is shipped without VITE_API_URL — or with a plaintext HTTP
+// value — the client will happily talk to the dev server or leak auth cookies
+// over the wire. Detect that at module load so the failure is obvious.
+function resolveApiBaseUrl(): string {
+  const value = import.meta.env.VITE_API_URL;
+  if (import.meta.env.PROD) {
+    if (!value) {
+      throw new Error(
+        'VITE_API_URL must be set at build time in production. ' +
+          'Check your CI build args / Dockerfile ARG.',
+      );
+    }
+    if (!/^https:\/\//i.test(value)) {
+      throw new Error(
+        `VITE_API_URL must use https:// in production (got: ${value}). ` +
+          'Plaintext HTTP would leak auth cookies over the wire.',
+      );
+    }
+    return value;
+  }
+  return value || 'http://localhost:3001';
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 // Create axios instance with security features
 // ⚠️ GÜVENLİK: withCredentials: true - httpOnly cookies için gerekli

@@ -18,11 +18,19 @@ interface User {
 }
 
 /**
- * Hook to handle authentication state and user info
- * @param allowedRoles Array of roles that can access the page
- * @returns Object containing user info and auth methods
+ * Role-guard hook. Redirects to the user's dashboard (or /login) if the
+ * current user's role is not in `allowedRoles`.
+ *
+ * F-M15: this is distinct from the Zustand `useAuth` selector in
+ * `stores/authStore.ts`, which just reads state. Two unrelated hooks with
+ * the same name caused import confusion, so the role-guard version is now
+ * exposed as `useAuthGuard`. The old `useAuth` name is kept as a deprecated
+ * alias so existing pages continue to build.
+ *
+ * @deprecated Import `useAuthGuard` from `../hooks/useAuth` instead, or use
+ *             the selectors from `stores/authStore` for pure state reads.
  */
-export function useAuth(allowedRoles: string[] = []) {
+export function useAuthGuard(allowedRoles: string[] = []) {
   const navigate = useNavigate();
   const { user, isLoading, error, logout: contextLogout } = useAuthContext();
   const [localUser, setLocalUser] = useState<User | null>(null);
@@ -38,7 +46,9 @@ export function useAuth(allowedRoles: string[] = []) {
 
         // If specific roles are required, check them
         if (allowedRoles.length > 0 && user.rol && !allowedRoles.includes(user.rol)) {
-          console.warn(`User role ${user.rol || 'undefined'} not in allowed roles: ${allowedRoles.join(', ')}`);
+          console.warn(
+            `User role ${user.rol || 'undefined'} not in allowed roles: ${allowedRoles.join(', ')}`,
+          );
           navigate(`/${user.rol || 'login'}`, { replace: true });
           return;
         }
@@ -48,7 +58,7 @@ export function useAuth(allowedRoles: string[] = []) {
 
         // Only redirect to login if not already on login page
         if (!window.location.pathname.includes('login')) {
-          navigate("/login", { replace: true });
+          navigate('/login', { replace: true });
         }
       }
       setLocalIsLoading(false);
@@ -71,18 +81,24 @@ export function useAuth(allowedRoles: string[] = []) {
     user: localUser,
     logout,
     isLoading: localIsLoading,
-    error: localError
+    error: localError,
   };
 }
 
 /**
+ * @deprecated Use `useAuthGuard` instead. Kept as an alias to avoid breaking
+ * existing page imports during the rename.
+ */
+export const useAuth = useAuthGuard;
+
+/**
  * Example usage in a page component:
  *
- * import { useAuth } from "../hooks/useAuth";
+ * import { useAuthGuard } from "../hooks/useAuth";
  *
  * export default function SomePage() {
  *   // Only 'admin' and 'teacher' can access
- *   useAuth(["admin", "teacher"]);
+ *   useAuthGuard(["admin", "teacher"]);
  *   return <div>Protected Content</div>;
  * }
  */

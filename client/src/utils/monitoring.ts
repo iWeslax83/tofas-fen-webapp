@@ -29,42 +29,61 @@ export function initializeSentry() {
       tracesSampleRate: 0.1,
       environment: import.meta.env.MODE,
       beforeSend(event) {
-        const sensitiveKeys = [
-          'tckn',
-          'tcknhash',
-          'password',
-          'sifre',
-          'token',
-          'refreshtoken',
-          'secret',
-          'authorization',
-        ];
+        // F-H3: match sensitive keys via regex so variations like `tcknHash`,
+        // `student_tckn`, `refresh_token`, `sifreHash`, `notesPayload` are also
+        // scrubbed. The old exact-lowercase list was leaky.
+        const SENSITIVE_KEY =
+          /(tckn|password|sifre|token|secret|authorization|cookie|session|api[-_]?key|credit|card|cvv|iban)/i;
+        // Any key containing one of these hints likely carries a full request
+        // or response body — redact the whole value.
+        const BODY_LIKE_KEY = /^(body|payload|data|response|request|params|query)$/i;
 
-        function scrubObject(obj: Record<string, any>): Record<string, any> {
-          const cleaned: Record<string, any> = {};
-          for (const [key, value] of Object.entries(obj)) {
-            if (sensitiveKeys.includes(key.toLowerCase())) {
+        function scrub(value: unknown, depth = 0): unknown {
+          if (depth > 6) return '[TRUNCATED]';
+          if (value === null || typeof value !== 'object') return value;
+          if (Array.isArray(value)) return value.map((v) => scrub(v, depth + 1));
+
+          const cleaned: Record<string, unknown> = {};
+          for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+            if (SENSITIVE_KEY.test(key)) {
               cleaned[key] = '[REDACTED]';
-            } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-              cleaned[key] = scrubObject(value);
+            } else if (BODY_LIKE_KEY.test(key)) {
+              // Keep shape info but drop contents.
+              cleaned[key] = '[REDACTED_BODY]';
             } else {
-              cleaned[key] = value;
+              cleaned[key] = scrub(v, depth + 1);
             }
           }
           return cleaned;
         }
 
         if (event.extra) {
-          event.extra = scrubObject(event.extra as Record<string, any>);
+          event.extra = scrub(event.extra) as typeof event.extra;
         }
         if (event.contexts) {
-          event.contexts = scrubObject(event.contexts as Record<string, any>);
+          event.contexts = scrub(event.contexts) as typeof event.contexts;
+        }
+        if (event.request) {
+          // Never send request bodies or cookies to Sentry.
+          delete event.request.data;
+          delete event.request.cookies;
+          if (event.request.headers) {
+            event.request.headers = scrub(event.request.headers) as Record<string, string>;
+          }
         }
         if (event.breadcrumbs) {
           for (const crumb of event.breadcrumbs) {
-            if (crumb.data?.headers) {
-              delete crumb.data.headers.Authorization;
-              delete crumb.data.headers.authorization;
+            if (crumb.data) {
+              // Reject bodies from breadcrumbs entirely — they're the biggest
+              // source of accidental PII leaks because fetch/xhr breadcrumbs
+              // attach request + response bodies by default.
+              crumb.data = scrub(crumb.data) as typeof crumb.data;
+            }
+            if (crumb.message) {
+              // Redact anything that looks like a JWT or 11-digit TCKN.
+              crumb.message = crumb.message
+                .replace(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g, '[REDACTED_JWT]')
+                .replace(/\b\d{11}\b/g, '[REDACTED_TCKN]');
             }
           }
         }
