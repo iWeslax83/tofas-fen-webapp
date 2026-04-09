@@ -11,9 +11,25 @@ import logger from '../utils/logger';
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 5 * 60 * 1000);
 const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS || 500);
 
+/**
+ * B-L4: key rate limits on the authenticated user ID when available, falling
+ * back to IP. On shared-NAT networks (e.g. the school) every student hits
+ * the server from the same egress IP; keying on user ID means one student's
+ * burst doesn't lock out everyone else on the same connection.
+ *
+ * The prefixes keep anon and user buckets separate, so an attacker spamming
+ * the login endpoint anonymously can't exhaust a legitimate user's quota.
+ */
+function keyByUserOrIp(req: express.Request): string {
+  const userId = (req as any).user?.userId;
+  if (userId) return `u:${userId}`;
+  return `ip:${req.ip || 'unknown'}`;
+}
+
 export const generalLimiter = rateLimit({
   windowMs: RATE_LIMIT_WINDOW_MS,
   max: RATE_LIMIT_MAX_REQUESTS,
+  keyGenerator: keyByUserOrIp,
   message: {
     error: 'Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.',
     retryAfter: Math.ceil(RATE_LIMIT_WINDOW_MS / 1000),
@@ -34,6 +50,7 @@ export const generalLimiter = rateLimit({
 export const readOnlyLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 300,
+  keyGenerator: keyByUserOrIp,
   message: {
     error: 'Çok fazla okuma isteği gönderildi. Lütfen biraz bekleyin.',
     retryAfter: 300,
