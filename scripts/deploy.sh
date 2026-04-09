@@ -3,7 +3,8 @@
 # TOFAS FEN Web Application Deployment Script
 # Usage: ./scripts/deploy.sh [command]
 
-set -e
+# Strict mode (I-H13): fail on any error, undefined variable, or failed pipe.
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -156,36 +157,64 @@ show_logs() {
 
 backup_data() {
     log_info "Creating database backup..."
-    
+
     BACKUP_DIR="./backups"
     BACKUP_FILE="backup_$(date +%Y%m%d_%H%M%S).tar.gz"
-    
-    mkdir -p $BACKUP_DIR
-    
-    # Create MongoDB backup
-    docker-compose -f $DOCKER_COMPOSE_FILE exec -T mongodb mongodump --archive --gzip > "$BACKUP_DIR/$BACKUP_FILE"
-    
+
+    mkdir -p "$BACKUP_DIR"
+
+    # I-H15: previously this command's exit code was ignored because mongodump
+    # ran inside a redirection (the redirection itself always succeeds even if
+    # the command fails). Capture the pipe exit status explicitly.
+    if ! docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T mongodb \
+            mongodump --archive --gzip > "$BACKUP_DIR/$BACKUP_FILE"; then
+        log_error "mongodump failed — backup not created"
+        rm -f "$BACKUP_DIR/$BACKUP_FILE"
+        exit 1
+    fi
+
+    # Refuse to treat an empty file as a valid backup.
+    if [ ! -s "$BACKUP_DIR/$BACKUP_FILE" ]; then
+        log_error "Backup file is empty; mongodump likely failed silently"
+        rm -f "$BACKUP_DIR/$BACKUP_FILE"
+        exit 1
+    fi
+
     log_success "Backup created: $BACKUP_DIR/$BACKUP_FILE"
 }
 
 restore_data() {
-    if [ -z "$2" ]; then
+    local backup_file="${2:-}"
+
+    if [ -z "$backup_file" ]; then
         log_error "Please provide backup file path"
         exit 1
     fi
-    
-    BACKUP_FILE=$2
-    
-    if [ ! -f "$BACKUP_FILE" ]; then
-        log_error "Backup file not found: $BACKUP_FILE"
+
+    if [ ! -f "$backup_file" ]; then
+        log_error "Backup file not found: $backup_file"
         exit 1
     fi
-    
-    log_info "Restoring from backup: $BACKUP_FILE"
-    
-    # Restore MongoDB backup
-    docker-compose -f $DOCKER_COMPOSE_FILE exec -T mongodb mongorestore --archive --gzip < "$BACKUP_FILE"
-    
+
+    # I-H14: destructive action — require an explicit typed confirmation before
+    # overwriting the database. Skip with FORCE=1 for automation.
+    if [ "${FORCE:-0}" != "1" ]; then
+        log_warning "This will OVERWRITE the current database with: $backup_file"
+        read -r -p "Type 'yes' to continue: " confirm
+        if [ "$confirm" != "yes" ]; then
+            log_info "Restore cancelled"
+            exit 0
+        fi
+    fi
+
+    log_info "Restoring from backup: $backup_file"
+
+    if ! docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T mongodb \
+            mongorestore --archive --gzip --drop < "$backup_file"; then
+        log_error "mongorestore failed"
+        exit 1
+    fi
+
     log_success "Data restored successfully"
 }
 
@@ -201,8 +230,8 @@ cleanup() {
     log_success "Cleanup completed"
 }
 
-# Main script logic
-case "$1" in
+# Main script logic (set -u requires the default branch)
+case "${1:-}" in
     "build")
         check_dependencies
         build_images
