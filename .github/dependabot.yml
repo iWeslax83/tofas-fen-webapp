@@ -1,0 +1,132 @@
+# Dependabot configuration
+#
+# I-H17: supply-chain hardening for GitHub Actions and npm dependencies.
+#
+# Pinning every action to a commit SHA manually solves yesterday's problem
+# (a maintainer silently re-tagging @v3 to a malicious commit) but creates
+# tomorrow's: the SHA goes stale and nobody updates it. Dependabot is the
+# right answer — it opens a PR whenever a tracked action or package gets a
+# new release, so pinning to SHAs stays maintainable.
+#
+# If you'd rather pin by SHA right now, run:
+#   gh api repos/<owner>/<repo>/commits/HEAD --jq .sha
+# for each action referenced in .github/workflows/*.yml and replace the
+# @vX tags.
+
+version: 2
+updates:
+  # GitHub Actions — keep the actions/{checkout, setup-node, etc} current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Istanbul
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(actions)'
+    labels:
+      - dependencies
+      - github-actions
+    # Group patch + minor bumps to avoid PR noise.
+    groups:
+      actions:
+        patterns: ['*']
+        update-types: [minor, patch]
+
+  # Root npm workspace
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Istanbul
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: 'chore(deps)'
+    labels:
+      - dependencies
+      - npm
+    groups:
+      # Dev tooling rarely needs a blocking review.
+      dev-deps:
+        dependency-type: development
+        update-types: [minor, patch]
+      # Security + typing: treat individually so advisories stay visible.
+      types:
+        patterns: ['@types/*']
+    # Ignore major bumps for runtime deps — opt into those manually.
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
+
+  # Server workspace
+  - package-ecosystem: npm
+    directory: /server
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Istanbul
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: 'chore(server-deps)'
+    labels:
+      - dependencies
+      - npm
+      - server
+    groups:
+      dev-deps:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
+
+  # Client workspace
+  - package-ecosystem: npm
+    directory: /client
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Istanbul
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: 'chore(client-deps)'
+    labels:
+      - dependencies
+      - npm
+      - client
+    groups:
+      dev-deps:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
+
+  # Docker base images (server + client Dockerfiles)
+  - package-ecosystem: docker
+    directory: /server
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: 'chore(docker)'
+    labels:
+      - dependencies
+      - docker
+
+  - package-ecosystem: docker
+    directory: /client
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: 'chore(docker)'
+    labels:
+      - dependencies
+      - docker
