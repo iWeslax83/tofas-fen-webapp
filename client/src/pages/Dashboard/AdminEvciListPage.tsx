@@ -1,10 +1,29 @@
 // src/pages/AdminEvciListPage.tsx
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { EvciService, UserService } from "../../utils/apiService";
-import { toast } from "sonner";
-import { Home, Plus, Trash2, Calendar, MapPin, User, Filter, Shield, Download, CheckSquare, XCircle, AlertCircle, BarChart3, ChevronLeft, ChevronRight, Check, X, Settings2 } from "lucide-react";
-import { useAuth } from "../../hooks/useAuth";
+import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { EvciService, UserService } from '../../utils/apiService';
+import { toast } from 'sonner';
+import {
+  Home,
+  Plus,
+  Trash2,
+  Calendar,
+  MapPin,
+  User,
+  Filter,
+  Shield,
+  Download,
+  CheckSquare,
+  XCircle,
+  AlertCircle,
+  BarChart3,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  X,
+  Settings2,
+} from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 
 import './AdminEvciListPage.css';
@@ -46,14 +65,14 @@ function getParentApprovalBadge(approval?: string) {
 }
 
 export default function AdminEvciListPage() {
-  const { user: authUser } = useAuth(["admin", "teacher"]);
+  const { user: authUser } = useAuth(['admin', 'teacher']);
   const [requests, setRequests] = useState<EvciTalep[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [newReq, setNewReq] = useState<Partial<EvciTalep>>({ willGo: true });
-  const [filterClass, setFilterClass] = useState<string>("All");
-  const [filterRoom, setFilterRoom] = useState<string>("All");
-  const [filterParentApproval, setFilterParentApproval] = useState<string>("All");
+  const [filterClass, setFilterClass] = useState<string>('All');
+  const [filterRoom, setFilterRoom] = useState<string>('All');
+  const [filterParentApproval, setFilterParentApproval] = useState<string>('All');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -67,41 +86,57 @@ export default function AdminEvciListPage() {
   const [overrideIsOpen, setOverrideIsOpen] = useState(true);
   const [overrideReason, setOverrideReason] = useState('');
 
-  useEffect(() => {
-    if (authUser) {
-      fetchData(1);
-    }
-  }, [authUser]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (authUser && page > 1) {
-      fetchData(page);
-    }
-  }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const fetchData = async (currentPage = page) => {
+  // F-M3/F-M4: previously two useEffects with exhaustive-deps disabled
+  // called fetchData at the same time with stale closures. Consolidated into
+  // one effect with a stable useCallback that tracks both authUser and page.
+  // Validates the server response shape explicitly instead of optimistic
+  // `as any` casts.
+  const fetchData = useCallback(async (currentPage: number) => {
     try {
       setIsLoading(true);
-      const { data: requestsData, error: requestsError } = await EvciService.getEvciRequests(currentPage, 50);
+      const { data: requestsData, error: requestsError } = await EvciService.getEvciRequests(
+        currentPage,
+        50,
+      );
+
       if (requestsError) {
         console.error('Error fetching evci requests:', requestsError);
+        toast.error('Talepler yüklenirken hata oluştu');
       } else {
-        const resp = requestsData as any;
-        if (resp?.requests) {
-          setRequests(resp.requests as EvciTalep[]);
-          setTotalPages(resp.pagination?.totalPages || 1);
-          setTotalCount(resp.pagination?.total || 0);
+        // Runtime shape check — accept either the paginated object
+        // { requests, pagination } or a raw array for backwards
+        // compatibility, and ignore anything else.
+        const resp = requestsData as unknown;
+        if (
+          resp &&
+          typeof resp === 'object' &&
+          'requests' in resp &&
+          Array.isArray((resp as { requests: unknown }).requests)
+        ) {
+          const typed = resp as {
+            requests: EvciTalep[];
+            pagination?: { totalPages?: number; total?: number };
+          };
+          setRequests(typed.requests);
+          setTotalPages(typed.pagination?.totalPages ?? 1);
+          setTotalCount(typed.pagination?.total ?? typed.requests.length);
+        } else if (Array.isArray(resp)) {
+          setRequests(resp as EvciTalep[]);
+          setTotalPages(1);
+          setTotalCount(resp.length);
         } else {
-          // Backward compatibility if server returns array
-          setRequests((Array.isArray(resp) ? resp : []) as EvciTalep[]);
+          setRequests([]);
+          setTotalPages(1);
+          setTotalCount(0);
         }
       }
 
-      const { data: studentsData, error: studentsError } = await UserService.getUsersByRole('student');
+      const { data: studentsData, error: studentsError } =
+        await UserService.getUsersByRole('student');
       if (studentsError) {
         console.error('Error fetching students:', studentsError);
       } else {
-        setStudents((studentsData as Student[]) || []);
+        setStudents(Array.isArray(studentsData) ? (studentsData as Student[]) : []);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -109,7 +144,11 @@ export default function AdminEvciListPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (authUser) fetchData(page);
+  }, [authUser, page, fetchData]);
 
   const saveNew = async () => {
     if (
@@ -118,7 +157,7 @@ export default function AdminEvciListPage() {
       newReq.startDate &&
       newReq.endDate &&
       newReq.destination &&
-      typeof newReq.willGo === "boolean"
+      typeof newReq.willGo === 'boolean'
     ) {
       setIsSubmitting(true);
       try {
@@ -134,7 +173,7 @@ export default function AdminEvciListPage() {
           toast.error(error);
         } else {
           toast.success('Evci talebi başarıyla eklendi');
-          await fetchData();
+          await fetchData(page);
           setShowForm(false);
           setNewReq({ willGo: true });
         }
@@ -150,7 +189,7 @@ export default function AdminEvciListPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Bu talebi silmek istediğinize emin misiniz?")) {
+    if (window.confirm('Bu talebi silmek istediğinize emin misiniz?')) {
       try {
         const { error } = await EvciService.deleteEvciRequest(id);
 
@@ -158,7 +197,11 @@ export default function AdminEvciListPage() {
           toast.error(error);
         } else {
           setRequests((reqs) => reqs.filter((r) => r._id !== id));
-          setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+          setSelectedIds((prev) => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          });
           toast.success('Evci talebi başarıyla silindi');
         }
       } catch (error) {
@@ -169,7 +212,7 @@ export default function AdminEvciListPage() {
   };
 
   const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -181,23 +224,27 @@ export default function AdminEvciListPage() {
     if (selectedIds.size === filteredRequests.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredRequests.map(r => r._id)));
+      setSelectedIds(new Set(filteredRequests.map((r) => r._id)));
     }
   };
 
   const handleBulkAction = async (status: 'approved' | 'rejected') => {
     if (selectedIds.size === 0) return;
     const label = status === 'approved' ? 'onaylamak' : 'reddetmek';
-    if (!window.confirm(`Seçili ${selectedIds.size} talebi ${label} istediğinize emin misiniz?`)) return;
+    if (!window.confirm(`Seçili ${selectedIds.size} talebi ${label} istediğinize emin misiniz?`))
+      return;
 
     try {
-      const { error } = await EvciService.bulkUpdateStatus(Array.from(selectedIds), status) as any;
+      const { error } = (await EvciService.bulkUpdateStatus(
+        Array.from(selectedIds),
+        status,
+      )) as any;
       if (error) {
         toast.error(error);
       } else {
         toast.success(`${selectedIds.size} talep başarıyla güncellendi`);
         setSelectedIds(new Set());
-        await fetchData();
+        await fetchData(page);
       }
     } catch (error) {
       console.error('Error bulk updating:', error);
@@ -210,7 +257,10 @@ export default function AdminEvciListPage() {
     try {
       const response = await EvciService.exportEvciRequests(format);
       const blob = new Blob([response.data], {
-        type: format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        type:
+          format === 'pdf'
+            ? 'application/pdf'
+            : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -249,7 +299,11 @@ export default function AdminEvciListPage() {
       return;
     }
     try {
-      const { error } = await EvciService.setWindowOverride(overrideWeekOf, overrideIsOpen, overrideReason) as any;
+      const { error } = (await EvciService.setWindowOverride(
+        overrideWeekOf,
+        overrideIsOpen,
+        overrideReason,
+      )) as any;
       if (error) {
         toast.error(error);
       } else {
@@ -265,9 +319,7 @@ export default function AdminEvciListPage() {
 
   const classes = Array.from(
     new Set(
-      requests
-        .map((r) => students.find((s) => s.id === r.studentId)?.sinif || "")
-        .filter(Boolean),
+      requests.map((r) => students.find((s) => s.id === r.studentId)?.sinif || '').filter(Boolean),
     ),
   );
 
@@ -276,7 +328,7 @@ export default function AdminEvciListPage() {
       requests
         .map((r) => {
           const st = students.find((s) => s.id === r.studentId);
-          return st?.pansiyon ? String(st.oda) : "";
+          return st?.pansiyon ? String(st.oda) : '';
         })
         .filter(Boolean),
     ),
@@ -285,9 +337,10 @@ export default function AdminEvciListPage() {
   const filteredRequests = requests.filter((r) => {
     const st = students.find((s) => s.id === r.studentId);
     if (!st) return false;
-    if (filterClass !== "All" && st.sinif !== filterClass) return false;
-    if (filterRoom !== "All" && String(st.oda) !== filterRoom) return false;
-    if (filterParentApproval !== "All" && (r.parentApproval || 'pending') !== filterParentApproval) return false;
+    if (filterClass !== 'All' && st.sinif !== filterClass) return false;
+    if (filterRoom !== 'All' && String(st.oda) !== filterRoom) return false;
+    if (filterParentApproval !== 'All' && (r.parentApproval || 'pending') !== filterParentApproval)
+      return false;
     return true;
   });
 
@@ -298,7 +351,7 @@ export default function AdminEvciListPage() {
 
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${authUser?.rol || 'admin'}` },
-    { label: 'Evci Talepleri Yönetimi' }
+    { label: 'Evci Talepleri Yönetimi' },
   ];
 
   if (isLoading) {
@@ -317,7 +370,6 @@ export default function AdminEvciListPage() {
   return (
     <ModernDashboardLayout pageTitle="Evci Talepleri Yönetimi" breadcrumb={breadcrumb}>
       <div className="admin-evci-page">
-
         <div className="page-header">
           <div className="page-header-content">
             <div className="page-title-section">
@@ -325,7 +377,10 @@ export default function AdminEvciListPage() {
               <h1 className="page-title-main">Evci Talepleri Yönetimi</h1>
             </div>
             <div className="page-header-actions">
-              <Link to={`/${authUser?.rol || 'admin'}/evci-istatistik`} className="btn btn-secondary">
+              <Link
+                to={`/${authUser?.rol || 'admin'}/evci-istatistik`}
+                className="btn btn-secondary"
+              >
                 <BarChart3 size={18} />
                 İstatistikler
               </Link>
@@ -352,10 +407,7 @@ export default function AdminEvciListPage() {
                   </div>
                 )}
               </div>
-              <button
-                onClick={() => setShowForm(!showForm)}
-                className="btn btn-primary"
-              >
+              <button onClick={() => setShowForm(!showForm)} className="btn btn-primary">
                 <Plus size={18} />
                 {showForm ? 'Formu Gizle' : 'Evci Ekle'}
               </button>
@@ -418,8 +470,12 @@ export default function AdminEvciListPage() {
                 />
               </div>
               <div className="override-actions">
-                <button onClick={() => setShowOverride(false)} className="btn btn-secondary">İptal</button>
-                <button onClick={handleWindowOverride} className="btn btn-primary">Kaydet</button>
+                <button onClick={() => setShowOverride(false)} className="btn btn-secondary">
+                  İptal
+                </button>
+                <button onClick={handleWindowOverride} className="btn btn-primary">
+                  Kaydet
+                </button>
               </div>
             </div>
           </div>
@@ -436,7 +492,9 @@ export default function AdminEvciListPage() {
             >
               <option value="All">Tüm Sınıflar</option>
               {classes.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
             </select>
           </div>
@@ -451,7 +509,9 @@ export default function AdminEvciListPage() {
             >
               <option value="All">Tüm Odalar</option>
               {rooms.map((r) => (
-                <option key={r} value={r}>{r}</option>
+                <option key={r} value={r}>
+                  {r}
+                </option>
               ))}
             </select>
           </div>
@@ -534,8 +594,8 @@ export default function AdminEvciListPage() {
               <div className="form-group">
                 <label className="form-label">Durum</label>
                 <select
-                  value={newReq.willGo ? "true" : "false"}
-                  onChange={(e) => setNewReq({ ...newReq, willGo: e.target.value === "true" })}
+                  value={newReq.willGo ? 'true' : 'false'}
+                  onChange={(e) => setNewReq({ ...newReq, willGo: e.target.value === 'true' })}
                   className="form-control"
                 >
                   <option value="true">Evci GİDECEK</option>
@@ -545,12 +605,10 @@ export default function AdminEvciListPage() {
             </div>
 
             <div className="form-actions">
-              <button onClick={resetForm} className="btn btn-secondary">İptal</button>
-              <button
-                onClick={saveNew}
-                disabled={isSubmitting}
-                className="btn btn-primary"
-              >
+              <button onClick={resetForm} className="btn btn-secondary">
+                İptal
+              </button>
+              <button onClick={saveNew} disabled={isSubmitting} className="btn btn-primary">
                 {isSubmitting ? 'Kaydediliyor...' : 'Kaydet'}
               </button>
             </div>
@@ -571,7 +629,9 @@ export default function AdminEvciListPage() {
                   <label className="checkbox-label">
                     <input
                       type="checkbox"
-                      checked={selectedIds.size === filteredRequests.length && filteredRequests.length > 0}
+                      checked={
+                        selectedIds.size === filteredRequests.length && filteredRequests.length > 0
+                      }
                       onChange={toggleSelectAll}
                     />
                     <span>Tümünü Seç ({filteredRequests.length})</span>
@@ -583,7 +643,10 @@ export default function AdminEvciListPage() {
                   const st = students.find((s) => s.id === r.studentId);
                   const pBadge = getParentApprovalBadge(r.parentApproval);
                   return (
-                    <div key={r._id} className={`request-card ${selectedIds.has(r._id) ? 'selected' : ''}`}>
+                    <div
+                      key={r._id}
+                      className={`request-card ${selectedIds.has(r._id) ? 'selected' : ''}`}
+                    >
                       <div className="card-header">
                         <label className="card-checkbox">
                           <input
@@ -604,7 +667,7 @@ export default function AdminEvciListPage() {
                         </button>
                       </div>
                       <div className="card-content">
-                        <h3 className="card-title">{r.studentName || st?.adSoyad || "-"}</h3>
+                        <h3 className="card-title">{r.studentName || st?.adSoyad || '-'}</h3>
                         <div className="request-info">
                           <div className="info-item">
                             <User className="info-icon" />
@@ -614,32 +677,38 @@ export default function AdminEvciListPage() {
                           <div className="info-item">
                             <Calendar className="info-icon" />
                             <span className="info-label">Sınıf:</span>
-                            <span className="info-value">{st?.sinif ? `${String(st.sinif)}${st.sube ? String(st.sube) : ''}` : "-"}</span>
+                            <span className="info-value">
+                              {st?.sinif
+                                ? `${String(st.sinif)}${st.sube ? String(st.sube) : ''}`
+                                : '-'}
+                            </span>
                           </div>
                           <div className="info-item">
                             <MapPin className="info-icon" />
                             <span className="info-label">Oda:</span>
-                            <span className="info-value">{st?.pansiyon ? st.oda : "-"}</span>
+                            <span className="info-value">{st?.pansiyon ? st.oda : '-'}</span>
                           </div>
                           <div className="info-item">
                             <Calendar className="info-icon" />
                             <span className="info-label">Başlangıç:</span>
-                            <span className="info-value">{r.startDate || "-"}</span>
+                            <span className="info-value">{r.startDate || '-'}</span>
                           </div>
                           <div className="info-item">
                             <Calendar className="info-icon" />
                             <span className="info-label">Bitiş:</span>
-                            <span className="info-value">{r.endDate || "-"}</span>
+                            <span className="info-value">{r.endDate || '-'}</span>
                           </div>
                           <div className="info-item">
                             <MapPin className="info-icon" />
                             <span className="info-label">Yer:</span>
-                            <span className="info-value">{r.destination || "-"}</span>
+                            <span className="info-value">{r.destination || '-'}</span>
                           </div>
                           <div className="info-item">
                             <Calendar className="info-icon" />
                             <span className="info-label">Talep Tarihi:</span>
-                            <span className="info-value">{new Date(r.createdAt).toLocaleString('tr-TR')}</span>
+                            <span className="info-value">
+                              {new Date(r.createdAt).toLocaleString('tr-TR')}
+                            </span>
                           </div>
                           {r.parentApproval === 'rejected' && r.rejectionReason && (
                             <div className="info-item rejection-reason">
@@ -651,7 +720,7 @@ export default function AdminEvciListPage() {
                         </div>
                         <div className="status-badge-container">
                           <span className={`status-badge ${r.willGo ? 'going' : 'not-going'}`}>
-                            {r.willGo ? "Evci gidecek" : "Evci gitmeyecek"}
+                            {r.willGo ? 'Evci gidecek' : 'Evci gitmeyecek'}
                           </span>
                           <span className={`parent-approval-badge ${pBadge.className}`}>
                             <Shield size={14} /> {pBadge.text}
@@ -692,7 +761,7 @@ export default function AdminEvciListPage() {
           {totalPages > 1 && (
             <div className="pagination-controls">
               <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
                 className="btn btn-secondary btn-sm"
               >
@@ -702,7 +771,7 @@ export default function AdminEvciListPage() {
                 Sayfa {page} / {totalPages} ({totalCount} talep)
               </span>
               <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
                 className="btn btn-secondary btn-sm"
               >
