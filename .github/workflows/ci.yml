@@ -2,21 +2,37 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   secret-scan:
     name: Secret scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history so secret scanners can walk commits.
+          fetch-depth: 0
+
       - name: Run gitleaks scan
         uses: zricethezav/gitleaks-action@v1
         with:
           args: --redact
+
+      # I-M6: TruffleHog cross-checks with a different ruleset and catches
+      # high-entropy strings that Gitleaks' regex-only approach misses.
+      - name: Run TruffleHog scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
+          head: ${{ github.event.pull_request.head.sha || github.sha }}
+          extra_args: --only-verified
 
   build:
     name: Lint / Typecheck / Test / Build
