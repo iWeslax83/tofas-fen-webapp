@@ -81,7 +81,7 @@
     "pdfkit": "^0.17.2",
     "rate-limit-redis": "^4.3.1",
     "redis": "^4.6.8",
-    "sharp": "^0.34.3",
+    "sharp": "^0.34.5",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0",
