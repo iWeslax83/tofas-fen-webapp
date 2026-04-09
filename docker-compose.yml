@@ -35,6 +35,9 @@ services:
       MONGODB_URI: mongodb://admin:${MONGO_PASSWORD:?MONGO_PASSWORD environment variable is required}@mongodb:27017/tofas-fen?authSource=admin
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET environment variable is required}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET environment variable is required}
+      # B-C5: backend throws at startup in production if ENCRYPTION_KEY is
+      # missing. Must be a dedicated 64-char hex value, not the JWT secret.
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY environment variable is required}
       PORT: 3001
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
