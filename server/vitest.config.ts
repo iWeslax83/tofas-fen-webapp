@@ -69,9 +69,13 @@ export default defineConfig({
       '@services': path.resolve(__dirname, './src/services')
     },
   },
+  // Note: esbuild `define` statically rewrites `process.env.X` in source at
+  // build time, so these values override any shell env var. Use 127.0.0.1
+  // explicitly because `localhost` resolves to ::1 first on modern Node and
+  // mongo running in Docker/podman typically binds IPv4 only.
   define: {
     'process.env.NODE_ENV': '"test"',
-    'process.env.MONGODB_URI': '"mongodb://localhost:27017/test-db"',
+    'process.env.MONGODB_URI': '"mongodb://127.0.0.1:27017/test-db"',
     'process.env.JWT_SECRET': '"test-jwt-secret"',
     'process.env.JWT_REFRESH_SECRET': '"test-refresh-secret"'
   }
