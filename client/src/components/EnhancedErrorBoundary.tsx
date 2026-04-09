@@ -1,5 +1,14 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home, Wifi, Shield, Server, Bug, HelpCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  RefreshCw,
+  Home,
+  Wifi,
+  Shield,
+  Server,
+  Bug,
+  HelpCircle,
+} from 'lucide-react';
 import { AppError, ErrorType, ErrorSeverity, errorHandler } from '../utils/errorHandling';
 import { ultraSafeErrorLog } from '../utils/safeLogger';
 import './EnhancedErrorBoundary.css';
@@ -24,35 +33,35 @@ class EnhancedErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
-      isRetrying: false
+      isRetrying: false,
     };
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     // Convert regular error to AppError
     const appError = errorHandler.categorizeError(error, {
-      component: 'ErrorBoundary'
+      component: 'ErrorBoundary',
     });
-    
+
     return {
       hasError: true,
       error: appError,
-      errorInfo: null
+      errorInfo: null,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     ultraSafeErrorLog('EnhancedErrorBoundary caught an error:', error?.message || 'Unknown error');
     ultraSafeErrorLog('Component stack:', errorInfo?.componentStack || 'No stack trace');
-    
+
     // Convert to AppError and handle
     const appError = errorHandler.categorizeError(error, {
-      component: 'ErrorBoundary'
+      component: 'ErrorBoundary',
     });
-    
+
     this.setState({
       error: appError,
-      errorInfo
+      errorInfo,
     });
 
     // Call onError callback if provided
@@ -63,22 +72,22 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     // Handle error through error handler
     errorHandler.handleError(error, {
       component: 'ErrorBoundary',
-      action: 'componentDidCatch'
+      action: 'componentDidCatch',
     });
   }
 
   handleRetry = async () => {
     this.setState({ isRetrying: true });
-    
+
     try {
       // Wait a bit before retry
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       this.setState({
         hasError: false,
         error: null,
         errorInfo: null,
-        isRetrying: false
+        isRetrying: false,
       });
     } catch {
       this.setState({ isRetrying: false });
@@ -110,7 +119,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
 
   getErrorColor = (error: AppError) => {
     // Get severity from error context or default to medium
-    const severity = (error.context as any)?.severity || ErrorSeverity.MEDIUM;
+    const severity = error.severity || ErrorSeverity.MEDIUM;
     switch (severity) {
       case ErrorSeverity.LOW:
         return 'var(--error-low)';
@@ -127,7 +136,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
 
   getRecoveryActions = (error: AppError) => {
     const actions = [];
-    const severity = (error.context as any)?.severity || ErrorSeverity.MEDIUM;
+    const severity = error.severity || ErrorSeverity.MEDIUM;
 
     // Always show retry for non-critical errors
     if (severity !== ErrorSeverity.CRITICAL) {
@@ -135,7 +144,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
         label: 'Tekrar Dene',
         icon: <RefreshCw size={16} />,
         action: this.handleRetry,
-        primary: true
+        primary: true,
       });
     }
 
@@ -145,7 +154,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
         label: 'Sayfayı Yenile',
         icon: <RefreshCw size={16} />,
         action: this.handleRefresh,
-        primary: false
+        primary: false,
       });
     }
 
@@ -155,7 +164,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
         label: 'Ana Sayfaya Dön',
         icon: <Home size={16} />,
         action: this.handleGoHome,
-        primary: false
+        primary: false,
       });
     }
 
@@ -173,7 +182,10 @@ class EnhancedErrorBoundary extends Component<Props, State> {
       const recoverySuggestion = errorHandler.getRecoverySuggestion(error);
 
       return (
-        <div className="enhanced-error-boundary" style={{ '--error-color': this.getErrorColor(error) } as React.CSSProperties}>
+        <div
+          className="enhanced-error-boundary"
+          style={{ '--error-color': this.getErrorColor(error) } as React.CSSProperties}
+        >
           <div className="error-container">
             <div className="error-header">
               {this.getErrorIcon(error)}
@@ -189,7 +201,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
                 </div>
                 <div className="error-severity">
                   <span className="error-label">Önem:</span>
-                  <span className="error-value">{(error.context as any)?.severity || ErrorSeverity.MEDIUM}</span>
+                  <span className="error-value">{error.severity || ErrorSeverity.MEDIUM}</span>
                 </div>
                 {recoverySuggestion && (
                   <div className="error-recovery">
@@ -230,7 +242,9 @@ class EnhancedErrorBoundary extends Component<Props, State> {
 
             <div className="error-help">
               <HelpCircle size={16} />
-              <span>Yardıma mı ihtiyacınız var? <a href="/help">Yardım Merkezi</a>'ni ziyaret edin.</span>
+              <span>
+                Yardıma mı ihtiyacınız var? <a href="/help">Yardım Merkezi</a>'ni ziyaret edin.
+              </span>
             </div>
           </div>
         </div>
