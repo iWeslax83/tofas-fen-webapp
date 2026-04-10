@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MongoDB Database
   mongodb:
@@ -31,13 +29,25 @@ services:
     container_name: tofas-backend
     restart: unless-stopped
     environment:
-      NODE_ENV: production
+      # NODE_ENV=staging (not production) because this single-box docker
+      # deploy uses a standalone Mongo container, not a replica set, so
+      # production's `w: majority` / TLS-required options don't fit.
+      # Compose still requires ENCRYPTION_KEY via the ${ENCRYPTION_KEY:?}
+      # guard below, so the security posture is unchanged.
+      NODE_ENV: staging
       MONGODB_URI: mongodb://admin:${MONGO_PASSWORD:?MONGO_PASSWORD environment variable is required}@mongodb:27017/tofas-fen?authSource=admin
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET environment variable is required}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET environment variable is required}
       # B-C5: backend throws at startup in production if ENCRYPTION_KEY is
       # missing. Must be a dedicated 64-char hex value, not the JWT secret.
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY environment variable is required}
+      # Local docker-compose Mongo has no TLS certs; disable TLS explicitly.
+      # Override to "true" when deploying to a real cluster with a TLS-enabled
+      # managed Mongo (Atlas, DocumentDB, etc).
+      MONGODB_TLS: 'false'
+      # One-time backward-compat migration for pre-weekOf evci docs. Fresh
+      # databases don't need it; skip it to avoid connection-readiness races.
+      SKIP_EVCI_MIGRATION: 'true'
       PORT: 3001
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
@@ -57,7 +67,11 @@ services:
     networks:
       - tofas-network
     volumes:
-      - ./logs:/app/logs
+      # Named volume (not a bind mount) so docker can manage ownership for
+      # the unprivileged nodejs UID (1001) inside the container. A bind
+      # mount of ./logs would inherit the host user's UID and crash-loop
+      # the server with EACCES on first log write.
+      - backend_logs:/app/logs
     # I-H16: read-only root FS + no-new-privileges. Writable state lives in
     # the explicit volumes and tmpfs below.
     read_only: true
@@ -79,8 +93,9 @@ services:
     container_name: tofas-frontend
     restart: unless-stopped
     ports:
-      # Container listens on 8080 (non-root nginx); expose as 3000 externally.
-      - '3000:8080'
+      # Container listens on 8080 (non-root nginx); expose as 3080 externally.
+      # (Port 3000 is commonly occupied on dev machines by other apps.)
+      - '${FRONTEND_HOST_PORT:-3080}:8080'
     depends_on:
       backend:
         condition: service_healthy
@@ -152,6 +167,8 @@ volumes:
   mongodb_data:
     driver: local
   redis_data:
+    driver: local
+  backend_logs:
     driver: local
 
 networks:

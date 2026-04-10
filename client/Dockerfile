@@ -1,23 +1,27 @@
-# Multi-stage build for production
-FROM node:18-alpine AS base
+# Multi-stage build for production.
+#
+# Builder stage uses node:18-slim (Debian/glibc) instead of alpine (musl) so
+# Tailwind's @tailwindcss/oxide native binding — which ships only glibc
+# binaries — can load. The production stage is still nginx:alpine (it only
+# serves pre-built static files, no native deps needed).
+FROM node:18-slim AS base
 
-# Install dependencies only when needed
+# Install dependencies only when needed.
+# We copy only package.json (NOT package-lock.json) and run `npm install`
+# so npm re-resolves optional platform-specific deps (notably
+# @tailwindcss/oxide's native binding) for the container's libc instead of
+# inheriting whatever the host build machine wrote into the lock. This is
+# the documented workaround for https://github.com/npm/cli/issues/4828.
 FROM base AS deps
 WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm ci
+COPY package.json ./
+RUN npm install --no-audit
 
 # Build stage
 FROM base AS builder
 WORKDIR /app
-
-# Copy package files and install all dependencies
-COPY package*.json ./
-RUN npm ci
+COPY package.json ./
+RUN npm install --no-audit
 
 # Copy source code
 COPY . .
