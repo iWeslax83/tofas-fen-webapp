@@ -21,7 +21,13 @@ const dbConfig: mongoose.ConnectOptions = {
   readPreference: 'primary',
   readConcern: { level: 'local' as const },
   monitorCommands: process.env.NODE_ENV === 'development',
-  tls: process.env.NODE_ENV === 'production',
+  // MongoDB TLS is controlled by MONGODB_TLS env var. It defaults to ON in
+  // production and OFF in dev/staging. Set MONGODB_TLS=false to explicitly
+  // disable (e.g. a single-box docker-compose deploy where the mongo
+  // container has no certs), or MONGODB_TLS=true to enable in non-prod.
+  tls:
+    process.env.MONGODB_TLS === 'true' ||
+    (process.env.MONGODB_TLS !== 'false' && process.env.NODE_ENV === 'production'),
   tlsAllowInvalidCertificates: process.env.NODE_ENV !== 'production',
   ...(process.env.NODE_ENV === 'production' && {
     authSource: process.env.MONGODB_AUTH_SOURCE || 'admin',

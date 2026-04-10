@@ -27,7 +27,7 @@ export interface IEvciRequest extends Document {
 export function getWeekMonday(d: Date): string {
   const date = new Date(d);
   const day = date.getDay(); // 0=Pazar, 1=Pazartesi, ...
-  const diff = (day === 0 ? 6 : day - 1); // Pazartesiye olan fark
+  const diff = day === 0 ? 6 : day - 1; // Pazartesiye olan fark
   date.setDate(date.getDate() - diff);
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -35,33 +35,36 @@ export function getWeekMonday(d: Date): string {
   return `${year}-${month}-${dayStr}`;
 }
 
-const evciRequestSchema = new Schema<IEvciRequest>({
-  studentId: { type: String, required: true },
-  studentName: { type: String },
-  willGo: { type: Boolean, required: true, default: true },
-  startDate: { type: String, required: false },
-  endDate: { type: String, required: false },
-  destination: { type: String, required: false },
-  status: {
-    type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending'
+const evciRequestSchema = new Schema<IEvciRequest>(
+  {
+    studentId: { type: String, required: true },
+    studentName: { type: String },
+    willGo: { type: Boolean, required: true, default: true },
+    startDate: { type: String, required: false },
+    endDate: { type: String, required: false },
+    destination: { type: String, required: false },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
+    adminNote: String,
+    approvedBy: String,
+    approvedAt: Date,
+    parentApproval: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
+    parentApprovalAt: Date,
+    parentApprovalBy: String,
+    rejectionReason: { type: String, default: null },
+    weekOf: { type: String, default: '' },
   },
-  adminNote: String,
-  approvedBy: String,
-  approvedAt: Date,
-  parentApproval: {
-    type: String,
-    enum: ['pending', 'approved', 'rejected'],
-    default: 'pending'
+  {
+    timestamps: true,
   },
-  parentApprovalAt: Date,
-  parentApprovalBy: String,
-  rejectionReason: { type: String, default: null },
-  weekOf: { type: String, default: '' },
-}, {
-  timestamps: true
-});
+);
 
 // Pre-save: weekOf boşsa createdAt'ten hesapla
 evciRequestSchema.pre('save', function (next) {
@@ -92,7 +95,8 @@ evciRequestSchema.index({ approvedBy: 1, approvedAt: -1 }); // Admin approval hi
 evciRequestSchema.index({ studentId: 1, weekOf: 1 }, { unique: true }); // Weekly limit per student
 evciRequestSchema.index({ parentApproval: 1, status: 1 }); // Parent approval + status queries
 
-export const EvciRequest = mongoose.models.EvciRequest || mongoose.model<IEvciRequest>("EvciRequest", evciRequestSchema);
+export const EvciRequest =
+  mongoose.models.EvciRequest || mongoose.model<IEvciRequest>('EvciRequest', evciRequestSchema);
 
 /**
  * Mevcut kayıtları yeni alanlara migrate et.
@@ -101,13 +105,16 @@ export const EvciRequest = mongoose.models.EvciRequest || mongoose.model<IEvciRe
  * - Aynı (studentId, weekOf) çiftinde birden fazla kayıt varsa en yenisini tut
  */
 export async function migrateEvciRequests(): Promise<void> {
+  // Fast path: fresh DB, nothing to migrate. Avoid a full collection scan
+  // and sidestep any $jsonSchema validator conflicts on empty collections.
+  const total = await EvciRequest.estimatedDocumentCount();
+  if (total === 0) {
+    return;
+  }
+
   // 1. parentApproval ve weekOf alanları olmayan kayıtları güncelle
   const docsWithoutFields = await EvciRequest.find({
-    $or: [
-      { parentApproval: { $exists: false } },
-      { weekOf: { $exists: false } },
-      { weekOf: '' },
-    ],
+    $or: [{ parentApproval: { $exists: false } }, { weekOf: { $exists: false } }, { weekOf: '' }],
   });
 
   for (const doc of docsWithoutFields) {
@@ -125,14 +132,22 @@ export async function migrateEvciRequests(): Promise<void> {
 
   // 2. Duplicate (studentId, weekOf) kontrol et, en yenisini tut
   const pipeline = [
-    { $group: { _id: { studentId: '$studentId', weekOf: '$weekOf' }, count: { $sum: 1 }, docs: { $push: { _id: '$_id', createdAt: '$createdAt' } } } },
+    {
+      $group: {
+        _id: { studentId: '$studentId', weekOf: '$weekOf' },
+        count: { $sum: 1 },
+        docs: { $push: { _id: '$_id', createdAt: '$createdAt' } },
+      },
+    },
     { $match: { count: { $gt: 1 } } },
   ];
   const duplicates = await EvciRequest.aggregate(pipeline);
 
   for (const dup of duplicates) {
     // En yeni olanı tut, diğerlerini sil
-    const sorted = dup.docs.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const sorted = dup.docs.sort(
+      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
     const toDelete = sorted.slice(1).map((d: any) => d._id);
     if (toDelete.length > 0) {
       await EvciRequest.deleteMany({ _id: { $in: toDelete } });
