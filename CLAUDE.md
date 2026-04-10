@@ -39,7 +39,18 @@ npm run type-check             # TypeScript type checking
 
 # Database
 npm run seed                   # Seed database with test data
+npm run seed:users             # Seed users only
 docker-compose up -d           # Start MongoDB + Redis locally
+
+# Database management
+cd server && npm run create-indexes   # Create MongoDB indexes
+cd server && npm run migrate          # Run database migrations
+cd server && npm run migrate:up       # Apply pending migrations
+cd server && npm run migrate:down     # Rollback last migration
+
+# Utilities
+npm run generate-secrets       # Generate production secrets
+cd server && npm run generate:openapi # Generate OpenAPI spec
 ```
 
 ## Architecture
@@ -48,33 +59,43 @@ docker-compose up -d           # Start MongoDB + Redis locally
 
 - **`client/`** — React 19 + Vite 6 + TypeScript frontend
 - **`server/`** — Express 4 + TypeScript + Mongoose backend
-- **`shared/`** — Shared TypeScript types/DTOs
+- **`shared/`** — Shared TypeScript types/DTOs (User, API, Homework, Note, Announcement)
 - **`docs/`** — Project documentation
 - **`k8s/`** — Kubernetes production manifests
 
-Turbo orchestrates cross-package tasks with caching.
+Turbo orchestrates cross-package tasks with caching. Non-cached tasks: `dev`, `lint:fix`. Cached tasks: `build`, `lint`, `type-check`, `test`.
 
 ### Frontend (`client/`)
 
 - **Routing**: React Router 7.5
-- **State**: Zustand stores (`src/stores/`) + React Query (`src/hooks/queries/`)
+- **State**: Zustand stores (`src/stores/`) + TanStack Query v5 (`src/hooks/queries/`)
 - **UI**: Tailwind CSS 4 with custom Tofaş brand colors, Radix UI, Headless UI
+- **Charts**: Recharts for data visualization
+- **Animations**: Framer Motion
 - **Auth**: `AuthContext` provider + `authStore` (Zustand) + JWT tokens
 - **API client**: Axios-based `src/utils/apiService.ts` with endpoint definitions in `src/utils/apiEndpoints.ts`
+- **Monitoring**: Sentry (`@sentry/react`) + OpenTelemetry for tracing/metrics
 - **Path alias**: `@/*` → `src/*`
 - **Tests**: Vitest (JSDOM) + Playwright for E2E; 70% coverage threshold
+- **Ports**: 5173 (dev via Vite), 3000 (production via Nginx in Docker)
 
 ### Backend (`server/`)
 
 - **Database**: MongoDB via Mongoose ODM (models in `src/models/`)
+- **GraphQL**: Apollo Server Express with DataLoader, complexity/depth limiting
 - **Caching**: Redis for sessions, rate limiting, and response caching
 - **Auth**: JWT access + refresh tokens, bcryptjs password hashing
-- **Middleware stack**: Helmet → CORS → rate limiting → WAF → JWT auth → validation → error handler
+- **Middleware stack**: Helmet → CORS → rate limiting → WAF → CAPTCHA → JWT auth → API versioning → audit logging → cache → validation → error handler
 - **API versioning**: `src/routes/v1/` for versioned endpoints
 - **Modular auth**: `src/modules/auth/` (controllers, services, routes, validators)
-- **Services**: Business logic in `src/services/` (Performance, Notification, Calendar, Bulk Import, etc.)
+- **Services**: Business logic in `src/services/` (Performance, Notification, Calendar, Bulk Import, Backup, Scheduler, SecurityAlert, Push Notification, etc.)
+- **Exports**: ExcelJS for spreadsheets, PDFKit for PDF generation, Sharp for image processing
+- **Push notifications**: web-push with VAPID keys
+- **Email**: Nodemailer
+- **Cron**: node-cron for scheduled tasks
+- **WebSocket**: ws library
 - **Logging**: Winston with daily file rotation
-- **Tests**: Vitest (Node); 80% coverage threshold; integration/security/performance test suites in `src/test/`
+- **Tests**: Vitest (Node); 80% coverage threshold; organized in `src/test/` as `unit/`, `integration/`, `security/`, `performance/`, `models/`, `modules/`, `routes/`
 
 ### User Roles
 
@@ -92,6 +113,10 @@ Backend requires `server/.env` (copy from `server/.env.example`). Key variables:
 - `REDIS_HOST`/`REDIS_PORT`
 - `JWT_SECRET`/`JWT_REFRESH_SECRET`
 - `FRONTEND_URL` (CORS origin, default: `http://localhost:5173`)
+- `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` (push notifications)
+- `SMTP_*` vars (email via Nodemailer)
+- `SENTRY_DSN` (error tracking)
+- `ENCRYPTION_KEY` (data encryption)
 
 ## Commit Rules
 
@@ -99,8 +124,8 @@ Backend requires `server/.env` (copy from `server/.env.example`). Key variables:
 
 ## Pre-commit Hooks
 
-Husky + lint-staged runs Prettier and ESLint on staged `.ts`/`.tsx` files automatically.
+Husky + lint-staged runs Prettier and ESLint on staged `.ts`/`.tsx` files automatically. Also formats `.json`, `.md`, `.yml`, `.yaml` files with Prettier.
 
 ## CI/CD
 
-GitHub Actions (`.github/workflows/ci.yml`): secret scanning (Gitleaks), lint, type-check, test, build. Docker multi-stage builds for both client (Nginx) and server (Node). Kubernetes manifests in `k8s/production/`.
+GitHub Actions (`.github/workflows/ci.yml`): secret scanning (Gitleaks), OpenAPI contract validation, lint, type-check, test, build. Docker multi-stage builds for both client (Nginx) and server (Node). Kubernetes manifests in `k8s/production/`.
