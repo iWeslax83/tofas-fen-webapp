@@ -171,8 +171,8 @@ router.get(
     if (status) query.status = status;
     if (priority) query.priority = priority;
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    const pageNum = Math.max(parseInt(page as string) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit as string) || 20, 1), 100);
     const skip = (pageNum - 1) * limitNum;
 
     const [dilekceler, total] = await Promise.all([
