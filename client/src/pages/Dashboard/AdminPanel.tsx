@@ -10,7 +10,10 @@ const AdminPanel: React.FC = () => {
 
   React.useEffect(() => {
     if (user && user.rol !== 'admin') {
-      console.warn(`[AdminPanel] User role ${user.rol || 'undefined'} not allowed for admin panel`);
+      if (import.meta.env.DEV)
+        console.warn(
+          `[AdminPanel] User role ${user.rol || 'undefined'} not allowed for admin panel`,
+        );
       navigate(`/${user.rol || 'login'}`);
     }
   }, [user, navigate]);

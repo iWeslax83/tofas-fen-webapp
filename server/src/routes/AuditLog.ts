@@ -29,8 +29,8 @@ router.get(
     } = req.query;
 
     const filters: Record<string, unknown> = {
-      page: page ? parseInt(page as string) : 1,
-      limit: limit ? parseInt(limit as string) : 50,
+      page: Math.max(page ? parseInt(page as string) : 1, 1),
+      limit: Math.min(Math.max(limit ? parseInt(limit as string) : 50, 1), 100),
     };
 
     if (userId) filters.userId = userId as string;
