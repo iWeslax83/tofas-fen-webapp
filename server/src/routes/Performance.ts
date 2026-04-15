@@ -127,8 +127,8 @@ router.get(
         type: req.query.type as string,
         category: req.query.category as string,
         status: req.query.status as string,
-        startDate: req.query.startDate as Date,
-        endDate: req.query.endDate as Date,
+        startDate: req.query.startDate ? new Date(String(req.query.startDate)) : undefined,
+        endDate: req.query.endDate ? new Date(String(req.query.endDate)) : undefined,
         userId: req.query.userId as string,
         userRole: req.query.userRole as string,
       };
@@ -274,8 +274,8 @@ router.get(
         action: req.query.action as string,
         status: req.query.status as string,
         impact: req.query.impact as string,
-        startDate: req.query.startDate as Date,
-        endDate: req.query.endDate as Date,
+        startDate: req.query.startDate ? new Date(String(req.query.startDate)) : undefined,
+        endDate: req.query.endDate ? new Date(String(req.query.endDate)) : undefined,
         executedBy: req.query.executedBy as string,
       };
 
