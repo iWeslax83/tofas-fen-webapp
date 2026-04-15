@@ -1,12 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
-import { useAuth } from "../../hooks/useAuth";
-import { DormitoryService } from "../../utils/apiService";
-import { toast } from "react-toastify";
+import { useEffect, useState, useCallback } from 'react';
+import { useAuthGuard } from '../../hooks/useAuthGuard';
+import { DormitoryService } from '../../utils/apiService';
+import { toast } from 'react-toastify';
 import { FileText, Loader2, RefreshCw, Upload, Calendar, Download, Trash2 } from 'lucide-react';
 
-import ModernDashboardLayout from "../../components/ModernDashboardLayout";
+import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import './SupervisorListPage.css';
-
 
 interface SupervisorList {
   _id: string;
@@ -18,19 +17,19 @@ interface SupervisorList {
 }
 
 export default function SupervisorListPage() {
-  useAuth(["admin", "hizmetli", "teacher", "parent", "student"]);
-  const { user } = useAuth();
+  useAuthGuard(['admin', 'hizmetli', 'teacher', 'parent', 'student']);
+  const { user } = useAuthGuard();
   const [supervisorLists, setSupervisorLists] = useState<SupervisorList[]>([]);
   const [loading, setLoading] = useState(true);
-  const [, setError] = useState<string>("");
-  const [selectedMonth, setSelectedMonth] = useState("");
+  const [, setError] = useState<string>('');
+  const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadMonth, setUploadMonth] = useState("");
+  const [uploadMonth, setUploadMonth] = useState('');
   const [uploadYear, setUploadYear] = useState(new Date().getFullYear());
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [userRole, setUserRole] = useState<string>("");
+  const [userRole, setUserRole] = useState<string>('');
 
   useEffect(() => {
     if (user) {
@@ -38,20 +37,20 @@ export default function SupervisorListPage() {
     }
   }, [user]);
 
-  const isAdmin = userRole === "admin";
-  const isHizmetli = userRole === "hizmetli";
+  const isAdmin = userRole === 'admin';
+  const isHizmetli = userRole === 'hizmetli';
   const isAdminOrHizmetli = isAdmin || isHizmetli;
 
   const fetchSupervisorLists = useCallback(async () => {
     try {
-      setError("");
+      setError('');
       const params = new URLSearchParams();
-      if (selectedMonth) params.append("month", selectedMonth);
-      if (selectedYear) params.append("year", selectedYear.toString());
+      if (selectedMonth) params.append('month', selectedMonth);
+      if (selectedYear) params.append('year', selectedYear.toString());
 
       const { data, error } = await DormitoryService.getSupervisors({
         month: selectedMonth,
-        year: selectedYear
+        year: selectedYear,
       });
       if (error) {
         setError(error);
@@ -59,9 +58,9 @@ export default function SupervisorListPage() {
         setSupervisorLists(data as SupervisorList[]);
       }
     } catch (error) {
-      console.error("Error fetching supervisor lists:", error);
-      setError("Belletmen listeleri yüklenirken hata oluştu");
-      toast.error("Belletmen listeleri yüklenirken hata oluştu");
+      console.error('Error fetching supervisor lists:', error);
+      setError('Belletmen listeleri yüklenirken hata oluştu');
+      toast.error('Belletmen listeleri yüklenirken hata oluştu');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -75,30 +74,30 @@ export default function SupervisorListPage() {
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile || !uploadMonth || !uploadYear) {
-      toast.error("Lütfen tüm alanları doldurun");
+      toast.error('Lütfen tüm alanları doldurun');
       return;
     }
 
     setUploading(true);
     const formData = new FormData();
-    formData.append("file", selectedFile);
-    formData.append("month", uploadMonth);
-    formData.append("year", uploadYear.toString());
+    formData.append('file', selectedFile);
+    formData.append('month', uploadMonth);
+    formData.append('year', uploadYear.toString());
 
     try {
       const { error } = await DormitoryService.createSupervisor(formData);
       if (error) {
         toast.error(error);
       } else {
-        toast.success("Belletmen listesi başarıyla yüklendi");
+        toast.success('Belletmen listesi başarıyla yüklendi');
         setSelectedFile(null);
-        setUploadMonth("");
+        setUploadMonth('');
         setUploadYear(new Date().getFullYear());
         await fetchSupervisorLists();
       }
     } catch (error) {
-      console.error("Error uploading file:", error);
-      toast.error("Dosya yüklenirken hata oluştu. Lütfen tekrar deneyin.");
+      console.error('Error uploading file:', error);
+      toast.error('Dosya yüklenirken hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setUploading(false);
     }
@@ -108,32 +107,32 @@ export default function SupervisorListPage() {
     try {
       const response = await DormitoryService.downloadSupervisor(id);
       const url = window.URL.createObjectURL(new Blob([(response as any).data]));
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
-      link.setAttribute("download", `belletmen-listesi-${month || "tum"}-${year}.pdf`);
+      link.setAttribute('download', `belletmen-listesi-${month || 'tum'}-${year}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      toast.success("Dosya indiriliyor...");
+      toast.success('Dosya indiriliyor...');
     } catch (error) {
-      console.error("Error downloading file:", error);
-      toast.error("Dosya indirilirken hata oluştu. Lütfen tekrar deneyin.");
+      console.error('Error downloading file:', error);
+      toast.error('Dosya indirilirken hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Bu listeyi silmek istediğinize emin misiniz?")) {
+    if (window.confirm('Bu listeyi silmek istediğinize emin misiniz?')) {
       try {
         const { error } = await DormitoryService.deleteSupervisor(id);
         if (error) {
           toast.error(error);
         } else {
-          toast.success("Liste başarıyla silindi");
+          toast.success('Liste başarıyla silindi');
           await fetchSupervisorLists();
         }
       } catch (error) {
-        console.error("Error deleting supervisor list:", error);
-        toast.error("Liste silinirken hata oluştu");
+        console.error('Error deleting supervisor list:', error);
+        toast.error('Liste silinirken hata oluştu');
       }
     }
   };
@@ -144,23 +143,23 @@ export default function SupervisorListPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("tr-TR");
+    return new Date(dateString).toLocaleDateString('tr-TR');
   };
 
   const getMonthName = (month: string) => {
     const months: { [key: string]: string } = {
-      "01": "Ocak",
-      "02": "Şubat",
-      "03": "Mart",
-      "04": "Nisan",
-      "05": "Mayıs",
-      "06": "Haziran",
-      "07": "Temmuz",
-      "08": "Ağustos",
-      "09": "Eylül",
-      "10": "Ekim",
-      "11": "Kasım",
-      "12": "Aralık",
+      '01': 'Ocak',
+      '02': 'Şubat',
+      '03': 'Mart',
+      '04': 'Nisan',
+      '05': 'Mayıs',
+      '06': 'Haziran',
+      '07': 'Temmuz',
+      '08': 'Ağustos',
+      '09': 'Eylül',
+      '10': 'Ekim',
+      '11': 'Kasım',
+      '12': 'Aralık',
     };
     return months[month] || month;
   };
@@ -169,10 +168,7 @@ export default function SupervisorListPage() {
     return (
       <ModernDashboardLayout
         pageTitle="Belletmen Listesi"
-        breadcrumb={[
-          { label: 'Ana Sayfa', path: `/${userRole}` },
-          { label: 'Belletmen Listesi' }
-        ]}
+        breadcrumb={[{ label: 'Ana Sayfa', path: `/${userRole}` }, { label: 'Belletmen Listesi' }]}
       >
         <div className="centered-spinner">
           <div className="spinner"></div>
@@ -184,10 +180,7 @@ export default function SupervisorListPage() {
   return (
     <ModernDashboardLayout
       pageTitle="Belletmen Listesi"
-      breadcrumb={[
-        { label: 'Ana Sayfa', path: `/${userRole}` },
-        { label: 'Belletmen Listesi' }
-      ]}
+      breadcrumb={[{ label: 'Ana Sayfa', path: `/${userRole}` }, { label: 'Belletmen Listesi' }]}
     >
       <div className="supervisor-list-page">
         <div className="page-header">
@@ -196,15 +189,13 @@ export default function SupervisorListPage() {
               <FileText className="page-icon" />
               <div className="title-wrapper">
                 <h1 className="page-title-main">Belletmen Listesi</h1>
-                <p className="page-subtitle">Pansiyon belletmen listelerini görüntüleyin ve yönetin</p>
+                <p className="page-subtitle">
+                  Pansiyon belletmen listelerini görüntüleyin ve yönetin
+                </p>
               </div>
             </div>
             <div className="header-actions">
-              <button
-                onClick={handleRefresh}
-                className="btn btn-primary"
-                disabled={isRefreshing}
-              >
+              <button onClick={handleRefresh} className="btn btn-primary" disabled={isRefreshing}>
                 <RefreshCw className={`icon ${isRefreshing ? 'animate-spin' : ''}`} size={18} />
                 <span>Yenile</span>
               </button>
@@ -218,7 +209,9 @@ export default function SupervisorListPage() {
             <h3 className="filters-title">Filtreler</h3>
             <form className="filters-form">
               <div className="form-group">
-                <label htmlFor="month-filter" className="form-label">Ay:</label>
+                <label htmlFor="month-filter" className="form-label">
+                  Ay:
+                </label>
                 <select
                   id="month-filter"
                   value={selectedMonth}
@@ -242,25 +235,25 @@ export default function SupervisorListPage() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="year-filter" className="form-label">Yıl:</label>
+                <label htmlFor="year-filter" className="form-label">
+                  Yıl:
+                </label>
                 <select
                   id="year-filter"
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
                   className="form-select"
                 >
-                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                    <option key={year} value={year}>{year}</option>
+                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div className="filter-actions">
-                <button
-                  onClick={handleRefresh}
-                  className="refresh-button"
-                  disabled={isRefreshing}
-                >
+                <button onClick={handleRefresh} className="refresh-button" disabled={isRefreshing}>
                   <RefreshCw className={`icon-small ${isRefreshing ? 'animate-spin' : ''}`} />
                   Yenile
                 </button>
@@ -277,7 +270,9 @@ export default function SupervisorListPage() {
               </h3>
               <form onSubmit={handleFileUpload} className="upload-form">
                 <div className="form-group">
-                  <label htmlFor="month-upload" className="form-label">Ay:</label>
+                  <label htmlFor="month-upload" className="form-label">
+                    Ay:
+                  </label>
                   <select
                     id="month-upload"
                     value={uploadMonth}
@@ -302,7 +297,9 @@ export default function SupervisorListPage() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="year-upload" className="form-label">Yıl:</label>
+                  <label htmlFor="year-upload" className="form-label">
+                    Yıl:
+                  </label>
                   <select
                     id="year-upload"
                     value={uploadYear}
@@ -310,14 +307,20 @@ export default function SupervisorListPage() {
                     className="form-select"
                     required
                   >
-                    {Array.from({ length: 3 }, (_, i) => new Date().getFullYear() + i).map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
+                    {Array.from({ length: 3 }, (_, i) => new Date().getFullYear() + i).map(
+                      (year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ),
+                    )}
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="file-upload" className="form-label">Dosya:</label>
+                  <label htmlFor="file-upload" className="form-label">
+                    Dosya:
+                  </label>
                   <div className="file-input-container">
                     <input
                       id="file-upload"
@@ -334,11 +337,7 @@ export default function SupervisorListPage() {
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  className="upload-button"
-                  disabled={uploading}
-                >
+                <button type="submit" className="upload-button" disabled={uploading}>
                   {uploading ? (
                     <>
                       <Loader2 className="icon-small animate-spin" />
@@ -376,7 +375,9 @@ export default function SupervisorListPage() {
                         <FileText className="icon" />
                       </div>
                       <div className="card-badge">
-                        <span>{getMonthName(list.month)} {list.year}</span>
+                        <span>
+                          {getMonthName(list.month)} {list.year}
+                        </span>
                       </div>
                     </div>
 
@@ -384,9 +385,7 @@ export default function SupervisorListPage() {
                       <h3 className="card-title">
                         {getMonthName(list.month)} {list.year}
                       </h3>
-                      <p className="card-subtitle">
-                        Yüklenen: {formatDate(list.uploadedAt)}
-                      </p>
+                      <p className="card-subtitle">Yüklenen: {formatDate(list.uploadedAt)}</p>
                       <div className="card-meta">
                         <div className="meta-item">
                           <Calendar className="meta-icon" />

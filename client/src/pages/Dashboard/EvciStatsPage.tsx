@@ -1,10 +1,29 @@
 import { useState, useEffect } from 'react';
-import { BarChart3, PieChart as PieChartIcon, TrendingUp, Users, Home, ArrowLeft } from 'lucide-react';
+import {
+  BarChart3,
+  PieChart as PieChartIcon,
+  TrendingUp,
+  Users,
+  Home,
+  ArrowLeft,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
-  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  LineChart,
+  Line,
+  ResponsiveContainer,
 } from 'recharts';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthGuard } from '../../hooks/useAuthGuard';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { EvciService } from '../../utils/apiService';
 import { toast } from 'sonner';
@@ -21,7 +40,7 @@ const PIE_COLORS = ['#10b981', '#ef4444', '#f59e0b'];
 const BAR_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe'];
 
 export default function EvciStatsPage() {
-  const { user: authUser } = useAuth(['admin', 'teacher']);
+  const { user: authUser } = useAuthGuard(['admin', 'teacher']);
   const [stats, setStats] = useState<EvciStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [weeks, setWeeks] = useState(8);
@@ -82,13 +101,13 @@ export default function EvciStatsPage() {
   const pieData = [
     { name: 'Gidecek', value: stats.summary.going },
     { name: 'Gitmeyecek', value: stats.summary.notGoing },
-  ].filter(d => d.value > 0);
+  ].filter((d) => d.value > 0);
 
   const approvalPieData = [
     { name: 'Onaylanan', value: stats.parentApproval.approved },
     { name: 'Reddedilen', value: stats.parentApproval.rejected },
     { name: 'Bekleyen', value: stats.parentApproval.pending },
-  ].filter(d => d.value > 0);
+  ].filter((d) => d.value > 0);
 
   return (
     <ModernDashboardLayout pageTitle="Evci İstatistikleri" breadcrumb={breadcrumb}>
@@ -236,9 +255,31 @@ export default function EvciStatsPage() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="going" name="Gidecek" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey="notGoing" name="Gitmeyecek" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey="total" name="Toplam" stroke="#6366f1" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 4 }} />
+                <Line
+                  type="monotone"
+                  dataKey="going"
+                  name="Gidecek"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="notGoing"
+                  name="Gitmeyecek"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  name="Toplam"
+                  stroke="#6366f1"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={{ r: 4 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
