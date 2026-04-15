@@ -59,8 +59,10 @@ export const useErrorHandler = (): UseErrorHandlerReturn => {
         message = respData['error'];
       } else if (typeof respData?.['message'] === 'string') {
         message = respData['message'];
-      } else if (error instanceof Error) {
-        message = error.message;
+      } else if (typeof errObj?.['message'] === 'string') {
+        // Covers both Error instances (Error.message is an own property)
+        // and plain `{ message: '...' }` objects from non-axios callers.
+        message = errObj['message'] as string;
       }
 
       setError(message);
