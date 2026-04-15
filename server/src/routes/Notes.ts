@@ -8,6 +8,7 @@ import { getParentChildIds, verifyParentChildAccess } from '../middleware/parent
 import { MongoFilter } from '../types';
 import logger from '../utils/logger';
 import { asyncHandler } from '../middleware/errorHandler';
+import { logSecurityEvent, SecurityEvent } from '../utils/securityLogger';
 
 /** Shape of a note update entry in bulk-update */
 interface NoteUpdateEntry {
@@ -501,6 +502,7 @@ router.post(
   authenticateJWT,
   authorizeRoles(['teacher', 'admin']),
   asyncHandler(async (req: Request, res: Response) => {
+    const authUser = (req as Request & { user?: { userId: string; role: string } }).user;
     try {
       if (!req.file) {
         res.status(400).json({ success: false, error: 'Dosya yüklenmedi' });
@@ -540,6 +542,60 @@ router.post(
         return;
       }
 
+      // F-C3: defense in depth — teachers can only import grades for students
+      // in their own assigned `sinif`. Admins are unrestricted. The data model
+      // currently stores a single `sinif` per teacher; if a teacher teaches
+      // multiple grades they must use the admin import path. Without this
+      // check, a teacher could replay a forged request and grade students
+      // they have no business grading.
+      if (authUser?.role === 'teacher') {
+        const teacher = (await User.findOne({ id: authUser.userId, rol: 'teacher' })
+          .select('sinif sube')
+          .lean()) as { sinif?: string; sube?: string } | null;
+        if (!teacher?.sinif) {
+          logSecurityEvent({
+            event: SecurityEvent.NOTES_BULK_IMPORT_REJECTED,
+            userId: authUser.userId,
+            ip: req.ip,
+            userAgent: req.get('user-agent') || undefined,
+            details: { reason: 'teacher_has_no_assigned_class', count: studentIds.length },
+          });
+          res.status(403).json({
+            error: 'Sınıfı atanmamış öğretmenler toplu not yükleyemez. Yöneticinize başvurun.',
+          });
+          return;
+        }
+        const ownedStudents = await User.find({
+          id: { $in: studentIds },
+          rol: 'student',
+          sinif: teacher.sinif,
+        })
+          .select('id')
+          .lean();
+        const ownedIds = new Set(ownedStudents.map((s) => s.id));
+        const unauthorized = studentIds.filter((id) => !ownedIds.has(id));
+        if (unauthorized.length > 0) {
+          logSecurityEvent({
+            event: SecurityEvent.NOTES_BULK_IMPORT_REJECTED,
+            userId: authUser.userId,
+            ip: req.ip,
+            userAgent: req.get('user-agent') || undefined,
+            details: {
+              reason: 'student_outside_teacher_class',
+              teacherSinif: teacher.sinif,
+              unauthorizedCount: unauthorized.length,
+              // Don't log every studentId; cap the sample to avoid log bloat.
+              sample: unauthorized.slice(0, 10),
+            },
+          });
+          res.status(403).json({
+            error: 'Bazı öğrenciler sınıfınıza ait değil. Yükleme reddedildi.',
+            unauthorizedCount: unauthorized.length,
+          });
+          return;
+        }
+      }
+
       // Notları veritabanına toplu kaydet (insertMany ile performans optimizasyonu)
       const noteDocs = validation.valid.map((noteData) => ({
         studentId: noteData.studentId,
@@ -553,6 +609,24 @@ router.post(
         isActive: true,
       }));
       const savedNotes = await Note.insertMany(noteDocs, { ordered: false });
+
+      // F-C3: audit-log every successful bulk import. Includes the importer's
+      // role so a query like `event=NOTES_BULK_IMPORT AND role=teacher` is
+      // possible from the security log.
+      logSecurityEvent({
+        event: SecurityEvent.NOTES_BULK_IMPORT,
+        userId: authUser?.userId,
+        ip: req.ip,
+        userAgent: req.get('user-agent') || undefined,
+        details: {
+          role: authUser?.role,
+          imported: savedNotes.length,
+          semester,
+          academicYear,
+          source: source || 'excel',
+          uniqueStudents: new Set(studentIds).size,
+        },
+      });
 
       res.json({
         success: true,
