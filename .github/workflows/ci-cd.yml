@@ -227,11 +227,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, security]
     if: github.event_name == 'push'
-    # I-H7: scope permissions to exactly what this job needs.
+    # I-H7 + I-C9: scope permissions to exactly what this job needs.
+    # `id-token: write` is required for cosign keyless OIDC signing
+    # (no long-lived signing key has to be stored in the repo).
     permissions:
       contents: read
       packages: write
       security-events: write
+      id-token: write
+      attestations: write
 
     steps:
       - name: Checkout code
@@ -308,7 +312,12 @@ jobs:
         with:
           sarif_file: .
 
+      # I-C9: produce SBOMs and SLSA provenance attestations directly from
+      # buildx, attached to the pushed image as referrers in the registry.
+      # `provenance: mode=max` includes full BuildKit metadata; `sbom: true`
+      # generates an SPDX SBOM via the built-in syft scanner.
       - name: Push client image
+        id: push-client
         uses: docker/build-push-action@v5
         with:
           context: ./client
@@ -317,8 +326,11 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-client:${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
+          provenance: mode=max
+          sbom: true
 
       - name: Push server image
+        id: push-server
         uses: docker/build-push-action@v5
         with:
           context: ./server
@@ -327,6 +339,31 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-server:${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
+          provenance: mode=max
+          sbom: true
+
+      # I-C9: cosign keyless OIDC signing. The signature is stored in the
+      # registry alongside the image and can be verified by anyone using
+      # `cosign verify --certificate-identity-regexp ... <image>`. No
+      # signing key is stored in the repo or in secrets.
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: v2.4.1
+
+      - name: Sign client image with cosign
+        env:
+          COSIGN_EXPERIMENTAL: 'true'
+        run: |
+          cosign sign --yes \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-client@${{ steps.push-client.outputs.digest }}"
+
+      - name: Sign server image with cosign
+        env:
+          COSIGN_EXPERIMENTAL: 'true'
+        run: |
+          cosign sign --yes \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-server@${{ steps.push-server.outputs.digest }}"
 
   # Deploy to Staging
   deploy-staging:
