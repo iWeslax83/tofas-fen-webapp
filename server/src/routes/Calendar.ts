@@ -483,10 +483,17 @@ router.get(
       } as CalendarFilters;
 
       const events = await CalendarService.getEvents(req.user?.userId, req.user?.role, filters);
-      const format = req.query.format as string;
+      const format = (req.query.format as string) || 'json';
 
-      // For now, return JSON format
-      // TODO: Implement ICS and CSV export
+      // Only JSON is supported today. ICS/CSV were never implemented;
+      // fail explicitly instead of silently returning JSON so clients
+      // don't think they got the format they asked for.
+      if (format !== 'json') {
+        return res.status(400).json({
+          error: `Desteklenmeyen format: ${format}. Şu an sadece 'json' destekleniyor.`,
+        });
+      }
+
       res.json({
         calendar: {
           name: calendar.name,
@@ -495,7 +502,7 @@ router.get(
         },
         events: events,
         exportedAt: new Date().toISOString(),
-        format: format,
+        format,
       });
     } catch (error) {
       logger.error('Calendar export error', {

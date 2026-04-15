@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { User } from '../models';
 import logger from '../utils/logger';
 import rateLimit from 'express-rate-limit';
 
@@ -47,28 +46,6 @@ export const requireService = requireRole(['hizmetli', 'admin']);
 
 // Visitor middleware
 export const requireVisitor = requireRole(['ziyaretci']);
-
-// Optional authentication - kullanıcı giriş yapmışsa bilgilerini ekle
-export const optionalAuth = async (
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    if (req.session && req.session.userId) {
-      const user = await User.findOne({ id: req.session.userId });
-      if (user) {
-        req.user = { userId: user.id, role: user.rol, email: user.email };
-      }
-    }
-    next();
-  } catch (error) {
-    logger.error('Optional auth middleware error', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    next(); // Hata olsa bile devam et
-  }
-};
 
 // B-H2 fix: CSRF protection — Origin allowlist + double-submit cookie.
 //
