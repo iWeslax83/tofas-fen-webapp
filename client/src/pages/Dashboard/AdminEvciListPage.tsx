@@ -23,7 +23,7 @@ import {
   X,
   Settings2,
 } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthGuard } from '../../hooks/useAuthGuard';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 
 import './AdminEvciListPage.css';
@@ -65,7 +65,7 @@ function getParentApprovalBadge(approval?: string) {
 }
 
 export default function AdminEvciListPage() {
-  const { user: authUser } = useAuth(['admin', 'teacher']);
+  const { user: authUser } = useAuthGuard(['admin', 'teacher']);
   const [requests, setRequests] = useState<EvciTalep[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [showForm, setShowForm] = useState(false);

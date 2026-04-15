@@ -21,14 +21,11 @@ interface User {
  * Role-guard hook. Redirects to the user's dashboard (or /login) if the
  * current user's role is not in `allowedRoles`.
  *
- * F-M15: this is distinct from the Zustand `useAuth` selector in
- * `stores/authStore.ts`, which just reads state. Two unrelated hooks with
- * the same name caused import confusion, so the role-guard version is now
- * exposed as `useAuthGuard`. The old `useAuth` name is kept as a deprecated
- * alias so existing pages continue to build.
- *
- * @deprecated Import `useAuthGuard` from `../hooks/useAuth` instead, or use
- *             the selectors from `stores/authStore` for pure state reads.
+ * F-M15: this hook used to be exported as `useAuth`, which collided with
+ * the Zustand selector of the same name in `stores/authStore.ts`. The
+ * role-guard is now exclusively `useAuthGuard`. Use the authStore
+ * selector for pure state reads and this hook only when you need the
+ * redirect side effect.
  */
 export function useAuthGuard(allowedRoles: string[] = []) {
   const navigate = useNavigate();
@@ -86,15 +83,9 @@ export function useAuthGuard(allowedRoles: string[] = []) {
 }
 
 /**
- * @deprecated Use `useAuthGuard` instead. Kept as an alias to avoid breaking
- * existing page imports during the rename.
- */
-export const useAuth = useAuthGuard;
-
-/**
  * Example usage in a page component:
  *
- * import { useAuthGuard } from "../hooks/useAuth";
+ * import { useAuthGuard } from "../hooks/useAuthGuard";
  *
  * export default function SomePage() {
  *   // Only 'admin' and 'teacher' can access

@@ -1,15 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "../../hooks/useAuth";
-import { UserService } from "../../utils/apiService";
-import { User } from "../../types/user";
+import { useState, useEffect, useCallback } from 'react';
+import { useAuthGuard } from '../../hooks/useAuthGuard';
+import { UserService } from '../../utils/apiService';
+import { User } from '../../types/user';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 
 import './DersProgramiPage.css';
-import {
-  BookOpen,
-  Clock,
-  ChevronDown
-} from 'lucide-react';
+import { BookOpen, Clock, ChevronDown } from 'lucide-react';
 import scheduleData from './DersProgramlari.json';
 import { toast } from 'sonner';
 import { LoadingState, Skeleton } from '../../components/SkeletonComponents';
@@ -42,7 +38,7 @@ const isSchedule = (data: unknown): data is Schedule => {
 const schedules = isSchedule(scheduleData) ? scheduleData : {};
 
 export default function DersProgramiPage() {
-  const { user: authUser } = useAuth(["admin", "teacher", "student", "parent"]);
+  const { user: authUser } = useAuthGuard(['admin', 'teacher', 'student', 'parent']);
   const [user, setUser] = useState<User | null>(null);
   const [classes, setClasses] = useState<{ sinif: string; sube: string; label: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,14 +57,17 @@ export default function DersProgramiPage() {
     return ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
   };
 
-
   const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
       const { data: userData, error: userError } = await UserService.getCurrentUser();
 
-      if (userError || !userData || !["admin", "teacher", "student", "parent"].includes(userData.rol)) {
-        setError(userError || "Bu sayfaya erişim yetkiniz bulunmuyor.");
+      if (
+        userError ||
+        !userData ||
+        !['admin', 'teacher', 'student', 'parent'].includes(userData.rol)
+      ) {
+        setError(userError || 'Bu sayfaya erişim yetkiniz bulunmuyor.');
         setLoading(false);
         return;
       }
@@ -77,37 +76,37 @@ export default function DersProgramiPage() {
       let allClasses: { sinif: string; sube: string; label: string }[] = [];
 
       // For students, show their own class
-      if (userData.rol === "student" && userData.sinif && userData.sube) {
+      if (userData.rol === 'student' && userData.sinif && userData.sube) {
         allClasses.push({
           sinif: userData.sinif,
           sube: userData.sube,
-          label: `${String(userData.sinif)}/${String(userData.sube)} - ${userData.adSoyad}`
+          label: `${String(userData.sinif)}/${String(userData.sube)} - ${userData.adSoyad}`,
         });
       }
 
       // For parents, show their children's classes
-      if (userData.rol === "parent" && userData.childrenSiniflar) {
+      if (userData.rol === 'parent' && userData.childrenSiniflar) {
         userData.childrenSiniflar.forEach((child) => {
           allClasses.push({
             sinif: child.sinif,
             sube: child.sube,
-            label: `${String(child.sinif)}/${String(child.sube)} - ${child.adSoyad || 'Çocuk'}`
+            label: `${String(child.sinif)}/${String(child.sube)} - ${child.adSoyad || 'Çocuk'}`,
           });
         });
       }
 
       // For teachers/admins, allow selecting any class
-      if (["teacher", "admin"].includes(userData.rol)) {
+      if (['teacher', 'admin'].includes(userData.rol)) {
         // This would be populated from an API in a real app
         allClasses = [
-          { sinif: "9", sube: "A", label: "9/A Sınıfı" },
-          { sinif: "9", sube: "B", label: "9/B Sınıfı" },
-          { sinif: "10", sube: "A", label: "10/A Sınıfı" },
-          { sinif: "10", sube: "B", label: "10/B Sınıfı" },
-          { sinif: "11", sube: "A", label: "11/A Sınıfı" },
-          { sinif: "11", sube: "B", label: "11/B Sınıfı" },
-          { sinif: "12", sube: "A", label: "12/A Sınıfı" },
-          { sinif: "12", sube: "B", label: "12/B Sınıfı" },
+          { sinif: '9', sube: 'A', label: '9/A Sınıfı' },
+          { sinif: '9', sube: 'B', label: '9/B Sınıfı' },
+          { sinif: '10', sube: 'A', label: '10/A Sınıfı' },
+          { sinif: '10', sube: 'B', label: '10/B Sınıfı' },
+          { sinif: '11', sube: 'A', label: '11/A Sınıfı' },
+          { sinif: '11', sube: 'B', label: '11/B Sınıfı' },
+          { sinif: '12', sube: 'A', label: '12/A Sınıfı' },
+          { sinif: '12', sube: 'B', label: '12/B Sınıfı' },
         ];
       }
 
@@ -115,8 +114,8 @@ export default function DersProgramiPage() {
       setError(null);
     } catch (err: unknown) {
       // Error fetching user data
-      setError("Kullanıcı bilgileri yüklenirken bir hata oluştu.");
-      toast.error("Ders programı yüklenirken bir hata oluştu.");
+      setError('Kullanıcı bilgileri yüklenirken bir hata oluştu.');
+      toast.error('Ders programı yüklenirken bir hata oluştu.');
     } finally {
       setLoading(false);
     }
@@ -129,16 +128,15 @@ export default function DersProgramiPage() {
   }, [authUser, fetchUserData]);
 
   const toggleDay = (day: string) => {
-    setExpandedDays(prev => ({
+    setExpandedDays((prev) => ({
       ...prev,
-      [day]: !prev[day]
+      [day]: !prev[day],
     }));
   };
 
-
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${user?.rol || 'student'}` },
-    { label: 'Ders Programı' }
+    { label: 'Ders Programı' },
   ];
 
   // Skeleton for schedule loading
@@ -190,10 +188,7 @@ export default function DersProgramiPage() {
   );
 
   return (
-    <ModernDashboardLayout
-      pageTitle="Ders Programı"
-      breadcrumb={breadcrumb}
-    >
+    <ModernDashboardLayout pageTitle="Ders Programı" breadcrumb={breadcrumb}>
       <LoadingState
         isLoading={loading}
         error={error}
@@ -232,13 +227,15 @@ export default function DersProgramiPage() {
                           </div>
                           <div className="class-details">
                             <h3 className="class-title">{label}</h3>
-                            <p className="class-subtitle">{sinif}. Sınıf - {sube} Şubesi</p>
+                            <p className="class-subtitle">
+                              {sinif}. Sınıf - {sube} Şubesi
+                            </p>
                           </div>
                         </div>
                       </div>
 
                       <div className="schedule-grid">
-                        {getDayNames().map(day => {
+                        {getDayNames().map((day) => {
                           if (!schedule[day]) return null;
                           const lessons = schedule[day] || [];
                           const isExpanded = !!expandedDays[day];
@@ -249,7 +246,10 @@ export default function DersProgramiPage() {
                                   <h4 className="day-name">{day}</h4>
                                   <span className="lesson-count">{lessons.length} ders</span>
                                 </div>
-                                <ChevronDown size={20} className={`day-chevron ${isExpanded ? 'rotated' : ''}`} />
+                                <ChevronDown
+                                  size={20}
+                                  className={`day-chevron ${isExpanded ? 'rotated' : ''}`}
+                                />
                               </div>
                               {isExpanded && (
                                 <div className="lessons-list">
