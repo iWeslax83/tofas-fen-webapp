@@ -40,13 +40,22 @@ export interface NoteStats {
   bySemester?: Record<string, { count: number; average: number }>;
 }
 
-// SecureAPI.get<T> types its return as T but actually returns the raw axios
-// response `{ data: T, status: number, ... }`. Unwrap through `unknown` to
-// the envelope and accept that a missing payload means an empty envelope.
+// SecureAPI.get<T> sometimes hands back the raw axios response
+// `{ data: ApiResponse<T> }` and sometimes hands back the already-unwrapped
+// `ApiResponse<T>` directly (the typing is loose because the wrapper class
+// in api.ts isn't consistent). Accept both shapes — prefer the inner
+// envelope when present, fall back to the outer object if it already looks
+// like an ApiResponse, and return a failure envelope otherwise.
+function isApiResponse<T>(value: unknown): value is ApiResponse<T> {
+  return !!value && typeof value === 'object' && 'success' in (value as object);
+}
 function unwrapAxiosEnvelope<T>(response: unknown): ApiResponse<T> {
-  const payload = (response as { data?: ApiResponse<T> })?.data;
-  if (payload && typeof payload === 'object' && 'success' in payload) {
-    return payload;
+  const inner = (response as { data?: unknown })?.data;
+  if (isApiResponse<T>(inner)) {
+    return inner;
+  }
+  if (isApiResponse<T>(response)) {
+    return response;
   }
   return { success: false, statusCode: 0 };
 }
