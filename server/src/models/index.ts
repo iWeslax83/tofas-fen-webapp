@@ -43,3 +43,6 @@ export type {
   PasswordAuditReason,
 } from './PasswordAuditLog';
 export { PASSWORD_AUDIT_ACTIONS, PASSWORD_AUDIT_REASONS } from './PasswordAuditLog';
+export { PasswordImportBatch } from './PasswordImportBatch';
+export type { IPasswordImportBatch, PasswordImportBatchStatus } from './PasswordImportBatch';
+export { PASSWORD_IMPORT_BATCH_STATUSES } from './PasswordImportBatch';
