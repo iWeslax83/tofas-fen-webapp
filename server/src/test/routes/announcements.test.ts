@@ -7,9 +7,12 @@ import { Announcement } from '../../models';
 vi.mock('../../utils/jwt', async () => {
   const actual = await vi.importActual('../../utils/jwt');
   return {
-    ...actual as any,
-    authenticateJWT: vi.fn((req: any, res: any, next: any) => next()),
-    authorizeRoles: vi.fn(() => (req: any, res: any, next: any) => next())
+    ...(actual as any),
+    authenticateJWT: vi.fn((req: any, res: any, next: any) => {
+      req.user = { userId: 'test-admin', role: 'admin' };
+      next();
+    }),
+    authorizeRoles: vi.fn(() => (req: any, res: any, next: any) => next()),
   };
 });
 
@@ -35,7 +38,7 @@ describe('Announcements API Tests', () => {
           priority: 'medium',
           targetRoles: ['student'],
           targetClasses: ['10'],
-          date: new Date().toISOString()
+          date: new Date().toISOString(),
         },
         {
           title: 'Test Announcement 2',
@@ -43,18 +46,16 @@ describe('Announcements API Tests', () => {
           priority: 'high',
           targetRoles: ['teacher'],
           targetClasses: ['11'],
-          date: new Date().toISOString()
+          date: new Date().toISOString(),
         },
       ];
 
       await Announcement.insertMany(announcements);
 
-      const response = await request(app)
-        .get('/api/announcements')
-        .expect(200);
+      const response = await request(app).get('/api/announcements').expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body).toHaveLength(2);
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data).toHaveLength(2);
     });
 
     it('should filter announcements by role', async () => {
@@ -66,11 +67,9 @@ describe('Announcements API Tests', () => {
 
       await Announcement.insertMany(announcements);
 
-      const response = await request(app)
-        .get('/api/announcements?role=student')
-        .expect(200);
+      const response = await request(app).get('/api/announcements?role=student').expect(200);
 
-      expect(response.body).toHaveLength(2);
+      expect(response.body.data).toHaveLength(2);
     });
 
     it('should filter announcements by class', async () => {
@@ -82,26 +81,22 @@ describe('Announcements API Tests', () => {
 
       await Announcement.insertMany(announcements);
 
-      const response = await request(app)
-        .get('/api/announcements?class=10')
-        .expect(200);
+      const response = await request(app).get('/api/announcements?class=10').expect(200);
 
-      expect(response.body).toHaveLength(2);
+      expect(response.body.data).toHaveLength(2);
     });
 
     it('should get announcements (pagination not implemented)', async () => {
       const announcements = Array.from({ length: 5 }, (_, i) => ({
         title: `Announcement ${i + 1}`,
-        content: `Content ${i + 1}`
+        content: `Content ${i + 1}`,
       }));
 
       await Announcement.insertMany(announcements);
 
-      const response = await request(app)
-        .get('/api/announcements')
-        .expect(200);
+      const response = await request(app).get('/api/announcements').expect(200);
 
-      expect(response.body).toHaveLength(5);
+      expect(response.body.data).toHaveLength(5);
     });
   });
 
@@ -130,10 +125,7 @@ describe('Announcements API Tests', () => {
         content: 'Missing title',
       };
 
-      const response = await request(app)
-        .post('/api/announcements')
-        .send(invalidData)
-        .expect(400);
+      const response = await request(app).post('/api/announcements').send(invalidData).expect(400);
 
       expect(response.body).toHaveProperty('error');
       expect(response.body.error).toMatch(/validation/i);
@@ -148,10 +140,7 @@ describe('Announcements API Tests', () => {
         targetClasses: ['10'],
       };
 
-      const response = await request(app)
-        .post('/api/announcements')
-        .send(invalidData)
-        .expect(400);
+      const response = await request(app).post('/api/announcements').send(invalidData).expect(400);
 
       expect(response.body).toHaveProperty('error');
     });
@@ -169,9 +158,7 @@ describe('Announcements API Tests', () => {
 
       await announcement.save();
 
-      const response = await request(app)
-        .get(`/api/announcements/${announcement._id}`)
-        .expect(200);
+      const response = await request(app).get(`/api/announcements/${announcement._id}`).expect(200);
 
       expect(response.body.title).toBe(announcement.title);
       expect(response.body.content).toBe(announcement.content);
@@ -180,15 +167,12 @@ describe('Announcements API Tests', () => {
     it('should return 404 for non-existent announcement', async () => {
       const fakeId = '507f1f77bcf86cd799439011';
 
-      const response = await request(app)
-        .get(`/api/announcements/${fakeId}`)
-        .expect(404);
+      const response = await request(app).get(`/api/announcements/${fakeId}`).expect(404);
 
       expect(response.body).toHaveProperty('error');
       expect(response.body.error).toBe('Duyuru bulunamadı');
     });
   });
-
 
   describe('DELETE /api/announcements/:id', () => {
     it('should delete announcement', async () => {
@@ -215,9 +199,7 @@ describe('Announcements API Tests', () => {
     it('should return 404 for non-existent announcement', async () => {
       const fakeId = '507f1f77bcf86cd799439011';
 
-      const response = await request(app)
-        .delete(`/api/announcements/${fakeId}`)
-        .expect(404);
+      const response = await request(app).delete(`/api/announcements/${fakeId}`).expect(404);
 
       expect(response.body).toHaveProperty('error');
     });

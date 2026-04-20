@@ -8,15 +8,15 @@ import {
   generateTokenPair,
   refreshTokens,
   JWTPayload,
-  RefreshTokenPayload
+  RefreshTokenPayload,
 } from '../../utils/jwt';
 
 // Mock environment variables
 vi.mock('process', () => ({
   env: {
     JWT_SECRET: 'test-jwt-secret-minimum-32-characters-long',
-    JWT_REFRESH_SECRET: 'test-refresh-secret-minimum-32-characters-long'
-  }
+    JWT_REFRESH_SECRET: 'test-refresh-secret-minimum-32-characters-long',
+  },
 }));
 
 // Mock jsonwebtoken
@@ -40,12 +40,12 @@ describe('JWT Utils', () => {
   const mockPayload: JWTPayload = {
     userId: 'user123',
     role: 'student',
-    email: 'test@example.com'
+    email: 'test@example.com',
   };
 
   const mockRefreshPayload: RefreshTokenPayload = {
     userId: 'user123',
-    tokenVersion: 1
+    tokenVersion: 1,
   };
 
   describe('generateAccessToken', () => {
@@ -79,7 +79,7 @@ describe('JWT Utils', () => {
       const iat = decoded.iat;
 
       // Allow for small timing differences (1-2 seconds)
-      expect(Math.abs((exp - iat) - (15 * 60))).toBeLessThanOrEqual(2);
+      expect(Math.abs(exp - iat - 15 * 60)).toBeLessThanOrEqual(2);
     });
   });
 
@@ -104,7 +104,7 @@ describe('JWT Utils', () => {
       const exp = decoded.exp;
       const iat = decoded.iat;
 
-      expect(exp - iat).toBe(7 * 24 * 60 * 60); // 7 days
+      expect(exp - iat).toBe(3 * 24 * 60 * 60); // 3 days
     });
   });
 
@@ -148,7 +148,7 @@ describe('JWT Utils', () => {
       expect(tokenPair.accessToken).toBeDefined();
       expect(tokenPair.refreshToken).toBeDefined();
       expect(tokenPair.expiresIn).toBe(15 * 60);
-      expect(tokenPair.refreshExpiresIn).toBe(7 * 24 * 60 * 60);
+      expect(tokenPair.refreshExpiresIn).toBe(3 * 24 * 60 * 60);
     });
 
     it('should generate valid tokens that can be verified', () => {
@@ -172,9 +172,9 @@ describe('JWT Utils', () => {
           findOne: vi.fn().mockResolvedValue({
             id: 'user123',
             rol: 'student',
-            email: 'test@example.com'
-          })
-        }
+            email: 'test@example.com',
+          }),
+        },
       }));
 
       const tokenPair = generateTokenPair('user123', 'student', 'test@example.com', 1);
@@ -183,7 +183,7 @@ describe('JWT Utils', () => {
       expect(newTokenPair.accessToken).toBeDefined();
       expect(newTokenPair.refreshToken).toBeDefined();
       expect(newTokenPair.expiresIn).toBe(15 * 60);
-      expect(newTokenPair.refreshExpiresIn).toBe(7 * 24 * 60 * 60);
+      expect(newTokenPair.refreshExpiresIn).toBe(3 * 24 * 60 * 60);
     });
 
     it('should throw error for invalid refresh token', async () => {
@@ -195,7 +195,9 @@ describe('JWT Utils', () => {
     it('should throw error for token version mismatch', async () => {
       const tokenPair = generateTokenPair('user123', 'student', 'test@example.com', 1);
 
-      await expect(refreshTokens(tokenPair.refreshToken, 2)).rejects.toThrow('Token version mismatch');
+      await expect(refreshTokens(tokenPair.refreshToken, 2)).rejects.toThrow(
+        'Token version mismatch',
+      );
     });
   });
 });
