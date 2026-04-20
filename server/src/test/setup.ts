@@ -1,16 +1,14 @@
 import { beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
-import { config } from 'dotenv';
 import mongoose from 'mongoose';
 
-// Load test environment variables
-config({ path: '.env.test' });
-
-// Set test environment
-process.env.NODE_ENV = 'test';
-process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/test-db';
-process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-only';
-process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing-only';
-process.env.REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379/1';
+// Test env vars are set in vitest.config.ts `test.env` (which runs before
+// setupFiles). We intentionally do NOT call dotenv here — loading
+// server/.env would overwrite the test-specific MONGODB_URI with the
+// dev/production URI, which connects without auth credentials and breaks
+// every integration test.
+//
+// If you need to override test env vars, create a server/.env.test file
+// or pass them in the shell: MONGODB_URI=... npx vitest run
 
 // Test database connection
 let testDbConnection: typeof mongoose | null = null;
@@ -89,7 +87,7 @@ global.testUtils = {
     rol: 'student',
     sinif: '10',
     sube: 'A',
-    ...overrides
+    ...overrides,
   }),
 
   // Generate test homework data
@@ -100,7 +98,7 @@ global.testUtils = {
     classLevel: '10',
     classSection: 'A',
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
-    ...overrides
+    ...overrides,
   }),
 
   // Generate test note data
@@ -111,7 +109,7 @@ global.testUtils = {
     date: new Date().toISOString(),
     semester: '1',
     academicYear: 2024,
-    ...overrides
+    ...overrides,
   }),
 
   // Generate test announcement data
@@ -121,7 +119,7 @@ global.testUtils = {
     priority: 'normal',
     targetRoles: ['student', 'teacher'],
     targetClasses: ['10', '11'],
-    ...overrides
+    ...overrides,
   }),
 
   // Generate test meal list data
@@ -131,16 +129,16 @@ global.testUtils = {
       {
         type: 'breakfast',
         time: '07:00',
-        menu: ['Bread', 'Butter', 'Jam', 'Tea']
+        menu: ['Bread', 'Butter', 'Jam', 'Tea'],
       },
       {
         type: 'lunch',
         time: '12:00',
-        menu: ['Rice', 'Chicken', 'Salad', 'Soup']
-      }
+        menu: ['Rice', 'Chicken', 'Salad', 'Soup'],
+      },
     ],
     notes: 'Test meal list notes',
-    ...overrides
+    ...overrides,
   }),
 
   // Generate test supervisor list data
@@ -152,10 +150,10 @@ global.testUtils = {
         shift: 'morning',
         area: 'Block A',
         startTime: '08:00',
-        endTime: '16:00'
-      }
+        endTime: '16:00',
+      },
     ],
-    ...overrides
+    ...overrides,
   }),
 
   // Generate test evci request data
@@ -167,7 +165,7 @@ global.testUtils = {
     destination: 'Home',
     contactPhone: '+905551234567',
     emergencyContact: 'Parent',
-    ...overrides
+    ...overrides,
   }),
 
   // Generate test request data
@@ -176,11 +174,11 @@ global.testUtils = {
     title: 'Test Request',
     description: 'This is a test request description',
     priority: 'normal',
-    ...overrides
+    ...overrides,
   }),
 
   // Wait for a specified time (useful for testing async operations)
-  wait: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
+  wait: (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
 
   // Generate random string
   randomString: (length: number = 10) => {
@@ -234,15 +232,14 @@ global.testUtils = {
   cleanupTestData: async (collections: string[]) => {
     // This would be implemented based on your database setup
     console.log(`🧹 Cleaning up test data for collections: ${collections.join(', ')}`);
-  }
+  },
 };
 
 // Extend global types
 declare global {
-  // eslint-disable-next-line no-var
+   
   var testUtils: any;
 }
 
 // Export test utilities for use in tests
 export { testUtils };
-
