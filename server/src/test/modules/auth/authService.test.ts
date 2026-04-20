@@ -25,7 +25,7 @@ describe('AuthService', () => {
         lastLogin: null,
         loginCount: 0,
         tokenVersion: 0,
-        save: vi.fn()
+        save: vi.fn(),
       };
 
       (User.findOne as any).mockResolvedValue(mockUser);
@@ -41,7 +41,7 @@ describe('AuthService', () => {
         adSoyad: 'John Doe',
         rol: 'student',
         email: 'john@example.com',
-        lastLogin: expect.any(Date)
+        lastLogin: expect.any(Date),
       });
       expect(result.tokens).toBeDefined();
     });
@@ -49,22 +49,27 @@ describe('AuthService', () => {
     it('should throw unauthorized error for non-existent user', async () => {
       (User.findOne as any).mockResolvedValue(null);
 
-      await expect(AuthService.authenticateUser('user123', 'password123'))
-        .rejects.toThrow(AppError);
+      await expect(AuthService.authenticateUser('user123', 'password123')).rejects.toThrow(
+        AppError,
+      );
     });
 
     it('should throw unauthorized error for wrong password', async () => {
       const mockUser = {
         id: 'user123',
         sifre: 'hashedPassword',
-        isActive: true
+        isActive: true,
+        failedLoginAttempts: 0,
+        lockUntil: null,
+        save: vi.fn(),
       };
 
       (User.findOne as any).mockResolvedValue(mockUser);
       (bcrypt.compare as any).mockResolvedValue(false);
 
-      await expect(AuthService.authenticateUser('user123', 'wrongpassword'))
-        .rejects.toThrow(AppError);
+      await expect(AuthService.authenticateUser('user123', 'wrongpassword')).rejects.toThrow(
+        AppError,
+      );
     });
   });
 
@@ -76,7 +81,7 @@ describe('AuthService', () => {
         rol: 'student',
         email: 'john@example.com',
         isActive: true,
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       (User.findOne as any).mockResolvedValue(mockUser);
@@ -89,18 +94,16 @@ describe('AuthService', () => {
         adSoyad: 'John Doe',
         rol: 'student',
         email: 'john@example.com',
-        createdAt: expect.any(Date)
+        createdAt: expect.any(Date),
       });
     });
 
     it('should throw not found error for non-existent user', async () => {
       (User.findOne as any).mockResolvedValue(null);
 
-      await expect(AuthService.getUserProfile('user123'))
-        .rejects.toThrow(AppError);
+      await expect(AuthService.getUserProfile('user123')).rejects.toThrow(AppError);
     });
   });
-
 
   describe('validatePasswordStrength', () => {
     it('should validate strong password', () => {
@@ -192,14 +195,14 @@ describe('AuthService', () => {
         activeUsers: 95,
         usersByRole: [
           { _id: 'student', count: 80 },
-          { _id: 'teacher', count: 15 }
+          { _id: 'teacher', count: 15 },
         ],
-        recentLogins: 10
+        recentLogins: 10,
       };
 
       (User.countDocuments as any)
         .mockResolvedValueOnce(100) // totalUsers
-        .mockResolvedValueOnce(95)  // activeUsers
+        .mockResolvedValueOnce(95) // activeUsers
         .mockResolvedValueOnce(10); // recentLogins
 
       (User.aggregate as any).mockResolvedValue(mockStats.usersByRole);
@@ -211,9 +214,9 @@ describe('AuthService', () => {
         activeUsers: 95,
         usersByRole: {
           student: 80,
-          teacher: 15
+          teacher: 15,
         },
-        recentLogins: 10
+        recentLogins: 10,
       });
     });
   });
