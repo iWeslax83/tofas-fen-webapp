@@ -36,3 +36,10 @@ export { Registration } from './Registration';
 export type { IRegistration } from './Registration';
 export { Appointment } from './Appointment';
 export type { IAppointment } from './Appointment';
+export { PasswordAuditLog } from './PasswordAuditLog';
+export type {
+  IPasswordAuditLog,
+  PasswordAuditAction,
+  PasswordAuditReason,
+} from './PasswordAuditLog';
+export { PASSWORD_AUDIT_ACTIONS, PASSWORD_AUDIT_REASONS } from './PasswordAuditLog';
