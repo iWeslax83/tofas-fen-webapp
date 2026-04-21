@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { UserService } from '../../utils/apiService';
+import { PasswordAdminService } from '../../utils/passwordAdminService';
+import PasswordRevealModal from './PasswordManagement/PasswordRevealModal';
 
 interface UserType {
   id: string;
@@ -21,7 +23,7 @@ interface CreateUserPayload {
   id: string;
   adSoyad: string;
   rol: string;
-  sifre: string;
+  sifre?: string;
   sinif?: string;
   sube?: string;
   oda?: string;
@@ -50,6 +52,8 @@ export default function AddUserModal({ onUserAdded, onClose }: AddUserModalProps
   const [addError, setAddError] = useState('');
   const [addSuccess, setAddSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [autoGen, setAutoGen] = useState(true);
+  const [revealed, setRevealed] = useState<{ password: string; label: string } | null>(null);
 
   const resetForm = () => {
     setAddForm({
@@ -114,12 +118,17 @@ export default function AddUserModal({ onUserAdded, onClose }: AddUserModalProps
             setAddSuccess('');
             setAddLoading(true);
             // Validasyon
-            if (!addForm.id || !addForm.adSoyad || !addForm.rol || !addForm.sifre) {
-              setAddError('ID, Ad Soyad, Rol ve Şifre zorunludur.');
+            if (!addForm.id || !addForm.adSoyad || !addForm.rol) {
+              setAddError('ID, Ad Soyad ve Rol zorunludur.');
               setAddLoading(false);
               return;
             }
-            if (addForm.sifre.length < 4) {
+            if (!autoGen && !addForm.sifre) {
+              setAddError('Şifre zorunludur (veya otomatik üret seçeneğini işaretleyin).');
+              setAddLoading(false);
+              return;
+            }
+            if (!autoGen && addForm.sifre.length < 4) {
               setAddError('Şifre en az 4 karakter olmalı.');
               setAddLoading(false);
               return;
@@ -130,8 +139,10 @@ export default function AddUserModal({ onUserAdded, onClose }: AddUserModalProps
                 id: addForm.id,
                 adSoyad: addForm.adSoyad,
                 rol: addForm.rol,
-                sifre: addForm.sifre,
               };
+              if (!autoGen) {
+                payload.sifre = addForm.sifre;
+              }
               if (addForm.rol === 'student') {
                 payload.sinif = addForm.sinif;
                 payload.sube = addForm.sube;
@@ -149,10 +160,26 @@ export default function AddUserModal({ onUserAdded, onClose }: AddUserModalProps
                 setAddError(error);
               } else {
                 onUserAdded(data as UserType);
-                setAddSuccess('Kullanıcı başarıyla eklendi!');
-                setTimeout(() => {
-                  handleClose();
-                }, 1200);
+                if (autoGen) {
+                  try {
+                    const gen = await PasswordAdminService.generatePassword(addForm.id, 'new_user');
+                    setRevealed({
+                      password: gen.password,
+                      label: `${addForm.adSoyad} (${addForm.id})`,
+                    });
+                    setAddSuccess('');
+                  } catch (genErr) {
+                    setAddError(
+                      'Kullanıcı eklendi ancak şifre üretilemedi: ' +
+                        (genErr instanceof Error ? genErr.message : 'Bilinmeyen hata'),
+                    );
+                  }
+                } else {
+                  setAddSuccess('Kullanıcı başarıyla eklendi!');
+                  setTimeout(() => {
+                    handleClose();
+                  }, 1200);
+                }
               }
             } catch {
               setAddError('Kullanıcı eklenemedi.');
@@ -204,35 +231,45 @@ export default function AddUserModal({ onUserAdded, onClose }: AddUserModalProps
             <option value="admin">Yönetici</option>
             <option value="hizmetli">Hizmetli</option>
           </select>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
             <input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Şifre"
-              value={addForm.sifre}
-              onChange={(e) => setAddForm((f) => ({ ...f, sifre: e.target.value }))}
-              style={{
-                border: '1.5px solid #d1d5db',
-                borderRadius: 8,
-                padding: '8px 12px',
-                fontSize: 15,
-                flex: 1,
-              }}
-              required
+              type="checkbox"
+              checked={autoGen}
+              onChange={(e) => setAutoGen(e.target.checked)}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--primary-red)',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              {showPassword ? 'Gizle' : 'Göster'}
-            </button>
-          </div>
+            Şifreyi otomatik üret
+          </label>
+          {!autoGen && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Şifre"
+                value={addForm.sifre}
+                onChange={(e) => setAddForm((f) => ({ ...f, sifre: e.target.value }))}
+                style={{
+                  border: '1.5px solid #d1d5db',
+                  borderRadius: 8,
+                  padding: '8px 12px',
+                  fontSize: 15,
+                  flex: 1,
+                }}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--primary-red)',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {showPassword ? 'Gizle' : 'Göster'}
+              </button>
+            </div>
+          )}
           {addForm.rol === 'student' && (
             <>
               <input
@@ -349,6 +386,16 @@ export default function AddUserModal({ onUserAdded, onClose }: AddUserModalProps
           </div>
         </form>
       </div>
+      {revealed && (
+        <PasswordRevealModal
+          password={revealed.password}
+          userLabel={revealed.label}
+          onClose={() => {
+            setRevealed(null);
+            handleClose();
+          }}
+        />
+      )}
     </div>
   );
 }
