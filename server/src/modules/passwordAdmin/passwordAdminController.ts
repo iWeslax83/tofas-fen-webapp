@@ -12,15 +12,21 @@ import {
 } from './passwordAdminService';
 import { queryAuditLog } from './passwordAuditService';
 import { buildCredentialsXlsx } from './credentialsExporter';
+import { User } from '../../models';
 
-function getAdminContext(req: Request): AdminContext {
-  const anyReq = req as unknown as { user?: { id: string; adSoyad: string } };
-  if (!anyReq.user) {
+async function getAdminContext(req: Request): Promise<AdminContext> {
+  const anyReq = req as unknown as { user?: { userId?: string } };
+  const userId = anyReq.user?.userId;
+  if (!userId) {
     throw new Error('Authenticated admin user missing on request');
   }
+  const admin = await User.findOne({ id: userId }).select('id adSoyad').lean();
+  if (!admin) {
+    throw new Error('Admin user not found in database');
+  }
   return {
-    id: anyReq.user.id,
-    adSoyad: anyReq.user.adSoyad,
+    id: (admin as unknown as { id: string }).id,
+    adSoyad: (admin as unknown as { adSoyad: string }).adSoyad,
     ip: req.ip,
     userAgent: req.get('user-agent') ?? undefined,
   };
@@ -52,7 +58,7 @@ function handleServiceError(err: unknown, res: Response) {
 
 export async function resetPassword(req: Request, res: Response, _next: NextFunction) {
   try {
-    const admin = getAdminContext(req);
+    const admin = await getAdminContext(req);
     const result = await resetUserPassword({
       userId: req.params.userId,
       admin,
@@ -68,7 +74,7 @@ export async function resetPassword(req: Request, res: Response, _next: NextFunc
 
 export async function generatePasswordForUser(req: Request, res: Response) {
   try {
-    const admin = getAdminContext(req);
+    const admin = await getAdminContext(req);
     const result = await generateUserPassword({
       userId: req.params.userId,
       admin,
@@ -85,7 +91,7 @@ export async function generatePasswordForUser(req: Request, res: Response) {
 export async function bulkImport(req: Request, res: Response) {
   try {
     if (!req.file) return res.status(400).json({ error: 'Dosya yüklenmedi' });
-    const admin = getAdminContext(req);
+    const admin = await getAdminContext(req);
 
     if (req.query.preview === 'true') {
       const preview = await previewClassList(req.file.buffer);
@@ -120,7 +126,7 @@ export async function bulkImport(req: Request, res: Response) {
 
 export async function activateBatch(req: Request, res: Response) {
   try {
-    const admin = getAdminContext(req);
+    const admin = await getAdminContext(req);
     const result = await activateImportBatch({ batchId: req.body.batchId, admin });
     res.json(result);
   } catch (err) {
@@ -130,7 +136,7 @@ export async function activateBatch(req: Request, res: Response) {
 
 export async function regenerateBatch(req: Request, res: Response) {
   try {
-    const admin = getAdminContext(req);
+    const admin = await getAdminContext(req);
     const result = await regenerateImportBatchPasswords({ batchId: req.params.batchId, admin });
     const xlsx = await buildCredentialsXlsx(result.credentialsRows);
     setNoStore(res);
@@ -146,7 +152,7 @@ export async function regenerateBatch(req: Request, res: Response) {
 
 export async function cancelBatch(req: Request, res: Response) {
   try {
-    const admin = getAdminContext(req);
+    const admin = await getAdminContext(req);
     const result = await cancelImportBatch({ batchId: req.params.batchId, admin });
     res.json(result);
   } catch (err) {
