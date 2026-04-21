@@ -164,7 +164,6 @@ export const API_ENDPOINTS = {
     GET_BY_STATUS: (status: string) => `/api/requests/status/${status}`,
   },
 
-
   // Calendar endpoints
   CALENDAR: {
     CALENDARS: {
@@ -188,7 +187,8 @@ export const API_ENDPOINTS = {
     ANNOUNCEMENTS: {
       BASE: '/api/calendar/announcements',
       CLUB_CREATE: (clubId: string) => `/api/clubs/${clubId}/announcements`,
-      CLUB_DELETE: (clubId: string, announcementId: string) => `/api/clubs/${clubId}/announcements/${announcementId}`,
+      CLUB_DELETE: (clubId: string, announcementId: string) =>
+        `/api/clubs/${clubId}/announcements/${announcementId}`,
     },
     STATS: '/api/calendar/stats',
     REMINDERS: {
@@ -215,12 +215,12 @@ export const API_ENDPOINTS = {
   // File Management endpoints
   // File Management endpoints - REMOVED
 
-
   // Communication endpoints
   COMMUNICATION: {
     MESSAGES: {
       BASE: '/api/communication/messages',
-      GET_BY_CONVERSATION: (conversationId: string) => `/api/communication/messages/${conversationId}`,
+      GET_BY_CONVERSATION: (conversationId: string) =>
+        `/api/communication/messages/${conversationId}`,
       CREATE: '/api/communication/messages',
       UPDATE: (id: string) => `/api/communication/messages/${id}`,
       DELETE: (id: string) => `/api/communication/messages/${id}`,
@@ -232,7 +232,8 @@ export const API_ENDPOINTS = {
       CREATE: '/api/communication/conversations',
       PARTICIPANTS: {
         ADD: (id: string) => `/api/communication/conversations/${id}/participants`,
-        REMOVE: (id: string, userId: string) => `/api/communication/conversations/${id}/participants/${userId}`,
+        REMOVE: (id: string, userId: string) =>
+          `/api/communication/conversations/${id}/participants/${userId}`,
       },
     },
     CHATROOMS: {
@@ -295,7 +296,7 @@ export type ApiEndpointKey = keyof typeof API_ENDPOINTS;
 // Helper function to build endpoint URLs with parameters
 export const buildEndpoint = (
   baseEndpoint: string,
-  params: Record<string, string | number> = {}
+  params: Record<string, string | number> = {},
 ): string => {
   let endpoint = baseEndpoint;
 
@@ -309,7 +310,7 @@ export const buildEndpoint = (
 // Helper function to add query parameters
 export const addQueryParams = (
   endpoint: string,
-  params: Record<string, string | number | boolean> = {}
+  params: Record<string, string | number | boolean> = {},
 ): string => {
   if (Object.keys(params).length === 0) return endpoint;
 
@@ -322,4 +323,33 @@ export const addQueryParams = (
 };
 
 // Export individual endpoint groups for easier imports
-export const { AUTH, USER, NOTES, HOMEWORKS, ANNOUNCEMENTS, SCHEDULE, CLUBS, DORMITORY, EVCI, REQUESTS, CALENDAR, MONITORING, COMMUNICATION, PERFORMANCE, PUSH } = API_ENDPOINTS;
+export const {
+  AUTH,
+  USER,
+  NOTES,
+  HOMEWORKS,
+  ANNOUNCEMENTS,
+  SCHEDULE,
+  CLUBS,
+  DORMITORY,
+  EVCI,
+  REQUESTS,
+  CALENDAR,
+  MONITORING,
+  COMMUNICATION,
+  PERFORMANCE,
+  PUSH,
+} = API_ENDPOINTS;
+
+// Password admin endpoints (Şifre Yönetimi)
+export const PASSWORD_ADMIN_ENDPOINTS = {
+  BULK_IMPORT: '/api/admin/passwords/bulk-import',
+  BULK_IMPORT_PREVIEW: '/api/admin/passwords/bulk-import?preview=true',
+  ACTIVATE_BATCH: '/api/admin/passwords/activate-batch',
+  REGENERATE_BATCH: (batchId: string) => `/api/admin/passwords/batch/${batchId}/regenerate`,
+  CANCEL_BATCH: (batchId: string) => `/api/admin/passwords/batch/${batchId}`,
+  PENDING_BATCHES: '/api/admin/passwords/batches',
+  RESET: (userId: string) => `/api/admin/passwords/reset/${userId}`,
+  GENERATE: (userId: string) => `/api/admin/passwords/generate/${userId}`,
+  AUDIT: '/api/admin/passwords/audit',
+} as const;
