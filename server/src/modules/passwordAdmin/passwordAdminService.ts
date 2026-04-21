@@ -112,7 +112,11 @@ export async function previewClassList(buffer: Buffer): Promise<{
   const existing = await User.find({ id: { $in: ids } })
     .select('id')
     .lean();
-  return { rows, warnings, existingIds: (existing as { id: string }[]).map((u) => u.id) };
+  return {
+    rows,
+    warnings,
+    existingIds: (existing as unknown as { id: string }[]).map((u) => u.id),
+  };
 }
 
 async function writeUsersForBatch(
@@ -123,7 +127,7 @@ async function writeUsersForBatch(
   const existing = await User.find({ id: { $in: ids } })
     .select('id')
     .lean();
-  const existingSet = new Set((existing as { id: string }[]).map((u) => u.id));
+  const existingSet = new Set((existing as unknown as { id: string }[]).map((u) => u.id));
   const toWrite = rows.filter((r) => !existingSet.has(r.id));
   const passwords = new Map<string, string>();
 
