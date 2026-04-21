@@ -70,6 +70,11 @@ const CalendarPage = lazy(() => import('../pages/Dashboard/CalendarPage'));
 const CommunicationPage = lazy(() => import('../pages/Dashboard/CommunicationPage'));
 const PerformancePage = lazy(() => import('../pages/Dashboard/PerformancePage'));
 
+// Password management
+const PasswordManagementPage = lazy(
+  () => import('../pages/Dashboard/PasswordManagement/PasswordManagementPage'),
+);
+
 // Visitor / Registration Pages
 const AdminRegistrationsPage = lazy(() => import('../pages/Dashboard/AdminRegistrationsPage'));
 const AdminAppointmentsPage = lazy(() => import('../pages/Dashboard/AdminAppointmentsPage'));
@@ -148,6 +153,14 @@ export default function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <NotEkleme />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/sifre-yonetimi"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <PasswordManagementPage />
                 </ProtectedRoute>
               }
             />
