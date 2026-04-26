@@ -34,13 +34,22 @@ function App() {
     }
   }, [theme]);
 
+  // Cross-tab sync: intentionally theme-only. The Zustand `persist`
+  // middleware does not fan out updates across tabs by default; rather
+  // than rehydrate the whole partialized payload (sidebar state etc.),
+  // we narrowly mirror the visible-to-user theme so dark/light flips
+  // in one tab follow in others. Extend if other fields ever need it.
   useEffect(() => {
+    const ALLOWED = ['light', 'dark', 'system'] as const;
     const handler = (e: StorageEvent) => {
       if (e.key !== 'ui-storage' || !e.newValue) return;
       try {
         const next = JSON.parse(e.newValue);
         const incoming = next?.state?.theme;
-        if (incoming && incoming !== useUIStore.getState().theme) {
+        if (
+          (ALLOWED as readonly string[]).includes(incoming) &&
+          incoming !== useUIStore.getState().theme
+        ) {
           useUIStore.setState({ theme: incoming });
         }
       } catch {
