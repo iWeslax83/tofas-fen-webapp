@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
 import { DormitoryService } from '../../utils/apiService';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { FileText, Loader2, RefreshCw, Upload, Calendar, Download, Trash2 } from 'lucide-react';
 
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';

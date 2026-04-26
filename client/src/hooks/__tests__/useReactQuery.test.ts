@@ -5,9 +5,9 @@ import { createElement } from 'react';
 import { useApiQuery, useApiMutation, usePaginatedQuery, queryKeys } from '../useReactQuery';
 
 // Mock toast
-vi.mock('react-hot-toast', () => ({
-  default: { success: vi.fn(), error: vi.fn() },
-  toast: { success: vi.fn(), error: vi.fn() },
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), error: vi.fn(), loading: vi.fn(), dismiss: vi.fn() },
+  Toaster: () => null,
 }));
 
 function createWrapper() {
@@ -30,7 +30,11 @@ describe('queryKeys', () => {
 
   it('generates announcement keys', () => {
     expect(queryKeys.announcements.all).toEqual(['announcements']);
-    expect(queryKeys.announcements.list({ type: 'urgent' })).toEqual(['announcements', 'list', { type: 'urgent' }]);
+    expect(queryKeys.announcements.list({ type: 'urgent' })).toEqual([
+      'announcements',
+      'list',
+      { type: 'urgent' },
+    ]);
     expect(queryKeys.announcements.detail('a1')).toEqual(['announcements', 'detail', 'a1']);
   });
 
@@ -71,39 +75,35 @@ describe('queryKeys', () => {
 describe('useApiQuery', () => {
   it('returns data on success', async () => {
     const queryFn = vi.fn().mockResolvedValue({ success: true, data: [1, 2, 3] });
-    const { result } = renderHook(
-      () => useApiQuery(['test-key'], queryFn),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => useApiQuery(['test-key'], queryFn), {
+      wrapper: createWrapper(),
+    });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual({ success: true, data: [1, 2, 3] });
   });
 
   it('throws on unsuccessful response', async () => {
     const queryFn = vi.fn().mockResolvedValue({ success: false, error: '404 Not Found' });
-    const { result } = renderHook(
-      () => useApiQuery(['test-fail'], queryFn),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => useApiQuery(['test-fail'], queryFn), {
+      wrapper: createWrapper(),
+    });
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toBe('404 Not Found');
   });
 
   it('uses default error message when none provided', async () => {
     const queryFn = vi.fn().mockResolvedValue({ success: false, error: '400 Bad Request' });
-    const { result } = renderHook(
-      () => useApiQuery(['test-default-err'], queryFn),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => useApiQuery(['test-default-err'], queryFn), {
+      wrapper: createWrapper(),
+    });
     await waitFor(() => expect(result.current.isError).toBe(true));
   });
 
   it('respects enabled option', async () => {
     const queryFn = vi.fn().mockResolvedValue({ success: true, data: [] });
-    renderHook(
-      () => useApiQuery(['test-disabled'], queryFn, { enabled: false }),
-      { wrapper: createWrapper() }
-    );
+    renderHook(() => useApiQuery(['test-disabled'], queryFn, { enabled: false }), {
+      wrapper: createWrapper(),
+    });
     expect(queryFn).not.toHaveBeenCalled();
   });
 });
@@ -113,7 +113,7 @@ describe('useApiMutation', () => {
     const mutationFn = vi.fn().mockResolvedValue({ success: true, message: 'Done' });
     const { result } = renderHook(
       () => useApiMutation(mutationFn, { invalidateQueries: [['test']] }),
-      { wrapper: createWrapper() }
+      { wrapper: createWrapper() },
     );
     result.current.mutate('arg1' as any);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -122,10 +122,7 @@ describe('useApiMutation', () => {
 
   it('throws on unsuccessful mutation', async () => {
     const mutationFn = vi.fn().mockResolvedValue({ success: false, error: 'Mutation failed' });
-    const { result } = renderHook(
-      () => useApiMutation(mutationFn),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => useApiMutation(mutationFn), { wrapper: createWrapper() });
     result.current.mutate('arg' as any);
     await waitFor(() => expect(result.current.isError).toBe(true));
   });
@@ -133,10 +130,12 @@ describe('useApiMutation', () => {
 
 describe('usePaginatedQuery', () => {
   it('passes page and limit to query function', async () => {
-    const queryFn = vi.fn().mockResolvedValue({ success: true, data: [], pagination: { page: 2, limit: 10 } });
+    const queryFn = vi
+      .fn()
+      .mockResolvedValue({ success: true, data: [], pagination: { page: 2, limit: 10 } });
     const { result } = renderHook(
       () => usePaginatedQuery(['paginated-test'], queryFn, { initialPage: 2, initialLimit: 10 }),
-      { wrapper: createWrapper() }
+      { wrapper: createWrapper() },
     );
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(queryFn).toHaveBeenCalledWith(2, 10);
@@ -144,10 +143,9 @@ describe('usePaginatedQuery', () => {
 
   it('uses defaults (page 1, limit 20)', async () => {
     const queryFn = vi.fn().mockResolvedValue({ success: true, data: [] });
-    renderHook(
-      () => usePaginatedQuery(['paginated-default'], queryFn),
-      { wrapper: createWrapper() }
-    );
+    renderHook(() => usePaginatedQuery(['paginated-default'], queryFn), {
+      wrapper: createWrapper(),
+    });
     await waitFor(() => expect(queryFn).toHaveBeenCalledWith(1, 20));
   });
 });

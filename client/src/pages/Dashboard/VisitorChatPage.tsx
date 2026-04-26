@@ -4,7 +4,7 @@ import { apiClient } from '../../utils/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useTheme } from '../../stores/uiStore';
 import { MessageCircle, Send } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface ChatMessage {
   _id: string;

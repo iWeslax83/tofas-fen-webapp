@@ -10,7 +10,7 @@ import {
   useTwoFactorExpiresAt,
 } from '../stores/authStore';
 import { Eye, EyeOff, Lock, User, ShieldCheck, RefreshCw } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { AppError } from '../utils/AppError';
 import './LoginPage.css';
 
