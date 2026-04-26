@@ -21,7 +21,9 @@
   --state: #931a1a;
   --state-deep: #6b0e0e;
 
-  /* Type families */
+  /* Type families. Intentionally overrides --font-sans / --font-mono
+     defined in theme.css (Inter / Fira Code) — Devlet is the single
+     source of truth from PR-02 onward. */
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-serif: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;

@@ -5,6 +5,9 @@ import { lightPalette, darkPalette } from '../tokens';
 
 const tokensCss = readFileSync(resolve(__dirname, '../../styles/tokens.css'), 'utf8');
 
+// Note: assumes tokens.css has no nested braces in values (none today;
+// would break on `content:` properties or nested at-rules). Switch to
+// postcss/css-tree if that changes.
 function parseBlock(selector: string): Record<string, string> {
   const re = new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]+)\\}`);
   const rawBody = tokensCss.match(re)?.[1] ?? '';
