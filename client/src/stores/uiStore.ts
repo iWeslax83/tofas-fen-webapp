@@ -9,54 +9,60 @@ interface UIState {
   // Sidebar state
   sidebarOpen: boolean;
   sidebarCollapsed: boolean;
-  
+
   // Mobile menu state
   mobileMenuOpen: boolean;
-  
+
   // Search state
   searchOpen: boolean;
   searchQuery: string;
-  
+
   // Theme state
   theme: 'light' | 'dark' | 'system';
   colorScheme: 'blue' | 'green' | 'purple' | 'red' | 'orange';
-  
+
   // Loading states
   globalLoading: boolean;
   loadingMessage: string | null;
-  
+
   // Modal states
   activeModal: string | null;
   modalData: unknown;
-  
+
   // Toast settings
-  toastPosition: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
+  toastPosition:
+    | 'top-right'
+    | 'top-left'
+    | 'bottom-right'
+    | 'bottom-left'
+    | 'top-center'
+    | 'bottom-center';
   toastDuration: number;
-  
+
   // Actions
   setSidebarOpen: (open: boolean) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebar: () => void;
   toggleSidebarCollapsed: () => void;
-  
+
   setMobileMenuOpen: (open: boolean) => void;
   toggleMobileMenu: () => void;
-  
+
   setSearchOpen: (open: boolean) => void;
   setSearchQuery: (query: string) => void;
   toggleSearch: () => void;
   clearSearch: () => void;
-  
+
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setColorScheme: (scheme: 'blue' | 'green' | 'purple' | 'red' | 'orange') => void;
-  
+
   setGlobalLoading: (loading: boolean, message?: string) => void;
-  
+
   setActiveModal: (modal: string | null, data?: unknown) => void;
   closeModal: () => void;
-  
+
   setToastSettings: (position: UIState['toastPosition'], duration: number) => void;
-  
+
   resetUI: () => void;
 }
 
@@ -73,7 +79,7 @@ const initialState = {
   activeModal: null,
   modalData: null,
   toastPosition: 'top-right' as const,
-  toastDuration: 4000
+  toastDuration: 4000,
 };
 
 export const useUIStore = create<UIState>()(
@@ -127,11 +133,13 @@ export const useUIStore = create<UIState>()(
       // Theme actions
       setTheme: (theme: 'light' | 'dark' | 'system') => {
         set({ theme });
-        
+
         // Apply theme to document
         const root = document.documentElement;
         if (theme === 'system') {
-          const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
           root.setAttribute('data-theme', systemTheme);
         } else {
           root.setAttribute('data-theme', theme);
@@ -140,7 +148,7 @@ export const useUIStore = create<UIState>()(
 
       setColorScheme: (scheme: 'blue' | 'green' | 'purple' | 'red' | 'orange') => {
         set({ colorScheme: scheme });
-        
+
         // Apply color scheme to document
         const root = document.documentElement;
         root.setAttribute('data-color-scheme', scheme);
@@ -148,39 +156,39 @@ export const useUIStore = create<UIState>()(
 
       // Loading actions
       setGlobalLoading: (loading: boolean, message?: string) => {
-        set({ 
-          globalLoading: loading, 
-          loadingMessage: message || null 
+        set({
+          globalLoading: loading,
+          loadingMessage: message || null,
         });
       },
 
       // Modal actions
       setActiveModal: (modal: string | null, data?: unknown) => {
-        set({ 
-          activeModal: modal, 
-          modalData: data || null 
+        set({
+          activeModal: modal,
+          modalData: data || null,
         });
       },
 
       closeModal: () => {
-        set({ 
-          activeModal: null, 
-          modalData: null 
+        set({
+          activeModal: null,
+          modalData: null,
         });
       },
 
       // Toast settings
       setToastSettings: (position: UIState['toastPosition'], duration: number) => {
-        set({ 
-          toastPosition: position, 
-          toastDuration: duration 
+        set({
+          toastPosition: position,
+          toastDuration: duration,
         });
       },
 
       // Reset UI
       resetUI: () => {
         set(initialState);
-      }
+      },
     }),
     {
       name: 'ui-storage',
@@ -190,10 +198,10 @@ export const useUIStore = create<UIState>()(
         sidebarOpen: state.sidebarOpen,
         sidebarCollapsed: state.sidebarCollapsed,
         toastPosition: state.toastPosition,
-        toastDuration: state.toastDuration
-      })
-    }
-  )
+        toastDuration: state.toastDuration,
+      }),
+    },
+  ),
 );
 
 /**
@@ -201,52 +209,77 @@ export const useUIStore = create<UIState>()(
  */
 import { useShallow } from 'zustand/react/shallow';
 
-export const useSidebar = () => useUIStore(useShallow((state) => ({
-  sidebarOpen: state.sidebarOpen,
-  sidebarCollapsed: state.sidebarCollapsed,
-  setSidebarOpen: state.setSidebarOpen,
-  setSidebarCollapsed: state.setSidebarCollapsed,
-  toggleSidebar: state.toggleSidebar,
-  toggleSidebarCollapsed: state.toggleSidebarCollapsed
-})));
+export const useSidebar = () =>
+  useUIStore(
+    useShallow((state) => ({
+      sidebarOpen: state.sidebarOpen,
+      sidebarCollapsed: state.sidebarCollapsed,
+      setSidebarOpen: state.setSidebarOpen,
+      setSidebarCollapsed: state.setSidebarCollapsed,
+      toggleSidebar: state.toggleSidebar,
+      toggleSidebarCollapsed: state.toggleSidebarCollapsed,
+    })),
+  );
 
-export const useMobileMenu = () => useUIStore(useShallow((state) => ({
-  mobileMenuOpen: state.mobileMenuOpen,
-  setMobileMenuOpen: state.setMobileMenuOpen,
-  toggleMobileMenu: state.toggleMobileMenu
-})));
+export const useMobileMenu = () =>
+  useUIStore(
+    useShallow((state) => ({
+      mobileMenuOpen: state.mobileMenuOpen,
+      setMobileMenuOpen: state.setMobileMenuOpen,
+      toggleMobileMenu: state.toggleMobileMenu,
+    })),
+  );
 
-export const useSearch = () => useUIStore(useShallow((state) => ({
-  searchOpen: state.searchOpen,
-  searchQuery: state.searchQuery,
-  setSearchOpen: state.setSearchOpen,
-  setSearchQuery: state.setSearchQuery,
-  toggleSearch: state.toggleSearch,
-  clearSearch: state.clearSearch
-})));
+export const useSearch = () =>
+  useUIStore(
+    useShallow((state) => ({
+      searchOpen: state.searchOpen,
+      searchQuery: state.searchQuery,
+      setSearchOpen: state.setSearchOpen,
+      setSearchQuery: state.setSearchQuery,
+      toggleSearch: state.toggleSearch,
+      clearSearch: state.clearSearch,
+    })),
+  );
 
-export const useTheme = () => useUIStore(useShallow((state) => ({
-  theme: state.theme,
-  colorScheme: state.colorScheme,
-  setTheme: state.setTheme,
-  setColorScheme: state.setColorScheme
-})));
+// Renamed from useTheme to disambiguate from hooks/useTheme (which is
+// the canonical { theme, setTheme, systemTheme, resolvedTheme } hook
+// from PR-03). This selector additionally exposes colorScheme for
+// callers that genuinely need it.
+export const useThemeSettings = () =>
+  useUIStore(
+    useShallow((state) => ({
+      theme: state.theme,
+      colorScheme: state.colorScheme,
+      setTheme: state.setTheme,
+      setColorScheme: state.setColorScheme,
+    })),
+  );
 
-export const useLoading = () => useUIStore(useShallow((state) => ({
-  globalLoading: state.globalLoading,
-  loadingMessage: state.loadingMessage,
-  setGlobalLoading: state.setGlobalLoading
-})));
+export const useLoading = () =>
+  useUIStore(
+    useShallow((state) => ({
+      globalLoading: state.globalLoading,
+      loadingMessage: state.loadingMessage,
+      setGlobalLoading: state.setGlobalLoading,
+    })),
+  );
 
-export const useModal = () => useUIStore(useShallow((state) => ({
-  activeModal: state.activeModal,
-  modalData: state.modalData,
-  setActiveModal: state.setActiveModal,
-  closeModal: state.closeModal
-})));
+export const useModal = () =>
+  useUIStore(
+    useShallow((state) => ({
+      activeModal: state.activeModal,
+      modalData: state.modalData,
+      setActiveModal: state.setActiveModal,
+      closeModal: state.closeModal,
+    })),
+  );
 
-export const useToastSettings = () => useUIStore(useShallow((state) => ({
-  toastPosition: state.toastPosition,
-  toastDuration: state.toastDuration,
-  setToastSettings: state.setToastSettings
-})));
+export const useToastSettings = () =>
+  useUIStore(
+    useShallow((state) => ({
+      toastPosition: state.toastPosition,
+      toastDuration: state.toastDuration,
+      setToastSettings: state.setToastSettings,
+    })),
+  );

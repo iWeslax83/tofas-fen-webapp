@@ -4,10 +4,9 @@ import { useUIStore } from '../stores/uiStore';
 export type Theme = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
 
+// Vite SPA — no SSR, so window is always defined; no guard needed.
 const readSystemTheme = (): ResolvedTheme =>
-  typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
+  window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
 /**
  * Theme accessor. Wraps the global UI store so callers get a stable
@@ -20,7 +19,6 @@ export function useTheme() {
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(readSystemTheme);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) => setSystemTheme(e.matches ? 'dark' : 'light');
     mq.addEventListener('change', handler);
