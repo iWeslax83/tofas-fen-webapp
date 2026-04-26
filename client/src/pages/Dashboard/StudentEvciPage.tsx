@@ -15,7 +15,6 @@ import {
   AlertCircle,
   Copy,
 } from 'lucide-react';
-import 'react-toastify/dist/ReactToastify.css';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 
 import { EvciService } from '../../utils/apiService';
