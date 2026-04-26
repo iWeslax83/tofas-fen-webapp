@@ -8,8 +8,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Tofaş brand color (primary red)
-        'tofas': {
+        // Devlet design tokens — driven by CSS vars (theme-aware)
+        paper: 'var(--paper)',
+        surface: 'var(--surface)',
+        'surface-2': 'var(--surface-2)',
+        ink: 'var(--ink)',
+        'ink-2': 'var(--ink-2)',
+        'ink-dim': 'var(--ink-dim)',
+        'ink-dim-2': 'var(--ink-dim-2)',
+        rule: 'var(--rule)',
+        'rule-2': 'var(--rule-2)',
+        state: 'var(--state)',
+        'state-deep': 'var(--state-deep)',
+
+        // Legacy Tofaş palette — kept until PR-20 cleanup
+        tofas: {
           50: '#fdf8f7',
           100: '#faf0ee',
           200: '#f4dcd8',
@@ -17,15 +30,19 @@ export default {
           400: '#dfa093',
           500: '#d27867',
           600: '#a85c51',
-          700: '#8B4A5A', // Main Tofaş color
+          700: '#8B4A5A',
           800: '#704043',
           900: '#5c353a',
         },
-        // Semantic colors
-        'success': '#10b981',
-        'warning': '#f59e0b',
-        'error': '#ef4444',
-        'info': '#3b82f6',
+        success: '#10b981',
+        warning: '#f59e0b',
+        error: '#ef4444',
+        info: '#3b82f6',
+      },
+      fontFamily: {
+        sans: ['IBM Plex Sans', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        serif: ['IBM Plex Serif', 'Georgia', 'Times New Roman', 'serif'],
+        mono: ['IBM Plex Mono', 'ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
       },
       fontSize: {
         'xs': '0.75rem',
