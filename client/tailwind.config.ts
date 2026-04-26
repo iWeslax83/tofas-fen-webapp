@@ -5,6 +5,10 @@ export default {
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
   ],
+  // Tie Tailwind's `dark:` variant to the same attribute the Devlet
+  // theme provider toggles, so future `dark:bg-X` etc. work without
+  // a second source of truth.
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
