@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
 import { apiClient } from '../../utils/api';
 import { ClipboardList, Check, X, Eye, UserPlus, MessageSquare } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface Registration {
   _id: string;

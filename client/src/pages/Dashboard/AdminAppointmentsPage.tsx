@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
 import { apiClient } from '../../utils/api';
 import { CalendarDays, Check, X, Clock } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface Appointment {
   _id: string;

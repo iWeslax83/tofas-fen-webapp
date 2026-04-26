@@ -1,4 +1,4 @@
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Analytics } from './monitoring';
 import { AppError, ErrorType, ErrorSeverity, ErrorContext } from './AppError';
 

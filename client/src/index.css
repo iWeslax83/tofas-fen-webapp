@@ -1,10 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&subset=latin,latin-ext&display=swap');
 @import url('./styles/theme.css');
 @import url('./styles/welcome-badges-override.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Animations moved to theme.css */
 

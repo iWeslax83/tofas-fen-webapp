@@ -2,14 +2,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useErrorHandler } from '../useErrorHandler';
 
-// Mock react-hot-toast
+// Mock sonner
 const { mockToastError } = vi.hoisted(() => {
   const mockToastError = vi.fn();
   return { mockToastError };
 });
-vi.mock('react-hot-toast', () => {
-  const mockToast = Object.assign(vi.fn(), { error: mockToastError, success: vi.fn() });
-  return { default: mockToast, toast: mockToast };
+vi.mock('sonner', () => {
+  const mockToast = Object.assign(vi.fn(), {
+    error: mockToastError,
+    success: vi.fn(),
+    loading: vi.fn(),
+    dismiss: vi.fn(),
+  });
+  return { toast: mockToast, Toaster: () => null };
 });
 
 beforeEach(() => {
@@ -84,10 +89,9 @@ describe('useErrorHandler', () => {
   it('handleAsyncError uses custom error message', async () => {
     const { result } = renderHook(() => useErrorHandler());
     await act(async () => {
-      await result.current.handleAsyncError(
-        async () => { throw new Error('original'); },
-        'Custom message'
-      );
+      await result.current.handleAsyncError(async () => {
+        throw new Error('original');
+      }, 'Custom message');
     });
     expect(result.current.error).toBe('Custom message');
   });

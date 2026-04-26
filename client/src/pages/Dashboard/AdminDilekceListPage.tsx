@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { FileText, Filter, Search, User, Mail, Calendar, Tag } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
@@ -66,12 +66,17 @@ const AdminDilekceListPage: React.FC = () => {
     }
   };
 
-  const handleStatusUpdate = async (id: string, status: string, reviewNote?: string, response?: string) => {
+  const handleStatusUpdate = async (
+    id: string,
+    status: string,
+    reviewNote?: string,
+    response?: string,
+  ) => {
     try {
       const response_data = await apiClient.put(`/api/dilekce/${id}/status`, {
         status,
         reviewNote,
-        response
+        response,
       });
 
       if (response_data.data.success) {
@@ -85,12 +90,16 @@ const AdminDilekceListPage: React.FC = () => {
     }
   };
 
-  const filteredDilekceler = dilekceler.filter(dilekce => {
+  const filteredDilekceler = dilekceler.filter((dilekce) => {
     if (filterStatus !== 'all' && dilekce.status !== filterStatus) return false;
     if (filterType !== 'all' && dilekce.type !== filterType) return false;
     if (filterPriority !== 'all' && dilekce.priority !== filterPriority) return false;
-    if (searchTerm && !dilekce.subject.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !dilekce.userName.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    if (
+      searchTerm &&
+      !dilekce.subject.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !dilekce.userName.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+      return false;
     return true;
   });
 
@@ -100,19 +109,22 @@ const AdminDilekceListPage: React.FC = () => {
       in_review: { bg: '#fef3c7', color: '#92400e', label: 'İnceleniyor' },
       approved: { bg: '#d1fae5', color: '#065f46', label: 'Onaylandı' },
       rejected: { bg: '#f3f4f6', color: '#6b7280', label: 'Reddedildi' },
-      completed: { bg: '#d1fae5', color: '#065f46', label: 'Tamamlandı' }
+      completed: { bg: '#d1fae5', color: '#065f46', label: 'Tamamlandı' },
     };
 
     const config = statusConfig[dilekce.status] || statusConfig.pending;
     return (
-      <span className="badge" style={{
-        padding: '4px 12px',
-        backgroundColor: config.bg,
-        color: config.color,
-        borderRadius: '12px',
-        fontSize: '12px',
-        fontWeight: '500'
-      }}>
+      <span
+        className="badge"
+        style={{
+          padding: '4px 12px',
+          backgroundColor: config.bg,
+          color: config.color,
+          borderRadius: '12px',
+          fontSize: '12px',
+          fontWeight: '500',
+        }}
+      >
         {config.label}
       </span>
     );
@@ -122,19 +134,21 @@ const AdminDilekceListPage: React.FC = () => {
     const priorityConfig: Record<string, { bg: string; color: string; label: string }> = {
       low: { bg: '#f3f4f6', color: '#6b7280', label: 'Düşük' },
       medium: { bg: '#fef3c7', color: '#92400e', label: 'Orta' },
-      high: { bg: '#fef3c7', color: '#92400e', label: 'Yüksek' }
+      high: { bg: '#fef3c7', color: '#92400e', label: 'Yüksek' },
     };
 
     const config = priorityConfig[priority] || priorityConfig.medium;
     return (
-      <span style={{
-        padding: '4px 8px',
-        backgroundColor: config.bg,
-        color: config.color,
-        borderRadius: '8px',
-        fontSize: '11px',
-        fontWeight: '500'
-      }}>
+      <span
+        style={{
+          padding: '4px 8px',
+          backgroundColor: config.bg,
+          color: config.color,
+          borderRadius: '8px',
+          fontSize: '11px',
+          fontWeight: '500',
+        }}
+      >
         {config.label}
       </span>
     );
@@ -142,7 +156,10 @@ const AdminDilekceListPage: React.FC = () => {
 
   if (loading) {
     return (
-      <ModernDashboardLayout pageTitle="Dilekçe Yönetimi" breadcrumb={[{ label: 'Ana Sayfa', path: '/admin' }, { label: 'Dilekçe Yönetimi' }]}>
+      <ModernDashboardLayout
+        pageTitle="Dilekçe Yönetimi"
+        breadcrumb={[{ label: 'Ana Sayfa', path: '/admin' }, { label: 'Dilekçe Yönetimi' }]}
+      >
         <div className="admin-dilekce-page">
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -156,10 +173,7 @@ const AdminDilekceListPage: React.FC = () => {
   return (
     <ModernDashboardLayout
       pageTitle="Dilekçe Yönetimi"
-      breadcrumb={[
-        { label: 'Ana Sayfa', path: '/admin' },
-        { label: 'Dilekçe Yönetimi' }
-      ]}
+      breadcrumb={[{ label: 'Ana Sayfa', path: '/admin' }, { label: 'Dilekçe Yönetimi' }]}
     >
       <div className="admin-dilekce-page">
         <div className="page-header">
@@ -243,7 +257,7 @@ const AdminDilekceListPage: React.FC = () => {
             </div>
           ) : (
             <div className="requests-grid">
-              {filteredDilekceler.map(dilekce => (
+              {filteredDilekceler.map((dilekce) => (
                 <div key={dilekce._id} className="request-card">
                   <div className="card-header">
                     <div className="card-header-left">
@@ -252,9 +266,7 @@ const AdminDilekceListPage: React.FC = () => {
                         {getPriorityBadge(dilekce.priority)}
                       </h3>
                     </div>
-                    <div className="card-header-right">
-                      {getStatusBadge(dilekce)}
-                    </div>
+                    <div className="card-header-right">{getStatusBadge(dilekce)}</div>
                   </div>
 
                   <div className="card-content">
@@ -263,14 +275,26 @@ const AdminDilekceListPage: React.FC = () => {
                         <User className="info-icon" />
                         <span className="info-label">Gönderen:</span>
                         <span className="info-value">
-                          {dilekce.userName} ({dilekce.userRole === 'student' ? 'Öğrenci' : dilekce.userRole === 'teacher' ? 'Öğretmen' : 'Veli'})
+                          {dilekce.userName} (
+                          {dilekce.userRole === 'student'
+                            ? 'Öğrenci'
+                            : dilekce.userRole === 'teacher'
+                              ? 'Öğretmen'
+                              : 'Veli'}
+                          )
                         </span>
                       </div>
                       <div className="info-item">
                         <Tag className="info-icon" />
                         <span className="info-label">Tür:</span>
                         <span className="info-value">
-                          {dilekce.type === 'izin' ? 'İzin' : dilekce.type === 'rapor' ? 'Rapor' : dilekce.type === 'nakil' ? 'Nakil' : 'Diğer'}
+                          {dilekce.type === 'izin'
+                            ? 'İzin'
+                            : dilekce.type === 'rapor'
+                              ? 'Rapor'
+                              : dilekce.type === 'nakil'
+                                ? 'Nakil'
+                                : 'Diğer'}
                           {dilekce.category && ` - ${dilekce.category}`}
                         </span>
                       </div>
@@ -283,15 +307,13 @@ const AdminDilekceListPage: React.FC = () => {
                             month: 'long',
                             day: 'numeric',
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
                           })}
                         </span>
                       </div>
                     </div>
 
-                    <div className="content-box">
-                      {dilekce.content}
-                    </div>
+                    <div className="content-box">{dilekce.content}</div>
 
                     {dilekce.attachments && dilekce.attachments.length > 0 && (
                       <div className="attachment-list">
@@ -359,7 +381,12 @@ const AdminDilekceListPage: React.FC = () => {
                           <button
                             onClick={() => {
                               const response = window.prompt('Yanıt (opsiyonel):');
-                              handleStatusUpdate(dilekce._id, 'completed', undefined, response || undefined);
+                              handleStatusUpdate(
+                                dilekce._id,
+                                'completed',
+                                undefined,
+                                response || undefined,
+                              );
                             }}
                             className="btn btn-success"
                           >
@@ -381,7 +408,12 @@ const AdminDilekceListPage: React.FC = () => {
                           onClick={() => {
                             const response = window.prompt('Yanıt:');
                             if (response) {
-                              handleStatusUpdate(dilekce._id, 'completed', undefined, response || undefined);
+                              handleStatusUpdate(
+                                dilekce._id,
+                                'completed',
+                                undefined,
+                                response || undefined,
+                              );
                             }
                           }}
                           className="btn btn-success"
@@ -402,4 +434,3 @@ const AdminDilekceListPage: React.FC = () => {
 };
 
 export default AdminDilekceListPage;
-
