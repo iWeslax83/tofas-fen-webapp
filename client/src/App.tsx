@@ -34,6 +34,23 @@ function App() {
     }
   }, [theme]);
 
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key !== 'ui-storage' || !e.newValue) return;
+      try {
+        const next = JSON.parse(e.newValue);
+        const incoming = next?.state?.theme;
+        if (incoming && incoming !== useUIStore.getState().theme) {
+          useUIStore.setState({ theme: incoming });
+        }
+      } catch {
+        /* ignore malformed storage payload */
+      }
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
