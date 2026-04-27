@@ -266,7 +266,7 @@ jobs:
       # the scan is clean. Fails the build on HIGH/CRITICAL CVEs with a fix
       # available (unfixed CVEs are reported via SARIF but don't block).
       - name: Build client image (no push)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./client
           file: ./client/Dockerfile
@@ -277,7 +277,7 @@ jobs:
           cache-to: type=gha,mode=min
 
       - name: Build server image (no push)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./server
           file: ./server/Dockerfile
@@ -318,7 +318,7 @@ jobs:
       # generates an SPDX SBOM via the built-in syft scanner.
       - name: Push client image
         id: push-client
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./client
           file: ./client/Dockerfile
@@ -331,7 +331,7 @@ jobs:
 
       - name: Push server image
         id: push-server
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./server
           file: ./server/Dockerfile
