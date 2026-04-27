@@ -35,7 +35,7 @@
     "@opentelemetry/instrumentation": "^0.208.0",
     "@opentelemetry/instrumentation-express": "^0.57.0",
     "@opentelemetry/instrumentation-http": "^0.208.0",
-    "@opentelemetry/instrumentation-mongoose": "^0.55.0",
+    "@opentelemetry/instrumentation-mongoose": "^0.61.0",
     "@opentelemetry/resources": "^2.2.0",
     "@opentelemetry/sdk-node": "^0.208.0",
     "@opentelemetry/semantic-conventions": "^1.38.0",
