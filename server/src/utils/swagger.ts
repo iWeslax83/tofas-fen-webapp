@@ -36,23 +36,23 @@ const options = {
       contact: {
         name: 'API Support',
         email: 'support@tofasfen.com',
-        url: 'https://tofasfen.com/support'
+        url: 'https://tofasfen.com/support',
       },
       license: {
         name: 'MIT',
-        url: 'https://opensource.org/licenses/MIT'
+        url: 'https://opensource.org/licenses/MIT',
       },
-      termsOfService: 'https://tofasfen.com/terms'
+      termsOfService: 'https://tofasfen.com/terms',
     },
     servers: [
       {
         url: 'http://localhost:3001',
-        description: 'Development server'
+        description: 'Development server',
       },
       {
         url: 'https://api.tofasfen.com',
-        description: 'Production server'
-      }
+        description: 'Production server',
+      },
     ],
     components: {
       securitySchemes: {
@@ -60,8 +60,8 @@ const options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'JWT token ile kimlik doğrulama'
-        }
+          description: 'JWT token ile kimlik doğrulama',
+        },
       },
       schemas: {
         User: {
@@ -71,44 +71,44 @@ const options = {
             id: {
               type: 'string',
               description: 'Kullanıcı ID',
-              example: '2024001'
+              example: '2024001',
             },
             adSoyad: {
               type: 'string',
               description: 'Ad ve soyad',
-              example: 'Ahmet Yılmaz'
+              example: 'Ahmet Yılmaz',
             },
             rol: {
               type: 'string',
-              enum: ['admin', 'teacher', 'student', 'parent', 'hizmetli', 'ziyaretci'],
-              description: 'Kullanıcı rolü'
+              enum: ['admin', 'teacher', 'student', 'parent', 'ziyaretci'],
+              description: 'Kullanıcı rolü',
             },
             email: {
               type: 'string',
               format: 'email',
               description: 'Email adresi',
-              example: 'ahmet.yilmaz@tofasfen.com'
+              example: 'ahmet.yilmaz@tofasfen.com',
             },
             sinif: {
               type: 'string',
               enum: ['9', '10', '11', '12'],
-              description: 'Sınıf'
+              description: 'Sınıf',
             },
             sube: {
               type: 'string',
               enum: ['A', 'B', 'C', 'D', 'E', 'F'],
-              description: 'Şube'
+              description: 'Şube',
             },
             oda: {
               type: 'string',
               description: 'Oda numarası',
-              example: '101'
+              example: '101',
             },
             pansiyon: {
               type: 'boolean',
-              description: 'Pansiyonda kalıyor mu?'
-            }
-          }
+              description: 'Pansiyonda kalıyor mu?',
+            },
+          },
         },
         LoginRequest: {
           type: 'object',
@@ -117,65 +117,73 @@ const options = {
             id: {
               type: 'string',
               description: 'Kullanıcı ID',
-              example: '2024001'
+              example: '2024001',
             },
             sifre: {
               type: 'string',
               description: 'Şifre',
-              example: 'password123'
-            }
-          }
+              example: 'password123',
+            },
+          },
         },
         LoginResponse: {
           type: 'object',
           properties: {
             success: {
               type: 'boolean',
-              example: true
+              example: true,
             },
             message: {
               type: 'string',
-              example: 'Giriş başarılı'
+              example: 'Giriş başarılı',
             },
             user: {
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/User',
             },
             accessToken: {
               type: 'string',
-              description: 'JWT access token'
+              description: 'JWT access token',
             },
             refreshToken: {
               type: 'string',
-              description: 'JWT refresh token'
+              description: 'JWT refresh token',
             },
             expiresIn: {
               type: 'number',
               description: 'Token süresi (saniye)',
-              example: 900
-            }
-          }
+              example: 900,
+            },
+          },
         },
         Error: {
           type: 'object',
           properties: {
             success: {
               type: 'boolean',
-              example: false
+              example: false,
             },
             message: {
               type: 'string',
-              description: 'Hata mesajı'
+              description: 'Hata mesajı',
             },
             errorType: {
               type: 'string',
-              enum: ['NETWORK', 'AUTHENTICATION', 'AUTHORIZATION', 'VALIDATION', 'SERVER', 'CLIENT', 'UNKNOWN'],
-              description: 'Hata tipi'
+              enum: [
+                'NETWORK',
+                'AUTHENTICATION',
+                'AUTHORIZATION',
+                'VALIDATION',
+                'SERVER',
+                'CLIENT',
+                'UNKNOWN',
+              ],
+              description: 'Hata tipi',
             },
             statusCode: {
               type: 'number',
-              description: 'HTTP status kodu'
-            }
-          }
+              description: 'HTTP status kodu',
+            },
+          },
         },
         EvciRequest: {
           type: 'object',
@@ -184,33 +192,33 @@ const options = {
             studentId: {
               type: 'string',
               description: 'Öğrenci ID',
-              example: '2024001'
+              example: '2024001',
             },
             startDate: {
               type: 'string',
               format: 'date',
               description: 'Başlangıç tarihi',
-              example: '2024-01-15'
+              example: '2024-01-15',
             },
             endDate: {
               type: 'string',
               format: 'date',
               description: 'Bitiş tarihi',
-              example: '2024-01-17'
+              example: '2024-01-17',
             },
             destination: {
               type: 'string',
               description: 'Gidilecek yer',
-              example: 'Ankara'
+              example: 'Ankara',
             },
             status: {
               type: 'string',
               enum: ['pending', 'approved', 'rejected'],
               description: 'Durum',
-              example: 'pending'
-            }
-          }
-        }
+              example: 'pending',
+            },
+          },
+        },
       },
       responses: {
         UnauthorizedError: {
@@ -218,94 +226,90 @@ const options = {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error',
               },
               example: {
                 success: false,
                 message: 'Token gerekli',
                 errorType: 'AUTHENTICATION',
-                statusCode: 401
-              }
-            }
-          }
+                statusCode: 401,
+              },
+            },
+          },
         },
         ForbiddenError: {
           description: 'Yetki yetersiz',
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error',
               },
               example: {
                 success: false,
                 message: 'Bu işlem için yetkiniz yok',
                 errorType: 'AUTHORIZATION',
-                statusCode: 403
-              }
-            }
-          }
+                statusCode: 403,
+              },
+            },
+          },
         },
         ValidationError: {
           description: 'Geçersiz istek',
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error',
               },
               example: {
                 success: false,
                 message: 'Geçersiz veri',
                 errorType: 'VALIDATION',
-                statusCode: 400
-              }
-            }
-          }
+                statusCode: 400,
+              },
+            },
+          },
         },
         NotFoundError: {
           description: 'Kaynak bulunamadı',
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error',
               },
               example: {
                 success: false,
                 message: 'Kaynak bulunamadı',
                 errorType: 'CLIENT',
-                statusCode: 404
-              }
-            }
-          }
+                statusCode: 404,
+              },
+            },
+          },
         },
         ServerError: {
           description: 'Sunucu hatası',
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error',
               },
               example: {
                 success: false,
                 message: 'Sunucu hatası',
                 errorType: 'SERVER',
-                statusCode: 500
-              }
-            }
-          }
-        }
-      }
+                statusCode: 500,
+              },
+            },
+          },
+        },
+      },
     },
     security: [
       {
-        bearerAuth: []
-      }
-    ]
+        bearerAuth: [],
+      },
+    ],
   },
-  apis: [
-    './src/routes/*.ts',
-    './src/modules/*/routes/*.ts',
-    './src/modules/*/controllers/*.ts'
-  ]
+  apis: ['./src/routes/*.ts', './src/modules/*/routes/*.ts', './src/modules/*/controllers/*.ts'],
 };
 
 export const specs = swaggerJsdoc(options);
@@ -317,12 +321,12 @@ export const swaggerOptions = {
     .swagger-ui .scheme-container { background: #f9fafb; }
   `,
   customSiteTitle: 'Tofas Fen Webapp API',
-  customfavIcon: '/favicon.ico'
+  customfavIcon: '/favicon.ico',
 };
 
 export const setupSwagger = (app: Express) => {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
-  
+
   // JSON endpoint
   app.get('/api-docs.json', (_req, res) => {
     res.setHeader('Content-Type', 'application/json');

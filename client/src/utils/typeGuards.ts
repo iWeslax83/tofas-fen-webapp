@@ -21,16 +21,31 @@ export const isUser = (obj: unknown): obj is IUser => {
 };
 
 export const isUserRole = (value: unknown): value is UserRole => {
-  return typeof value === 'string' && ['student', 'teacher', 'parent', 'admin', 'hizmetli', 'ziyaretci'].includes(value);
+  return (
+    typeof value === 'string' &&
+    ['student', 'teacher', 'parent', 'admin', 'ziyaretci'].includes(value)
+  );
 };
 
 export const isPartialUser = (obj: unknown): obj is Partial<IUser> => {
   if (!obj || typeof obj !== 'object') return false;
 
-  const validKeys = ['_id', 'id', 'name', 'surname', 'rol', 'email', 'emailVerified', 'pansiyon', 'tokenVersion', 'createdAt', 'updatedAt'];
+  const validKeys = [
+    '_id',
+    'id',
+    'name',
+    'surname',
+    'rol',
+    'email',
+    'emailVerified',
+    'pansiyon',
+    'tokenVersion',
+    'createdAt',
+    'updatedAt',
+  ];
   const objKeys = Object.keys(obj);
 
-  return objKeys.every(key => validKeys.includes(key));
+  return objKeys.every((key) => validKeys.includes(key));
 };
 
 // API Response Type Guards
@@ -38,16 +53,22 @@ export const isApiResponse = <T>(obj: unknown): obj is ApiResponse<T> => {
   if (!obj || typeof obj !== 'object' || obj === null) return false;
 
   const o = obj as any;
-  return (
-    typeof o.success === 'boolean' &&
-    typeof o.statusCode === 'number'
-  );
+  return typeof o.success === 'boolean' && typeof o.statusCode === 'number';
 };
 
-export const isPaginatedResponse = <T>(obj: unknown): obj is ApiResponse<T[]> & { pagination: { page: number; limit: number; total: number; totalPages: number } } => {
+export const isPaginatedResponse = <T>(
+  obj: unknown,
+): obj is ApiResponse<T[]> & {
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+} => {
   if (!isApiResponse<T[]>(obj) || !('pagination' in obj)) return false;
 
-  const pagination = obj.pagination as { page: number; limit: number; total: number; totalPages: number };
+  const pagination = obj.pagination as {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
   return (
     pagination &&
     typeof pagination === 'object' &&
@@ -75,12 +96,8 @@ export const isError = (obj: unknown): obj is Error => {
   if (!obj || typeof obj !== 'object' || obj === null) return false;
 
   const o = obj as any;
-  return (
-    typeof o.message === 'string' &&
-    typeof (obj as any).name === 'string'
-  );
+  return typeof o.message === 'string' && typeof (obj as any).name === 'string';
 };
-
 
 // Theme Type Guards
 export const isTheme = (obj: unknown): obj is Theme => {
@@ -100,7 +117,6 @@ export const isTheme = (obj: unknown): obj is Theme => {
 export const isArrayOfUsers = (arr: unknown): arr is IUser[] => {
   return Array.isArray(arr) && arr.every(isUser);
 };
-
 
 // Primitive Type Guards
 export const isString = (value: unknown): value is string => {
@@ -162,16 +178,16 @@ export const isValidPhoneNumber = (phone: string): boolean => {
 // Deep Type Checking
 export const hasProperty = <T extends object, K extends keyof T>(
   obj: T,
-  key: K
+  key: K,
 ): obj is T & Record<K, unknown> => {
   return key in obj;
 };
 
 export const hasProperties = <T extends object, K extends keyof T>(
   obj: T,
-  keys: K[]
+  keys: K[],
 ): obj is T & Record<K, unknown> => {
-  return keys.every(key => key in obj);
+  return keys.every((key) => key in obj);
 };
 
 // Type Assertion Helpers
@@ -202,7 +218,10 @@ export const narrowToUser = (value: unknown): IUser | null => {
   return null;
 };
 
-export const narrowToArray = <T>(value: unknown, guard: (item: unknown) => item is T): T[] | null => {
+export const narrowToArray = <T>(
+  value: unknown,
+  guard: (item: unknown) => item is T,
+): T[] | null => {
   if (Array.isArray(value) && value.every(guard)) return value;
   return null;
 };

@@ -129,8 +129,7 @@ export default function AppRoutes() {
             <Route path="/dashboard/parent" element={<Navigate to="/parent" replace />} />
             <Route path="/student" element={<ModernDashboard key="student" />} />
             <Route path="/dashboard/student" element={<Navigate to="/student" replace />} />
-            <Route path="/hizmetli" element={<ModernDashboard key="hizmetli" />} />
-            <Route path="/dashboard/hizmetli" element={<Navigate to="/hizmetli" replace />} />
+
             <Route path="/ziyaretci" element={<ModernDashboard key="ziyaretci" />} />
             <Route path="/dashboard/ziyaretci" element={<Navigate to="/ziyaretci" replace />} />
 
@@ -185,7 +184,6 @@ export default function AppRoutes() {
             <Route path="/teacher/duyurular" element={<DuyurularPage />} />
             <Route path="/parent/duyurular" element={<DuyurularPage />} />
             <Route path="/student/duyurular" element={<DuyurularPage />} />
-            <Route path="/hizmetli/duyurular" element={<DuyurularPage />} />
 
             {/* Dormitory Routes */}
             <Route path="/teacher/yemek-listesi" element={<MealListPage />} />
@@ -194,8 +192,7 @@ export default function AppRoutes() {
             <Route path="/parent/belletmen-listesi" element={<SupervisorListPage />} />
             <Route path="/student/yemek-listesi" element={<MealListPage />} />
             <Route path="/student/belletmen-listesi" element={<SupervisorListPage />} />
-            <Route path="/hizmetli/yemek-listesi" element={<MealListPage />} />
-            <Route path="/hizmetli/belletmen-listesi" element={<SupervisorListPage />} />
+
             <Route path="/admin/yemek-listesi" element={<MealListPage />} />
             <Route path="/admin/belletmen-listesi" element={<SupervisorListPage />} />
 
@@ -323,7 +320,6 @@ export default function AppRoutes() {
             <Route path="/teacher/takvim" element={<CalendarPage />} />
             <Route path="/student/takvim" element={<CalendarPage />} />
             <Route path="/parent/takvim" element={<CalendarPage />} />
-            <Route path="/hizmetli/takvim" element={<CalendarPage />} />
 
             {/* File Management Routes */}
             {/* File Management Routes - REMOVED */}
@@ -331,28 +327,24 @@ export default function AppRoutes() {
             {/* <Route path="/teacher/dosyalar" element={<FileManagementPage />} /> */}
             {/* <Route path="/student/dosyalar" element={<FileManagementPage />} /> */}
             {/* <Route path="/parent/dosyalar" element={<FileManagementPage />} /> */}
-            {/* <Route path="/hizmetli/dosyalar" element={<FileManagementPage />} /> */}
 
             {/* Communication Routes */}
             <Route path="/admin/iletisim" element={<CommunicationPage />} />
             <Route path="/teacher/iletisim" element={<CommunicationPage />} />
             <Route path="/student/iletisim" element={<CommunicationPage />} />
             <Route path="/parent/iletisim" element={<CommunicationPage />} />
-            <Route path="/hizmetli/iletisim" element={<CommunicationPage />} />
 
             {/* Performance Routes */}
             <Route path="/admin/performans" element={<PerformancePage />} />
             <Route path="/teacher/performans" element={<PerformancePage />} />
             <Route path="/student/performans" element={<PerformancePage />} />
             <Route path="/parent/performans" element={<PerformancePage />} />
-            <Route path="/hizmetli/performans" element={<PerformancePage />} />
 
             {/* Settings Routes */}
             <Route path="/admin/ayarlar" element={<SettingsPage />} />
             <Route path="/teacher/ayarlar" element={<SettingsPage />} />
             <Route path="/student/ayarlar" element={<SettingsPage />} />
             <Route path="/parent/ayarlar" element={<SettingsPage />} />
-            <Route path="/hizmetli/ayarlar" element={<SettingsPage />} />
 
             {/* Demo Routes - only available in development */}
             {isDev && (
@@ -361,31 +353,26 @@ export default function AppRoutes() {
                 <Route path="/teacher/skeleton-demo" element={<SkeletonDemoPage />} />
                 <Route path="/student/skeleton-demo" element={<SkeletonDemoPage />} />
                 <Route path="/parent/skeleton-demo" element={<SkeletonDemoPage />} />
-                <Route path="/hizmetli/skeleton-demo" element={<SkeletonDemoPage />} />
 
                 <Route path="/admin/error-demo" element={<ErrorHandlingDemoPage />} />
                 <Route path="/teacher/error-demo" element={<ErrorHandlingDemoPage />} />
                 <Route path="/student/error-demo" element={<ErrorHandlingDemoPage />} />
                 <Route path="/parent/error-demo" element={<ErrorHandlingDemoPage />} />
-                <Route path="/hizmetli/error-demo" element={<ErrorHandlingDemoPage />} />
 
                 <Route path="/admin/form-demo" element={<FormUXDemoPage />} />
                 <Route path="/teacher/form-demo" element={<FormUXDemoPage />} />
                 <Route path="/student/form-demo" element={<FormUXDemoPage />} />
                 <Route path="/parent/form-demo" element={<FormUXDemoPage />} />
-                <Route path="/hizmetli/form-demo" element={<FormUXDemoPage />} />
 
                 <Route path="/admin/navigation-demo" element={<NavigationDemoPage />} />
                 <Route path="/teacher/navigation-demo" element={<NavigationDemoPage />} />
                 <Route path="/student/navigation-demo" element={<NavigationDemoPage />} />
                 <Route path="/parent/navigation-demo" element={<NavigationDemoPage />} />
-                <Route path="/hizmetli/navigation-demo" element={<NavigationDemoPage />} />
 
                 <Route path="/admin/accessibility-demo" element={<AccessibilityDemoPage />} />
                 <Route path="/teacher/accessibility-demo" element={<AccessibilityDemoPage />} />
                 <Route path="/student/accessibility-demo" element={<AccessibilityDemoPage />} />
                 <Route path="/parent/accessibility-demo" element={<AccessibilityDemoPage />} />
-                <Route path="/hizmetli/accessibility-demo" element={<AccessibilityDemoPage />} />
               </>
             )}
 

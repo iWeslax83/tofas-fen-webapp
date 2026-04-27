@@ -14,13 +14,13 @@ export const validateRequest = (req: Request, res: Response, next: NextFunction)
       path: req.path,
       method: req.method,
       userId: (req as any).user?.id || 'anonymous',
-      errors: errors.array()
+      errors: errors.array(),
     });
 
     return res.status(400).json({
       error: 'Validation failed',
       details: errors.array(),
-      message: 'Please check your input and try again'
+      message: 'Please check your input and try again',
     });
   }
   return next();
@@ -46,10 +46,12 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
 
     next();
   } catch (error) {
-    logger.error('Input sanitization error', { error: error instanceof Error ? error.message : error });
+    logger.error('Input sanitization error', {
+      error: error instanceof Error ? error.message : error,
+    });
     res.status(400).json({
       error: 'Invalid input detected',
-      message: 'Input contains potentially dangerous content'
+      message: 'Input contains potentially dangerous content',
     });
   }
 };
@@ -57,7 +59,7 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
 // Recursively sanitize objects and arrays
 const sanitizeObject = (obj: any): any => {
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeObject(item));
+    return obj.map((item) => sanitizeObject(item));
   }
 
   if (obj !== null && typeof obj === 'object') {
@@ -72,8 +74,32 @@ const sanitizeObject = (obj: any): any => {
     return DOMPurify.sanitize(obj, {
       ALLOWED_TAGS: [],
       ALLOWED_ATTR: [],
-      FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'select', 'button', 'link', 'meta'],
-      FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onchange', 'onkeydown', 'onkeyup', 'onkeypress']
+      FORBID_TAGS: [
+        'script',
+        'style',
+        'iframe',
+        'object',
+        'embed',
+        'form',
+        'input',
+        'textarea',
+        'select',
+        'button',
+        'link',
+        'meta',
+      ],
+      FORBID_ATTR: [
+        'onerror',
+        'onload',
+        'onclick',
+        'onmouseover',
+        'onfocus',
+        'onblur',
+        'onchange',
+        'onkeydown',
+        'onkeyup',
+        'onkeypress',
+      ],
     });
   }
 
@@ -93,21 +119,31 @@ export const validateHomework = [
     .trim()
     .isLength({ min: 10, max: 2000 })
     .withMessage('Açıklama 10-2000 karakter arasında olmalıdır')
-    .customSanitizer(value => DOMPurify.sanitize(value, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li'] })),
+    .customSanitizer((value) =>
+      DOMPurify.sanitize(value, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li'] }),
+    ),
 
   body('subject')
     .trim()
     .isIn([
-      'Matematik', 'Fizik', 'Kimya', 'Biyoloji', 'İngilizce',
-      'Türkçe', 'Tarih', 'Coğrafya', 'Din Kültürü', 'Beden Eğitimi',
-      'Müzik', 'Görsel Sanatlar', 'Teknoloji ve Tasarım', 'Bilişim Teknolojileri'
+      'Matematik',
+      'Fizik',
+      'Kimya',
+      'Biyoloji',
+      'İngilizce',
+      'Türkçe',
+      'Tarih',
+      'Coğrafya',
+      'Din Kültürü',
+      'Beden Eğitimi',
+      'Müzik',
+      'Görsel Sanatlar',
+      'Teknoloji ve Tasarım',
+      'Bilişim Teknolojileri',
     ])
     .withMessage('Geçersiz ders adı'),
 
-  body('classLevel')
-    .trim()
-    .isIn(['9', '10', '11', '12'])
-    .withMessage('Geçersiz sınıf seviyesi'),
+  body('classLevel').trim().isIn(['9', '10', '11', '12']).withMessage('Geçersiz sınıf seviyesi'),
 
   body('classSection')
     .optional()
@@ -132,10 +168,7 @@ export const validateHomework = [
     .isIn(['low', 'medium', 'high', 'urgent'])
     .withMessage('Geçersiz öncelik seviyesi'),
 
-  body('attachments')
-    .optional()
-    .isArray({ max: 5 })
-    .withMessage('En fazla 5 dosya eklenebilir'),
+  body('attachments').optional().isArray({ max: 5 }).withMessage('En fazla 5 dosya eklenebilir'),
 
   body('attachments.*.filename')
     .optional()
@@ -149,7 +182,7 @@ export const validateHomework = [
     .isInt({ min: 1, max: 10 * 1024 * 1024 }) // 10MB max
     .withMessage('Dosya boyutu 1 byte - 10MB arasında olmalıdır'),
 
-  validateRequest
+  validateRequest,
 ];
 
 // Enhanced User validation rules with comprehensive security
@@ -182,21 +215,11 @@ export const validateUser = [
       return true;
     }),
 
-  body('rol')
-    .isIn(['student', 'teacher', 'parent', 'admin', 'hizmetli'])
-    .withMessage('Geçersiz rol'),
+  body('rol').isIn(['student', 'teacher', 'parent', 'admin']).withMessage('Geçersiz rol'),
 
-  body('sinif')
-    .optional()
-    .trim()
-    .isIn(['9', '10', '11', '12'])
-    .withMessage('Geçersiz sınıf'),
+  body('sinif').optional().trim().isIn(['9', '10', '11', '12']).withMessage('Geçersiz sınıf'),
 
-  body('sube')
-    .optional()
-    .trim()
-    .isIn(['A', 'B', 'C', 'D', 'E', 'F'])
-    .withMessage('Geçersiz şube'),
+  body('sube').optional().trim().isIn(['A', 'B', 'C', 'D', 'E', 'F']).withMessage('Geçersiz şube'),
 
   body('oda')
     .optional()
@@ -206,10 +229,7 @@ export const validateUser = [
     .matches(/^[a-zA-Z\d\-_]+$/)
     .withMessage('Oda numarası sadece harf, rakam, tire ve alt çizgi içerebilir'),
 
-  body('pansiyon')
-    .optional()
-    .isBoolean()
-    .withMessage('Pansiyon değeri boolean olmalıdır'),
+  body('pansiyon').optional().isBoolean().withMessage('Pansiyon değeri boolean olmalıdır'),
 
   body('parentId')
     .optional()
@@ -219,10 +239,7 @@ export const validateUser = [
     .matches(/^[a-zA-ZğüşıöçĞÜŞİÖÇ\d\-_]+$/)
     .withMessage('Veli ID sadece harf, rakam, tire ve alt çizgi içerebilir'),
 
-  body('childId')
-    .optional()
-    .isArray()
-    .withMessage('Çocuk ID listesi array olmalıdır'),
+  body('childId').optional().isArray().withMessage('Çocuk ID listesi array olmalıdır'),
 
   body('childId.*')
     .optional()
@@ -232,7 +249,7 @@ export const validateUser = [
     .matches(/^[a-zA-ZğüşıöçĞÜŞİÖÇ\d\-_]+$/)
     .withMessage('Çocuk ID sadece harf, rakam, tire ve alt çizgi içerebilir'),
 
-  validateRequest
+  validateRequest,
 ];
 
 // Enhanced Note validation rules
@@ -251,9 +268,7 @@ export const validateNote = [
     .matches(/^[a-zA-ZğüşıöçĞÜŞİÖÇ\s]+$/)
     .withMessage('Ders adı sadece harf ve boşluk içerebilir'),
 
-  body('note')
-    .isFloat({ min: 0, max: 100 })
-    .withMessage('Not 0-100 arasında olmalıdır'),
+  body('note').isFloat({ min: 0, max: 100 }).withMessage('Not 0-100 arasında olmalıdır'),
 
   body('date')
     .isISO8601()
@@ -272,19 +287,16 @@ export const validateNote = [
     .trim()
     .isLength({ min: 0, max: 500 })
     .withMessage('Açıklama en fazla 500 karakter olabilir')
-    .customSanitizer(value => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
+    .customSanitizer((value) => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
 
-  body('semester')
-    .optional()
-    .isIn(['1', '2'])
-    .withMessage('Geçersiz dönem'),
+  body('semester').optional().isIn(['1', '2']).withMessage('Geçersiz dönem'),
 
   body('academicYear')
     .optional()
     .isInt({ min: 2020, max: 2030 })
     .withMessage('Geçersiz akademik yıl'),
 
-  validateRequest
+  validateRequest,
 ];
 
 // Enhanced Announcement validation rules
@@ -300,30 +312,43 @@ export const validateAnnouncement = [
     .trim()
     .isLength({ min: 10, max: 5000 })
     .withMessage('İçerik 10-5000 karakter arasında olmalıdır')
-    .customSanitizer(value => DOMPurify.sanitize(value, {
-      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre'],
-      ALLOWED_ATTR: ['class', 'id']
-    })),
+    .customSanitizer((value) =>
+      DOMPurify.sanitize(value, {
+        ALLOWED_TAGS: [
+          'p',
+          'br',
+          'strong',
+          'em',
+          'ul',
+          'ol',
+          'li',
+          'h1',
+          'h2',
+          'h3',
+          'h4',
+          'h5',
+          'h6',
+          'blockquote',
+          'code',
+          'pre',
+        ],
+        ALLOWED_ATTR: ['class', 'id'],
+      }),
+    ),
 
   body('priority')
     .optional()
     .isIn(['low', 'medium', 'high', 'urgent'])
     .withMessage('Geçersiz öncelik seviyesi'),
 
-  body('targetRoles')
-    .optional()
-    .isArray()
-    .withMessage('Hedef roller array olmalıdır'),
+  body('targetRoles').optional().isArray().withMessage('Hedef roller array olmalıdır'),
 
   body('targetRoles.*')
     .optional()
-    .isIn(['student', 'teacher', 'parent', 'admin', 'hizmetli'])
+    .isIn(['student', 'teacher', 'parent', 'admin'])
     .withMessage('Geçersiz hedef rol'),
 
-  body('targetClasses')
-    .optional()
-    .isArray()
-    .withMessage('Hedef sınıflar array olmalıdır'),
+  body('targetClasses').optional().isArray().withMessage('Hedef sınıflar array olmalıdır'),
 
   body('targetClasses.*')
     .optional()
@@ -343,20 +368,14 @@ export const validateAnnouncement = [
       return true;
     }),
 
-  validateRequest
+  validateRequest,
 ];
-
-
 
 // Enhanced Meal List validation rules
 export const validateMealList = [
-  body('date')
-    .isISO8601()
-    .withMessage('Geçersiz tarih formatı'),
+  body('date').isISO8601().withMessage('Geçersiz tarih formatı'),
 
-  body('meals')
-    .isArray({ min: 1, max: 5 })
-    .withMessage('En az 1, en fazla 5 öğün olmalıdır'),
+  body('meals').isArray({ min: 1, max: 5 }).withMessage('En az 1, en fazla 5 öğün olmalıdır'),
 
   body('meals.*.type')
     .isIn(['breakfast', 'lunch', 'dinner', 'snack'])
@@ -366,35 +385,29 @@ export const validateMealList = [
     .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
     .withMessage('Geçersiz saat formatı (HH:MM)'),
 
-  body('meals.*.menu')
-    .isArray({ min: 1, max: 20 })
-    .withMessage('Menü 1-20 öğe içermelidir'),
+  body('meals.*.menu').isArray({ min: 1, max: 20 }).withMessage('Menü 1-20 öğe içermelidir'),
 
   body('meals.*.menu.*')
     .trim()
     .isLength({ min: 1, max: 100 })
     .withMessage('Menü öğesi 1-100 karakter arasında olmalıdır')
-    .customSanitizer(value => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
+    .customSanitizer((value) => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
 
   body('notes')
     .optional()
     .trim()
     .isLength({ min: 0, max: 500 })
     .withMessage('Notlar en fazla 500 karakter olabilir')
-    .customSanitizer(value => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
+    .customSanitizer((value) => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
 
-  validateRequest
+  validateRequest,
 ];
 
 // Enhanced Supervisor List validation rules
 export const validateSupervisorList = [
-  body('date')
-    .isISO8601()
-    .withMessage('Geçersiz tarih formatı'),
+  body('date').isISO8601().withMessage('Geçersiz tarih formatı'),
 
-  body('supervisors')
-    .isArray({ min: 1 })
-    .withMessage('En az 1 belletmen olmalıdır'),
+  body('supervisors').isArray({ min: 1 }).withMessage('En az 1 belletmen olmalıdır'),
 
   body('supervisors.*.userId')
     .trim()
@@ -411,7 +424,7 @@ export const validateSupervisorList = [
     .trim()
     .isLength({ min: 1, max: 50 })
     .withMessage('Alan 1-50 karakter arasında olmalıdır')
-    .customSanitizer(value => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
+    .customSanitizer((value) => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
 
   body('supervisors.*.startTime')
     .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
@@ -428,7 +441,7 @@ export const validateSupervisorList = [
       return true;
     }),
 
-  validateRequest
+  validateRequest,
 ];
 
 // Enhanced Maintenance Request validation rules
@@ -444,7 +457,9 @@ export const validateMaintenanceRequest = [
     .trim()
     .isLength({ min: 10, max: 1000 })
     .withMessage('Açıklama 10-1000 karakter arasında olmalıdır')
-    .customSanitizer(value => DOMPurify.sanitize(value, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li'] })),
+    .customSanitizer((value) =>
+      DOMPurify.sanitize(value, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li'] }),
+    ),
 
   body('category')
     .isIn(['electrical', 'plumbing', 'heating', 'structural', 'cleaning', 'other'])
@@ -458,17 +473,14 @@ export const validateMaintenanceRequest = [
     .trim()
     .isLength({ min: 3, max: 100 })
     .withMessage('Konum 3-100 karakter arasında olmalıdır')
-    .customSanitizer(value => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
+    .customSanitizer((value) => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
 
   body('estimatedCost')
     .optional()
     .isFloat({ min: 0, max: 1000000 })
     .withMessage('Tahmini maliyet 0-1,000,000 arasında olmalıdır'),
 
-  body('attachments')
-    .optional()
-    .isArray({ max: 10 })
-    .withMessage('En fazla 10 dosya eklenebilir'),
+  body('attachments').optional().isArray({ max: 10 }).withMessage('En fazla 10 dosya eklenebilir'),
 
   body('attachments.*.filename')
     .optional()
@@ -477,7 +489,7 @@ export const validateMaintenanceRequest = [
     .matches(/^[a-zA-ZğüşıöçĞÜŞİÖÇ\s\d\-_.]+$/)
     .withMessage('Dosya adı sadece harf, rakam ve temel karakterler içerebilir'),
 
-  validateRequest
+  validateRequest,
 ];
 
 // Enhanced Evci Request validation rules
@@ -493,7 +505,9 @@ export const validateEvciRequest = [
     .trim()
     .isLength({ min: 10, max: 500 })
     .withMessage('Gerekçe 10-500 karakter arasında olmalıdır')
-    .customSanitizer(value => DOMPurify.sanitize(value, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em'] })),
+    .customSanitizer((value) =>
+      DOMPurify.sanitize(value, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em'] }),
+    ),
 
   body('startDate')
     .isISO8601()
@@ -523,7 +537,7 @@ export const validateEvciRequest = [
     .trim()
     .isLength({ min: 3, max: 100 })
     .withMessage('Gidilecek yer 3-100 karakter arasında olmalıdır')
-    .customSanitizer(value => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
+    .customSanitizer((value) => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
 
   body('contactPhone')
     .optional()
@@ -535,16 +549,14 @@ export const validateEvciRequest = [
     .trim()
     .isLength({ min: 3, max: 100 })
     .withMessage('Acil durum iletişim 3-100 karakter arasında olmalıdır')
-    .customSanitizer(value => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
+    .customSanitizer((value) => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
 
-  validateRequest
+  validateRequest,
 ];
 
 // Enhanced Request Data validation rules
 export const validateRequestData = [
-  body('type')
-    .isIn(['general', 'maintenance', 'evci', 'other'])
-    .withMessage('Geçersiz istek türü'),
+  body('type').isIn(['general', 'maintenance', 'evci', 'other']).withMessage('Geçersiz istek türü'),
 
   body('title')
     .trim()
@@ -557,20 +569,19 @@ export const validateRequestData = [
     .trim()
     .isLength({ min: 10, max: 2000 })
     .withMessage('Açıklama 10-2000 karakter arasında olmalıdır')
-    .customSanitizer(value => DOMPurify.sanitize(value, {
-      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li']
-    })),
+    .customSanitizer((value) =>
+      DOMPurify.sanitize(value, {
+        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li'],
+      }),
+    ),
 
   body('priority')
     .isIn(['low', 'normal', 'high', 'urgent'])
     .withMessage('Geçersiz öncelik seviyesi'),
 
-  body('attachments')
-    .optional()
-    .isArray({ max: 5 })
-    .withMessage('En fazla 5 dosya eklenebilir'),
+  body('attachments').optional().isArray({ max: 5 }).withMessage('En fazla 5 dosya eklenebilir'),
 
-  validateRequest
+  validateRequest,
 ];
 
 // Enhanced parameter validation
@@ -582,7 +593,7 @@ export const validateId = [
     .matches(/^[a-zA-ZğüşıöçĞÜŞİÖÇ\d\-_]+$/)
     .withMessage('ID sadece harf, rakam, tire ve alt çizgi içerebilir'),
 
-  validateRequest
+  validateRequest,
 ];
 
 // Enhanced query validation
@@ -607,9 +618,9 @@ export const validatePagination = [
     .trim()
     .isLength({ min: 1, max: 100 })
     .withMessage('Arama terimi 1-100 karakter arasında olmalıdır')
-    .customSanitizer(value => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
+    .customSanitizer((value) => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
 
-  validateRequest
+  validateRequest,
 ];
 
 // All validation rules are already exported individually above

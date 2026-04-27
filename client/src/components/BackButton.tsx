@@ -13,25 +13,30 @@ interface BackButtonProps {
   customText?: string;
 }
 
-const BackButton: React.FC<BackButtonProps> = ({ 
-  className = '', 
+const BackButton: React.FC<BackButtonProps> = ({
+  className = '',
   onClick,
   variant = 'default',
   size = 'md',
   showText = true,
-  customText
+  customText,
 }) => {
   const navigate = useNavigate();
   const { user } = useAuthContext();
 
   const getRoleRoute = (role?: string) => {
     switch (role) {
-      case 'admin': return '/admin';
-      case 'student': return '/student';
-      case 'teacher': return '/teacher';
-      case 'parent': return '/parent';
-      case 'hizmetli': return '/hizmetli';
-      default: return '/';
+      case 'admin':
+        return '/admin';
+      case 'student':
+        return '/student';
+      case 'teacher':
+        return '/teacher';
+      case 'parent':
+        return '/parent';
+
+      default:
+        return '/';
     }
   };
 
@@ -47,24 +52,30 @@ const BackButton: React.FC<BackButtonProps> = ({
 
   const getSizeClasses = () => {
     switch (size) {
-      case 'sm': return 'back-button--sm';
-      case 'lg': return 'back-button--lg';
-      default: return 'back-button--md';
+      case 'sm':
+        return 'back-button--sm';
+      case 'lg':
+        return 'back-button--lg';
+      default:
+        return 'back-button--md';
     }
   };
 
   const getVariantClasses = () => {
     switch (variant) {
-      case 'minimal': return 'back-button--minimal';
-      case 'floating': return 'back-button--floating';
-      default: return 'back-button--default';
+      case 'minimal':
+        return 'back-button--minimal';
+      case 'floating':
+        return 'back-button--floating';
+      default:
+        return 'back-button--default';
     }
   };
 
   const buttonText = customText || 'Ana Sayfaya Dön';
 
   return (
-    <button 
+    <button
       onClick={handleClick}
       className={`back-button ${getVariantClasses()} ${getSizeClasses()} ${className}`}
       title={buttonText}

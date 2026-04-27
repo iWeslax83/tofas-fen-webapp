@@ -106,13 +106,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       const user: User = {
         id: String(userData.id || ''),
         adSoyad: String(userData.adSoyad || ''),
-        rol: String(userData.rol || '') as
-          | 'admin'
-          | 'teacher'
-          | 'student'
-          | 'parent'
-          | 'hizmetli'
-          | 'ziyaretci',
+        rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'ziyaretci',
         ...(userData.email && { email: String(userData.email) }),
         emailVerified: Boolean(userData.emailVerified),
         twoFactorEnabled: Boolean(userData.twoFactorEnabled),
@@ -239,13 +233,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       const buildUser = (userData: Record<string, unknown>): User => ({
         id: String(userData.id || ''),
         adSoyad: String(userData.adSoyad || ''),
-        rol: String(userData.rol || '') as
-          | 'admin'
-          | 'teacher'
-          | 'student'
-          | 'parent'
-          | 'hizmetli'
-          | 'ziyaretci',
+        rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'ziyaretci',
         ...(userData.email && { email: String(userData.email) }),
         emailVerified: userData.emailVerified === true,
         twoFactorEnabled: Boolean(userData.twoFactorEnabled),
@@ -349,13 +337,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       const user: User = {
         id: String(userData.id || ''),
         adSoyad: String(userData.adSoyad || ''),
-        rol: String(userData.rol || '') as
-          | 'admin'
-          | 'teacher'
-          | 'student'
-          | 'parent'
-          | 'hizmetli'
-          | 'ziyaretci',
+        rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'ziyaretci',
         ...(userData.email && { email: String(userData.email) }),
         emailVerified: Boolean(userData.emailVerified),
         twoFactorEnabled: Boolean(userData.twoFactorEnabled),

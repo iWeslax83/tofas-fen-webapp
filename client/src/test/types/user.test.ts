@@ -15,7 +15,7 @@ describe('User Types', () => {
         pansiyon: true,
         isActive: true,
         createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z'
+        updatedAt: '2024-01-01T00:00:00Z',
       };
 
       expect(user.id).toBe('user123');
@@ -33,7 +33,7 @@ describe('User Types', () => {
       const user: User = {
         id: 'user123',
         adSoyad: 'John Doe',
-        rol: 'admin'
+        rol: 'admin',
       };
 
       expect(user.email).toBeUndefined();
@@ -44,13 +44,13 @@ describe('User Types', () => {
     });
 
     it('should accept valid role values', () => {
-      const roles: User['rol'][] = ['admin', 'teacher', 'student', 'parent', 'hizmetli', 'ziyaretci'];
-      
-      roles.forEach(role => {
+      const roles: User['rol'][] = ['admin', 'teacher', 'student', 'parent', 'ziyaretci'];
+
+      roles.forEach((role) => {
         const user: User = {
           id: 'user123',
           adSoyad: 'John Doe',
-          rol: role
+          rol: role,
         };
         expect(user.rol).toBe(role);
       });
@@ -61,7 +61,7 @@ describe('User Types', () => {
     it('should have required id and sifre properties', () => {
       const loginRequest: LoginRequest = {
         id: 'user123',
-        sifre: 'password123'
+        sifre: 'password123',
       };
 
       expect(loginRequest.id).toBe('user123');
@@ -75,12 +75,12 @@ describe('User Types', () => {
         user: {
           id: 'user123',
           adSoyad: 'John Doe',
-          rol: 'student'
+          rol: 'student',
         },
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
         expiresIn: 900,
-        refreshExpiresIn: 604800
+        refreshExpiresIn: 604800,
       };
 
       expect(userResponse.user).toBeDefined();
@@ -100,10 +100,9 @@ describe('User Types', () => {
           teacher: 50,
           student: 800,
           parent: 140,
-          hizmetli: 5
         },
         activeUsers: 950,
-        newUsersThisMonth: 25
+        newUsersThisMonth: 25,
       };
 
       expect(userStats.totalUsers).toBe(1000);
@@ -121,7 +120,7 @@ describe('User Types', () => {
         sube: 'A',
         pansiyon: true,
         isActive: true,
-        search: 'john'
+        search: 'john',
       };
 
       expect(userFilters.role).toBe('student');

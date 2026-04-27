@@ -301,8 +301,6 @@
 
 /* slideDown moved to theme.css */
 
-
-
 /* Admin Panel Styles */
 .admin-panel {
   min-height: 100vh;
@@ -1326,7 +1324,6 @@
   background: #bbf7d0;
 }
 
-
 .security-icon {
   background: #fee2e2;
   color: #dc2626;
@@ -1367,7 +1364,6 @@
   background: #e5e7eb;
   margin: 0.5rem 0;
 }
-
 
 /* Dashboard Card Improvements moved to theme.css */
 
@@ -1531,8 +1527,6 @@
   }
 }
 
-
-
 /* LoginLogsPage Styles */
 .login-logs-page {
   padding: 1.5rem;
@@ -1651,16 +1645,10 @@
   color: #9333ea;
 }
 
-.role-hizmetli {
-  background-color: #fff7ed;
-  color: #ea580c;
-}
-
 .role-default {
   background-color: #f3f4f6;
   color: #374151;
 }
-
 
 /* Student Card Styles */
 .student-card {
@@ -1906,7 +1894,6 @@
 .admin-panel .header-right .user-menu-trigger:hover .dropdown-arrow {
   transform: rotate(180deg);
 }
-
 
 /* Responsive adjustments for smaller header */
 @media (max-width: 768px) {
@@ -2322,7 +2309,6 @@
   transform: rotate(180deg);
 }
 
-
 /* Main Content */
 .teacher-panel .main-content {
   max-width: 1400px;
@@ -2417,7 +2403,6 @@
   .teacher-panel .header-right .user-menu-trigger .user-name {
     max-width: 80px;
   }
-
 
   .teacher-panel .main-content {
     padding: 20px 16px;
@@ -2616,7 +2601,6 @@
 .parent-panel .header-right .user-menu-trigger:hover .dropdown-arrow {
   transform: rotate(180deg);
 }
-
 
 /* Main Content */
 .parent-panel .main-content {
@@ -2928,7 +2912,6 @@
     max-width: 80px;
   }
 
-
   .parent-panel .main-content {
     padding: 20px 16px;
   }
@@ -3050,299 +3033,20 @@
 }
 
 /* ===== HIZMETLIPANEL STYLES ===== */
-/* HizmetliPanel Styles - Same Modern Design as other panels */
-.hizmetli-panel {
-  min-height: 100vh;
-  background: var(--gradient-primary-animated);
-  padding: 0;
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  animation: gradientShift 15s ease-in-out infinite;
-}
-
 /* Header */
-.hizmetli-panel .panel-header {
-  animation: slideDown 0.6s ease-out;
-}
-
-.hizmetli-panel .panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 30px;
-}
-
-.hizmetli-panel .header-left {
-  display: flex;
-  align-items: center;
-}
-
-.hizmetli-panel .panel-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.hizmetli-panel .panel-logo-icon {
-  height: 32px;
-  width: 32px;
-  color: var(--primary-red-dark);
-  animation: logoGlow 2s ease-in-out infinite alternate;
-}
-
-.hizmetli-panel .panel-logo-text {
-  font-size: 20px;
-  font-weight: 800;
-  color: #1a202c;
-  margin: 0;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.hizmetli-panel .header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  animation: fadeInRight 0.8s ease-out 0.4s both;
-}
-
-/* Custom UserMenu Design for HizmetliPanel */
-.hizmetli-panel .header-right .user-menu-container {
-  position: relative;
-}
-
-.hizmetli-panel .header-right .user-menu-trigger {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.1) 0%, rgba(75, 85, 99, 0.1) 100%);
-  border: 1px solid rgba(55, 65, 81, 0.2);
-  border-radius: 20px;
-  color: var(--primary-red-dark);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  /* backdrop-filter: blur(10px); */
-}
-
-.hizmetli-panel .header-right .user-menu-trigger:hover {
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.15) 0%, rgba(75, 85, 99, 0.15) 100%);
-  border-color: rgba(55, 65, 81, 0.3);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(55, 65, 81, 0.15);
-}
-
-.hizmetli-panel .header-right .user-menu-trigger .user-avatar {
-  width: 28px;
-  height: 28px;
-  background: var(--gradient-primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  border: 2px solid var(--primary-red-30);
-}
-
-.hizmetli-panel .header-right .user-menu-trigger .user-name {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.hizmetli-panel .header-right .user-menu-trigger .dropdown-arrow {
-  width: 16px;
-  height: 16px;
-  color: var(--primary-red-dark);
-  transition: transform 0.3s ease;
-}
-
-.hizmetli-panel .header-right .user-menu-trigger:hover .dropdown-arrow {
-  transform: rotate(180deg);
-}
-
-
 /* Main Content */
-.hizmetli-panel .main-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  animation: fadeIn 1s ease-out 0.6s both;
-  background: transparent;
-}
-
-.hizmetli-panel .container {
-  width: 100%;
-}
-
 /* Welcome Section */
-.hizmetli-panel .welcome-section {
-  background: var(--white);
-  /* backdrop-filter: blur(20px); */
-  border-radius: 24px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-  border: 2px solid var(--gray-200);
-  padding: 40px;
-  margin-bottom: 40px;
-  text-align: center;
-  animation: slideUp 0.8s ease-out 0.8s both;
-}
-
-.hizmetli-panel .welcome-section h2 {
-  font-size: 32px;
-  font-weight: 800;
-  color: #1a202c;
-  margin: 0 0 16px 0;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.hizmetli-panel .welcome-section .last-login {
-  font-size: 18px;
-  color: #718096;
-  margin: 0;
-  line-height: 1.6;
-}
-
 /* Dashboard Grid - Same as AdminPanel */
-.hizmetli-panel .dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  animation: fadeIn 1s ease-out 1.2s both;
-}
-
-.hizmetli-panel .dashboard-card-container {
-  perspective: 1000px;
-}
-
 /* Panel Card Styles handled by centralized patterns in theme.css */
 
-/* HizmetliPanel Responsive Design */
 @media (max-width: 1200px) {
-  .hizmetli-panel .dashboard-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
   }
-}
 
 @media (max-width: 768px) {
-  .hizmetli-panel .panel-header {
-    padding: 10px 20px;
   }
-
-  .hizmetli-panel .panel-logo-text {
-    font-size: 18px;
-  }
-
-  .hizmetli-panel .panel-logo-icon {
-    height: 28px;
-    width: 28px;
-  }
-
-  .hizmetli-panel .header-right .user-menu-trigger {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-
-  .hizmetli-panel .header-right .user-menu-trigger .user-avatar {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-  }
-
-  .hizmetli-panel .header-right .user-menu-trigger .user-name {
-    max-width: 80px;
-  }
-
-
-  .hizmetli-panel .main-content {
-    padding: 20px 16px;
-  }
-
-  .hizmetli-panel .welcome-section {
-    padding: 30px 20px;
-  }
-
-  .hizmetli-panel .welcome-section h2 {
-    font-size: 28px;
-  }
-
-  .hizmetli-panel .welcome-section .last-login {
-    font-size: 16px;
-  }
-
-  .hizmetli-panel .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .hizmetli-panel .dashboard-card {
-    padding: 24px;
-    min-height: 120px;
-  }
-
-  .hizmetli-panel .card-header {
-    gap: 16px;
-  }
-
-  .hizmetli-panel .card-icon {
-    width: 48px;
-    height: 48px;
-  }
-
-  .hizmetli-panel .card-icon.icon {
-    height: 24px;
-    width: 24px;
-  }
-
-  .hizmetli-panel .card-content h3 {
-    font-size: 18px;
-  }
-
-  .hizmetli-panel .card-content p {
-    font-size: 13px;
-  }
-}
 
 @media (max-width: 480px) {
-  .hizmetli-panel .dashboard-card {
-    padding: 20px;
-    min-height: 100px;
   }
-
-  .hizmetli-panel .card-header {
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
-  }
-
-  .hizmetli-panel .card-content {
-    text-align: center;
-  }
-
-  .hizmetli-panel .card-content h3 {
-    font-size: 16px;
-  }
-
-  .hizmetli-panel .card-content p {
-    font-size: 12px;
-  }
-
-  .hizmetli-panel .card-arrow {
-    align-self: center;
-    margin-top: 8px;
-  }
-}
 
 /* HomePage Styles */
 .home-page {
@@ -3867,7 +3571,6 @@
 .border-gray-200 {
   border: 1px solid #e5e7eb;
 }
-
 
 /* Removed temporary global override: individual components now use theme tokens. */
 .w-9 {

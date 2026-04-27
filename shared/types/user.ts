@@ -3,7 +3,7 @@
  * These types are used by both client and server to ensure type safety across the API boundary
  */
 
-export type UserRole = 'student' | 'teacher' | 'parent' | 'admin' | 'hizmetli';
+export type UserRole = 'student' | 'teacher' | 'parent' | 'admin';
 
 export interface User {
   id: string;

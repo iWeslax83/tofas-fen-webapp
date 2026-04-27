@@ -58,7 +58,7 @@ router.get(
 router.post(
   '/',
   authenticateJWT,
-  authorizeRoles(['admin', 'hizmetli']),
+  authorizeRoles(['admin']),
   validateMealList,
   asyncHandler(async (req, res) => {
     try {
@@ -78,7 +78,7 @@ router.post(
 router.put(
   '/:id',
   authenticateJWT,
-  authorizeRoles(['admin', 'hizmetli']),
+  authorizeRoles(['admin']),
   validateMealList,
   asyncHandler(async (req, res) => {
     try {

@@ -342,11 +342,6 @@
     color: #D97706;
   }
 
-  .role-hizmetli {
-    background: #E0E7FF;
-    color: #7C3AED;
-  }
-
   .user-card-body {
     padding: var(--space-4);
   }

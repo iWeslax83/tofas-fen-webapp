@@ -229,7 +229,6 @@ export default function AddUserModal({ onUserAdded, onClose }: AddUserModalProps
             <option value="parent">Veli</option>
             <option value="teacher">Öğretmen</option>
             <option value="admin">Yönetici</option>
-            <option value="hizmetli">Hizmetli</option>
           </select>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
             <input
