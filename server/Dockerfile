@@ -7,7 +7,7 @@
 # change our base layer. Dependabot (.github/dependabot.yml) tracks the
 # `docker` ecosystem and will open PRs when a newer pinned version is
 # available. Promote to a digest pin (`@sha256:...`) on first prod cut.
-FROM node:20.19-alpine3.20 AS base
+FROM node:24.1-alpine3.20 AS base
 WORKDIR /app
 COPY package*.json ./
 
