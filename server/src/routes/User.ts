@@ -5,13 +5,7 @@ import bcrypt from 'bcryptjs';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import multer from 'multer';
 import { verifyUploadedFiles } from '../config/upload';
-import {
-  parseUserFile,
-  validateUserRows,
-  bulkCreateUsers,
-  parseParentChildFile,
-  bulkLinkParentChild,
-} from '../services/bulkImportService';
+import { parseParentChildFile, bulkLinkParentChild } from '../services/bulkImportService';
 import logger from '../utils/logger';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -305,125 +299,6 @@ router.get('/parent/:parentId/children', authenticateJWT, async (req, res) => {
 });
 
 // Şifre değiştirme endpoint'i kaldırıldı - artık TCKN kullanılıyor ve değiştirilemez
-
-/**
- * @swagger
- * /api/users/bulk-import:
- *   post:
- *     summary: Bulk import users from file
- *     description: Upload an Excel/CSV file to import users in bulk. Supports preview mode. Admin only.
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: preview
- *         schema:
- *           type: string
- *           enum: ['true', 'false']
- *         description: If 'true', returns parsed data without importing
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             required:
- *               - file
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
- *                 description: Excel or CSV file (max 5MB)
- *     responses:
- *       200:
- *         description: Import result or preview data
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 imported:
- *                   type: integer
- *                 failed:
- *                   type: integer
- *                 duplicates:
- *                   type: array
- *                   items:
- *                     type: string
- *                 validationErrors:
- *                   type: array
- *                   items:
- *                     type: string
- *       400:
- *         description: No file uploaded or no valid users found
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin role
- *       500:
- *         description: Internal server error
- */
-router.post(
-  '/bulk-import',
-  authenticateJWT,
-  authorizeRoles(['admin']),
-  upload.single('file'),
-  verifyUploadedFiles,
-  async (req: Request, res: Response) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'Dosya yüklenmedi' });
-      }
-
-      const rows = parseUserFile(req.file.buffer, req.file.originalname);
-      if (rows.length === 0) {
-        return res.status(400).json({ error: 'Dosyada kullanıcı verisi bulunamadı' });
-      }
-
-      const validation = validateUserRows(rows);
-
-      // Preview mode - return parsed data without importing
-      if (req.query.preview === 'true') {
-        return res.json({
-          preview: true,
-          total: rows.length,
-          valid: validation.valid.length,
-          errors: validation.errors,
-          duplicates: validation.duplicates,
-          rows: validation.valid.map((r) => ({
-            id: r.id,
-            adSoyad: r.adSoyad,
-            rol: r.rol,
-            sinif: r.sinif,
-            sube: r.sube,
-          })),
-        });
-      }
-
-      if (validation.valid.length === 0) {
-        return res.status(400).json({
-          error: 'Geçerli kullanıcı bulunamadı',
-          validationErrors: validation.errors,
-          duplicates: validation.duplicates,
-        });
-      }
-
-      const result = await bulkCreateUsers(validation.valid);
-
-      res.json({
-        imported: result.imported,
-        failed: result.failed,
-        duplicates: [...validation.duplicates, ...result.duplicates],
-        validationErrors: validation.errors,
-        importErrors: result.errors,
-      });
-    } catch (error) {
-      logger.error('Bulk import error', { error: error instanceof Error ? error.message : error });
-      res.status(500).json({ error: 'Toplu kullanıcı aktarımı sırasında hata oluştu' });
-    }
-  },
-);
 
 /**
  * @swagger

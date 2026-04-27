@@ -1,35 +1,25 @@
-# Multi-stage build for production
-FROM node:18-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
+# Multi-stage build for production.
+# docker-compose sets context: ./server, so the build context IS the server
+# workspace — don't nest under /app/server, just build in /app directly.
+#
+# I-C7: pin to a specific minor + alpine patch version instead of the
+# floating `node:20-alpine` tag, so an upstream re-tag can't silently
+# change our base layer. Dependabot (.github/dependabot.yml) tracks the
+# `docker` ecosystem and will open PRs when a newer pinned version is
+# available. Promote to a digest pin (`@sha256:...`) on first prod cut.
+FROM node:20.19-alpine3.20 AS base
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
-COPY server/package*.json ./server/
 
-# Install dependencies
-RUN npm ci --only=production && \
-    cd server && npm ci --only=production
-
-# Build stage
+# Build stage — full deps + TS compile. We mount the npm cache so the
+# install layer doesn't redownload tarballs every rebuild.
 FROM base AS builder
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-COPY server/package*.json ./server/
-
-# Install all dependencies
-RUN npm ci && \
-    cd server && npm ci
-
-# Copy source code
+RUN --mount=type=cache,target=/root/.npm npm ci
 COPY . .
-
-# Build the application
-RUN cd server && npm run build
+RUN npm run build && \
+    # I-H22: prune dev deps in-place rather than maintaining a separate
+    # `deps` stage that does a second `npm ci`. Halves install I/O.
+    npm prune --omit=dev
 
 # Production stage
 FROM base AS production
@@ -39,10 +29,11 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy built application
-COPY --from=builder --chown=nodejs:nodejs /app/server/dist ./dist
-COPY --from=deps --chown=nodejs:nodejs /app/server/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/server/package*.json ./
+# Copy built application — node_modules is now the post-prune set from
+# the builder stage, so production gets only runtime deps.
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 
 # Create necessary directories
 RUN mkdir -p logs uploads thumbnails && \

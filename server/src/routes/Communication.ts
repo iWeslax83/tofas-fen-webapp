@@ -8,6 +8,7 @@ import fs from 'fs';
 
 import { createEndpointLimiter } from '../config/rateLimiters';
 import { verifyUploadedFiles } from '../config/upload';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = express.Router();
 
@@ -140,7 +141,7 @@ router.post(
   requireAuth,
   messageLimiter as any,
   validateMessageCreate,
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -157,7 +158,7 @@ router.post(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.get(
@@ -168,7 +169,7 @@ router.get(
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 100 }),
   ],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -189,7 +190,7 @@ router.get(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.put(
@@ -199,7 +200,7 @@ router.put(
     param('messageId').isString().notEmpty(),
     body('content').isString().notEmpty().isLength({ max: 5000 }),
   ],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -214,14 +215,14 @@ router.put(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.delete(
   '/messages/:messageId',
   requireAuth,
   [param('messageId').isString().notEmpty()],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -234,7 +235,7 @@ router.delete(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.post(
@@ -244,7 +245,7 @@ router.post(
     param('messageId').isString().notEmpty(),
     body('emoji').isString().notEmpty().isLength({ max: 10 }),
   ],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -259,7 +260,7 @@ router.post(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 // Conversation Routes
@@ -267,7 +268,7 @@ router.post(
   '/conversations',
   requireAuth,
   validateConversationCreate,
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -284,7 +285,7 @@ router.post(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.get(
@@ -296,7 +297,7 @@ router.get(
     query('isArchived').optional().isBoolean(),
     query('hasUnread').optional().isBoolean(),
   ],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -315,14 +316,14 @@ router.get(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.get(
   '/conversations/:conversationId',
   requireAuth,
   [param('conversationId').isString().notEmpty()],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -341,7 +342,7 @@ router.get(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.post(
@@ -352,7 +353,7 @@ router.post(
     body('userId').isString().notEmpty(),
     body('role').optional().isIn(['admin', 'moderator', 'member', 'readonly']),
   ],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -367,14 +368,14 @@ router.post(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.delete(
   '/conversations/:conversationId/participants/:userId',
   requireAuth,
   [param('conversationId').isString().notEmpty(), param('userId').isString().notEmpty()],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -387,38 +388,43 @@ router.delete(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 // Email Routes
-router.post('/emails', requireAuth, validateEmailCreate, async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+router.post(
+  '/emails',
+  requireAuth,
+  validateEmailCreate,
+  asyncHandler(async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const emailData = {
+        ...req.body,
+        from: {
+          userId: req.user.id,
+          email: req.user.email,
+          name: req.user.name,
+        },
+      };
+
+      const email = await CommunicationService.createEmail(emailData);
+      res.status(201).json(email);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
-
-    const emailData = {
-      ...req.body,
-      from: {
-        userId: req.user.id,
-        email: req.user.email,
-        name: req.user.name,
-      },
-    };
-
-    const email = await CommunicationService.createEmail(emailData);
-    res.status(201).json(email);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+  }),
+);
 
 router.post(
   '/emails/:emailId/send',
   requireAuth,
   [param('emailId').isString().notEmpty()],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -431,7 +437,7 @@ router.post(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.get(
@@ -442,7 +448,7 @@ router.get(
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 100 }),
   ],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -462,28 +468,33 @@ router.get(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 // Chat Room Routes
-router.post('/chatrooms', requireAuth, validateChatRoomCreate, async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+router.post(
+  '/chatrooms',
+  requireAuth,
+  validateChatRoomCreate,
+  asyncHandler(async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const chatRoomData = {
+        ...req.body,
+        admins: req.body.admins || [req.user.id],
+      };
+
+      const chatRoom = await CommunicationService.createChatRoom(chatRoomData);
+      res.status(201).json(chatRoom);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
-
-    const chatRoomData = {
-      ...req.body,
-      admins: req.body.admins || [req.user.id],
-    };
-
-    const chatRoom = await CommunicationService.createChatRoom(chatRoomData);
-    res.status(201).json(chatRoom);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+  }),
+);
 
 router.get(
   '/chatrooms',
@@ -495,7 +506,7 @@ router.get(
       .isIn(['general', 'academic', 'social', 'announcements', 'support', 'events']),
     query('isActive').optional().isBoolean(),
   ],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -513,14 +524,14 @@ router.get(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.post(
   '/chatrooms/:roomId/join',
   requireAuth,
   [param('roomId').isString().notEmpty()],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -533,14 +544,14 @@ router.post(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.post(
   '/chatrooms/:roomId/leave',
   requireAuth,
   [param('roomId').isString().notEmpty()],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -553,28 +564,33 @@ router.post(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 // Contact Routes
-router.post('/contacts', requireAuth, validateContactCreate, async (req: any, res: any) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+router.post(
+  '/contacts',
+  requireAuth,
+  validateContactCreate,
+  asyncHandler(async (req: any, res: any) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const contactData = {
+        ...req.body,
+        userId: req.user.id,
+      };
+
+      const contact = await CommunicationService.createContact(contactData);
+      res.status(201).json(contact);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
-
-    const contactData = {
-      ...req.body,
-      userId: req.user.id,
-    };
-
-    const contact = await CommunicationService.createContact(contactData);
-    res.status(201).json(contact);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+  }),
+);
 
 router.get(
   '/contacts',
@@ -585,7 +601,7 @@ router.get(
     query('tags').optional().isArray(),
     query('tags.*').isString(),
   ],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -603,7 +619,7 @@ router.get(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.put(
@@ -613,7 +629,7 @@ router.put(
     param('contactId').isString().notEmpty(),
     body('status').isIn(['online', 'offline', 'away', 'busy', 'invisible']),
   ],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -628,7 +644,7 @@ router.put(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.post(
@@ -638,7 +654,7 @@ router.post(
     param('contactId').isString().notEmpty(),
     body('reason').optional().isString().isLength({ max: 200 }),
   ],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -653,14 +669,14 @@ router.post(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 router.post(
   '/contacts/:contactId/unblock',
   requireAuth,
   [param('contactId').isString().notEmpty()],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -673,7 +689,7 @@ router.post(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 // Search and Analytics Routes
@@ -690,7 +706,7 @@ router.get(
     query('dateTo').optional().isISO8601(),
     query('hasAttachments').optional().isBoolean(),
   ],
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -717,17 +733,21 @@ router.get(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
-router.get('/stats', requireAuth, async (req: any, res: any) => {
-  try {
-    const stats = await CommunicationService.getCommunicationStats((req as any).user?.id);
-    res.json(stats);
-  } catch (error: any) {
-    return res.status(400).json({ error: error.message });
-  }
-});
+router.get(
+  '/stats',
+  requireAuth,
+  asyncHandler(async (req: any, res: any) => {
+    try {
+      const stats = await CommunicationService.getCommunicationStats((req as any).user?.id);
+      res.json(stats);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
+    }
+  }),
+);
 
 // File Upload Route
 router.post(
@@ -736,7 +756,7 @@ router.post(
   commUploadLimiter as any,
   upload.array('attachments', 10),
   verifyUploadedFiles,
-  async (req: any, res: any) => {
+  asyncHandler(async (req: any, res: any) => {
     try {
       if (!req.files || req.files.length === 0) {
         return res.status(400).json({ error: 'No files uploaded' });
@@ -754,7 +774,7 @@ router.post(
     } catch (error: any) {
       return res.status(400).json({ error: error.message });
     }
-  },
+  }),
 );
 
 export default router;

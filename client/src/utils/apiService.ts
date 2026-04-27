@@ -139,13 +139,6 @@ export class UserService {
     });
   }
 
-  static async bulkImportUsers(formData: FormData, preview = false) {
-    const endpoint = preview
-      ? `${API_ENDPOINTS.USER.BULK_IMPORT}?preview=true`
-      : API_ENDPOINTS.USER.BULK_IMPORT;
-    return ApiService.upload(endpoint, formData);
-  }
-
   static async bulkLinkParentChild(formData: FormData, preview = false) {
     const endpoint = preview
       ? `${API_ENDPOINTS.USER.BULK_PARENT_CHILD_LINK}?preview=true`

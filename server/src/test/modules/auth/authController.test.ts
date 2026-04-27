@@ -21,13 +21,16 @@ describe('AuthController', () => {
   beforeEach(() => {
     mockRequest = {
       body: {},
-      user: undefined
+      user: undefined,
+      cookies: {},
+      ip: '127.0.0.1',
+      get: vi.fn().mockReturnValue('test-user-agent'),
     };
     mockResponse = {
       json: vi.fn(),
       status: vi.fn().mockReturnThis(),
       clearCookie: vi.fn().mockReturnThis(),
-      cookie: vi.fn().mockReturnThis()
+      cookie: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
   });
@@ -40,7 +43,7 @@ describe('AuthController', () => {
     it('should login user with valid credentials', async () => {
       const mockResult = {
         user: { id: 'user123', adSoyad: 'John Doe', rol: 'student' },
-        tokens: { accessToken: 'at', refreshToken: 'rt', expiresIn: 900, refreshExpiresIn: 604800 }
+        tokens: { accessToken: 'at', refreshToken: 'rt', expiresIn: 900, refreshExpiresIn: 604800 },
       };
 
       (AuthService.authenticateUser as any).mockResolvedValue(mockResult);
@@ -49,13 +52,18 @@ describe('AuthController', () => {
 
       await AuthController.login(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(AuthService.authenticateUser).toHaveBeenCalledWith('user123', 'password123');
+      expect(AuthService.authenticateUser).toHaveBeenCalledWith(
+        'user123',
+        'password123',
+        undefined,
+        expect.any(Object),
+      );
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
           message: 'Giriş başarılı',
-          user: expect.objectContaining({ id: 'user123' })
-        })
+          user: expect.objectContaining({ id: 'user123' }),
+        }),
       );
     });
 
@@ -76,7 +84,7 @@ describe('AuthController', () => {
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
-        message: 'Çıkış başarılı'
+        message: 'Çıkış başarılı',
       });
     });
   });
@@ -91,9 +99,8 @@ describe('AuthController', () => {
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
-        user: expect.objectContaining({ id: 'user123' })
+        user: expect.objectContaining({ id: 'user123' }),
       });
     });
   });
-
 });

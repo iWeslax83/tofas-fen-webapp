@@ -192,10 +192,15 @@ export const handleUncaughtException = (error: Error): void => {
 };
 
 /**
- * Async error wrapper for route handlers
+ * Async error wrapper for route handlers.
+ *
+ * The return type is `Promise<unknown>` (not `Promise<void>`) so that
+ * existing handlers which do `return res.status(x).json(...)` type-check
+ * without the caller having to drop the `return`. The wrapper itself
+ * ignores the resolved value — it only forwards rejections to `next()`.
  */
 export const asyncHandler = (
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>,
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>,
 ) => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);

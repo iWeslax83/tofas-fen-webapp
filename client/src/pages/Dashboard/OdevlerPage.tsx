@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Calendar, Trash2, FileText, Download } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthGuard } from '../../hooks/useAuthGuard';
 import { HomeworkService } from '../../utils/apiService';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 
@@ -29,7 +29,7 @@ interface Homework {
 }
 
 export default function OdevlerPage() {
-  const { user, isLoading: authLoading } = useAuth(['admin', 'teacher', 'student', 'parent']);
+  const { user, isLoading: authLoading } = useAuthGuard(['admin', 'teacher', 'student', 'parent']);
   const [showModal, setShowModal] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('Tümü');
   const [homeworks, setHomeworks] = useState<Homework[]>([]);

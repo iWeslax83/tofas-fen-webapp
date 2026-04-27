@@ -1,7 +1,20 @@
-import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
-import { ArrowLeft, Home, Calendar, MapPin, Clock, Edit, Trash2, Plus, Shield, Timer, AlertCircle, Copy } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuthGuard } from '../../hooks/useAuthGuard';
+import {
+  ArrowLeft,
+  Home,
+  Calendar,
+  MapPin,
+  Clock,
+  Edit,
+  Trash2,
+  Plus,
+  Shield,
+  Timer,
+  AlertCircle,
+  Copy,
+} from 'lucide-react';
 import 'react-toastify/dist/ReactToastify.css';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 
@@ -33,12 +46,10 @@ interface SubmissionWindow {
   weekOf: string;
 }
 
-type FormErrors = Partial<
-  Pick<EvciTalep, "startDate" | "endDate" | "destination">
->;
+type FormErrors = Partial<Pick<EvciTalep, 'startDate' | 'endDate' | 'destination'>>;
 
 function formatCountdown(ms: number): string {
-  if (!Number.isFinite(ms) || ms <= 0) return "0sn";
+  if (!Number.isFinite(ms) || ms <= 0) return '0sn';
   const totalSeconds = Math.floor(ms / 1000);
   const days = Math.floor(totalSeconds / 86400);
   const hours = Math.floor((totalSeconds % 86400) / 3600);
@@ -73,14 +84,14 @@ function getParentApprovalBadge(approval?: string) {
 }
 
 const StudentEvciPage = () => {
-  const { user: authUser } = useAuth(["student"]);
+  const { user: authUser } = useAuthGuard(['student']);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [requests, setRequests] = useState<EvciTalep[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<Partial<EvciTalep & { startTime?: string; endTime?: string }>>({
-    willGo: true
+    willGo: true,
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -116,7 +127,7 @@ const StudentEvciPage = () => {
           setError('Evci talepleri yüklenirken hata oluştu.');
           console.error('Error fetching evci requests:', error);
         } else {
-          setRequests(data as EvciTalep[] || []);
+          setRequests((data as EvciTalep[]) || []);
         }
       } catch (err) {
         setError('Evci talepleri yüklenirken bir hata oluştu.');
@@ -154,13 +165,19 @@ const StudentEvciPage = () => {
         // Pencere kapanışına kalan süre
         const end = new Date(submissionWindow.windowEnd);
         const endTime = end.getTime();
-        if (isNaN(endTime)) { setCountdown(''); return; }
+        if (isNaN(endTime)) {
+          setCountdown('');
+          return;
+        }
         setCountdown(formatCountdown(Math.max(0, endTime - now.getTime())));
       } else {
         // Pencere açılışına kalan süre
         const next = new Date(submissionWindow.nextWindowStart);
         const nextTime = next.getTime();
-        if (isNaN(nextTime)) { setCountdown(''); return; }
+        if (isNaN(nextTime)) {
+          setCountdown('');
+          return;
+        }
         setCountdown(formatCountdown(Math.max(0, nextTime - now.getTime())));
       }
     };
@@ -174,30 +191,32 @@ const StudentEvciPage = () => {
   const validate = (): FormErrors => {
     const err: FormErrors = {};
     if (form.willGo) {
-      if (!form.startDate) err.startDate = "Çıkış günü seçin.";
-      if (!form.endDate) err.endDate = "Dönüş günü seçin.";
-      if (!form.destination) err.destination = "Lütfen yer girin.";
+      if (!form.startDate) err.startDate = 'Çıkış günü seçin.';
+      if (!form.endDate) err.endDate = 'Dönüş günü seçin.';
+      if (!form.destination) err.destination = 'Lütfen yer girin.';
     }
     return err;
   };
 
   // Son gidecek talebin destination'ını bul (template)
-  const lastTemplate = requests.find(r => r.willGo && r.destination);
+  const lastTemplate = requests.find((r) => r.willGo && r.destination);
 
   // Yeni talep
   const handleNew = () => {
     if (!authUser) return;
 
     if (submissionWindow && !submissionWindow.isOpen) {
-      toast.error("Talep penceresi kapalı. Pazartesi-Perşembe arasında talep oluşturabilirsiniz.");
+      toast.error('Talep penceresi kapalı. Pazartesi-Perşembe arasında talep oluşturabilirsiniz.');
       return;
     }
 
     // Bu hafta zaten talep var mı kontrolü (local)
     if (submissionWindow?.weekOf) {
-      const thisWeekReqs = requests.filter(r => r.weekOf === submissionWindow.weekOf && r.parentApproval !== 'rejected');
+      const thisWeekReqs = requests.filter(
+        (r) => r.weekOf === submissionWindow.weekOf && r.parentApproval !== 'rejected',
+      );
       if (thisWeekReqs.length > 0) {
-        toast.error("Bu hafta için zaten bir evci talebiniz var.");
+        toast.error('Bu hafta için zaten bir evci talebiniz var.');
         return;
       }
     }
@@ -210,7 +229,7 @@ const StudentEvciPage = () => {
 
   const applyTemplate = () => {
     if (lastTemplate) {
-      setForm(prev => ({ ...prev, destination: lastTemplate.destination }));
+      setForm((prev) => ({ ...prev, destination: lastTemplate.destination }));
       toast.success('Geçen haftaki yer bilgisi uygulandı');
     }
   };
@@ -218,7 +237,7 @@ const StudentEvciPage = () => {
   // Gün adını startDate/endDate'ten ayıkla (yeni format: "Perşembe 16:00", eski format: "2026-03-05T16:00")
   const parseDayAndTime = (value?: string): { day: string; time: string } => {
     if (!value) return { day: '', time: '' };
-    const dayNames = DAYS_OF_WEEK.map(d => d.value);
+    const dayNames = DAYS_OF_WEEK.map((d) => d.value);
     // Yeni format: "Perşembe 16:00" veya sadece "Perşembe"
     const parts = value.split(' ');
     if (dayNames.includes(parts[0])) {
@@ -240,7 +259,7 @@ const StudentEvciPage = () => {
   const handleEdit = (idx: number) => {
     const req = requests[idx];
     if (req.parentApproval === 'approved') {
-      toast.error("Veli tarafından onaylanmış talep düzenlenemez.");
+      toast.error('Veli tarafından onaylanmış talep düzenlenemez.');
       return;
     }
     const start = parseDayAndTime(req.startDate);
@@ -263,12 +282,11 @@ const StudentEvciPage = () => {
     const target = requests[idx];
 
     if (target.parentApproval === 'approved') {
-      toast.error("Veli tarafından onaylanmış talep silinemez.");
+      toast.error('Veli tarafından onaylanmış talep silinemez.');
       return;
     }
 
-    if (!window.confirm("Talebi iptal etmek istediğinize emin misiniz?"))
-      return;
+    if (!window.confirm('Talebi iptal etmek istediğinize emin misiniz?')) return;
 
     if (!target._id) return;
 
@@ -278,7 +296,7 @@ const StudentEvciPage = () => {
         toast.error('Talep silinirken hata oluştu: ' + error);
       } else {
         setRequests(requests.filter((r) => r._id !== target._id));
-        toast.success("Talep iptal edildi.");
+        toast.success('Talep iptal edildi.');
       }
     } catch (err) {
       console.error('Error deleting evci request:', err);
@@ -299,11 +317,9 @@ const StudentEvciPage = () => {
     const startDateTime =
       form.startDate && form.startTime
         ? `${form.startDate} ${form.startTime}`
-        : form.startDate || "";
+        : form.startDate || '';
     const endDateTime =
-      form.endDate && form.endTime
-        ? `${form.endDate} ${form.endTime}`
-        : form.endDate || "";
+      form.endDate && form.endTime ? `${form.endDate} ${form.endTime}` : form.endDate || '';
 
     try {
       if (editingIndex !== null) {
@@ -313,7 +329,7 @@ const StudentEvciPage = () => {
         const { error } = await EvciService.updateEvciRequest(target._id, {
           startDate: startDateTime,
           endDate: endDateTime,
-          destination: form.destination || "",
+          destination: form.destination || '',
           willGo: form.willGo || false,
         });
 
@@ -325,19 +341,19 @@ const StudentEvciPage = () => {
             ...updatedRequests[editingIndex],
             startDate: startDateTime,
             endDate: endDateTime,
-            destination: form.destination || "",
+            destination: form.destination || '',
             willGo: form.willGo || false,
           };
           setRequests(updatedRequests);
           setModalOpen(false);
-          toast.success("Talep güncellendi.");
+          toast.success('Talep güncellendi.');
         }
       } else {
         const { data, error } = await EvciService.createEvciRequest({
           studentId: authUser.id,
           startDate: startDateTime,
           endDate: endDateTime,
-          destination: form.destination || "",
+          destination: form.destination || '',
           willGo: form.willGo || false,
         });
 
@@ -350,7 +366,7 @@ const StudentEvciPage = () => {
             studentName: authUser.adSoyad,
             startDate: startDateTime,
             endDate: endDateTime,
-            destination: form.destination || "",
+            destination: form.destination || '',
             willGo: form.willGo || false,
             createdAt: new Date().toISOString(),
             parentApproval: 'pending',
@@ -358,7 +374,7 @@ const StudentEvciPage = () => {
           };
           setRequests([newRequest, ...requests]);
           setModalOpen(false);
-          toast.success("Talep gönderildi. Veli onayı bekleniyor.");
+          toast.success('Talep gönderildi. Veli onayı bekleniyor.');
         }
       }
     } catch (err) {
@@ -367,10 +383,7 @@ const StudentEvciPage = () => {
     }
   };
 
-  const breadcrumb = [
-    { label: 'Ana Sayfa', path: '/student' },
-    { label: 'Evci İşlemleri' }
-  ];
+  const breadcrumb = [{ label: 'Ana Sayfa', path: '/student' }, { label: 'Evci İşlemleri' }];
 
   if (loading) {
     return (
@@ -408,7 +421,9 @@ const StudentEvciPage = () => {
       <ModernDashboardLayout pageTitle="Evci İşlemleri" breadcrumb={breadcrumb}>
         <div className="evci-page">
           <div className="empty-state">
-            <div className="empty-icon"><Home size={80} /></div>
+            <div className="empty-icon">
+              <Home size={80} />
+            </div>
             <h3>Evci Talepleri</h3>
             <p>Evci talepleri sadece yatılı öğrenciler için geçerlidir.</p>
             <Link to="/student" className="btn btn-primary">
@@ -432,8 +447,7 @@ const StudentEvciPage = () => {
             <span>
               {windowIsOpen
                 ? `Talep penceresi açık${countdown ? ` — kapanışa kalan: ${countdown}` : ''}`
-                : `Talep penceresi kapalı${countdown ? ` — açılışa kalan: ${countdown}` : ''}`
-              }
+                : `Talep penceresi kapalı${countdown ? ` — açılışa kalan: ${countdown}` : ''}`}
               {submissionWindow.reason ? ` (${submissionWindow.reason})` : ''}
             </span>
           </div>
@@ -471,7 +485,9 @@ const StudentEvciPage = () => {
                 return (
                   <div key={r._id || i} className="request-card">
                     <div className="card-header">
-                      <div className="card-icon"><Calendar size={20} /></div>
+                      <div className="card-icon">
+                        <Calendar size={20} />
+                      </div>
                       <div className="card-header-badges">
                         <span className={`parent-approval-badge ${badge.className}`}>
                           <Shield size={14} /> {badge.text}
@@ -479,10 +495,18 @@ const StudentEvciPage = () => {
                       </div>
                       {canModify && (
                         <div className="card-actions">
-                          <button onClick={() => handleEdit(i)} className="action-button edit-button" title="Düzenle">
+                          <button
+                            onClick={() => handleEdit(i)}
+                            className="action-button edit-button"
+                            title="Düzenle"
+                          >
                             <Edit size={16} />
                           </button>
-                          <button onClick={() => handleDelete(i)} className="action-button delete-button" title="İptal Et">
+                          <button
+                            onClick={() => handleDelete(i)}
+                            className="action-button delete-button"
+                            title="İptal Et"
+                          >
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -493,22 +517,24 @@ const StudentEvciPage = () => {
                         <div className="info-item">
                           <Calendar className="info-icon" />
                           <span className="info-label">Tarih:</span>
-                          <span className="info-value">{new Date(r.createdAt).toLocaleDateString("tr-TR")}</span>
+                          <span className="info-value">
+                            {new Date(r.createdAt).toLocaleDateString('tr-TR')}
+                          </span>
                         </div>
                         <div className="info-item">
                           <Clock className="info-icon" />
                           <span className="info-label">Çıkış:</span>
-                          <span className="info-value">{!r.willGo ? "Gitmiyor" : r.startDate}</span>
+                          <span className="info-value">{!r.willGo ? 'Gitmiyor' : r.startDate}</span>
                         </div>
                         <div className="info-item">
                           <Clock className="info-icon" />
                           <span className="info-label">Dönüş:</span>
-                          <span className="info-value">{!r.willGo ? "-" : r.endDate}</span>
+                          <span className="info-value">{!r.willGo ? '-' : r.endDate}</span>
                         </div>
                         <div className="info-item">
                           <MapPin className="info-icon" />
                           <span className="info-label">Yer:</span>
-                          <span className="info-value">{!r.willGo ? "-" : r.destination}</span>
+                          <span className="info-value">{!r.willGo ? '-' : r.destination}</span>
                         </div>
                         {r.parentApproval === 'rejected' && r.rejectionReason && (
                           <div className="info-item rejection-reason">
@@ -531,14 +557,35 @@ const StudentEvciPage = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <h3 className="modal-title">Evci Talebi</h3>
-                <button type="button" onClick={() => setModalOpen(false)} className="modal-close" aria-label="Kapat">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="modal-close"
+                  aria-label="Kapat"
+                >
+                  <svg
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
 
-              <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="modal-body">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSubmit();
+                }}
+                className="modal-body"
+              >
                 <div className="form-group checkbox-group">
                   <label className="checkbox-label">
                     <input
@@ -555,59 +602,89 @@ const StudentEvciPage = () => {
                     <div className="form-row">
                       <div className="form-group">
                         <label className="form-label">Çıkış Günü</label>
-                        <select value={form.startDate || ""} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className="form-control">
+                        <select
+                          value={form.startDate || ''}
+                          onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                          className="form-control"
+                        >
                           <option value="">Gün seçin</option>
-                          {DAYS_OF_WEEK.map(d => (
-                            <option key={d.value} value={d.value}>{d.label}</option>
+                          {DAYS_OF_WEEK.map((d) => (
+                            <option key={d.value} value={d.value}>
+                              {d.label}
+                            </option>
                           ))}
                         </select>
                         {errors.startDate && <p className="error-message">{errors.startDate}</p>}
                       </div>
                       <div className="form-group">
                         <label className="form-label">Çıkış Saati</label>
-                        <input type="time" value={form.startTime || ""} onChange={(e) => setForm({ ...form, startTime: e.target.value })} className="form-control" />
+                        <input
+                          type="time"
+                          value={form.startTime || ''}
+                          onChange={(e) => setForm({ ...form, startTime: e.target.value })}
+                          className="form-control"
+                        />
                       </div>
                     </div>
 
                     <div className="form-row">
                       <div className="form-group">
                         <label className="form-label">Dönüş Günü</label>
-                        <select value={form.endDate || ""} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className="form-control">
+                        <select
+                          value={form.endDate || ''}
+                          onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                          className="form-control"
+                        >
                           <option value="">Gün seçin</option>
-                          {DAYS_OF_WEEK.map(d => (
-                            <option key={d.value} value={d.value}>{d.label}</option>
+                          {DAYS_OF_WEEK.map((d) => (
+                            <option key={d.value} value={d.value}>
+                              {d.label}
+                            </option>
                           ))}
                         </select>
                         {errors.endDate && <p className="error-message">{errors.endDate}</p>}
                       </div>
                       <div className="form-group">
                         <label className="form-label">Dönüş Saati</label>
-                        <input type="time" value={form.endTime || ""} onChange={(e) => setForm({ ...form, endTime: e.target.value })} className="form-control" />
+                        <input
+                          type="time"
+                          value={form.endTime || ''}
+                          onChange={(e) => setForm({ ...form, endTime: e.target.value })}
+                          className="form-control"
+                        />
                       </div>
                     </div>
 
                     <div className="form-group">
                       <label className="form-label">Yer</label>
                       {lastTemplate && editingIndex === null && !form.destination && (
-                        <button
-                          type="button"
-                          onClick={applyTemplate}
-                          className="btn btn-template"
-                        >
+                        <button type="button" onClick={applyTemplate} className="btn btn-template">
                           <Copy size={14} />
                           Geçen haftaki gibi ({lastTemplate.destination})
                         </button>
                       )}
-                      <input type="text" value={form.destination || ""} onChange={(e) => setForm({ ...form, destination: e.target.value })} className="form-control" placeholder="Gidilecek yer" />
+                      <input
+                        type="text"
+                        value={form.destination || ''}
+                        onChange={(e) => setForm({ ...form, destination: e.target.value })}
+                        className="form-control"
+                        placeholder="Gidilecek yer"
+                      />
                       {errors.destination && <p className="error-message">{errors.destination}</p>}
                     </div>
                   </>
                 )}
 
                 <div className="form-actions">
-                  <button type="button" onClick={() => setModalOpen(false)} className="btn btn-secondary">İptal</button>
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    className="btn btn-secondary"
+                  >
+                    İptal
+                  </button>
                   <button type="submit" className="btn btn-primary">
-                    {editingIndex !== null ? "Güncelle" : "Talebi Gönder"}
+                    {editingIndex !== null ? 'Güncelle' : 'Talebi Gönder'}
                   </button>
                 </div>
               </form>
@@ -617,6 +694,6 @@ const StudentEvciPage = () => {
       </div>
     </ModernDashboardLayout>
   );
-}
+};
 
 export default StudentEvciPage;

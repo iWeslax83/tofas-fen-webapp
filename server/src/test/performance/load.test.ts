@@ -8,26 +8,40 @@ vi.mock('../../middleware/security', () => ({
   preventSQLInjection: (req: any, res: any, next: any) => next(),
   preventXSS: (req: any, res: any, next: any) => next(),
   sanitizeInput: (req: any, res: any, next: any) => next(),
-  csrfProtection: (req: any, res: any, next: any) => next()
+  csrfProtection: (req: any, res: any, next: any) => next(),
+}));
+
+vi.mock('../../middleware/auth', async () => {
+  const actual = await vi.importActual('../../middleware/auth');
+  return {
+    ...(actual as any),
+    csrfProtection: (req: any, res: any, next: any) => next(),
+  };
+});
+
+vi.mock('../../middleware/waf', () => ({
+  wafMiddleware: (req: any, res: any, next: any) => next(),
+  cloudflareHeaders: (req: any, res: any, next: any) => next(),
+  initWafRedis: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('express-rate-limit', () => {
   const mock = vi.fn(() => (req: any, res: any, next: any) => next());
   return {
     default: mock,
-    rateLimit: mock
+    rateLimit: mock,
   };
 });
 
 vi.mock('../../utils/jwt', async () => {
   const actual = await vi.importActual('../../utils/jwt');
   return {
-    ...actual as any,
+    ...(actual as any),
     authenticateJWT: vi.fn((req: any, res: any, next: any) => {
-      req.user = { userId: 'loadtest', role: 'student', adSoyad: 'Load Test User' };
+      req.user = { userId: 'loadtest', role: 'admin', adSoyad: 'Load Test User' };
       next();
     }),
-    authorizeRoles: vi.fn(() => (req: any, res: any, next: any) => next())
+    authorizeRoles: vi.fn(() => (req: any, res: any, next: any) => next()),
   };
 });
 
@@ -59,14 +73,14 @@ describe('Load Tests', () => {
             adSoyad: `Load Test User ${i}`,
             email: `loadtest${i}@example.com`,
             rol: 'student',
-            sifre: 'password123'
+            sifre: 'password123',
           });
       });
 
       const results = await Promise.all(userPromises);
       const duration = Date.now() - startTime;
 
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.status).toBe(201);
       });
       expect(duration).toBeLessThan(15000);
@@ -82,12 +96,12 @@ describe('Load Tests', () => {
             title: `Load Test Announcement ${i}`,
             content: `This is load test announcement ${i}`,
             priority: 'medium',
-            targetRoles: ['student']
+            targetRoles: ['student'],
           });
       });
 
       const results = await Promise.all(announcementPromises);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.status).toBe(201);
       });
     });
@@ -104,12 +118,12 @@ describe('Load Tests', () => {
             subject: 'Matematik',
             classLevel: '10',
             classSection: 'A',
-            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           });
       });
 
       const results = await Promise.all(homeworkPromises);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.status).toBe(201);
       });
     });

@@ -42,7 +42,8 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
   useEffect(() => {
     if (!authLoading && user && shouldValidateRole && user.rol !== role) {
       // Navigation would be handled by parent component
-      console.warn(`[DashboardPanel] User role ${user.rol} not allowed for ${role} panel`);
+      if (import.meta.env.DEV)
+        console.warn(`[DashboardPanel] User role ${user.rol} not allowed for ${role} panel`);
     }
   }, [authLoading, user, shouldValidateRole, role]);
 
@@ -58,7 +59,7 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
 
           // Filter buttons for the role
           const buttons = dashboardButtons
-            .filter(btn => {
+            .filter((btn) => {
               if (!btn.roles.includes(role)) return false;
 
               // Check dormitory-specific buttons
@@ -68,7 +69,7 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
 
               return true;
             })
-            .map(btn => ({
+            .map((btn) => ({
               id: btn.key,
               title: btn.title,
               description: btn.description,
@@ -80,7 +81,8 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
           setPageButtons(buttons as PageButton[]);
           setIsLoading(false);
         } catch (error) {
-          console.error(`[DashboardPanel] Error loading ${role} panel data:`, error);
+          if (import.meta.env.DEV)
+            console.error(`[DashboardPanel] Error loading ${role} panel data:`, error);
           setIsLoading(false);
         }
       }
@@ -101,10 +103,7 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
     return null;
   }
 
-  const breadcrumb = [
-    { label: 'Ana Sayfa', path: '/' },
-    { label: pageTitle },
-  ];
+  const breadcrumb = [{ label: 'Ana Sayfa', path: '/' }, { label: pageTitle }];
 
   return (
     <ModernDashboardLayout pageTitle={pageTitle} breadcrumb={breadcrumb}>
@@ -118,7 +117,10 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
           <div className="welcome-content">
             <div className="welcome-text">
               <h2>Hoş Geldiniz, {user.adSoyad}!</h2>
-              <p>{customWelcomeContent || `${role.charAt(0).toUpperCase() + role.slice(1)} paneline hoş geldiniz.`}</p>
+              <p>
+                {customWelcomeContent ||
+                  `${role.charAt(0).toUpperCase() + role.slice(1)} paneline hoş geldiniz.`}
+              </p>
               {!!additionalUserData.sinif && (
                 <p className="class-info">
                   <strong>Sınıf:</strong> {additionalUserData.sinif as React.ReactNode}
@@ -127,7 +129,8 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
               )}
               {!!additionalUserData.pansiyon && (
                 <p className="dormitory-info">
-                  <strong>Pansiyon:</strong> {(additionalUserData.oda as React.ReactNode) || 'Atanmış'}
+                  <strong>Pansiyon:</strong>{' '}
+                  {(additionalUserData.oda as React.ReactNode) || 'Atanmış'}
                 </p>
               )}
             </div>

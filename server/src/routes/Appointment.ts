@@ -5,6 +5,7 @@ import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import { NotificationService } from '../services/NotificationService';
 import { sendMail } from '../mailService';
 import logger from '../utils/logger';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -13,7 +14,7 @@ router.post(
   '/',
   authenticateJWT,
   authorizeRoles(['ziyaretci']),
-  async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     try {
       const authUser = req.user;
       const { date, timeSlot, purpose, notes, registrationId } = req.body;
@@ -95,75 +96,88 @@ router.post(
       });
       res.status(500).json({ error: 'Randevu olusturulurken hata olustu' });
     }
-  },
+  }),
 );
 
 // Authenticated user: Get own appointments
-router.get('/my', authenticateJWT, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.user;
-    const appointments = await Appointment.find({ applicantUserId: authUser.userId }).sort({
-      date: -1,
-    });
-    res.json(appointments);
-  } catch (error) {
-    res.status(500).json({ error: 'Randevular alinirken hata olustu' });
-  }
-});
+router.get(
+  '/my',
+  authenticateJWT,
+  asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const authUser = req.user;
+      const appointments = await Appointment.find({ applicantUserId: authUser.userId }).sort({
+        date: -1,
+      });
+      res.json(appointments);
+    } catch (error) {
+      res.status(500).json({ error: 'Randevular alinirken hata olustu' });
+    }
+  }),
+);
 
 // Visitor: Cancel own pending appointment
-router.put('/my/:id/cancel', authenticateJWT, async (req: Request, res: Response) => {
-  try {
-    const authUser = req.user;
-    const appointment = await Appointment.findById(req.params.id);
-    if (!appointment) return res.status(404).json({ error: 'Randevu bulunamadi' });
-    if (appointment.applicantUserId !== authUser.userId) {
-      return res.status(403).json({ error: 'Bu randevuyu iptal etme yetkiniz yok' });
+router.put(
+  '/my/:id/cancel',
+  authenticateJWT,
+  asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const authUser = req.user;
+      const appointment = await Appointment.findById(req.params.id);
+      if (!appointment) return res.status(404).json({ error: 'Randevu bulunamadi' });
+      if (appointment.applicantUserId !== authUser.userId) {
+        return res.status(403).json({ error: 'Bu randevuyu iptal etme yetkiniz yok' });
+      }
+      if (appointment.status !== 'pending') {
+        return res.status(400).json({ error: 'Sadece beklemedeki randevular iptal edilebilir' });
+      }
+      appointment.status = 'cancelled';
+      await appointment.save();
+      res.json({ success: true });
+    } catch (error) {
+      logger.error('Appointment cancel error', {
+        error: error instanceof Error ? error.message : error,
+      });
+      res.status(500).json({ error: 'Randevu iptal edilirken hata olustu' });
     }
-    if (appointment.status !== 'pending') {
-      return res.status(400).json({ error: 'Sadece beklemedeki randevular iptal edilebilir' });
-    }
-    appointment.status = 'cancelled';
-    await appointment.save();
-    res.json({ success: true });
-  } catch (error) {
-    logger.error('Appointment cancel error', {
-      error: error instanceof Error ? error.message : error,
-    });
-    res.status(500).json({ error: 'Randevu iptal edilirken hata olustu' });
-  }
-});
+  }),
+);
 
 // Admin: Get all appointments
-router.get('/', authenticateJWT, authorizeRoles(['admin']), async (req: Request, res: Response) => {
-  try {
-    const { status, page = '1', limit = '20' } = req.query;
-    const filter: Record<string, unknown> = {};
-    if (status) filter.status = status;
+router.get(
+  '/',
+  authenticateJWT,
+  authorizeRoles(['admin']),
+  asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const { status, page = '1', limit = '20' } = req.query;
+      const filter: Record<string, unknown> = {};
+      if (status) filter.status = status;
 
-    const pageNum = Math.max(parseInt(page as string) || 1, 1);
-    const limitNum = Math.min(Math.max(parseInt(limit as string) || 20, 1), 100);
+      const pageNum = Math.max(parseInt(page as string) || 1, 1);
+      const limitNum = Math.min(Math.max(parseInt(limit as string) || 20, 1), 100);
 
-    const [appointments, total] = await Promise.all([
-      Appointment.find(filter)
-        .sort({ date: -1 })
-        .skip((pageNum - 1) * limitNum)
-        .limit(limitNum),
-      Appointment.countDocuments(filter),
-    ]);
+      const [appointments, total] = await Promise.all([
+        Appointment.find(filter)
+          .sort({ date: -1 })
+          .skip((pageNum - 1) * limitNum)
+          .limit(limitNum),
+        Appointment.countDocuments(filter),
+      ]);
 
-    res.json({ data: appointments, total, page: pageNum, limit: limitNum });
-  } catch (error) {
-    res.status(500).json({ error: 'Randevular listelenirken hata olustu' });
-  }
-});
+      res.json({ data: appointments, total, page: pageNum, limit: limitNum });
+    } catch (error) {
+      res.status(500).json({ error: 'Randevular listelenirken hata olustu' });
+    }
+  }),
+);
 
 // Admin: Update appointment status
 router.put(
   '/:id/status',
   authenticateJWT,
   authorizeRoles(['admin']),
-  async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     try {
       const { status, rejectionReason } = req.body;
       const authUser = req.user;
@@ -210,7 +224,7 @@ router.put(
       });
       res.status(500).json({ error: 'Randevu guncellenirken hata olustu' });
     }
-  },
+  }),
 );
 
 // Admin: Get appointment stats
@@ -218,7 +232,7 @@ router.get(
   '/stats/summary',
   authenticateJWT,
   authorizeRoles(['admin']),
-  async (_req: Request, res: Response) => {
+  asyncHandler(async (_req: Request, res: Response) => {
     try {
       const [pending, approved, rejected, completed, total] = await Promise.all([
         Appointment.countDocuments({ status: 'pending' }),
@@ -232,47 +246,51 @@ router.get(
     } catch (error) {
       res.status(500).json({ error: 'Istatistikler alinirken hata olustu' });
     }
-  },
+  }),
 );
 
 // Get available time slots for a date
-router.get('/available-slots', authenticateJWT, async (req: Request, res: Response) => {
-  try {
-    const { date } = req.query;
-    if (!date) return res.status(400).json({ error: 'Tarih gerekli' });
+router.get(
+  '/available-slots',
+  authenticateJWT,
+  asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const { date } = req.query;
+      if (!date) return res.status(400).json({ error: 'Tarih gerekli' });
 
-    const dayStart = new Date(date as string);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(date as string);
-    dayEnd.setHours(23, 59, 59, 999);
+      const dayStart = new Date(date as string);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(date as string);
+      dayEnd.setHours(23, 59, 59, 999);
 
-    const bookedAppointments = await Appointment.find({
-      date: { $gte: dayStart, $lte: dayEnd },
-      status: { $in: ['pending', 'approved'] },
-    }).select('timeSlot');
+      const bookedAppointments = await Appointment.find({
+        date: { $gte: dayStart, $lte: dayEnd },
+        status: { $in: ['pending', 'approved'] },
+      }).select('timeSlot');
 
-    const bookedSlots = bookedAppointments.map((a) => a.timeSlot);
+      const bookedSlots = bookedAppointments.map((a) => a.timeSlot);
 
-    const allSlots = [
-      '09:00-09:30',
-      '09:30-10:00',
-      '10:00-10:30',
-      '10:30-11:00',
-      '11:00-11:30',
-      '11:30-12:00',
-      '13:00-13:30',
-      '13:30-14:00',
-      '14:00-14:30',
-      '14:30-15:00',
-      '15:00-15:30',
-      '15:30-16:00',
-    ];
+      const allSlots = [
+        '09:00-09:30',
+        '09:30-10:00',
+        '10:00-10:30',
+        '10:30-11:00',
+        '11:00-11:30',
+        '11:30-12:00',
+        '13:00-13:30',
+        '13:30-14:00',
+        '14:00-14:30',
+        '14:30-15:00',
+        '15:00-15:30',
+        '15:30-16:00',
+      ];
 
-    const availableSlots = allSlots.filter((slot) => !bookedSlots.includes(slot));
-    res.json({ availableSlots, bookedSlots });
-  } catch (error) {
-    res.status(500).json({ error: 'Musait saatler alinirken hata olustu' });
-  }
-});
+      const availableSlots = allSlots.filter((slot) => !bookedSlots.includes(slot));
+      res.json({ availableSlots, bookedSlots });
+    } catch (error) {
+      res.status(500).json({ error: 'Musait saatler alinirken hata olustu' });
+    }
+  }),
+);
 
 export default router;

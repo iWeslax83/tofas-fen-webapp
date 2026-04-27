@@ -1,6 +1,19 @@
 // Load environment variables first
 import './config/environment';
 
+// Bulletproof early uncaughtException trap — writes directly to stderr so
+// the actual stack trace is visible even when winston/logger is in a bad
+// state. Installed BEFORE any other module so nothing can mask it.
+process.on('uncaughtException', (err: Error) => {
+  process.stderr.write(
+    `\n[FATAL uncaughtException] ${err?.stack || err?.message || String(err)}\n`,
+  );
+});
+process.on('unhandledRejection', (reason: unknown) => {
+  const r = reason instanceof Error ? reason.stack || reason.message : String(reason);
+  process.stderr.write(`\n[FATAL unhandledRejection] ${r}\n`);
+});
+
 // Initialize OpenTelemetry before other imports
 import { initializeTelemetry } from './utils/telemetry';
 initializeTelemetry();
@@ -280,10 +293,22 @@ if (process.env.NODE_ENV !== 'test') {
         initializeEventDrivenWebSocket();
         logger.info(`Event-driven architecture enabled`);
 
-        // Migrate existing evci requests (one-time, idempotent)
-        migrateEvciRequests()
-          .then(() => logger.info('EvciRequest migration completed'))
-          .catch((err) => logger.error('EvciRequest migration failed', { error: err.message }));
+        // Migrate existing evci requests (one-time, idempotent).
+        // Errors here are non-fatal — the server should still start even if
+        // the migration can't run. Skip entirely when SKIP_EVCI_MIGRATION=true
+        // (useful for fresh-db deployments and for sidestepping connection-
+        // readiness races with the scheduler / WAF init above).
+        if (process.env.SKIP_EVCI_MIGRATION !== 'true') {
+          migrateEvciRequests()
+            .then(() => logger.info('EvciRequest migration completed'))
+            .catch((err: unknown) => {
+              const message = err instanceof Error ? err.message : String(err);
+              const stack = err instanceof Error ? err.stack : undefined;
+              logger.error('EvciRequest migration failed', { message, stack });
+            });
+        } else {
+          logger.info('EvciRequest migration skipped (SKIP_EVCI_MIGRATION=true)');
+        }
 
         // Initialize scheduler for cron jobs (evci reminders etc.)
         SchedulerService.initialize();

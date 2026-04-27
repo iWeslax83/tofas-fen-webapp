@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(where:*)",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash(podman run:*)",
+      "Bash(npm run:*)",
+      "Bash(jobs -l)",
+      "Bash(npm test:*)"
     ]
   }
 }

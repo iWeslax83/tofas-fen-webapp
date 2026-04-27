@@ -6,6 +6,7 @@ import { MealList, SupervisorList, User } from '../models';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { verifyUploadedFiles } from '../config/upload';
 import logger from '../utils/logger';
+import { asyncHandler } from '../middleware/errorHandler';
 
 // Simple in-memory cache for meals data
 const mealsCache = new Map<string, { data: any; timestamp: number }>();
@@ -47,101 +48,110 @@ const upload = multer({
 // ===== MEAL LIST ROUTES =====
 
 // Clear meals cache (admin only)
-router.delete('/meals/cache', requireAuth, requireRole(['admin']), async (req, res) => {
-  try {
-    mealsCache.clear();
-    res.json({ message: 'Meals cache cleared successfully' });
-  } catch (error) {
-    logger.error('Cache clear error', { error: error instanceof Error ? error.message : error });
-    res.status(500).json({ error: 'Sunucu hatası' });
-  }
-});
+router.delete(
+  '/meals/cache',
+  requireAuth,
+  requireRole(['admin']),
+  asyncHandler(async (req, res) => {
+    try {
+      mealsCache.clear();
+      res.json({ message: 'Meals cache cleared successfully' });
+    } catch (error) {
+      logger.error('Cache clear error', { error: error instanceof Error ? error.message : error });
+      res.status(500).json({ error: 'Sunucu hatası' });
+    }
+  }),
+);
 
 // Get all meal lists with month/year filtering
-router.get('/meals', requireAuth, async (req, res) => {
-  try {
-    const { month, year } = req.query;
-    const filter: any = {};
+router.get(
+  '/meals',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    try {
+      const { month, year } = req.query;
+      const filter: any = {};
 
-    if (month) filter.month = month;
-    if (year) filter.year = parseInt(year as string);
+      if (month) filter.month = month;
+      if (year) filter.year = parseInt(year as string);
 
-    // Create cache key based on filter parameters
-    const cacheKey = `meals_${JSON.stringify(filter)}`;
-    const now = Date.now();
+      // Create cache key based on filter parameters
+      const cacheKey = `meals_${JSON.stringify(filter)}`;
+      const now = Date.now();
 
-    // Check cache first
-    if (mealsCache.has(cacheKey)) {
-      const cached = mealsCache.get(cacheKey);
-      if (cached && now - cached.timestamp < CACHE_TTL) {
-        logger.info('Serving meals from cache');
+      // Check cache first
+      if (mealsCache.has(cacheKey)) {
+        const cached = mealsCache.get(cacheKey);
+        if (cached && now - cached.timestamp < CACHE_TTL) {
+          logger.info('Serving meals from cache');
+          return res.json({
+            success: true,
+            data: cached.data,
+            cached: true,
+            timestamp: cached.timestamp,
+          });
+        }
+      }
+
+      // Fetch from database with timeout
+      const mealLists = await Promise.race([
+        MealList.find(filter).sort({ createdAt: -1 }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 5000)),
+      ]);
+
+      // Cache the result
+      mealsCache.set(cacheKey, {
+        data: mealLists,
+        timestamp: now,
+      });
+
+      // Clean up old cache entries (only if cache is getting large)
+      if (mealsCache.size > 50) {
+        for (const [key, value] of mealsCache.entries()) {
+          if (now - value.timestamp >= CACHE_TTL) {
+            mealsCache.delete(key);
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        data: mealLists,
+        cached: false,
+        timestamp: now,
+      });
+    } catch (error) {
+      logger.error('Meal list fetch error', {
+        error: error instanceof Error ? error.message : error,
+      });
+
+      // Try to serve from cache even if expired
+      const { month, year } = req.query;
+      const filter: any = {};
+      if (month) filter.month = month;
+      if (year) filter.year = parseInt(year as string);
+      const cacheKey = `meals_${JSON.stringify(filter)}`;
+
+      if (mealsCache.has(cacheKey)) {
+        const cached = mealsCache.get(cacheKey);
+        logger.info('Serving expired cache due to database error');
         return res.json({
           success: true,
           data: cached.data,
           cached: true,
+          expired: true,
           timestamp: cached.timestamp,
         });
       }
-    }
 
-    // Fetch from database with timeout
-    const mealLists = await Promise.race([
-      MealList.find(filter).sort({ createdAt: -1 }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 5000)),
-    ]);
-
-    // Cache the result
-    mealsCache.set(cacheKey, {
-      data: mealLists,
-      timestamp: now,
-    });
-
-    // Clean up old cache entries (only if cache is getting large)
-    if (mealsCache.size > 50) {
-      for (const [key, value] of mealsCache.entries()) {
-        if (now - value.timestamp >= CACHE_TTL) {
-          mealsCache.delete(key);
-        }
-      }
-    }
-
-    res.json({
-      success: true,
-      data: mealLists,
-      cached: false,
-      timestamp: now,
-    });
-  } catch (error) {
-    logger.error('Meal list fetch error', {
-      error: error instanceof Error ? error.message : error,
-    });
-
-    // Try to serve from cache even if expired
-    const { month, year } = req.query;
-    const filter: any = {};
-    if (month) filter.month = month;
-    if (year) filter.year = parseInt(year as string);
-    const cacheKey = `meals_${JSON.stringify(filter)}`;
-
-    if (mealsCache.has(cacheKey)) {
-      const cached = mealsCache.get(cacheKey);
-      logger.info('Serving expired cache due to database error');
-      return res.json({
-        success: true,
-        data: cached.data,
-        cached: true,
-        expired: true,
-        timestamp: cached.timestamp,
+      res.status(500).json({
+        success: false,
+        error: 'Sunucu hatası',
+        message: 'Yemek listesi yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
       });
     }
-
-    res.status(500).json({
-      success: false,
-      error: 'Sunucu hatası',
-      message: 'Yemek listesi yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
-    });
-  }
-});
+  }),
+);
 
 // Upload meal list (admin only)
 router.post(
@@ -150,7 +160,7 @@ router.post(
   requireRole(['admin', 'hizmetli']),
   upload.single('file'),
   verifyUploadedFiles,
-  async (req, res) => {
+  asyncHandler(async (req, res) => {
     try {
       if (!req.file) {
         res.status(400).json({ error: 'Dosya yüklenmedi' });
@@ -202,52 +212,60 @@ router.post(
       });
       res.status(500).json({ error: 'Sunucu hatası' });
     }
-  },
+  }),
 );
 
 // Download meal list file
-router.get('/meals/:id/download', requireAuth, async (req, res) => {
-  try {
-    const mealList = await MealList.findById(req.params.id);
-    if (!mealList) {
-      res.status(404).json({ error: 'Dosya bulunamadı' });
-      return;
-    }
+router.get(
+  '/meals/:id/download',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    try {
+      const mealList = await MealList.findById(req.params.id);
+      if (!mealList) {
+        res.status(404).json({ error: 'Dosya bulunamadı' });
+        return;
+      }
 
-    if (!fs.existsSync(mealList.fileUrl)) {
-      res.status(404).json({ error: 'Dosya sistemde bulunamadı' });
-      return;
-    }
+      if (!fs.existsSync(mealList.fileUrl)) {
+        res.status(404).json({ error: 'Dosya sistemde bulunamadı' });
+        return;
+      }
 
-    res.download(mealList.fileUrl);
-  } catch (error) {
-    logger.error('Meal list download error', {
-      error: error instanceof Error ? error.message : error,
-    });
-    res.status(500).json({ error: 'Sunucu hatası' });
-  }
-});
+      res.download(mealList.fileUrl);
+    } catch (error) {
+      logger.error('Meal list download error', {
+        error: error instanceof Error ? error.message : error,
+      });
+      res.status(500).json({ error: 'Sunucu hatası' });
+    }
+  }),
+);
 
 // ===== SUPERVISOR LIST ROUTES =====
 
 // Get all supervisor lists with month/year filtering
-router.get('/supervisors', requireAuth, async (req, res) => {
-  try {
-    const { month, year } = req.query;
-    const filter: any = {};
+router.get(
+  '/supervisors',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    try {
+      const { month, year } = req.query;
+      const filter: any = {};
 
-    if (month) filter.month = month;
-    if (year) filter.year = parseInt(year as string);
+      if (month) filter.month = month;
+      if (year) filter.year = parseInt(year as string);
 
-    const supervisorLists = await SupervisorList.find(filter).sort({ createdAt: -1 });
-    res.json(supervisorLists);
-  } catch (error) {
-    logger.error('Supervisor list fetch error', {
-      error: error instanceof Error ? error.message : error,
-    });
-    res.status(500).json({ error: 'Sunucu hatası' });
-  }
-});
+      const supervisorLists = await SupervisorList.find(filter).sort({ createdAt: -1 });
+      res.json(supervisorLists);
+    } catch (error) {
+      logger.error('Supervisor list fetch error', {
+        error: error instanceof Error ? error.message : error,
+      });
+      res.status(500).json({ error: 'Sunucu hatası' });
+    }
+  }),
+);
 
 // Upload supervisor list (admin only)
 router.post(
@@ -256,7 +274,7 @@ router.post(
   requireRole(['admin', 'hizmetli']),
   upload.single('file'),
   verifyUploadedFiles,
-  async (req, res) => {
+  asyncHandler(async (req, res) => {
     try {
       if (!req.file) {
         res.status(400).json({ error: 'Dosya yüklenmedi' });
@@ -298,30 +316,34 @@ router.post(
       });
       res.status(500).json({ error: 'Sunucu hatası' });
     }
-  },
+  }),
 );
 
 // Download supervisor list file
-router.get('/supervisors/:id/download', requireAuth, async (req, res) => {
-  try {
-    const supervisorList = await SupervisorList.findById(req.params.id);
-    if (!supervisorList) {
-      res.status(404).json({ error: 'Dosya bulunamadı' });
-      return;
-    }
+router.get(
+  '/supervisors/:id/download',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    try {
+      const supervisorList = await SupervisorList.findById(req.params.id);
+      if (!supervisorList) {
+        res.status(404).json({ error: 'Dosya bulunamadı' });
+        return;
+      }
 
-    if (!fs.existsSync(supervisorList.fileUrl)) {
-      res.status(404).json({ error: 'Dosya sistemde bulunamadı' });
-      return;
-    }
+      if (!fs.existsSync(supervisorList.fileUrl)) {
+        res.status(404).json({ error: 'Dosya sistemde bulunamadı' });
+        return;
+      }
 
-    res.download(supervisorList.fileUrl);
-  } catch (error) {
-    logger.error('Supervisor list download error', {
-      error: error instanceof Error ? error.message : error,
-    });
-    res.status(500).json({ error: 'Sunucu hatası' });
-  }
-});
+      res.download(supervisorList.fileUrl);
+    } catch (error) {
+      logger.error('Supervisor list download error', {
+        error: error instanceof Error ? error.message : error,
+      });
+      res.status(500).json({ error: 'Sunucu hatası' });
+    }
+  }),
+);
 
 export default router;

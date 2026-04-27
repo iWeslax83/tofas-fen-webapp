@@ -25,6 +25,7 @@ import appointmentRoutes from '../routes/Appointment';
 import visitorChatRoutes from '../routes/VisitorChat';
 import dashboardRoutes from '../routes/Dashboard';
 import kvkkRoutes from '../routes/Kvkk';
+import passwordAdminRoutes from '../modules/passwordAdmin/passwordAdminRoutes';
 
 /**
  * Register all API routes on the Express app.
@@ -62,4 +63,7 @@ export function registerRoutes(app: express.Express): void {
 
   // KVKK (Turkish GDPR) compliance routes
   app.use('/api/kvkk', kvkkRoutes);
+
+  // Admin password management
+  app.use('/api/admin/passwords', passwordAdminRoutes);
 }

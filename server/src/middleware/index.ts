@@ -7,10 +7,9 @@ export {
   requireStudent,
   requireParent,
   requireService,
-  optionalAuth,
   csrfProtection,
   sessionSecurity,
-  createRateLimiter
+  createRateLimiter,
 } from './auth';
 
 // Validation
@@ -24,17 +23,11 @@ export {
   validateSupervisorList,
   validateMaintenanceRequest,
   validateEvciRequest,
-  validateRequestData
+  validateRequestData,
 } from './validation';
 
 // Caching
-export {
-  cache,
-  invalidateCache,
-  sessionCache,
-  cacheHelpers,
-  cleanupCache
-} from './cache';
+export { cache, invalidateCache, sessionCache, cacheHelpers, cleanupCache } from './cache';
 
 // Named export for redis client (no default export in cache.ts)
 export { redis } from './cache';

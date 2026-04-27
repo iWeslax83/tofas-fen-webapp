@@ -23,7 +23,7 @@ import {
   X,
   Settings2,
 } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthGuard } from '../../hooks/useAuthGuard';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 
 import './AdminEvciListPage.css';
@@ -65,7 +65,7 @@ function getParentApprovalBadge(approval?: string) {
 }
 
 export default function AdminEvciListPage() {
-  const { user: authUser } = useAuth(['admin', 'teacher']);
+  const { user: authUser } = useAuthGuard(['admin', 'teacher']);
   const [requests, setRequests] = useState<EvciTalep[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -100,7 +100,7 @@ export default function AdminEvciListPage() {
       );
 
       if (requestsError) {
-        console.error('Error fetching evci requests:', requestsError);
+        if (import.meta.env.DEV) console.error('Error fetching evci requests:', requestsError);
         toast.error('Talepler yüklenirken hata oluştu');
       } else {
         // Runtime shape check — accept either the paginated object
@@ -134,12 +134,12 @@ export default function AdminEvciListPage() {
       const { data: studentsData, error: studentsError } =
         await UserService.getUsersByRole('student');
       if (studentsError) {
-        console.error('Error fetching students:', studentsError);
+        if (import.meta.env.DEV) console.error('Error fetching students:', studentsError);
       } else {
         setStudents(Array.isArray(studentsData) ? (studentsData as Student[]) : []);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      if (import.meta.env.DEV) console.error('Error fetching data:', error);
       toast.error('Veriler yüklenirken hata oluştu');
     } finally {
       setIsLoading(false);
@@ -178,7 +178,7 @@ export default function AdminEvciListPage() {
           setNewReq({ willGo: true });
         }
       } catch (error) {
-        console.error('Error creating evci request:', error);
+        if (import.meta.env.DEV) console.error('Error creating evci request:', error);
         toast.error('Evci talebi oluşturulurken hata oluştu');
       } finally {
         setIsSubmitting(false);
@@ -207,7 +207,7 @@ export default function AdminEvciListPage() {
         toast.success('Evci talebi başarıyla silindi');
       }
     } catch (error) {
-      console.error('Error deleting evci request:', error);
+      if (import.meta.env.DEV) console.error('Error deleting evci request:', error);
       toast.error('Evci talebi silinirken hata oluştu');
     }
   }, []);
@@ -248,7 +248,7 @@ export default function AdminEvciListPage() {
         await fetchData(page);
       }
     } catch (error) {
-      console.error('Error bulk updating:', error);
+      if (import.meta.env.DEV) console.error('Error bulk updating:', error);
       toast.error('Toplu güncelleme sırasında hata oluştu');
     }
   };
@@ -271,7 +271,7 @@ export default function AdminEvciListPage() {
       window.URL.revokeObjectURL(url);
       toast.success(`${format.toUpperCase()} dosyası indirildi`);
     } catch (error) {
-      console.error('Error exporting:', error);
+      if (import.meta.env.DEV) console.error('Error exporting:', error);
       toast.error('Dışa aktarma sırasında hata oluştu');
     }
   };
@@ -289,7 +289,7 @@ export default function AdminEvciListPage() {
         await fetchData(page);
       }
     } catch (error) {
-      console.error('Error admin action:', error);
+      if (import.meta.env.DEV) console.error('Error admin action:', error);
       toast.error('İşlem sırasında hata oluştu');
     }
   };
@@ -313,7 +313,7 @@ export default function AdminEvciListPage() {
         setOverrideReason('');
       }
     } catch (error) {
-      console.error('Error setting override:', error);
+      if (import.meta.env.DEV) console.error('Error setting override:', error);
       toast.error('Override ayarlanırken hata oluştu');
     }
   };

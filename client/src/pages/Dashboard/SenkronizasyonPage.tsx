@@ -1,10 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, X, Save, FileSpreadsheet, Link2 } from 'lucide-react';
+import { Users, Plus, X, Save, Link2 } from 'lucide-react';
 import { UserService } from '../../utils/apiService';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-import BulkUserImportSection from './BulkUserImportSection';
 import BulkLinkSection from './BulkLinkSection';
 import AddUserModal from './AddUserModal';
 import EditUserModal from './EditUserModal';
@@ -25,19 +24,6 @@ interface UserType {
   meslek?: string;
   departman?: string;
   _showPassword?: boolean;
-}
-
-interface BulkImportPreview {
-  valid: number;
-  total: number;
-  errors?: { row: number; message: string }[];
-  rows?: { id: string; adSoyad: string; rol: string; sinif?: string; sube?: string }[];
-}
-
-interface BulkImportResult {
-  imported: number;
-  failed: number;
-  duplicates?: string[];
 }
 
 interface BulkLinkPreview {
@@ -80,14 +66,6 @@ export default function SenkronizasyonPage() {
   // Student search and filter states
   const [studentSearch, setStudentSearch] = useState('');
   const [studentClassFilter, setStudentClassFilter] = useState('');
-
-  // Bulk import states
-  const [showBulkImport, setShowBulkImport] = useState(false);
-  const [bulkFile, setBulkFile] = useState<File | null>(null);
-  const [bulkPreview, setBulkPreview] = useState<BulkImportPreview | null>(null);
-  const [bulkLoading, setBulkLoading] = useState(false);
-  const [bulkResult, setBulkResult] = useState<BulkImportResult | null>(null);
-  const [bulkError, setBulkError] = useState('');
 
   // Bulk parent-child link states
   const [showBulkLink, setShowBulkLink] = useState(false);
@@ -283,20 +261,9 @@ export default function SenkronizasyonPage() {
           {/* Bulk Actions Bar */}
           <div className="bulk-actions-bar">
             <button
-              className={`btn ${showBulkImport ? 'btn-secondary' : 'btn-success'}`}
-              onClick={() => {
-                setShowBulkImport(!showBulkImport);
-                setShowBulkLink(false);
-              }}
-            >
-              <FileSpreadsheet size={16} />
-              Toplu Kullanıcı Aktar
-            </button>
-            <button
               className={`btn ${showBulkLink ? 'btn-secondary' : 'btn-warning'}`}
               onClick={() => {
                 setShowBulkLink(!showBulkLink);
-                setShowBulkImport(false);
               }}
             >
               <Link2 size={16} />
@@ -311,24 +278,6 @@ export default function SenkronizasyonPage() {
               Veli-Öğrenci Eşleştirme Sayfası
             </button>
           </div>
-
-          {/* Bulk User Import Panel */}
-          {showBulkImport && (
-            <BulkUserImportSection
-              bulkFile={bulkFile}
-              setBulkFile={setBulkFile}
-              bulkPreview={bulkPreview}
-              setBulkPreview={setBulkPreview}
-              bulkLoading={bulkLoading}
-              setBulkLoading={setBulkLoading}
-              bulkResult={bulkResult}
-              setBulkResult={setBulkResult}
-              bulkError={bulkError}
-              setBulkError={setBulkError}
-              onImportComplete={fetchUsers}
-              onClose={() => setShowBulkImport(false)}
-            />
-          )}
 
           {/* Bulk Parent-Child Link Panel */}
           {showBulkLink && (
