@@ -2,7 +2,7 @@ import { forwardRef, type HTMLAttributes } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../utils/cn';
 
-const chipVariants = cva(
+export const chipVariants = cva(
   'inline-flex items-center gap-1.5 px-2.5 h-6 text-xs font-medium uppercase tracking-wider whitespace-nowrap',
   {
     variants: {
