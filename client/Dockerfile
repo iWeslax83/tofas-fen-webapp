@@ -9,7 +9,7 @@
 # the floating `node:18-slim` / `nginx:alpine` tags. Dependabot's docker
 # updater will open PRs for new patch releases. Promote to a digest pin
 # (`@sha256:...`) on first prod cut.
-FROM node:18.20-slim AS base
+FROM node:25.9-slim AS base
 
 # Install dependencies only when needed.
 # We copy only package.json (NOT package-lock.json) and run `npm install`
