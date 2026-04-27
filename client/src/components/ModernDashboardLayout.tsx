@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { Home, Settings, Menu, X, Bell, CheckCheck } from 'lucide-react';
+import { Home, Settings, Menu, X, Bell, CheckCheck, Search } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
-import { dashboardButtons } from '../pages/Dashboard/dashboardButtonConfig';
+import { dashboardButtons, type UserRole } from '../pages/Dashboard/dashboardButtonConfig';
 import { useNotifications } from '../hooks/useNotifications';
 import { ThemeToggle } from './ThemeToggle';
 import { StateBar } from './StateBar';
 import { SidebarProfile } from './SidebarProfile';
+import { CommandPalette } from './CommandPalette';
 import './ModernDashboardLayout.css';
 
 interface ModernDashboardLayoutProps {
@@ -26,6 +27,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
 }) => {
   const { user } = useAuthContext();
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 1024);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const { notifications, unreadCount, isOpen, setIsOpen, markAsRead, markAllAsRead } =
     useNotifications(user?.id);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -171,6 +173,15 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
           </div>
           <div className="header-right">
             {customHeaderActions}
+            <button
+              type="button"
+              className="notif-bell-btn"
+              onClick={() => setPaletteOpen(true)}
+              aria-label="Komut paletini aç (Ctrl+K)"
+              title="Komut paleti · Ctrl+K"
+            >
+              <Search size={20} />
+            </button>
             <ThemeToggle />
             {/* Notification Bell */}
             <div className="notif-container" ref={notifRef}>
@@ -238,6 +249,13 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
         {/* Page Content */}
         <main className="dashboard-content">{children}</main>
       </div>
+
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        role={(user.rol ?? 'student') as UserRole}
+        pansiyon={user.pansiyon}
+      />
     </div>
   );
 };
