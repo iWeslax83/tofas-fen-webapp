@@ -19,19 +19,23 @@ export const createRateLimiter = (options: {
     max: options.max,
     message: {
       error: options.message || 'Too many requests',
-      retryAfter: Math.ceil(options.windowMs / 1000)
+      retryAfter: Math.ceil(options.windowMs / 1000),
     },
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: options.skipSuccessfulRequests || false,
-    keyGenerator: options.keyGenerator || ((req: Request) => {
-      // Use user ID if authenticated, otherwise IP
-      return (req as any).user?.userId || req.ip || 'anonymous';
-    }),
-    skip: options.skip || ((req: Request) => {
-      // Skip rate limiting for health checks
-      return req.path === '/health' || req.path === '/status';
-    }),
+    keyGenerator:
+      options.keyGenerator ||
+      ((req: Request) => {
+        // Use user ID if authenticated, otherwise IP
+        return (req as any).user?.userId || req.ip || 'anonymous';
+      }),
+    skip:
+      options.skip ||
+      ((req: Request) => {
+        // Skip rate limiting for health checks
+        return req.path === '/health' || req.path === '/status';
+      }),
     handler: async (req: Request, res: Response) => {
       // Log rate limit violation
       logger.warn('Rate limit exceeded', {
@@ -39,7 +43,7 @@ export const createRateLimiter = (options: {
         userId: (req as any).user?.userId,
         path: req.path,
         method: req.method,
-        userAgent: req.get('User-Agent')
+        userAgent: req.get('User-Agent'),
       });
 
       res.status(429).json({
@@ -48,9 +52,9 @@ export const createRateLimiter = (options: {
         retryAfter: Math.ceil(options.windowMs / 1000),
         limit: options.max,
         windowMs: options.windowMs,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-    }
+    },
   });
 };
 
@@ -60,7 +64,7 @@ export const createRateLimiter = (options: {
 export const generalLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // 100 requests per 15 minutes
-  message: 'Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.'
+  message: 'Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.',
 });
 
 /**
@@ -70,7 +74,7 @@ export const authLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 login attempts per 15 minutes
   message: 'Çok fazla giriş denemesi. Lütfen daha sonra tekrar deneyin.',
-  skipSuccessfulRequests: true
+  skipSuccessfulRequests: true,
 });
 
 /**
@@ -79,7 +83,7 @@ export const authLimiter = createRateLimiter({
 export const uploadLimiter = createRateLimiter({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 10, // 10 uploads per hour
-  message: 'Çok fazla dosya yükleme denemesi. Lütfen daha sonra tekrar deneyin.'
+  message: 'Çok fazla dosya yükleme denemesi. Lütfen daha sonra tekrar deneyin.',
 });
 
 /**
@@ -88,7 +92,7 @@ export const uploadLimiter = createRateLimiter({
 export const readOnlyLimiter = createRateLimiter({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 200, // 200 requests per 5 minutes
-  message: 'Çok fazla okuma isteği gönderildi. Lütfen biraz bekleyin.'
+  message: 'Çok fazla okuma isteği gönderildi. Lütfen biraz bekleyin.',
 });
 
 /**
@@ -104,7 +108,7 @@ export const userSpecificLimiter = createRateLimiter({
       return req.ip || 'anonymous';
     }
     return `user:${userId}`;
-  }
+  },
 });
 
 /**
@@ -114,7 +118,7 @@ export const ipLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20, // 20 requests per 15 minutes per IP
   message: 'IP adresinizden çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.',
-  keyGenerator: (req: Request) => req.ip || 'unknown'
+  keyGenerator: (req: Request) => req.ip || 'unknown',
 });
 
 /**
@@ -144,7 +148,7 @@ export const roleBasedLimiter = (req: Request, res: Response, next: any) => {
     case 'parent':
       maxRequests = 50;
       break;
-    case 'hizmetli':
+
       maxRequests = 150;
       break;
     default:
@@ -155,7 +159,7 @@ export const roleBasedLimiter = (req: Request, res: Response, next: any) => {
     windowMs,
     max: maxRequests,
     message: `Rolünüz için çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.`,
-    keyGenerator: (_req: Request) => `role:${user.role}:${user.userId}`
+    keyGenerator: (_req: Request) => `role:${user.role}:${user.userId}`,
   });
 
   return limiter(req, res, next as any);
@@ -171,7 +175,7 @@ export const adaptiveLimiter = (req: Request, res: Response, next: (err?: unknow
   const baseLimiter = createRateLimiter({
     windowMs: 15 * 60 * 1000,
     max: 100,
-    message: 'Sunucu yükü nedeniyle istek limiti düşürüldü. Lütfen daha sonra tekrar deneyin.'
+    message: 'Sunucu yükü nedeniyle istek limiti düşürüldü. Lütfen daha sonra tekrar deneyin.',
   });
 
   return baseLimiter(req, res, next as any);
@@ -188,6 +192,6 @@ export const endpointSpecificLimiter = (endpoint: string, maxRequests: number) =
     keyGenerator: (req: Request) => {
       const userId = (req as any).user?.userId;
       return userId ? `endpoint:${endpoint}:user:${userId}` : `endpoint:${endpoint}:ip:${req.ip}`;
-    }
+    },
   });
 };

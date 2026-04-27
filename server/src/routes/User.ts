@@ -31,7 +31,7 @@ function escapeRegex(str: string): string {
  *         name: role
  *         schema:
  *           type: string
- *           enum: [student, teacher, parent, admin, hizmetli, ziyaretci]
+
  *         description: Filter users by role
  *     responses:
  *       200:
@@ -89,7 +89,7 @@ router.get(
  *         required: true
  *         schema:
  *           type: string
- *           enum: [student, teacher, parent, admin, hizmetli, ziyaretci]
+
  *         description: User role to filter by
  *       - in: query
  *         name: search
@@ -599,7 +599,7 @@ router.put('/:userId/update', authenticateJWT, async (req, res) => {
  *                 description: Plain text password (will be hashed)
  *               rol:
  *                 type: string
- *                 enum: [student, teacher, parent, admin, hizmetli, ziyaretci]
+
  *               sinif:
  *                 type: string
  *               sube:
@@ -683,7 +683,7 @@ router.post('/', authenticateJWT, authorizeRoles(['admin']), async (req, res) =>
  *                 description: Plain text password (will be hashed)
  *               rol:
  *                 type: string
- *                 enum: [student, teacher, parent, admin, hizmetli, ziyaretci]
+
  *               sinif:
  *                 type: string
  *               sube:

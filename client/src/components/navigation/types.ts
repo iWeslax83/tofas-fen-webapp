@@ -46,8 +46,7 @@ export const getRoleDisplayName = (role?: string): string => {
       return 'Öğretmen';
     case 'parent':
       return 'Veli';
-    case 'hizmetli':
-      return 'Hizmetli';
+
     default:
       return 'Kullanıcı';
   }

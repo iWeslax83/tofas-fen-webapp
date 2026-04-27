@@ -17,42 +17,49 @@ TOFAS FEN WebApp projesi için geliştirilmiş kapsamlı error handling sistemi.
 ## Error Types
 
 ### 1. NETWORK
+
 - **Açıklama**: İnternet bağlantısı sorunları
 - **Severity**: MEDIUM
 - **Retry**: ✅ (3 deneme, 2s bekleme)
 - **User Message**: "İnternet bağlantınızı kontrol edin ve tekrar deneyin."
 
 ### 2. AUTHENTICATION
+
 - **Açıklama**: Kimlik doğrulama hataları
 - **Severity**: HIGH
 - **Retry**: ❌
 - **User Message**: "Oturum süreniz dolmuş. Lütfen tekrar giriş yapın."
 
 ### 3. AUTHORIZATION
+
 - **Açıklama**: Yetki hataları
 - **Severity**: HIGH
 - **Retry**: ❌
 - **User Message**: "Bu işlemi gerçekleştirmek için yetkiniz bulunmuyor."
 
 ### 4. VALIDATION
+
 - **Açıklama**: Form doğrulama hataları
 - **Severity**: LOW
 - **Retry**: ❌
 - **User Message**: "Lütfen girdiğiniz bilgileri kontrol edin."
 
 ### 5. SERVER
+
 - **Açıklama**: Sunucu hataları
 - **Severity**: HIGH
 - **Retry**: ✅ (2 deneme, 5s bekleme)
 - **User Message**: "Sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin."
 
 ### 6. CLIENT
+
 - **Açıklama**: İstemci hataları
 - **Severity**: MEDIUM
 - **Retry**: ✅ (1 deneme, 1s bekleme)
 - **User Message**: "Bir hata oluştu. Sayfayı yenilemeyi deneyin."
 
 ### 7. UNKNOWN
+
 - **Açıklama**: Bilinmeyen hatalar
 - **Severity**: MEDIUM
 - **Retry**: ✅ (1 deneme, 3s bekleme)
@@ -61,21 +68,25 @@ TOFAS FEN WebApp projesi için geliştirilmiş kapsamlı error handling sistemi.
 ## Error Severity Levels
 
 ### LOW
+
 - Toast notification göstermez
 - Kullanıcı müdahalesi gerektirmez
 - Otomatik çözülür
 
 ### MEDIUM
+
 - Toast notification gösterir
 - Kullanıcı bilgilendirilir
 - Retry mekanizması çalışır
 
 ### HIGH
+
 - Toast notification gösterir
 - Kullanıcı müdahalesi gerekebilir
 - Özel işlemler tetiklenir
 
 ### CRITICAL
+
 - Modal dialog gösterir
 - Acil kullanıcı müdahalesi gerekir
 - Sistem durumu kontrol edilir
@@ -148,7 +159,7 @@ const MyComponent = () => {
       ErrorSeverity.MEDIUM,
       { component: 'MyComponent', action: 'customError' }
     );
-    
+
     handleError(customError);
   };
 
@@ -219,10 +230,10 @@ axios.interceptors.response.use(
   (error) => {
     errorHandler.handleError(error, {
       component: 'API',
-      action: 'request'
+      action: 'request',
     });
     return Promise.reject(error);
-  }
+  },
 );
 ```
 
@@ -242,19 +253,19 @@ const queryClient = new QueryClient({
       onError: (error) => {
         errorHandler.handleError(error, {
           component: 'ReactQuery',
-          action: 'query'
+          action: 'query',
         });
-      }
+      },
     },
     mutations: {
       onError: (error) => {
         errorHandler.handleError(error, {
           component: 'ReactQuery',
-          action: 'mutation'
+          action: 'mutation',
         });
-      }
-    }
-  }
+      },
+    },
+  },
 });
 ```
 
@@ -270,7 +281,7 @@ import { Analytics } from '../utils/monitoring';
 Analytics.getInstance().trackError(error, {
   component: 'MyComponent',
   action: 'customAction',
-  userId: 'user123'
+  userId: 'user123',
 });
 ```
 
@@ -296,7 +307,7 @@ Her zaman context bilgisi sağlayın:
 handleError(error, {
   component: 'UserProfile',
   action: 'updateProfile',
-  userId: user.id
+  userId: user.id,
 });
 ```
 
@@ -325,7 +336,7 @@ Retry stratejisini dikkatli kullanın:
 const data = await retryOperation(
   async () => await api.getData(),
   { component: 'DataFetch' },
-  3 // maksimum deneme
+  3, // maksimum deneme
 );
 ```
 
@@ -348,7 +359,7 @@ Error handling sistemini test etmek için:
 /teacher/error-demo
 /student/error-demo
 /parent/error-demo
-/hizmetli/error-demo
+
 ```
 
 ## Migration Guide
@@ -356,6 +367,7 @@ Error handling sistemini test etmek için:
 ### Eski Error Handling'den Yeni Sisteme
 
 #### Öncesi:
+
 ```typescript
 try {
   const data = await api.getData();
@@ -366,6 +378,7 @@ try {
 ```
 
 #### Sonrası:
+
 ```typescript
 import { useErrorHandler } from '../utils/errorHandling';
 
@@ -376,7 +389,7 @@ try {
 } catch (error) {
   handleError(error, {
     component: 'MyComponent',
-    action: 'getData'
+    action: 'getData',
   });
 }
 ```

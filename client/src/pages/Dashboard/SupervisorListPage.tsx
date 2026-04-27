@@ -17,7 +17,7 @@ interface SupervisorList {
 }
 
 export default function SupervisorListPage() {
-  useAuthGuard(['admin', 'hizmetli', 'teacher', 'parent', 'student']);
+  useAuthGuard(['admin', 'teacher', 'parent', 'student']);
   const { user } = useAuthGuard();
   const [supervisorLists, setSupervisorLists] = useState<SupervisorList[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,8 +38,6 @@ export default function SupervisorListPage() {
   }, [user]);
 
   const isAdmin = userRole === 'admin';
-  const isHizmetli = userRole === 'hizmetli';
-  const isAdminOrHizmetli = isAdmin || isHizmetli;
 
   const fetchSupervisorLists = useCallback(async () => {
     try {
@@ -262,7 +260,7 @@ export default function SupervisorListPage() {
           </div>
 
           {/* Upload Section (Admin Only) */}
-          {isAdminOrHizmetli && (
+          {isAdmin && (
             <div className="upload-section">
               <h3 className="upload-title">
                 <Upload className="icon-medium" />
@@ -402,7 +400,7 @@ export default function SupervisorListPage() {
                           <Download className="icon" />
                           <span>İndir</span>
                         </button>
-                        {isAdminOrHizmetli && (
+                        {isAdmin && (
                           <button
                             onClick={() => handleDelete(list._id)}
                             className="btn-red"

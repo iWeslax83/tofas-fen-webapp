@@ -46,11 +46,9 @@ export default function UserCard({
                     ? `Öğrenci ${u.pansiyon ? '(Yatılı)' : '(Gündüzlü)'}`
                     : u.rol === 'parent'
                       ? 'Veli'
-                      : u.rol === 'hizmetli'
-                        ? 'Hizmetli'
-                        : u.rol === 'ziyaretci'
-                          ? 'Ziyaretçi'
-                          : u.rol}
+                      : u.rol === 'ziyaretci'
+                        ? 'Ziyaretçi'
+                        : u.rol}
             </span>
           </div>
         </div>
