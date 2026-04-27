@@ -5,6 +5,7 @@ import { AuditLog } from '../models/AuditLog';
 import { requireAuth, requireRole } from '../middleware/auth';
 import logger from '../utils/logger';
 import { asyncHandler } from '../middleware/errorHandler';
+import { overview } from '../modules/dashboard/dashboardController';
 
 const router = express.Router();
 
@@ -48,5 +49,13 @@ router.get(
     }
   }),
 );
+
+/**
+ * GET /api/v1/dashboard/overview
+ * Aggregate hero payload for the authenticated user. Today returns the
+ * full StudentOverview for students; teacher/admin/parent shapes will
+ * be filled in PR-10.
+ */
+router.get('/overview', requireAuth, asyncHandler(overview));
 
 export default router;
