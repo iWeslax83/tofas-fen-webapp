@@ -1,6 +1,15 @@
 /* Devlet design tokens — single source of truth (CSS).
    Mirrored in src/design-tokens/tokens.ts (parity verified by test). */
 
+html {
+  /* Smooth palette swap when [data-theme] changes. Limited to color
+     properties so layout/transform animations aren't affected. */
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
 :root {
   /* Paper / surface */
   --paper: #ffffff;
