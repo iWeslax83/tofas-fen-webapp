@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
 import { apiClient } from '../../utils/api';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { useTheme } from '../../stores/uiStore';
+import { useTheme } from '../../hooks/useTheme';
 import { MessageCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
