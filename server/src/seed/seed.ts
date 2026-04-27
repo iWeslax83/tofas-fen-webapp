@@ -5,17 +5,17 @@ import { createSampleReports } from './sampleReports';
 async function seed() {
   try {
     console.log('🌱 Seed işlemi başlatılıyor...');
-    
+
     // Veritabanına bağlan
     await connectDB();
     console.log('✅ Veritabanına bağlandı');
-    
+
     // Test kullanıcılarını oluştur
     await createTestUsers();
-    
+
     // Sample raporları oluştur
     await createSampleReports();
-    
+
     console.log('🎉 Seed işlemi tamamlandı!');
     console.log('\n📋 Test Kullanıcı Bilgileri:');
     console.log('================================');
@@ -49,10 +49,9 @@ async function seed() {
     console.log('  • parent4 - Zeynep Özkan (zeynep.ozkan@email.com)');
     console.log('  • parent5 - Ali Çelik (ali.celik@email.com)');
     console.log('\n🧹 HİZMETLİ KULLANICILARI:');
-    console.log('  • hizmetli1 - Osman Temizlik (osman.temizlik@tofasfen.edu.tr)');
-    console.log('  • hizmetli2 - Hatice Güvenlik (hatice.guvenlik@tofasfen.edu.tr)');
+
     console.log('\n🚀 Artık uygulamayı test edebilirsiniz!');
-    
+
     process.exit(0);
   } catch (error) {
     console.error('❌ Seed işlemi başarısız:', error);

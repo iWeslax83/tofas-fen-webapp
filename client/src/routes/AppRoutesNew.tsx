@@ -47,7 +47,6 @@ export default function AppRoutes() {
         <Route path="/teacher" element={<ModernDashboard />} />
         <Route path="/admin" element={<ModernDashboard />} />
         <Route path="/parent" element={<ModernDashboard />} />
-        <Route path="/hizmetli" element={<ModernDashboard />} />
 
         {/* 404 handler */}
         <Route path="*" element={<NotFoundPage />} />

@@ -5,6 +5,7 @@ This document describes the comprehensive type safety features and error boundar
 ## 🎯 Overview
 
 The implementation provides:
+
 - **Comprehensive TypeScript interfaces** for all application entities
 - **Runtime type guards** for safe type checking
 - **React Error Boundaries** with specialized error handling
@@ -50,7 +51,7 @@ export interface IUser {
   updatedAt: Date;
 }
 
-export type UserRole = 'student' | 'teacher' | 'parent' | 'admin' | 'hizmetli';
+export type UserRole = 'student' | 'teacher' | 'parent' | 'admin';
 
 // API responses
 export interface ApiResponse<T = any> {
@@ -131,7 +132,7 @@ import { isApiResponse, isPaginatedResponse } from '../utils/typeGuards';
 if (isApiResponse<User[]>(response)) {
   // TypeScript knows response is ApiResponse<User[]>
   if (response.success && response.data) {
-    response.data.forEach(user => {
+    response.data.forEach((user) => {
       console.log(user.name); // ✅ Safe access
     });
   }
@@ -197,11 +198,11 @@ function App() {
 ### Specialized Error Boundaries
 
 ```typescript
-import { 
-  ApiErrorBoundary, 
-  FormErrorBoundary, 
+import {
+  ApiErrorBoundary,
+  FormErrorBoundary,
   AuthErrorBoundary,
-  RouteErrorBoundary 
+  RouteErrorBoundary
 } from '../components/ErrorBoundaries';
 
 // API Error Boundary
@@ -256,12 +257,12 @@ if (response.success && response.data) {
 const newUser = await apiPost<User>('/users', {
   name: 'John',
   email: 'john@example.com',
-  rol: 'student'
+  rol: 'student',
 });
 
 // PUT request
 const updatedUser = await apiPut<User>('/users/123', {
-  name: 'John Updated'
+  name: 'John Updated',
 });
 
 // DELETE request
@@ -283,7 +284,7 @@ if (userResponse.success && userResponse.data) {
 // Get all users with pagination
 const usersResponse = await userApi.getAll(1, 10);
 if (usersResponse.success && usersResponse.data) {
-  usersResponse.data.forEach(user => {
+  usersResponse.data.forEach((user) => {
     console.log(user.name); // ✅ Safe access
   });
 }
@@ -292,7 +293,7 @@ if (usersResponse.success && usersResponse.data) {
 const createResponse = await userApi.create({
   name: 'Jane',
   email: 'jane@example.com',
-  rol: 'teacher'
+  rol: 'teacher',
 });
 ```
 
@@ -313,13 +314,11 @@ try {
 const response = await withRetry(
   () => apiGet<User>('/users/123'),
   3, // max retries
-  1000 // delay between retries
+  1000, // delay between retries
 )();
 
 // Wrap with error handling
-const response = await withErrorHandling(
-  () => apiGet<User>('/users/123')
-)();
+const response = await withErrorHandling(() => apiGet<User>('/users/123'))();
 ```
 
 ## 🪝 Custom React Hooks
@@ -411,7 +410,7 @@ function UserList() {
           {user.name} {user.surname} - {user.rol}
         </div>
       ))}
-      
+
       <div className="pagination">
         <button onClick={prevPage} disabled={!pagination.hasPrevPage}>
           Previous
@@ -491,15 +490,12 @@ function processUser(user: any) {
 const [user, setUser] = useState(null);
 useEffect(() => {
   fetch('/api/users/123')
-    .then(res => res.json())
-    .then(data => setUser(data));
+    .then((res) => res.json())
+    .then((data) => setUser(data));
 }, []);
 
 // ✅ Good - Using custom hook
-const { data: user, loading, error } = useApi(
-  () => userApi.getById('123'),
-  { autoExecute: true }
-);
+const { data: user, loading, error } = useApi(() => userApi.getById('123'), { autoExecute: true });
 ```
 
 ### 4. Validate API Responses

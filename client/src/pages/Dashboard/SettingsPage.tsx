@@ -61,7 +61,7 @@ const roleLabels: Record<string, string> = {
   teacher: 'Öğretmen',
   student: 'Öğrenci',
   parent: 'Veli',
-  hizmetli: 'Hizmetli',
+
   ziyaretci: 'Ziyaretçi',
 };
 

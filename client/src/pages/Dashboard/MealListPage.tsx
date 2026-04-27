@@ -1,12 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from 'react';
 import { Utensils, Calendar, Download, FileText, Loader2, RefreshCw, Upload } from 'lucide-react'; // ArrowLeft removed
-import { useAuthContext } from "../../contexts/AuthContext";
-import { DormitoryService } from "../../utils/apiService";
-import { toast } from "sonner";
+import { useAuthContext } from '../../contexts/AuthContext';
+import { DormitoryService } from '../../utils/apiService';
+import { toast } from 'sonner';
 // import { Link } from "react-router-dom"; // Not used
 
-import ModernDashboardLayout from "../../components/ModernDashboardLayout";
-// import { 
+import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+// import {
 //   SkeletonTable, // Not used
 //   SkeletonCard // Not used
 //   // SkeletonForm, // Not used
@@ -35,11 +35,9 @@ export default function MealListPage() {
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [userRole, setUserRole] = useState<string>("");
+  const [userRole, setUserRole] = useState<string>('');
 
-  const isAdmin = userRole === "admin";
-  const isHizmetli = userRole === "hizmetli";
-  const isAdminOrHizmetli = isAdmin || isHizmetli;
+  const isAdmin = userRole === 'admin';
 
   // Set user role on component mount
   useEffect(() => {
@@ -49,46 +47,49 @@ export default function MealListPage() {
   }, [user]);
 
   // Fetch meal lists with retry mechanism
-  const fetchMealLists = useCallback(async (retryCount = 0) => {
-    const maxRetries = 3;
+  const fetchMealLists = useCallback(
+    async (retryCount = 0) => {
+      const maxRetries = 3;
 
-    try {
-      setError(null);
-      const { data, error } = await DormitoryService.getMeals({
-        month: selectedMonth,
-        year: selectedYear
-      });
+      try {
+        setError(null);
+        const { data, error } = await DormitoryService.getMeals({
+          month: selectedMonth,
+          year: selectedYear,
+        });
 
-      if (error) {
+        if (error) {
+          if (retryCount < maxRetries) {
+            setTimeout(() => fetchMealLists(retryCount + 1), Math.pow(2, retryCount) * 1000);
+            return;
+          }
+          setError(error);
+        } else {
+          setMealLists(Array.isArray(data) ? (data as MealList[]) : []);
+        }
+      } catch (err: unknown) {
+        if ((err as any)?.response?.status === 429 && retryCount < maxRetries) {
+          const retryAfter = (err as any)?.response?.data?.retryAfter || Math.pow(2, retryCount);
+          setTimeout(() => fetchMealLists(retryCount + 1), retryAfter * 1000);
+          return;
+        }
+
         if (retryCount < maxRetries) {
           setTimeout(() => fetchMealLists(retryCount + 1), Math.pow(2, retryCount) * 1000);
           return;
         }
-        setError(error);
-      } else {
-        setMealLists(Array.isArray(data) ? data as MealList[] : []);
-      }
-    } catch (err: unknown) {
-      if ((err as any)?.response?.status === 429 && retryCount < maxRetries) {
-        const retryAfter = (err as any)?.response?.data?.retryAfter || Math.pow(2, retryCount);
-        setTimeout(() => fetchMealLists(retryCount + 1), retryAfter * 1000);
-        return;
-      }
 
-      if (retryCount < maxRetries) {
-        setTimeout(() => fetchMealLists(retryCount + 1), Math.pow(2, retryCount) * 1000);
-        return;
+        setError('Yemek listeleri yüklenirken bir hata oluştu.');
+        toast.error('Yemek listeleri yüklenirken bir hata oluştu.');
+      } finally {
+        if (retryCount === 0) {
+          setLoading(false);
+          setIsRefreshing(false);
+        }
       }
-
-      setError('Yemek listeleri yüklenirken bir hata oluştu.');
-      toast.error('Yemek listeleri yüklenirken bir hata oluştu.');
-    } finally {
-      if (retryCount === 0) {
-        setLoading(false);
-        setIsRefreshing(false);
-      }
-    }
-  }, [selectedMonth, selectedYear]);
+    },
+    [selectedMonth, selectedYear],
+  );
 
   useEffect(() => {
     fetchMealLists();
@@ -102,32 +103,32 @@ export default function MealListPage() {
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile || !uploadMonth || !uploadYear) {
-      toast.error("Lütfen tüm alanları doldurun");
+      toast.error('Lütfen tüm alanları doldurun');
       return;
     }
 
     setUploading(true);
     const formData = new FormData();
-    formData.append("file", selectedFile);
-    formData.append("month", uploadMonth);
-    formData.append("year", uploadYear.toString());
+    formData.append('file', selectedFile);
+    formData.append('month', uploadMonth);
+    formData.append('year', uploadYear.toString());
 
     try {
       const { error } = await DormitoryService.createMeal(formData);
       if (error) {
         toast.error(error);
       } else {
-        toast.success("Yemek listesi başarıyla yüklendi");
+        toast.success('Yemek listesi başarıyla yüklendi');
         setSelectedFile(null);
-        setUploadMonth("");
+        setUploadMonth('');
         setUploadYear(new Date().getFullYear());
         const fileInput = document.getElementById('file-upload') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
         await fetchMealLists();
       }
     } catch (error) {
-      console.error("Error uploading file:", error);
-      toast.error("Dosya yüklenirken hata oluştu");
+      console.error('Error uploading file:', error);
+      toast.error('Dosya yüklenirken hata oluştu');
     } finally {
       setUploading(false);
     }
@@ -138,39 +139,43 @@ export default function MealListPage() {
   const handleDownload = async (id: string) => {
     try {
       const response = await DormitoryService.downloadMeal(id);
-      const blob = new Blob([(response as { data: string }).data], { type: (response as { headers?: { 'content-type'?: string } }).headers?.['content-type'] || 'application/octet-stream' });
+      const blob = new Blob([(response as { data: string }).data], {
+        type:
+          (response as { headers?: { 'content-type'?: string } }).headers?.['content-type'] ||
+          'application/octet-stream',
+      });
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
-      link.setAttribute("download", `yemek-listesi-${selectedMonth || "tum"}-${selectedYear}.pdf`);
+      link.setAttribute('download', `yemek-listesi-${selectedMonth || 'tum'}-${selectedYear}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading file:", error);
-      toast.error("Dosya indirilirken hata oluştu");
+      console.error('Error downloading file:', error);
+      toast.error('Dosya indirilirken hata oluştu');
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("tr-TR");
+    return new Date(dateString).toLocaleDateString('tr-TR');
   };
 
   const getMonthName = (month: string) => {
     const months: { [key: string]: string } = {
-      "01": "Ocak",
-      "02": "Şubat",
-      "03": "Mart",
-      "04": "Nisan",
-      "05": "Mayıs",
-      "06": "Haziran",
-      "07": "Temmuz",
-      "08": "Ağustos",
-      "09": "Eylül",
-      "10": "Ekim",
-      "11": "Kasım",
-      "12": "Aralık",
+      '01': 'Ocak',
+      '02': 'Şubat',
+      '03': 'Mart',
+      '04': 'Nisan',
+      '05': 'Mayıs',
+      '06': 'Haziran',
+      '07': 'Temmuz',
+      '08': 'Ağustos',
+      '09': 'Eylül',
+      '10': 'Ekim',
+      '11': 'Kasım',
+      '12': 'Aralık',
     };
     return months[month] || month;
   };
@@ -187,24 +192,19 @@ export default function MealListPage() {
     return (
       <ModernDashboardLayout
         pageTitle="Yemek Listesi"
-        breadcrumb={[
-          { label: 'Ana Sayfa', path: '/admin' },
-          { label: 'Yemek Listesi' }
-        ]}
+        breadcrumb={[{ label: 'Ana Sayfa', path: '/admin' }, { label: 'Yemek Listesi' }]}
       >
         <div className="error-message">
           <p>{error}</p>
-          <button
-            className="btn-blue"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
+          <button className="btn-blue" onClick={handleRefresh} disabled={isRefreshing}>
             {isRefreshing ? (
               <>
                 <Loader2 className="icon animate-spin" />
                 Yenileniyor...
               </>
-            ) : 'Tekrar Dene'}
+            ) : (
+              'Tekrar Dene'
+            )}
           </button>
         </div>
       </ModernDashboardLayout>
@@ -212,15 +212,11 @@ export default function MealListPage() {
   }
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${user?.rol || 'student'}` },
-    { label: 'Yemek Listesi' }
+    { label: 'Yemek Listesi' },
   ];
 
-
   return (
-    <ModernDashboardLayout
-      pageTitle="Yemek Listesi"
-      breadcrumb={breadcrumb}
-    >
+    <ModernDashboardLayout pageTitle="Yemek Listesi" breadcrumb={breadcrumb}>
       <div className="meal-list-page">
         <div className="page-header">
           <div className="page-header-content">
@@ -232,11 +228,7 @@ export default function MealListPage() {
               </div>
             </div>
             <div className="welcome-actions">
-              <button
-                onClick={handleRefresh}
-                className="btn-blue"
-                disabled={isRefreshing}
-              >
+              <button onClick={handleRefresh} className="btn-blue" disabled={isRefreshing}>
                 <RefreshCw className={`icon ${isRefreshing ? 'animate-spin' : ''}`} />
                 <span>Yenile</span>
               </button>
@@ -252,7 +244,9 @@ export default function MealListPage() {
             </h3>
             <form className="filters-form">
               <div className="form-group">
-                <label htmlFor="month-filter" className="form-label">Ay:</label>
+                <label htmlFor="month-filter" className="form-label">
+                  Ay:
+                </label>
                 <select
                   id="month-filter"
                   value={selectedMonth}
@@ -276,15 +270,19 @@ export default function MealListPage() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="year-filter" className="form-label">Yıl:</label>
+                <label htmlFor="year-filter" className="form-label">
+                  Yıl:
+                </label>
                 <select
                   id="year-filter"
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
                   className="form-select"
                 >
-                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                    <option key={year} value={year}>{year}</option>
+                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -301,7 +299,7 @@ export default function MealListPage() {
             </form>
           </div>
 
-          {isAdminOrHizmetli && (
+          {isAdmin && (
             <div className="upload-section">
               <h3 className="upload-title">
                 <Upload className="icon-medium" />
@@ -309,7 +307,9 @@ export default function MealListPage() {
               </h3>
               <form onSubmit={handleFileUpload} className="upload-form">
                 <div className="form-group">
-                  <label htmlFor="month-upload" className="form-label">Ay:</label>
+                  <label htmlFor="month-upload" className="form-label">
+                    Ay:
+                  </label>
                   <select
                     id="month-upload"
                     value={uploadMonth}
@@ -334,7 +334,9 @@ export default function MealListPage() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="year-upload" className="form-label">Yıl:</label>
+                  <label htmlFor="year-upload" className="form-label">
+                    Yıl:
+                  </label>
                   <select
                     id="year-upload"
                     value={uploadYear}
@@ -342,14 +344,20 @@ export default function MealListPage() {
                     className="form-select"
                     required
                   >
-                    {Array.from({ length: 3 }, (_, i) => new Date().getFullYear() + i).map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
+                    {Array.from({ length: 3 }, (_, i) => new Date().getFullYear() + i).map(
+                      (year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ),
+                    )}
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="file-upload" className="form-label">Dosya:</label>
+                  <label htmlFor="file-upload" className="form-label">
+                    Dosya:
+                  </label>
                   <div className="file-input-container">
                     <input
                       id="file-upload"
@@ -366,11 +374,7 @@ export default function MealListPage() {
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  className="upload-button"
-                  disabled={uploading}
-                >
+                <button type="submit" className="upload-button" disabled={uploading}>
                   {uploading ? (
                     <>
                       <Loader2 className="icon-small animate-spin" />
@@ -403,7 +407,9 @@ export default function MealListPage() {
                         <FileText className="icon" size={24} />
                       </div>
                       <div className="card-badge">
-                        <span>{getMonthName(mealList.month)} {mealList.year}</span>
+                        <span>
+                          {getMonthName(mealList.month)} {mealList.year}
+                        </span>
                       </div>
                     </div>
 
@@ -411,9 +417,7 @@ export default function MealListPage() {
                       <h3 className="card-title">
                         {getMonthName(mealList.month)} {mealList.year} Yemek Listesi
                       </h3>
-                      <p className="card-subtitle">
-                        Pansiyon yemek listesi belgesi
-                      </p>
+                      <p className="card-subtitle">Pansiyon yemek listesi belgesi</p>
 
                       <div className="card-meta">
                         <div className="meta-item">
