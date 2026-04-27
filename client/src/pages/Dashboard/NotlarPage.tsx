@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
-import { BookOpen, AlertCircle, User, GraduationCap } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useNotes } from '../../hooks/queries/noteQueries';
 import GradeTrendChart from '../../components/charts/GradeTrendChart';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-
-import './NotlarPage.css';
+import { DataTable } from '../../components/ui/DataTable';
+import { Chip } from '../../components/ui/Chip';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
 
 export interface NoteEntry {
   _id?: string;
@@ -22,20 +25,55 @@ export interface NoteEntry {
   classSection?: string;
 }
 
-function getAverageClass(avg: number): string {
-  if (avg >= 85) return 'excellent';
-  if (avg >= 70) return 'good';
-  if (avg >= 50) return 'average';
-  return 'poor';
-}
+const averageTone = (avg: number): 'state' | 'black' | 'default' | 'outline' => {
+  if (avg >= 85) return 'black';
+  if (avg >= 70) return 'default';
+  if (avg >= 50) return 'outline';
+  return 'state';
+};
+
+const formatNum = (n: number | undefined): string => (typeof n === 'number' ? n.toFixed(0) : '—');
+
+const NOTE_COLUMNS: ColumnDef<NoteEntry>[] = [
+  {
+    accessorKey: 'lesson',
+    header: 'Ders',
+    cell: (info) => <span className="font-serif text-[var(--ink)]">{info.getValue<string>()}</span>,
+  },
+  {
+    accessorKey: 'exam1',
+    header: '1. Sınav',
+    cell: (info) => (
+      <span className="font-mono text-[var(--ink-2)]">{formatNum(info.getValue<number>())}</span>
+    ),
+  },
+  {
+    accessorKey: 'exam2',
+    header: '2. Sınav',
+    cell: (info) => (
+      <span className="font-mono text-[var(--ink-2)]">{formatNum(info.getValue<number>())}</span>
+    ),
+  },
+  {
+    accessorKey: 'oral',
+    header: 'Sözlü',
+    cell: (info) => (
+      <span className="font-mono text-[var(--ink-2)]">{formatNum(info.getValue<number>())}</span>
+    ),
+  },
+  {
+    accessorKey: 'average',
+    header: 'Ortalama',
+    cell: (info) => {
+      const avg = info.getValue<number>();
+      return <Chip tone={averageTone(avg)}>{avg.toFixed(1)}</Chip>;
+    },
+  },
+];
 
 export default function NotlarPage() {
   const { user } = useAuthContext();
   const { data, isLoading, error, refetch } = useNotes();
-  // The backend returns `_id` only (Mongo's ObjectId), while the local
-  // `NoteEntry` interface declares `id` as required. Unwrap through
-  // `unknown` so the two shapes stay loosely coupled — the downstream
-  // rendering code only reads the numeric fields.
   const notes: NoteEntry[] = (data?.data as unknown as NoteEntry[]) || [];
 
   const showChart = useMemo(() => {
@@ -52,10 +90,9 @@ export default function NotlarPage() {
   if (isLoading) {
     return (
       <ModernDashboardLayout pageTitle="Notlarım" breadcrumb={breadcrumb}>
-        <div className="notlar-page">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Notlar yükleniyor...</p>
+        <div className="p-6">
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Yükleniyor…
           </div>
         </div>
       </ModernDashboardLayout>
@@ -65,14 +102,18 @@ export default function NotlarPage() {
   if (error) {
     return (
       <ModernDashboardLayout pageTitle="Notlarım" breadcrumb={breadcrumb}>
-        <div className="notlar-page">
-          <div className="error-message">
-            <AlertCircle className="error-icon" />
-            <p>Notlar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.</p>
-            <button onClick={() => refetch()} className="btn-blue">
-              Tekrar Dene
-            </button>
-          </div>
+        <div className="p-6">
+          <Card accentBar contentClassName="p-4 flex items-start gap-3">
+            <AlertCircle className="text-[var(--state)] shrink-0 mt-0.5" size={18} />
+            <div className="flex-1">
+              <p className="font-serif text-[var(--ink)]">
+                Notlar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.
+              </p>
+              <Button variant="secondary" size="sm" onClick={() => refetch()} className="mt-3">
+                Tekrar Dene
+              </Button>
+            </div>
+          </Card>
         </div>
       </ModernDashboardLayout>
     );
@@ -80,71 +121,30 @@ export default function NotlarPage() {
 
   return (
     <ModernDashboardLayout pageTitle="Notlarım" breadcrumb={breadcrumb}>
-      <div className="notlar-page">
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="page-title-section">
-              <BookOpen className="page-icon" />
-              <h2 className="page-title-main">Notlarım</h2>
-            </div>
+      <div className="p-6 space-y-6">
+        <header>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Belge No. {new Date().getFullYear()}/N-{user?.id ?? '—'}
           </div>
-        </div>
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Notlarım</h1>
+        </header>
 
-        {showChart && <GradeTrendChart notes={notes} />}
-
-        <div className="notlar-page-content">
-          {notes.length === 0 ? (
-            <div className="empty-state">
-              <BookOpen className="empty-icon" />
-              <h3>Henüz not bulunmuyor</h3>
-              <p>Notlarınız açıklandığında burada görünecektir.</p>
-            </div>
-          ) : (
-            <div className="dashboard-grid">
-              {notes.map((note) => (
-                <div key={note._id || note.id} className="dashboard-card">
-                  <div className="card-header">
-                    <div className="card-icon">
-                      <BookOpen className="icon" size={24} />
-                    </div>
-                    <div className="card-badge">
-                      <span className={`note-average ${getAverageClass(note.average)}`}>
-                        {note.average.toFixed(1)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="card-content">
-                    <h3 className="note-title">{note.lesson}</h3>
-                    <div className="note-meta">
-                      <span className="note-student">
-                        <User size={14} />
-                        {note.studentName}
-                      </span>
-                      {note.gradeLevel && (
-                        <span className="note-class">
-                          <GraduationCap size={14} />
-                          {note.gradeLevel}/{note.classSection}
-                        </span>
-                      )}
-                    </div>
-                    <div className="note-scores">
-                      <div className="score-item">
-                        <span className="score-label">1. Sınav</span>
-                        <span className="score-value">{note.exam1}</span>
-                      </div>
-                      <div className="score-item">
-                        <span className="score-label">2. Sınav</span>
-                        <span className="score-value">{note.exam2}</span>
-                      </div>
-                      <div className="score-item">
-                        <span className="score-label">Sözlü</span>
-                        <span className="score-value">{note.oral}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className={showChart ? 'grid lg:grid-cols-3 gap-6' : ''}>
+          <div className={showChart ? 'lg:col-span-2' : ''}>
+            <DataTable
+              caption="Tablo I — Ders Notları"
+              columns={NOTE_COLUMNS}
+              data={notes}
+              emptyState="Henüz not girilmemiş."
+            />
+          </div>
+          {showChart && (
+            <aside>
+              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] mb-2">
+                Tablo II — Dönem Grafiği
+              </div>
+              <GradeTrendChart notes={notes} />
+            </aside>
           )}
         </div>
       </div>
