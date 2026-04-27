@@ -1,16 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import {
-  Home,
-  Settings,
-  Menu,
-  X,
-  Bell,
-  CheckCheck
-} from 'lucide-react';
+import { Home, Settings, Menu, X, Bell, CheckCheck, Search } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
-import { dashboardButtons } from '../pages/Dashboard/dashboardButtonConfig';
+import { dashboardButtons, type UserRole } from '../pages/Dashboard/dashboardButtonConfig';
 import { useNotifications } from '../hooks/useNotifications';
+import { ThemeToggle } from './ThemeToggle';
+import { StateBar } from './StateBar';
+import { SidebarProfile } from './SidebarProfile';
+import { CommandPalette } from './CommandPalette';
 import './ModernDashboardLayout.css';
 
 interface ModernDashboardLayoutProps {
@@ -26,11 +23,13 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
   pageTitle,
   breadcrumb = [],
   showSidebar = true,
-  customHeaderActions
+  customHeaderActions,
 }) => {
   const { user } = useAuthContext();
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 1024);
-  const { notifications, unreadCount, isOpen, setIsOpen, markAsRead, markAllAsRead } = useNotifications(user?.id);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const { notifications, unreadCount, isOpen, setIsOpen, markAsRead, markAllAsRead } =
+    useNotifications(user?.id);
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -47,7 +46,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
 
   const roleButtons = useMemo(() => {
     const role = user?.rol || 'student';
-    return dashboardButtons.filter(btn => {
+    return dashboardButtons.filter((btn) => {
       if (!btn.roles.includes(role)) return false;
       if (btn.showForDormitory && !user?.pansiyon) return false;
       return true;
@@ -67,11 +66,10 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
 
   return (
     <div className="modern-dashboard">
+      <StateBar />
+
       {/* Mobile Menu Button */}
-      <button
-        className="mobile-menu-button"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-      >
+      <button className="mobile-menu-button" onClick={() => setSidebarOpen(!sidebarOpen)}>
         {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
@@ -80,7 +78,13 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
         <aside className={`modern-sidebar ${sidebarOpen ? 'open' : ''}`}>
           <div className="sidebar-header">
             <div className="sidebar-logo">
-              <img src="/tofaslogo.png" alt="Tofaş Fen Lisesi" className="logo-image" width="36" height="36" />
+              <img
+                src="/tofaslogo.png"
+                alt="Tofaş Fen Lisesi"
+                className="logo-image"
+                width="36"
+                height="36"
+              />
               <div className="logo-text">
                 <h2>Tofaş Fen Lisesi</h2>
                 <span>Bilgi Sistemi</span>
@@ -88,21 +92,35 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
             </div>
           </div>
 
+          <SidebarProfile
+            name={user.adSoyad ?? user.id}
+            userId={user.id}
+            role={user.rol ?? 'student'}
+            pansiyon={user.pansiyon}
+          />
+
           <nav className="sidebar-nav">
             <div className="nav-section">
               <h3>Ana Menü</h3>
-              <Link to={`/${user?.rol || 'student'}`} className="nav-item" onClick={closeSidebarOnMobile}>
+              <Link
+                to={`/${user?.rol || 'student'}`}
+                className="nav-item"
+                onClick={closeSidebarOnMobile}
+              >
                 <Home className="nav-icon" />
                 <span>Ana Sayfa</span>
               </Link>
-
-
             </div>
 
             <div className="nav-section">
               <h3>Hızlı Erişim</h3>
               {roleButtons.map((button) => (
-                <Link key={button.key} to={button.route} className="nav-item" onClick={closeSidebarOnMobile}>
+                <Link
+                  key={button.key}
+                  to={button.route}
+                  className="nav-item"
+                  onClick={closeSidebarOnMobile}
+                >
                   {button.icon && <button.icon className="nav-icon" />}
                   <span>{button.title}</span>
                 </Link>
@@ -141,9 +159,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
                     ) : (
                       <span>{item.label}</span>
                     )}
-                    {index < breadcrumb.length - 1 && (
-                      <span className="separator">/</span>
-                    )}
+                    {index < breadcrumb.length - 1 && <span className="separator">/</span>}
                   </React.Fragment>
                 ))
               ) : (
@@ -157,6 +173,16 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
           </div>
           <div className="header-right">
             {customHeaderActions}
+            <button
+              type="button"
+              className="notif-bell-btn"
+              onClick={() => setPaletteOpen(true)}
+              aria-label="Komut paletini aç (Ctrl+K)"
+              title="Komut paleti · Ctrl+K"
+            >
+              <Search size={20} />
+            </button>
+            <ThemeToggle />
             {/* Notification Bell */}
             <div className="notif-container" ref={notifRef}>
               <button
@@ -185,7 +211,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
                     {notifications.length === 0 ? (
                       <div className="notif-empty">Bildirim yok</div>
                     ) : (
-                      notifications.map(n => (
+                      notifications.map((n) => (
                         <button
                           key={n._id}
                           className={`notif-item${n.read ? '' : ' unread'}`}
@@ -221,10 +247,15 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
         </header>
 
         {/* Page Content */}
-        <main className="dashboard-content">
-          {children}
-        </main>
+        <main className="dashboard-content">{children}</main>
       </div>
+
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        role={(user.rol ?? 'student') as UserRole}
+        pansiyon={user.pansiyon}
+      />
     </div>
   );
 };

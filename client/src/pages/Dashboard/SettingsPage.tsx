@@ -17,7 +17,7 @@ import {
 import axios from 'axios';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useUpdateUser } from '../../stores/authStore';
-import { useTheme } from '../../stores/uiStore';
+import { useTheme } from '../../hooks/useTheme';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { SecureAPI } from '../../utils/api';
 import { API_ENDPOINTS } from '../../utils/apiEndpoints';
