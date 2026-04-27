@@ -62,7 +62,7 @@
     "date-fns": "^4.1.0",
     "dompurify": "^3.2.6",
     "dotenv": "^16.5.0",
-    "framer-motion": "^12.9.7",
+    "framer-motion": "^12.38.0",
     "graphql": "^16.12.0",
     "graphql-depth-limit": "^1.1.0",
     "graphql-query-complexity": "^1.1.0",
