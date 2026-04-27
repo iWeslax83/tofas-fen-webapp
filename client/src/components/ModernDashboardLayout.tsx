@@ -5,6 +5,8 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { dashboardButtons } from '../pages/Dashboard/dashboardButtonConfig';
 import { useNotifications } from '../hooks/useNotifications';
 import { ThemeToggle } from './ThemeToggle';
+import { StateBar } from './StateBar';
+import { SidebarProfile } from './SidebarProfile';
 import './ModernDashboardLayout.css';
 
 interface ModernDashboardLayoutProps {
@@ -62,6 +64,8 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
 
   return (
     <div className="modern-dashboard">
+      <StateBar />
+
       {/* Mobile Menu Button */}
       <button className="mobile-menu-button" onClick={() => setSidebarOpen(!sidebarOpen)}>
         {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
@@ -85,6 +89,13 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
               </div>
             </div>
           </div>
+
+          <SidebarProfile
+            name={user.adSoyad ?? user.id}
+            userId={user.id}
+            role={user.rol ?? 'student'}
+            pansiyon={user.pansiyon}
+          />
 
           <nav className="sidebar-nav">
             <div className="nav-section">
