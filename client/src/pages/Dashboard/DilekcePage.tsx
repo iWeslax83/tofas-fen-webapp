@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { FileText, X, Plus, Calendar, Tag, Trash2, Mail } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
@@ -61,10 +61,7 @@ const DilekcePage: React.FC = () => {
       setLoading(true);
 
       // Veliler için hem kendi hem çocuklarının dilekçelerini çek
-      const includeChildren =
-        user?.rol === 'parent'
-          ? '?includeChildren=true'
-          : '';
+      const includeChildren = user?.rol === 'parent' ? '?includeChildren=true' : '';
 
       const response = await apiClient.get(`/api/dilekce${includeChildren}`);
 
@@ -86,12 +83,12 @@ const DilekcePage: React.FC = () => {
         toast.error('Maksimum 5 dosya yükleyebilirsiniz');
         return;
       }
-      setAttachments(prev => [...prev, ...files]);
+      setAttachments((prev) => [...prev, ...files]);
     }
   };
 
   const removeFile = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,8 +114,8 @@ const DilekcePage: React.FC = () => {
 
       const response = await apiClient.post('/api/dilekce', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       if (response.data.success) {
@@ -166,15 +163,18 @@ const DilekcePage: React.FC = () => {
       in_review: { bg: '#fef3c7', color: '#92400e', label: 'İnceleniyor' },
       approved: { bg: '#d1fae5', color: '#065f46', label: 'Onaylandı' },
       rejected: { bg: '#f3f4f6', color: '#6b7280', label: 'Reddedildi' },
-      completed: { bg: '#d1fae5', color: '#065f46', label: 'Tamamlandı' }
+      completed: { bg: '#d1fae5', color: '#065f46', label: 'Tamamlandı' },
     };
 
     const config = statusConfig[dilekce.status] || statusConfig.pending;
     return (
-      <span className="badge" style={{
-        backgroundColor: config.bg,
-        color: config.color
-      }}>
+      <span
+        className="badge"
+        style={{
+          backgroundColor: config.bg,
+          color: config.color,
+        }}
+      >
         {config.label}
       </span>
     );
@@ -184,15 +184,18 @@ const DilekcePage: React.FC = () => {
     const priorityConfig: Record<string, { bg: string; color: string; label: string }> = {
       low: { bg: '#f3f4f6', color: '#6b7280', label: 'Düşük' },
       medium: { bg: '#fef3c7', color: '#92400e', label: 'Orta' },
-      high: { bg: '#fef3c7', color: '#92400e', label: 'Yüksek' }
+      high: { bg: '#fef3c7', color: '#92400e', label: 'Yüksek' },
     };
 
     const config = priorityConfig[priority] || priorityConfig.medium;
     return (
-      <span className="badge" style={{
-        backgroundColor: config.bg,
-        color: config.color
-      }}>
+      <span
+        className="badge"
+        style={{
+          backgroundColor: config.bg,
+          color: config.color,
+        }}
+      >
         {config.label}
       </span>
     );
@@ -200,7 +203,10 @@ const DilekcePage: React.FC = () => {
 
   if (loading) {
     return (
-      <ModernDashboardLayout pageTitle="Dilekçe" breadcrumb={[{ label: 'Ana Sayfa', path: `/${user?.rol}` }, { label: 'Dilekçe' }]}>
+      <ModernDashboardLayout
+        pageTitle="Dilekçe"
+        breadcrumb={[{ label: 'Ana Sayfa', path: `/${user?.rol}` }, { label: 'Dilekçe' }]}
+      >
         <div className="dilekce-page">
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -214,10 +220,7 @@ const DilekcePage: React.FC = () => {
   return (
     <ModernDashboardLayout
       pageTitle="Dilekçe"
-      breadcrumb={[
-        { label: 'Ana Sayfa', path: `/${user?.rol}` },
-        { label: 'Dilekçe' }
-      ]}
+      breadcrumb={[{ label: 'Ana Sayfa', path: `/${user?.rol}` }, { label: 'Dilekçe' }]}
     >
       <div className="dilekce-page">
         <div className="page-header">
@@ -309,7 +312,14 @@ const DilekcePage: React.FC = () => {
                     placeholder="Dilekçenizin detaylı içeriğini buraya yazınız..."
                     className="form-control form-textarea"
                   />
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '5px', textAlign: 'right' }}>
+                  <p
+                    style={{
+                      fontSize: '12px',
+                      color: '#6b7280',
+                      marginTop: '5px',
+                      textAlign: 'right',
+                    }}
+                  >
                     {content.length} / 5000 karakter
                   </p>
                 </div>
@@ -365,11 +375,7 @@ const DilekcePage: React.FC = () => {
                 >
                   İptal
                 </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="btn btn-primary"
-                >
+                <button type="submit" disabled={submitting} className="btn btn-primary">
                   {submitting ? 'Gönderiliyor...' : 'Dilekçe Gönder'}
                 </button>
               </div>
@@ -386,7 +392,7 @@ const DilekcePage: React.FC = () => {
             </div>
           ) : (
             <div className="requests-grid">
-              {dilekceler.map(dilekce => (
+              {dilekceler.map((dilekce) => (
                 <div key={dilekce._id} className="request-card">
                   <div className="card-header">
                     <div className="card-header-left">
@@ -395,9 +401,7 @@ const DilekcePage: React.FC = () => {
                         {getPriorityBadge(dilekce.priority)}
                       </h3>
                     </div>
-                    <div className="card-header-right">
-                      {getStatusBadge(dilekce)}
-                    </div>
+                    <div className="card-header-right">{getStatusBadge(dilekce)}</div>
                   </div>
 
                   <div className="card-content">
@@ -408,38 +412,42 @@ const DilekcePage: React.FC = () => {
                         {dilekce.userRole === 'student'
                           ? ' (Öğrenci)'
                           : dilekce.userRole === 'parent'
-                          ? ' (Veli)'
-                          : dilekce.userRole === 'teacher'
-                          ? ' (Öğretmen)'
-                          : ''}
+                            ? ' (Veli)'
+                            : dilekce.userRole === 'teacher'
+                              ? ' (Öğretmen)'
+                              : ''}
                       </span>
                     </div>
 
                     <div className="request-owner">
-                        <Tag className="info-icon" />
-                        <span className="info-label">Tür:</span>
-                        <span className="info-value">
-                          {dilekce.type === 'izin' ? 'İzin' : dilekce.type === 'rapor' ? 'Rapor' : dilekce.type === 'nakil' ? 'Nakil' : 'Diğer'}
-                          {dilekce.category && ` - ${dilekce.category}`}
-                        </span>
-                      </div>
-                      <div className="request-owner">
-                        <Calendar className="info-icon" />
-                        <span className="info-label">Tarih:</span>
-                        <span className="info-value">
-                          {new Date(dilekce.createdAt).toLocaleDateString('tr-TR', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-
-                    <div className="content-box">
-                      {dilekce.content}
+                      <Tag className="info-icon" />
+                      <span className="info-label">Tür:</span>
+                      <span className="info-value">
+                        {dilekce.type === 'izin'
+                          ? 'İzin'
+                          : dilekce.type === 'rapor'
+                            ? 'Rapor'
+                            : dilekce.type === 'nakil'
+                              ? 'Nakil'
+                              : 'Diğer'}
+                        {dilekce.category && ` - ${dilekce.category}`}
+                      </span>
                     </div>
+                    <div className="request-owner">
+                      <Calendar className="info-icon" />
+                      <span className="info-label">Tarih:</span>
+                      <span className="info-value">
+                        {new Date(dilekce.createdAt).toLocaleDateString('tr-TR', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="content-box">{dilekce.content}</div>
 
                     {dilekce.attachments && dilekce.attachments.length > 0 && (
                       <div className="attachment-list">
@@ -498,4 +506,3 @@ const DilekcePage: React.FC = () => {
 };
 
 export default DilekcePage;
-

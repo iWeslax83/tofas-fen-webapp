@@ -1,6 +1,6 @@
 /**
  * React Query Hooks for Tofas Fen Webapp
- * 
+ *
  * This file provides standardized data fetching hooks using TanStack Query.
  * It replaces the custom useApi hooks with React Query's powerful caching,
  * background refetching, and optimistic updates.
@@ -8,7 +8,7 @@
 
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { ApiResponse, PaginatedResponse } from '../utils/api';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 // Query Keys Factory - Centralized query key management
 export const queryKeys = {
@@ -62,7 +62,8 @@ export const queryKeys = {
   dormitory: {
     meals: (date?: string) => ['dormitory', 'meals', date] as const,
     supervisors: ['dormitory', 'supervisors'] as const,
-    maintenanceRequests: (filters?: Record<string, unknown>) => ['dormitory', 'maintenance-requests', filters] as const,
+    maintenanceRequests: (filters?: Record<string, unknown>) =>
+      ['dormitory', 'maintenance-requests', filters] as const,
   },
 
   // Schedule
@@ -82,7 +83,8 @@ export const queryKeys = {
   // Analytics
   analytics: {
     dashboard: (role: string) => ['analytics', 'dashboard', role] as const,
-    performance: (filters?: Record<string, unknown>) => ['analytics', 'performance', filters] as const,
+    performance: (filters?: Record<string, unknown>) =>
+      ['analytics', 'performance', filters] as const,
   },
 } as const;
 
@@ -90,7 +92,7 @@ export const queryKeys = {
 export function useApiQuery<T>(
   queryKey: readonly unknown[],
   queryFn: () => Promise<ApiResponse<T>>,
-  options?: Omit<UseQueryOptions<ApiResponse<T>, Error>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<ApiResponse<T>, Error>, 'queryKey' | 'queryFn'>,
 ) {
   return useQuery({
     queryKey,
@@ -124,7 +126,7 @@ export function useApiMutation<TData, TVariables>(
     showToast?: boolean;
     successMessage?: string;
     errorMessage?: string;
-  }
+  },
 ) {
   const queryClient = useQueryClient();
 
@@ -171,7 +173,7 @@ export function usePaginatedQuery<T>(
   options?: {
     initialPage?: number;
     initialLimit?: number;
-  } & Omit<UseQueryOptions<PaginatedResponse<T>, Error>, 'queryKey' | 'queryFn'>
+  } & Omit<UseQueryOptions<PaginatedResponse<T>, Error>, 'queryKey' | 'queryFn'>,
 ) {
   const page = options?.initialPage ?? 1;
   const limit = options?.initialLimit ?? 20;
@@ -190,10 +192,7 @@ export function usePrefetch() {
   const queryClient = useQueryClient();
 
   return {
-    prefetch: <T>(
-      queryKey: readonly unknown[],
-      queryFn: () => Promise<ApiResponse<T>>
-    ) => {
+    prefetch: <T>(queryKey: readonly unknown[], queryFn: () => Promise<ApiResponse<T>>) => {
       queryClient.prefetchQuery({
         queryKey,
         queryFn: async () => {
@@ -207,4 +206,3 @@ export function usePrefetch() {
     },
   };
 }
-

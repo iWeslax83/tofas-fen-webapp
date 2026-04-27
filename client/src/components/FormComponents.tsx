@@ -13,7 +13,7 @@ import {
   User,
   Lock,
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { InputSanitizer, PasswordPolicy } from '../utils/security';
 
 // Types and Interfaces

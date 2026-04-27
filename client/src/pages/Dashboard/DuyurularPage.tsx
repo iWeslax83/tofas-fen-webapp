@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Bell, Plus, Calendar, Trash2, X } from 'lucide-react';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
 import { AnnouncementService } from '../../utils/apiService';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 
 import './DuyurularPage.css';
