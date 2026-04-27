@@ -49,7 +49,7 @@ export const generateAccessToken = (payload: Omit<JWTPayload, 'iat' | 'exp'>): s
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: '15m',
     issuer: 'tofas-fen-webapp',
-    audience: 'tofas-fen-users'
+    audience: 'tofas-fen-users',
   });
 };
 
@@ -58,7 +58,7 @@ export const generateRefreshToken = (payload: RefreshTokenPayload): string => {
   return jwt.sign(payload, JWT_REFRESH_SECRET, {
     expiresIn: '3d', // Reduced from 7d for better security
     issuer: 'tofas-fen-webapp',
-    audience: 'tofas-fen-users'
+    audience: 'tofas-fen-users',
   });
 };
 
@@ -67,11 +67,11 @@ export const verifyAccessToken = (token: string): JWTPayload | null => {
   try {
     return jwt.verify(token, JWT_SECRET, {
       issuer: 'tofas-fen-webapp',
-      audience: 'tofas-fen-users'
+      audience: 'tofas-fen-users',
     }) as JWTPayload;
   } catch (error) {
     logger.error('Access token verification failed', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return null;
   }
@@ -82,11 +82,11 @@ export const verifyRefreshToken = (token: string): RefreshTokenPayload | null =>
   try {
     return jwt.verify(token, JWT_REFRESH_SECRET, {
       issuer: 'tofas-fen-webapp',
-      audience: 'tofas-fen-users'
+      audience: 'tofas-fen-users',
     }) as RefreshTokenPayload;
   } catch (error) {
     logger.error('Refresh token verification failed', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return null;
   }
@@ -94,7 +94,11 @@ export const verifyRefreshToken = (token: string): RefreshTokenPayload | null =>
 
 // JWT Authentication Middleware with blacklist check
 // ⚠️ GÜVENLİK: httpOnly cookie desteği eklendi (localStorage yerine)
-export const authenticateJWT = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const authenticateJWT = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     // Try to get token from httpOnly cookie first (preferred method)
     let token = req.cookies?.accessToken;
@@ -132,7 +136,7 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
   } catch (error) {
     logger.error('JWT authentication error', {
       error: error instanceof Error ? error.message : String(error),
-      path: req.path
+      path: req.path,
     });
     res.status(401).json({ error: 'Authentication failed' });
   }
@@ -155,8 +159,24 @@ export const authorizeRoles = (allowedRoles: string[]) => {
   };
 };
 
+/**
+ * Convenience middleware that layers authenticateJWT + authorizeRoles.
+ * Prevents the bug where authorizeRoles is mounted without authenticateJWT,
+ * allowing a revoked token to pass role checks.
+ * Usage: router.get('/admin', ...protectedRoute(['admin']), handler)
+ */
+export const protectedRoute = (allowedRoles: string[]) => [
+  authenticateJWT,
+  authorizeRoles(allowedRoles),
+];
+
 // Generate token pair with enhanced security
-export const generateTokenPair = (userId: string, role: string, email?: string, tokenVersion: number = 0) => {
+export const generateTokenPair = (
+  userId: string,
+  role: string,
+  email?: string,
+  tokenVersion: number = 0,
+) => {
   const accessToken = generateAccessToken({ userId, role, email });
   const refreshToken = generateRefreshToken({ userId, tokenVersion });
 
@@ -165,7 +185,7 @@ export const generateTokenPair = (userId: string, role: string, email?: string, 
     refreshToken,
     expiresIn: 15 * 60, // 15 minutes in seconds
     refreshExpiresIn: 3 * 24 * 60 * 60, // 3 days in seconds
-    tokenVersion // Include token version for validation
+    tokenVersion, // Include token version for validation
   };
 };
 
@@ -214,7 +234,7 @@ export const logoutUser = async (accessToken: string, refreshToken: string): Pro
     }
   } catch (error) {
     logger.error('Error during logout token blacklisting', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     // Don't throw error to prevent logout failure
   }
@@ -230,7 +250,7 @@ export const revokeAllUserTokens = async (userId: string): Promise<void> => {
   } catch (error) {
     logger.error('Error revoking user tokens', {
       error: error instanceof Error ? error.message : String(error),
-      userId
+      userId,
     });
   }
 };

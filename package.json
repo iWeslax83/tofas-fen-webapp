@@ -81,6 +81,7 @@
     "express-rate-limit": "^8.0.1",
     "express-session": "^1.18.1",
     "framer-motion": "^12.23.12",
+    "kubernetes": "^1.0.0",
     "mongoose": "^8.16.4",
     "nodemailer": "^8.0.1",
     "react": "^19.1.0",
@@ -95,7 +96,6 @@
     "@types/react-router-dom": "^5.3.3",
     "@types/react-toastify": "^4.0.2",
     "concurrently": "^8.2.2",
-    "turbo": "^2.5.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.26",
@@ -103,6 +103,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
+    "turbo": "^2.5.0",
     "typescript-eslint": "^8.53.1"
   }
 }

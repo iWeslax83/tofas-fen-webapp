@@ -36,6 +36,8 @@ export interface IUser extends Document {
   lockReason?: 'failed_attempts' | 'admin_action' | 'security_alert';
   lastLogin?: Date;
   loginCount: number;
+  passwordLastSetAt?: Date;
+  importBatchId?: string;
   isActive: boolean;
   kvkkConsent: boolean;
   kvkkConsentDate?: Date;
@@ -163,6 +165,15 @@ const UserSchema = new Schema<IUser>(
       default: 0,
       index: true, // For user engagement metrics
     },
+    passwordLastSetAt: {
+      type: Date,
+      index: true,
+    },
+    importBatchId: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -221,6 +232,7 @@ UserSchema.index({ oda: 1, isActive: 1 }); // Room-based queries
 UserSchema.index({ lastLogin: -1, isActive: 1 }); // Recent activity queries
 UserSchema.index({ createdAt: -1, isActive: 1 }); // New user queries
 UserSchema.index({ tokenVersion: 1, isActive: 1 }); // Token invalidation queries
+UserSchema.index({ importBatchId: 1, isActive: 1 }); // Pending batch queries
 
 // Text search index for name searches
 

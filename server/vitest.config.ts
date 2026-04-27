@@ -1,11 +1,33 @@
 import { defineConfig } from 'vitest/config'
 import path from 'path'
+import { config as dotenvConfig } from 'dotenv'
+
+// Load ONLY the root .env (docker-compose secrets like MONGO_PASSWORD).
+// Do NOT load server/.env here — it contains MONGODB_URI pointing to the
+// dev database without auth, which would clobber the test URI we build below.
+dotenvConfig({ path: path.resolve(__dirname, '../.env') })
+
+// Always build a dedicated test URI with auth credentials from docker-compose.
+// Ignore any MONGODB_URI already in the environment (it came from server/.env
+// or the shell and points to dev/production, not the test database).
+const mongoPassword = process.env.MONGO_PASSWORD || ''
+const testMongoUri = mongoPassword
+  ? `mongodb://admin:${mongoPassword}@127.0.0.1:27017/tofas-fen-test?authSource=admin`
+  : 'mongodb://127.0.0.1:27017/tofas-fen-test'
 
 export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
     setupFiles: ['./src/test/setup.ts'],
+    // Set env vars BEFORE any module is imported, so top-level
+    // validations (e.g. JWT_SECRET length check) see test values.
+    env: {
+      NODE_ENV: 'test',
+      MONGODB_URI: testMongoUri,
+      JWT_SECRET: 'test-jwt-secret-key-for-vitest-minimum-32-chars',
+      JWT_REFRESH_SECRET: 'test-refresh-secret-key-for-vitest-min-32-chars',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
@@ -69,14 +91,4 @@ export default defineConfig({
       '@services': path.resolve(__dirname, './src/services')
     },
   },
-  // Note: esbuild `define` statically rewrites `process.env.X` in source at
-  // build time, so these values override any shell env var. Use 127.0.0.1
-  // explicitly because `localhost` resolves to ::1 first on modern Node and
-  // mongo running in Docker/podman typically binds IPv4 only.
-  define: {
-    'process.env.NODE_ENV': '"test"',
-    'process.env.MONGODB_URI': '"mongodb://127.0.0.1:27017/test-db"',
-    'process.env.JWT_SECRET': '"test-jwt-secret"',
-    'process.env.JWT_REFRESH_SECRET': '"test-refresh-secret"'
-  }
 })

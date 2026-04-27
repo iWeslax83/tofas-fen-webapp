@@ -637,6 +637,27 @@ export class AuthService {
 
     if (!password || password.length === 0) {
       errors.push('Şifre boş olamaz');
+      return { isValid: false, errors };
+    }
+
+    if (password.length < 6) {
+      errors.push('Şifre en az 6 karakter olmalıdır');
+    }
+
+    if (password.length > 100) {
+      errors.push('Şifre 100 karakterden kısa olmalıdır');
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Şifre en az bir büyük harf içermelidir');
+    }
+
+    if (!/[a-z]/.test(password)) {
+      errors.push('Şifre en az bir küçük harf içermelidir');
+    }
+
+    if (!/[0-9]/.test(password)) {
+      errors.push('Şifre en az bir rakam içermelidir');
     }
 
     return {

@@ -11,7 +11,7 @@ import {
   Shield,
   Clock,
 } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthGuard } from '../../hooks/useAuthGuard';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { EvciService } from '../../utils/apiService';
 import { toast } from 'sonner';
@@ -44,7 +44,7 @@ interface Student {
 }
 
 export default function ParentEvciPage() {
-  const { user: authUser } = useAuth(['parent']);
+  const { user: authUser } = useAuthGuard(['parent']);
 
   const [children, setChildren] = useState<Student[]>([]);
   const [requests, setRequests] = useState<EvciTalep[]>([]);

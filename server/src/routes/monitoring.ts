@@ -1,45 +1,53 @@
 import express from 'express';
-import monitoringService, { startRequestTimer, endRequestTimer, logRequestMetrics } from '../utils/monitoring';
+import monitoringService, {
+  startRequestTimer,
+  endRequestTimer,
+  logRequestMetrics,
+} from '../utils/monitoring';
 import logger from '../utils/logger';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { requireMonitoringAuth } from '../middleware/monitoringAuth';
 import { BackupService } from '../services/BackupService';
 import { getWafStatus, blockIP, unblockIP } from '../middleware/waf';
 import { SecurityAlertService } from '../services/SecurityAlertService';
+import { asyncHandler } from '../middleware/errorHandler';
 
 const router = express.Router();
 
 // Health check endpoint (public - Kubernetes/load balancer probes)
-router.get('/health', async (req, res) => {
-  const startTime = startRequestTimer();
+router.get(
+  '/health',
+  asyncHandler(async (req, res) => {
+    const startTime = startRequestTimer();
 
-  try {
-    const healthCheck = await monitoringService.performHealthCheck();
+    try {
+      const healthCheck = await monitoringService.performHealthCheck();
 
-    const statusCode = healthCheck.status === 'healthy' ? 200 :
-                      healthCheck.status === 'degraded' ? 200 : 503;
+      const statusCode =
+        healthCheck.status === 'healthy' ? 200 : healthCheck.status === 'degraded' ? 200 : 503;
 
-    res.status(statusCode).json(healthCheck);
+      res.status(statusCode).json(healthCheck);
 
-    const duration = endRequestTimer(startTime);
-    logRequestMetrics(req, res, duration);
+      const duration = endRequestTimer(startTime);
+      logRequestMetrics(req, res, duration);
 
-    logger.info(`Health check completed: ${healthCheck.status}`, {
-      status: healthCheck.status,
-      responseTime: duration,
-    });
-  } catch (error) {
-    const duration = endRequestTimer(startTime);
-    logRequestMetrics(req, res, duration);
+      logger.info(`Health check completed: ${healthCheck.status}`, {
+        status: healthCheck.status,
+        responseTime: duration,
+      });
+    } catch (error) {
+      const duration = endRequestTimer(startTime);
+      logRequestMetrics(req, res, duration);
 
-    logger.error('Health check failed', { error: error.message });
-    res.status(503).json({
-      status: 'unhealthy',
-      error: 'Health check failed',
-      timestamp: new Date().toISOString(),
-    });
-  }
-});
+      logger.error('Health check failed', { error: error.message });
+      res.status(503).json({
+        status: 'unhealthy',
+        error: 'Health check failed',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }),
+);
 
 // System metrics endpoint (API key OR admin JWT)
 router.get('/metrics', requireMonitoringAuth, requireAuth, requireRole(['admin']), (req, res) => {
@@ -248,39 +256,46 @@ router.get('/warnings', requireMonitoringAuth, requireAuth, requireRole(['admin'
 // --- Database Backup Endpoints (admin only) ---
 
 // Manuel yedek al
-router.post('/backup', requireAuth, requireRole(['admin']), async (req, res) => {
-  const startTime = startRequestTimer();
+router.post(
+  '/backup',
+  requireAuth,
+  requireRole(['admin']),
+  asyncHandler(async (req, res) => {
+    const startTime = startRequestTimer();
 
-  try {
-    logger.info('Manual backup triggered', { userId: (req as any).user?.id });
-    const result = await BackupService.createBackup();
+    try {
+      logger.info('Manual backup triggered', { userId: (req as any).user?.id });
+      const result = await BackupService.createBackup();
 
-    const duration = endRequestTimer(startTime);
-    logRequestMetrics(req, res, duration);
+      const duration = endRequestTimer(startTime);
+      logRequestMetrics(req, res, duration);
 
-    if (result.success) {
-      res.json({
-        message: 'Yedekleme başarılı',
-        ...result,
-        duration,
+      if (result.success) {
+        res.json({
+          message: 'Yedekleme başarılı',
+          ...result,
+          duration,
+        });
+      } else {
+        res.status(500).json({
+          message: 'Yedekleme başarısız',
+          error: result.error,
+        });
+      }
+    } catch (error) {
+      const duration = endRequestTimer(startTime);
+      logRequestMetrics(req, res, duration);
+
+      logger.error('Backup endpoint failed', {
+        error: error instanceof Error ? error.message : error,
       });
-    } else {
       res.status(500).json({
-        message: 'Yedekleme başarısız',
-        error: result.error,
+        error: 'Yedekleme sırasında hata oluştu',
+        timestamp: new Date().toISOString(),
       });
     }
-  } catch (error) {
-    const duration = endRequestTimer(startTime);
-    logRequestMetrics(req, res, duration);
-
-    logger.error('Backup endpoint failed', { error: error instanceof Error ? error.message : error });
-    res.status(500).json({
-      error: 'Yedekleme sırasında hata oluştu',
-      timestamp: new Date().toISOString(),
-    });
-  }
-});
+  }),
+);
 
 // Yedek listesini getir
 router.get('/backups', requireAuth, requireRole(['admin']), (req, res) => {
@@ -294,40 +309,54 @@ router.get('/backups', requireAuth, requireRole(['admin']), (req, res) => {
 });
 
 // Yedek dogrula
-router.post('/backup/verify', requireAuth, requireRole(['admin']), async (req, res) => {
-  try {
-    const { backupName } = req.body;
-    const result = await BackupService.verifyBackup(backupName);
-    res.json(result);
-  } catch (error) {
-    logger.error('Backup verification failed', { error: error instanceof Error ? error.message : error });
-    res.status(500).json({ error: 'Yedek dogrulanamadi' });
-  }
-});
+router.post(
+  '/backup/verify',
+  requireAuth,
+  requireRole(['admin']),
+  asyncHandler(async (req, res) => {
+    try {
+      const { backupName } = req.body;
+      const result = await BackupService.verifyBackup(backupName);
+      res.json(result);
+    } catch (error) {
+      logger.error('Backup verification failed', {
+        error: error instanceof Error ? error.message : error,
+      });
+      res.status(500).json({ error: 'Yedek dogrulanamadi' });
+    }
+  }),
+);
 
 // Yedek al ve dogrula
-router.post('/backup/create-and-verify', requireAuth, requireRole(['admin']), async (req, res) => {
-  const startTime = startRequestTimer();
+router.post(
+  '/backup/create-and-verify',
+  requireAuth,
+  requireRole(['admin']),
+  asyncHandler(async (req, res) => {
+    const startTime = startRequestTimer();
 
-  try {
-    logger.info('Create and verify backup triggered', { userId: (req as any).user?.id });
-    const result = await BackupService.createAndVerifyBackup();
+    try {
+      logger.info('Create and verify backup triggered', { userId: (req as any).user?.id });
+      const result = await BackupService.createAndVerifyBackup();
 
-    const duration = endRequestTimer(startTime);
-    logRequestMetrics(req, res, duration);
+      const duration = endRequestTimer(startTime);
+      logRequestMetrics(req, res, duration);
 
-    res.json({
-      ...result,
-      duration,
-    });
-  } catch (error) {
-    const duration = endRequestTimer(startTime);
-    logRequestMetrics(req, res, duration);
+      res.json({
+        ...result,
+        duration,
+      });
+    } catch (error) {
+      const duration = endRequestTimer(startTime);
+      logRequestMetrics(req, res, duration);
 
-    logger.error('Create and verify backup failed', { error: error instanceof Error ? error.message : error });
-    res.status(500).json({ error: 'Yedekleme ve dogrulama sirasinda hata olustu' });
-  }
-});
+      logger.error('Create and verify backup failed', {
+        error: error instanceof Error ? error.message : error,
+      });
+      res.status(500).json({ error: 'Yedekleme ve dogrulama sirasinda hata olustu' });
+    }
+  }),
+);
 
 // --- WAF & Security Status ---
 
@@ -374,14 +403,21 @@ router.post('/waf/unblock', requireAuth, requireRole(['admin']), (req, res) => {
 });
 
 // Security alerts status
-router.get('/security', requireAuth, requireRole(['admin']), async (_req, res) => {
-  try {
-    const status = await SecurityAlertService.getSecurityStatus();
-    res.json({ success: true, ...status });
-  } catch (error) {
-    logger.error('Security status failed', { error: error instanceof Error ? error.message : error });
-    res.status(500).json({ error: 'Guvenlik durumu alinamadi' });
-  }
-});
+router.get(
+  '/security',
+  requireAuth,
+  requireRole(['admin']),
+  asyncHandler(async (_req, res) => {
+    try {
+      const status = await SecurityAlertService.getSecurityStatus();
+      res.json({ success: true, ...status });
+    } catch (error) {
+      logger.error('Security status failed', {
+        error: error instanceof Error ? error.message : error,
+      });
+      res.status(500).json({ error: 'Guvenlik durumu alinamadi' });
+    }
+  }),
+);
 
 export default router;
