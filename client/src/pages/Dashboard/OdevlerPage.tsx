@@ -1,10 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Plus, Calendar, Trash2, FileText, Download } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, Trash2, Download, X, Search } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
 import { HomeworkService } from '../../utils/apiService';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-
-import './OdevlerPage.css';
+import { DataTable } from '../../components/ui/DataTable';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Card } from '../../components/ui/Card';
+import { Chip } from '../../components/ui/Chip';
+import { cn } from '../../utils/cn';
 
 interface Homework {
   _id?: string;
@@ -28,463 +33,409 @@ interface Homework {
   status?: string;
 }
 
+const SUBJECTS = [
+  'Matematik',
+  'Fizik',
+  'Kimya',
+  'Biyoloji',
+  'Türkçe',
+  'İngilizce',
+  'Tarih',
+  'Coğrafya',
+  'Din Kültürü',
+];
+
+const formatDate = (raw: string | Date | undefined): string => {
+  if (!raw) return '—';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+const dueChip = (raw: string | Date | undefined): { label: string; urgent: boolean } => {
+  if (!raw) return { label: '—', urgent: false };
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return { label: '—', urgent: false };
+  const days = Math.floor((d.getTime() - Date.now()) / 86_400_000);
+  if (days < 0) return { label: 'Geçti', urgent: true };
+  if (days === 0) return { label: 'Bugün', urgent: true };
+  if (days === 1) return { label: 'Yarın', urgent: true };
+  return { label: `${days} gün`, urgent: false };
+};
+
+interface FieldProps {
+  label: string;
+  children: React.ReactNode;
+}
+const Field = ({ label, children }: FieldProps) => (
+  <label className="flex flex-col gap-1">
+    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+      {label}
+    </span>
+    {children}
+  </label>
+);
+
+const selectClasses = cn(
+  'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+  'transition-colors',
+);
+
 export default function OdevlerPage() {
   const { user, isLoading: authLoading } = useAuthGuard(['admin', 'teacher', 'student', 'parent']);
   const [showModal, setShowModal] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState('Tümü');
   const [homeworks, setHomeworks] = useState<Homework[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const canEdit = user?.rol === 'teacher' || user?.rol === 'admin';
 
   useEffect(() => {
-    // Check if user has the correct role
-    if (
-      !authLoading &&
-      user &&
-      !['admin', 'teacher', 'student', 'parent'].includes(user.rol || '')
-    ) {
-      console.warn(`User role ${user.rol || 'undefined'} not allowed for odevler page`);
-      // The original code had navigate(`/${user.rol || 'login'}`, { replace: true });
-      // This line was removed as per the edit hint.
-      return;
-    }
-
-    // Redirect to login if no user
-    if (!authLoading && !user) {
-      // The original code had navigate('/login', { replace: true });
-      // This line was removed as per the edit hint.
-      return;
-    }
-
-    const fetchHomeworks = async () => {
+    if (authLoading || !user) return;
+    let cancelled = false;
+    (async () => {
       try {
-        // Backend /api/homeworks already applies role-aware filtering:
-        //   - student: limited to own sinif+sube
-        //   - parent: limited to children's sinif+sube
-        //   - teacher/admin: unfiltered (can pass query params)
-        // See server/src/routes/Homework.ts:107. Client does NOT need to
-        // re-filter by class (F-M16).
         const result = await HomeworkService.getHomeworks();
-        if (result.error) {
-          console.error('Error fetching homeworks:', result.error);
-          setHomeworks([]);
-        } else {
-          setHomeworks((result.data as Homework[]) || []);
+        if (!cancelled) {
+          setHomeworks(result.error ? [] : (result.data as Homework[]) || []);
         }
-      } catch (error) {
-        console.error('Error fetching homeworks:', error);
-        setHomeworks([]);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-
-    if (user) {
-      fetchHomeworks();
-    }
-  }, [user, authLoading]); // Removed navigate from dependency array
+  }, [user, authLoading]);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Ödevi silmek istediğinize emin misiniz?')) {
-      try {
-        const { error } = await HomeworkService.deleteHomework(id);
-        if (error) {
-          console.error('Error deleting homework:', error);
-          alert('Ödev silinirken hata oluştu: ' + error);
-        } else {
-          // Hem _id hem id ile filtrele
-          setHomeworks((hws) => hws.filter((hw) => hw._id !== id && hw.id !== id));
-          // Liste yenile
-          const { data, error: fetchError } = await HomeworkService.getHomeworks();
-          if (!fetchError && data) {
-            setHomeworks((data as Homework[]) || []);
-          }
-        }
-      } catch (error) {
-        console.error('Error deleting homework:', error);
-      }
+    if (!window.confirm('Ödevi silmek istediğinize emin misiniz?')) return;
+    const { error } = await HomeworkService.deleteHomework(id);
+    if (error) {
+      alert('Ödev silinirken hata oluştu: ' + error);
+      return;
     }
+    setHomeworks((hws) => hws.filter((hw) => hw._id !== id && hw.id !== id));
   };
 
-  const filteredHomeworks = homeworks.filter((hw: Homework) => {
-    if (selectedSubject !== 'Tümü' && hw.subject !== selectedSubject) return false;
+  const visibleHomeworks = useMemo(() => {
     if (user?.rol === 'student') {
-      // Öğrencinin sınıf bilgisinden sadece seviye (9,10,11,12) alınır
-      const raw = user.sinif;
-      const studentClassLevel = raw ? String(raw).replace(/[^0-9]/g, '') : '';
-      if (!studentClassLevel) return false;
-      return hw.classLevel === studentClassLevel || hw.grade === studentClassLevel;
+      const lvl = user.sinif ? String(user.sinif).replace(/[^0-9]/g, '') : '';
+      if (!lvl) return [];
+      return homeworks.filter((hw) => hw.classLevel === lvl || hw.grade === lvl);
     }
-    if (user?.rol === 'parent' && user.childId) {
-      if (!user.childrenSiniflar) {
-        return false;
-      }
-      const childrenSiniflar = user.childrenSiniflar || [];
-      // Çocukların sınıf bilgisinden sadece seviye (9,10,11,12) çıkar
-      const childClasses = childrenSiniflar
-        .map((child) => {
-          return child.sinif ? String(child.sinif).replace(/[^0-9]/g, '') : '';
-        })
-        .filter((sinif) => sinif);
-      return childClasses.includes(hw.classLevel) || childClasses.includes(hw.grade);
+    if (user?.rol === 'parent') {
+      const childLevels = (user.childrenSiniflar ?? [])
+        .map((c) => (c.sinif ? String(c.sinif).replace(/[^0-9]/g, '') : ''))
+        .filter(Boolean);
+      if (childLevels.length === 0) return [];
+      return homeworks.filter(
+        (hw) =>
+          (hw.classLevel && childLevels.includes(hw.classLevel)) ||
+          (hw.grade && childLevels.includes(hw.grade)),
+      );
     }
-    return true;
-  });
+    return homeworks;
+  }, [homeworks, user]);
 
-  if (isLoading) {
-    return (
-      <div className="centered-spinner">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
+  const searchedHomeworks = useMemo(() => {
+    if (!search) return visibleHomeworks;
+    const needle = search.toLowerCase();
+    return visibleHomeworks.filter((hw) => hw.title.toLowerCase().includes(needle));
+  }, [visibleHomeworks, search]);
+
+  const columns = useMemo<ColumnDef<Homework>[]>(
+    () => [
+      {
+        accessorKey: 'subject',
+        header: 'Ders',
+        cell: (info) => (
+          <span className="font-mono text-[var(--ink-dim)] text-xs uppercase tracking-wider">
+            {info.getValue<string>()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'title',
+        header: 'Başlık',
+        cell: (info) => (
+          <span className="font-serif text-[var(--ink)]">{info.getValue<string>()}</span>
+        ),
+        filterFn: 'includesString',
+      },
+      {
+        id: 'class',
+        header: 'Sınıf',
+        accessorFn: (hw) =>
+          `${hw.classLevel || hw.grade || '—'}${hw.classSection ? `/${hw.classSection}` : ''}`,
+        cell: (info) => <span className="text-[var(--ink-2)]">{info.getValue<string>()}</span>,
+      },
+      {
+        id: 'due',
+        header: 'Bitiş',
+        accessorFn: (hw) => hw.dueDate ?? hw.endDate ?? '',
+        cell: (info) => {
+          const raw = info.getValue<string | Date>();
+          const { label, urgent } = dueChip(raw);
+          return (
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs text-[var(--ink-dim)]">{formatDate(raw)}</span>
+              <Chip tone={urgent ? 'state' : 'default'}>{label}</Chip>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const hw = row.original;
+          return (
+            <div className="flex items-center justify-end gap-2">
+              {hw.file && (
+                <a
+                  href={hw.file}
+                  download
+                  className="text-[var(--ink-dim)] hover:text-[var(--ink)]"
+                  aria-label="Dosyayı indir"
+                  title="Dosyayı indir"
+                >
+                  <Download size={16} />
+                </a>
+              )}
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => handleDelete(hw.id || hw._id || '')}
+                  className="text-[var(--ink-dim)] hover:text-[var(--state)]"
+                  aria-label="Ödevi sil"
+                  title="Ödevi sil"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    [canEdit],
+  );
 
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${user?.rol || 'student'}` },
     { label: 'Ödevler' },
   ];
 
+  if (isLoading) {
+    return (
+      <ModernDashboardLayout pageTitle="Ödevler" breadcrumb={breadcrumb}>
+        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          Yükleniyor…
+        </div>
+      </ModernDashboardLayout>
+    );
+  }
+
   return (
     <ModernDashboardLayout pageTitle="Ödevler" breadcrumb={breadcrumb}>
-      <div className="odevler-page">
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="page-title-section">
-              <FileText className="page-icon" />
-              <h1 className="page-title-main">Ödevler</h1>
-            </div>
-            <div className="header-actions">
-              {(user?.rol === 'teacher' || user?.rol === 'admin') && (
-                <button onClick={() => setShowModal(true)} className="btn btn-primary">
-                  <Plus size={18} />
-                  <span>Yeni Ödev Ekle</span>
-                </button>
+      <div className="p-6 space-y-6">
+        <header>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Belge No. {new Date().getFullYear()}/Ö
+          </div>
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Ödevler</h1>
+        </header>
+
+        <DataTable
+          caption="Tablo I — Ödev Listesi"
+          columns={columns}
+          data={searchedHomeworks}
+          emptyState="Seçilen kriterlere uygun ödev bulunamadı."
+          toolbar={
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="relative flex-1 max-w-sm">
+                <Search
+                  size={14}
+                  className="absolute left-1 top-1/2 -translate-y-1/2 text-[var(--ink-dim)] pointer-events-none"
+                />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Başlık ara…"
+                  className="pl-6"
+                />
+              </div>
+              {canEdit && (
+                <Button variant="primary" size="sm" onClick={() => setShowModal(true)}>
+                  <Plus size={14} />
+                  Yeni Ödev
+                </Button>
               )}
             </div>
-          </div>
-        </div>
-
-        <div className="odevler-page-content">
-          {/* Filters */}
-          <div className="filters-section">
-            <div className="filter-group">
-              <label className="filter-label">Derse göre filtrele:</label>
-              <select
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="filter-select"
-              >
-                <option value="Tümü">Tümü</option>
-                {[...new Set(homeworks.map((hw) => hw.subject))].map((subject, i) => (
-                  <option key={i} value={subject}>
-                    {subject}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Homeworks List */}
-          {filteredHomeworks.length === 0 ? (
-            <div className="empty-state">
-              <FileText className="empty-icon" />
-              <h3>Henüz ödev bulunmuyor</h3>
-              <p>Seçilen kriterlere uygun ödev bulunamadı.</p>
-            </div>
-          ) : (
-            <div className="dashboard-grid">
-              {filteredHomeworks.map((hw, index) => (
-                <div key={hw._id || hw.id || index} className="dashboard-card">
-                  <div className="card-header">
-                    <div className="card-icon">
-                      <FileText className="icon" />
-                    </div>
-                    {(user?.rol === 'teacher' || user?.rol === 'admin') && (
-                      <button
-                        onClick={() => handleDelete(hw.id || hw._id || '')}
-                        className="card-badge delete-button"
-                        title="Ödevi Sil"
-                      >
-                        <Trash2 className="icon" />
-                      </button>
-                    )}
-                  </div>
-                  <div className="card-content">
-                    <h3>{hw.title}</h3>
-                    <p className="card-subtitle">
-                      {hw.subject} • {hw.classLevel || hw.grade || 'N/A'}. Sınıf
-                      {hw.classSection ? ` ${hw.classSection}` : ''}
-                    </p>
-                    <p className="card-description">
-                      {hw.description || hw.content || 'Açıklama bulunmuyor'}
-                    </p>
-                    <div className="card-meta">
-                      <div className="meta-item">
-                        <Calendar className="meta-icon" />
-                        <span>
-                          Başlangıç:{' '}
-                          {(() => {
-                            const dateStr = hw.assignedDate || hw.startDate;
-                            if (!dateStr) return 'Belirtilmemiş';
-                            try {
-                              const date = new Date(dateStr);
-                              if (isNaN(date.getTime())) return 'Geçersiz tarih';
-                              return date.toLocaleDateString('tr-TR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                              });
-                            } catch {
-                              return 'Geçersiz tarih';
-                            }
-                          })()}
-                        </span>
-                      </div>
-                      <div className="meta-item">
-                        <Calendar className="meta-icon" />
-                        <span>
-                          Bitiş:{' '}
-                          {(() => {
-                            const dateStr = hw.dueDate || hw.endDate;
-                            if (!dateStr) return 'Belirtilmemiş';
-                            try {
-                              const date = new Date(dateStr);
-                              if (isNaN(date.getTime())) return 'Geçersiz tarih';
-                              return date.toLocaleDateString('tr-TR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                              });
-                            } catch {
-                              return 'Geçersiz tarih';
-                            }
-                          })()}
-                        </span>
-                      </div>
-                      {hw.file && (
-                        <div className="meta-item">
-                          <Download className="meta-icon" />
-                          <a href={hw.file} download className="file-link">
-                            Dosyayı İndir
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        {/* Add Homework Modal */}
-        {showModal && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h3 className="modal-title">Yeni Ödev Ekle</h3>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="modal-close"
-                  aria-label="Kapat"
-                >
-                  <svg
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const form = e.target as HTMLFormElement;
-                  const formData = new FormData(form);
-
-                  try {
-                    let fileUrl = '';
-
-                    // Handle file upload if file is selected
-                    const fileInput = form.querySelector('input[name="file"]') as HTMLInputElement;
-                    if (fileInput && fileInput.files && fileInput.files[0]) {
-                      const file = fileInput.files[0];
-                      const uploadFormData = new FormData();
-                      uploadFormData.append('file', file);
-
-                      try {
-                        const response = await fetch('/api/upload', {
-                          method: 'POST',
-                          body: uploadFormData,
-                          credentials: 'include',
-                        });
-
-                        if (response.ok) {
-                          const result = await response.json();
-                          fileUrl = result.url;
-                        } else {
-                          console.error('File upload failed');
-                        }
-                      } catch (uploadError) {
-                        console.error('File upload error:', uploadError);
-                      }
-                    }
-
-                    // Create the homework with file URL if uploaded
-                    const startDate = formData.get('startDate') as string;
-                    const endDate = formData.get('endDate') as string;
-
-                    const homeworkData = {
-                      title: formData.get('title') as string,
-                      description: formData.get('content') as string,
-                      subject: formData.get('subject') as string,
-                      classLevel: formData.get('grade') as string,
-                      classSection: (formData.get('section') as string) || 'A',
-                      assignedDate: startDate || new Date().toISOString(),
-                      dueDate: endDate,
-                      attachments: fileUrl ? [fileUrl] : [],
-                    };
-
-                    const { error } = await HomeworkService.createHomework(homeworkData);
-
-                    if (error) {
-                      alert(error);
-                    } else {
-                      // Show success message
-                      alert('Ödev başarıyla oluşturuldu!');
-
-                      // Then fetch the updated list of homeworks
-                      const { data, error: fetchError } = await HomeworkService.getHomeworks();
-                      if (fetchError) {
-                        console.error('Error fetching homeworks:', fetchError);
-                        alert('Ödev oluşturuldu ancak liste yenilenemedi. Sayfayı yenileyin.');
-                      } else {
-                        setHomeworks((data as Homework[]) || []);
-                      }
-
-                      // Close modal and reset form
-                      setShowModal(false);
-                      form.reset();
-                    }
-                  } catch (error) {
-                    console.error('Ödev oluşturulurken hata oluştu:', error);
-                    alert('Ödev eklenirken bir hata oluştu. Lütfen tekrar deneyin.');
-                  }
-                }}
-                className="modal-body"
-              >
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Ödev Başlığı</label>
-                    <input
-                      name="title"
-                      type="text"
-                      className="form-control"
-                      required
-                      placeholder="Ödev başlığını giriniz"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Ders</label>
-                    <select name="subject" className="form-control" required>
-                      <option value="">Ders Seçiniz</option>
-                      <option value="Matematik">Matematik</option>
-                      <option value="Fizik">Fizik</option>
-                      <option value="Kimya">Kimya</option>
-                      <option value="Biyoloji">Biyoloji</option>
-                      <option value="Türkçe">Türkçe</option>
-                      <option value="İngilizce">İngilizce</option>
-                      <option value="Tarih">Tarih</option>
-                      <option value="Coğrafya">Coğrafya</option>
-                      <option value="Din">Din Kültürü</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Ödev Açıklaması</label>
-                  <textarea
-                    name="content"
-                    rows={4}
-                    className="form-control"
-                    required
-                    placeholder="Ödev açıklamasını giriniz"
-                  />
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Başlangıç Tarihi</label>
-                    <input name="startDate" type="date" className="form-control" required />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Bitiş Tarihi</label>
-                    <input name="endDate" type="date" className="form-control" required />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Sınıf</label>
-                    <select name="grade" className="form-control" required>
-                      <option value="">Sınıf Seçiniz</option>
-                      <option value="9">9. Sınıf</option>
-                      <option value="10">10. Sınıf</option>
-                      <option value="11">11. Sınıf</option>
-                      <option value="12">12. Sınıf</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Dosya Ekle (Opsiyonel)</label>
-                    <div className="file-upload">
-                      <label className="file-upload-label">
-                        <span>Dosya Seç</span>
-                        <input
-                          name="file"
-                          type="file"
-                          className="sr-only"
-                          onChange={(e) => {
-                            const fileName = e.target.files?.[0]?.name || 'Dosya seçilmedi';
-                            const fileNameSpan = e.target.parentElement
-                              ?.nextElementSibling as HTMLSpanElement;
-                            if (fileNameSpan) {
-                              fileNameSpan.textContent = fileName;
-                            }
-                          }}
-                        />
-                      </label>
-                      <span className="file-name">Dosya seçilmedi</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-actions">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="btn btn-secondary"
-                  >
-                    İptal
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    Ödevi Kaydet
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+          }
+        />
       </div>
+
+      {showModal && (
+        <NewHomeworkModal
+          onClose={() => setShowModal(false)}
+          onSuccess={(hws) => setHomeworks(hws)}
+        />
+      )}
     </ModernDashboardLayout>
+  );
+}
+
+interface NewHomeworkModalProps {
+  onClose: () => void;
+  onSuccess: (homeworks: Homework[]) => void;
+}
+
+function NewHomeworkModal({ onClose, onSuccess }: NewHomeworkModalProps) {
+  const [submitting, setSubmitting] = useState(false);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+      role="presentation"
+    >
+      <Card
+        className="relative w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
+        contentClassName="p-0"
+      >
+        <div onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">Yeni Ödev</span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-white hover:opacity-80"
+              aria-label="Kapat"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <form
+            className="p-6 space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (submitting) return;
+              setSubmitting(true);
+              const form = e.target as HTMLFormElement;
+              const formData = new FormData(form);
+
+              try {
+                let fileUrl = '';
+                const fileInput = form.querySelector('input[name="file"]') as HTMLInputElement;
+                if (fileInput && fileInput.files && fileInput.files[0]) {
+                  const uploadFormData = new FormData();
+                  uploadFormData.append('file', fileInput.files[0]);
+                  const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: uploadFormData,
+                    credentials: 'include',
+                  });
+                  if (response.ok) {
+                    const result = await response.json();
+                    fileUrl = result.url;
+                  }
+                }
+
+                const homeworkData = {
+                  title: formData.get('title') as string,
+                  description: formData.get('content') as string,
+                  subject: formData.get('subject') as string,
+                  classLevel: formData.get('grade') as string,
+                  classSection: (formData.get('section') as string) || 'A',
+                  assignedDate: (formData.get('startDate') as string) || new Date().toISOString(),
+                  dueDate: formData.get('endDate') as string,
+                  attachments: fileUrl ? [fileUrl] : [],
+                };
+
+                const { error } = await HomeworkService.createHomework(homeworkData);
+                if (error) {
+                  alert(error);
+                } else {
+                  const { data } = await HomeworkService.getHomeworks();
+                  onSuccess((data as Homework[]) || []);
+                  onClose();
+                }
+              } catch {
+                alert('Ödev eklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+              } finally {
+                setSubmitting(false);
+              }
+            }}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Ödev Başlığı">
+                <Input name="title" required placeholder="Ödev başlığını giriniz" />
+              </Field>
+              <Field label="Ders">
+                <select name="subject" className={selectClasses} required>
+                  <option value="">Ders Seçiniz</option>
+                  {SUBJECTS.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+
+            <Field label="Açıklama">
+              <textarea
+                name="content"
+                rows={4}
+                required
+                placeholder="Ödev açıklamasını giriniz"
+                className={cn(selectClasses, 'resize-y min-h-[6rem]')}
+              />
+            </Field>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Başlangıç">
+                <Input name="startDate" type="date" required />
+              </Field>
+              <Field label="Bitiş">
+                <Input name="endDate" type="date" required />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Sınıf">
+                <select name="grade" className={selectClasses} required>
+                  <option value="">Sınıf Seçiniz</option>
+                  <option value="9">9. Sınıf</option>
+                  <option value="10">10. Sınıf</option>
+                  <option value="11">11. Sınıf</option>
+                  <option value="12">12. Sınıf</option>
+                </select>
+              </Field>
+              <Field label="Dosya (Opsiyonel)">
+                <input
+                  name="file"
+                  type="file"
+                  className="font-serif text-sm text-[var(--ink-2)] file:mr-3 file:px-3 file:py-1 file:border file:border-[var(--ink)] file:bg-transparent file:text-[var(--ink)] file:font-medium file:cursor-pointer"
+                />
+              </Field>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button type="button" variant="ghost" onClick={onClose}>
+                İptal
+              </Button>
+              <Button type="submit" variant="primary" loading={submitting}>
+                Ödevi Kaydet
+              </Button>
+            </div>
+          </form>
+        </div>
+      </Card>
+    </div>
   );
 }
