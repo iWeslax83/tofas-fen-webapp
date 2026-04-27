@@ -23,13 +23,14 @@ import {
   SkeletonTable,
   SkeletonForm,
   SkeletonList,
-  LoadingState
+  LoadingState,
 } from '../../components/SkeletonComponents';
 ```
 
 ## Bileşenler
 
 ### 1. SkeletonCard
+
 Genel amaçlı kart skeleton bileşeni.
 
 ```typescript
@@ -38,6 +39,7 @@ Genel amaçlı kart skeleton bileşeni.
 ```
 
 ### 2. SkeletonClubCard
+
 Kulüp kartları için özel skeleton bileşeni.
 
 ```typescript
@@ -46,6 +48,7 @@ Kulüp kartları için özel skeleton bileşeni.
 ```
 
 ### 3. SkeletonTable
+
 Tablo skeleton bileşeni.
 
 ```typescript
@@ -54,6 +57,7 @@ Tablo skeleton bileşeni.
 ```
 
 ### 4. SkeletonForm
+
 Form skeleton bileşeni.
 
 ```typescript
@@ -62,6 +66,7 @@ Form skeleton bileşeni.
 ```
 
 ### 5. SkeletonList
+
 Liste skeleton bileşeni.
 
 ```typescript
@@ -70,6 +75,7 @@ Liste skeleton bileşeni.
 ```
 
 ### 6. SkeletonDashboard
+
 Dashboard skeleton bileşeni.
 
 ```typescript
@@ -78,6 +84,7 @@ Dashboard skeleton bileşeni.
 ```
 
 ### 7. SkeletonProfile
+
 Profil sayfası skeleton bileşeni.
 
 ```typescript
@@ -86,6 +93,7 @@ Profil sayfası skeleton bileşeni.
 ```
 
 ### 8. SkeletonNotification
+
 Bildirim skeleton bileşeni.
 
 ```typescript
@@ -94,6 +102,7 @@ Bildirim skeleton bileşeni.
 ```
 
 ### 9. SkeletonCalendar
+
 Takvim skeleton bileşeni.
 
 ```typescript
@@ -102,6 +111,7 @@ Takvim skeleton bileşeni.
 ```
 
 ### 10. SkeletonChart
+
 Grafik skeleton bileşeni.
 
 ```typescript
@@ -228,16 +238,22 @@ Skeleton bileşenleri CSS ile özelleştirilebilir:
 ```css
 /* Özel skeleton stilleri */
 .custom-skeleton {
-  background: linear-gradient(90deg, 
-    rgba(139, 0, 0, 0.1) 0%, 
-    rgba(220, 20, 60, 0.2) 50%, 
-    rgba(139, 0, 0, 0.1) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(139, 0, 0, 0.1) 0%,
+    rgba(220, 20, 60, 0.2) 50%,
+    rgba(139, 0, 0, 0.1) 100%
+  );
   animation: custom-shimmer 2s ease-in-out infinite;
 }
 
 @keyframes custom-shimmer {
-  0% { background-position: -200px 0; }
-  100% { background-position: calc(200px + 100%) 0; }
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
 }
 ```
 
@@ -250,7 +266,7 @@ Tüm skeleton bileşenlerini test etmek için demo sayfasını kullanın:
 /teacher/skeleton-demo
 /student/skeleton-demo
 /parent/skeleton-demo
-/hizmetli/skeleton-demo
+
 ```
 
 ## Best Practices

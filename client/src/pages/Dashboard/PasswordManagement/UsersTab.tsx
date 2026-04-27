@@ -93,7 +93,6 @@ export default function UsersTab() {
           <option value="teacher">Öğretmen</option>
           <option value="parent">Veli</option>
           <option value="admin">Yönetici</option>
-          <option value="hizmetli">Hizmetli</option>
         </select>
         <select
           value={hasPassword}

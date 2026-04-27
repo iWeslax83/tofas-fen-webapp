@@ -27,7 +27,7 @@ describe('User Model', () => {
         id: 'user123',
         adSoyad: 'John Doe',
         sifre: 'hashedPassword',
-        rol: 'student'
+        rol: 'student',
       };
 
       const user = new User(userData);
@@ -51,7 +51,7 @@ describe('User Model', () => {
         sinif: '9',
         sube: 'A',
         oda: '101',
-        pansiyon: true
+        pansiyon: true,
       };
 
       const user = new User(userData);
@@ -68,7 +68,7 @@ describe('User Model', () => {
       const userData = {
         adSoyad: 'John Doe',
         sifre: 'hashedPassword',
-        rol: 'student'
+        rol: 'student',
       };
 
       const user = new User(userData);
@@ -80,7 +80,7 @@ describe('User Model', () => {
       const userData = {
         id: 'user123',
         sifre: 'hashedPassword',
-        rol: 'student'
+        rol: 'student',
       };
 
       const user = new User(userData);
@@ -92,7 +92,7 @@ describe('User Model', () => {
       const userData = {
         id: 'user123',
         adSoyad: 'John Doe',
-        sifre: 'hashedPassword'
+        sifre: 'hashedPassword',
       };
 
       const user = new User(userData);
@@ -108,7 +108,7 @@ describe('User Model', () => {
         adSoyad: 'John Doe',
         sifre: 'hashedPassword',
         rol: 'student',
-        email: 'invalid-email'
+        email: 'invalid-email',
       };
 
       const user = new User(userData);
@@ -122,7 +122,7 @@ describe('User Model', () => {
         adSoyad: 'John Doe',
         sifre: 'hashedPassword',
         rol: 'student',
-        email: 'john@example.com'
+        email: 'john@example.com',
       };
 
       const user = new User(userData);
@@ -132,14 +132,14 @@ describe('User Model', () => {
     });
 
     it('should validate role enum values', async () => {
-      const validRoles = ['admin', 'teacher', 'student', 'parent', 'hizmetli', 'ziyaretci'];
+      const validRoles = ['admin', 'teacher', 'student', 'parent', 'ziyaretci'];
 
       for (const role of validRoles) {
         const userData = {
           id: `user${role}`,
           adSoyad: 'John Doe',
           sifre: 'hashedPassword',
-          rol: role
+          rol: role,
         };
 
         const user = new User(userData);
@@ -154,7 +154,7 @@ describe('User Model', () => {
         id: 'user123',
         adSoyad: 'John Doe',
         sifre: 'hashedPassword',
-        rol: 'invalid-role'
+        rol: 'invalid-role',
       };
 
       const user = new User(userData);
@@ -172,7 +172,7 @@ describe('User Model', () => {
           adSoyad: 'Admin User',
           sifre: 'hashedPassword',
           rol: 'admin',
-          email: 'admin@example.com'
+          email: 'admin@example.com',
         },
         {
           id: 'teacher1',
@@ -180,7 +180,7 @@ describe('User Model', () => {
           sifre: 'hashedPassword',
           rol: 'teacher',
           sinif: '9',
-          sube: 'A'
+          sube: 'A',
         },
         {
           id: 'student1',
@@ -189,7 +189,7 @@ describe('User Model', () => {
           rol: 'student',
           sinif: '9',
           sube: 'A',
-          pansiyon: true
+          pansiyon: true,
         },
         {
           id: 'student2',
@@ -198,8 +198,8 @@ describe('User Model', () => {
           rol: 'student',
           sinif: '9',
           sube: 'B',
-          pansiyon: false
-        }
+          pansiyon: false,
+        },
       ];
 
       await User.insertMany(users);
@@ -216,8 +216,8 @@ describe('User Model', () => {
     it('should find users by class and section', async () => {
       const class9A = await User.find({ sinif: '9', sube: 'A' });
       expect(class9A).toHaveLength(2);
-      expect(class9A.map(u => u.id)).toContain('student1');
-      expect(class9A.map(u => u.id)).toContain('teacher1');
+      expect(class9A.map((u) => u.id)).toContain('student1');
+      expect(class9A.map((u) => u.id)).toContain('teacher1');
     });
 
     it('should find users by dormitory status', async () => {
@@ -232,14 +232,13 @@ describe('User Model', () => {
     });
   });
 
-
   describe('User Virtuals', () => {
     it('should return full name from adSoyad', async () => {
       const userData = {
         id: 'user123',
         adSoyad: 'John Doe',
         sifre: 'hashedPassword',
-        rol: 'student'
+        rol: 'student',
       };
 
       const user = new User(userData);

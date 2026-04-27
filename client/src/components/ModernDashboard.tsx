@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  Users,
-  GraduationCap,
-  House
-} from 'lucide-react';
+import { Users, GraduationCap, House } from 'lucide-react';
 import { useUser, useIsLoading } from '../stores/authStore';
 import { SecureAPI } from '../utils/api';
 import { dashboardButtons } from '../pages/Dashboard/dashboardButtonConfig';
@@ -53,7 +49,7 @@ const ModernDashboard: React.FC = () => {
           pansiyon: authUser.pansiyon ?? undefined,
           oda: authUser.oda ? String(authUser.oda) : undefined,
           avatar: undefined, // Not in User type
-          sonGiris: undefined // Not in User type
+          sonGiris: undefined, // Not in User type
         };
         setUserData(finalUserData);
       }
@@ -71,7 +67,7 @@ const ModernDashboard: React.FC = () => {
           pansiyon: authUser.pansiyon ?? undefined,
           oda: authUser.oda ? String(authUser.oda) : undefined,
           avatar: undefined,
-          sonGiris: undefined
+          sonGiris: undefined,
         });
       }
     }
@@ -101,7 +97,7 @@ const ModernDashboard: React.FC = () => {
   const getRoleButtons = () => {
     const currentRole = userData?.rol || authUser?.rol;
 
-    return dashboardButtons.filter(btn => {
+    return dashboardButtons.filter((btn) => {
       const hasRole = btn.roles.includes(currentRole as UserRole);
       const dormitoryCheck = !btn.showForDormitory || userData?.pansiyon;
 
@@ -151,82 +147,87 @@ const ModernDashboard: React.FC = () => {
       <div className="modern-dashboard-home">
         {/* Welcome Section */}
         <section className="welcome-section">
-        <div className="welcome-card">
-          <div className="welcome-content">
-            <div className="welcome-text">
-              <h1>Hoş Geldiniz, {userData.adSoyad}</h1>
-              <p className="welcome-subtitle">
-                {userData.rol === 'student'
-                  ? `${userData.sinif && userData.sube ? `${userData.sinif}/${userData.sube} sınıfı öğrencisi` : 'Öğrenci'}`
-                  : `${userData.rol === 'admin' ? 'Yönetici' :
-                    userData.rol === 'teacher' ? 'Öğretmen' :
-                      userData.rol === 'parent' ? 'Veli' :
-                        userData.rol === 'hizmetli' ? 'Hizmetli' :
-                          userData.rol === 'ziyaretci' ? 'Ziyaretci' : 'Kullanıcı'} paneli`
-                }
-                {userData.pansiyon && userData.oda && ` - Oda: ${userData.oda}`}
-              </p>
-              <div className="welcome-badges">
-                <span className="badge role-badge">
-                  <GraduationCap className="badge-icon" />
+          <div className="welcome-card">
+            <div className="welcome-content">
+              <div className="welcome-text">
+                <h1>Hoş Geldiniz, {userData.adSoyad}</h1>
+                <p className="welcome-subtitle">
+                  {userData.rol === 'student'
+                    ? `${userData.sinif && userData.sube ? `${userData.sinif}/${userData.sube} sınıfı öğrencisi` : 'Öğrenci'}`
+                    : `${
+                        userData.rol === 'admin'
+                          ? 'Yönetici'
+                          : userData.rol === 'teacher'
+                            ? 'Öğretmen'
+                            : userData.rol === 'parent'
+                              ? 'Veli'
+                              : userData.rol === 'ziyaretci'
+                                ? 'Ziyaretci'
+                                : 'Kullanıcı'
+                      } paneli`}
+                  {userData.pansiyon && userData.oda && ` - Oda: ${userData.oda}`}
+                </p>
+                <div className="welcome-badges">
+                  <span className="badge role-badge">
+                    <GraduationCap className="badge-icon" />
 
-                  {userData.rol === 'admin' ? 'YÖNETİCİ' :
-                    userData.rol === 'teacher' ? 'ÖĞRETMEN' :
-                      userData.rol === 'student' ? 'ÖĞRENCİ' :
-                        userData.rol === 'parent' ? 'VELİ' :
-                          userData.rol === 'hizmetli' ? 'HİZMETLİ' :
-                            userData.rol === 'ziyaretci' ? 'ZİYARETÇİ' : 'KULLANICI'}
-                </span>
-                {userData.rol === 'student' && userData.sinif && userData.sube && (
-                  <span className="badge role-badge">
-                    <Users className="badge-icon" />
-                    {userData.sinif}/{userData.sube}
+                    {userData.rol === 'admin'
+                      ? 'YÖNETİCİ'
+                      : userData.rol === 'teacher'
+                        ? 'ÖĞRETMEN'
+                        : userData.rol === 'student'
+                          ? 'ÖĞRENCİ'
+                          : userData.rol === 'parent'
+                            ? 'VELİ'
+                            : userData.rol === 'ziyaretci'
+                              ? 'ZİYARETÇİ'
+                              : 'KULLANICI'}
                   </span>
-                )}
-                {userData.rol === 'student' && (
-                  <span className="badge role-badge">
-                    <House className="badge-icon" />
-                    {userData.pansiyon === true ? 'Yatılı' : 'Gündüzlü'}
-                  </span>
-                )}
+                  {userData.rol === 'student' && userData.sinif && userData.sube && (
+                    <span className="badge role-badge">
+                      <Users className="badge-icon" />
+                      {userData.sinif}/{userData.sube}
+                    </span>
+                  )}
+                  {userData.rol === 'student' && (
+                    <span className="badge role-badge">
+                      <House className="badge-icon" />
+                      {userData.pansiyon === true ? 'Yatılı' : 'Gündüzlü'}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="welcome-illustration">
-              <div className="illustration-container">
-                <GraduationCap className="illustration-icon" />
+              <div className="welcome-illustration">
+                <div className="illustration-container">
+                  <GraduationCap className="illustration-icon" />
+                </div>
               </div>
             </div>
           </div>
-        </div>
         </section>
         {/* Email Verification Banner */}
         <EmailVerificationBanner />
         {/* Dashboard Grid */}
         <section className="dashboard-grid-section">
-
           <div className="dashboard-grid">
-          {roleButtons.map((button) => (
-            <div
-              key={button.key}
-              className="dashboard-card-container"
-            >
-              <Link to={button.route} className="dashboard-card-link">
-                <div className="dashboard-card">
-                  <div className="card-header">
-                    <div className="card-icon">
-                      {button.icon && <button.icon className="icon" />}
+            {roleButtons.map((button) => (
+              <div key={button.key} className="dashboard-card-container">
+                <Link to={button.route} className="dashboard-card-link">
+                  <div className="dashboard-card">
+                    <div className="card-header">
+                      <div className="card-icon">
+                        {button.icon && <button.icon className="icon" />}
+                      </div>
+                    </div>
+                    <div className="card-content">
+                      <h3>{button.title}</h3>
+                      <p>{button.description}</p>
                     </div>
                   </div>
-                  <div className="card-content">
-                    <h3>{button.title}</h3>
-                    <p>{button.description}</p>
-                  </div>
-                </div>
-              </Link>
-            </div>
-          ))}
-        </div>
-
+                </Link>
+              </div>
+            ))}
+          </div>
         </section>
       </div>
     </ModernDashboardLayout>

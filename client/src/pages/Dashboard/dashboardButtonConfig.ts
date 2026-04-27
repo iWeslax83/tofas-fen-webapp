@@ -14,7 +14,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 
-export type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'hizmetli' | 'ziyaretci';
+export type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'ziyaretci';
 
 export interface DashboardButton {
   key: string;
@@ -203,19 +203,17 @@ export const dashboardButtons: DashboardButton[] = [
     icon: MessageSquareWarning,
     actionText: 'Dilekçe Oluştur',
   },
-
-  // Admin & Hizmetli
   {
     key: 'meal-list',
     title: 'Pansiyon Yemek Listesi',
     description: 'Aylık yemek menüsünü görüntüle ve düzenle',
     route: '/admin/yemek-listesi',
-    roles: ['admin', 'hizmetli'],
-    crudRoles: ['admin', 'hizmetli'],
+    roles: ['admin'],
+    crudRoles: ['admin'],
     icon: Utensils,
     actionText: 'Menüyü Yönet',
   },
-  // Belletmen Listesi (separate for admin and hizmetli)
+
   {
     key: 'supervisor-list-admin',
     title: 'Pansiyon Belletmen Listesi',
@@ -223,16 +221,6 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/admin/belletmen-listesi',
     roles: ['admin'],
     crudRoles: ['admin'],
-    icon: ClipboardList,
-    actionText: 'Listeyi Yönet',
-  },
-  {
-    key: 'supervisor-list-hizmetli',
-    title: 'Pansiyon Belletmen Listesi',
-    description: 'Belletmen nöbet listelerini yönet',
-    route: '/hizmetli/belletmen-listesi',
-    roles: ['hizmetli'],
-    crudRoles: ['hizmetli'],
     icon: ClipboardList,
     actionText: 'Listeyi Yönet',
   },

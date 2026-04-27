@@ -5,7 +5,7 @@ export const createSampleReports = async () => {
   // Report model not available - skipping for now
   console.log('⚠️ Report model not found - skipping sample reports creation');
   return;
-  
+
   /* Commented out until Report model is available
   try {
     const { Report } = await import('../models/Report');
@@ -111,7 +111,7 @@ export const createSampleReports = async () => {
             {
               type: 'pie',
               data: {
-                labels: ['Admin', 'Öğretmen', 'Öğrenci', 'Veli', 'Hizmetli'],
+                labels: ['Admin', 'Öğretmen', 'Öğrenci', 'Veli'],
                 datasets: [{
                   data: [5, 25, 120, 40, 10],
                   backgroundColor: [
@@ -142,7 +142,7 @@ export const createSampleReports = async () => {
                 ['Öğretmen', '25', '23', '38'],
                 ['Öğrenci', '120', '110', '25'],
                 ['Veli', '40', '35', '12'],
-                ['Hizmetli', '10', '7', '8']
+                [ '10', '7', '8']
               ],
               summary: {
                 totalUsers: 200,

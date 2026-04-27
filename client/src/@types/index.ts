@@ -1,5 +1,5 @@
 // User and Authentication Types
-export type UserRole = 'student' | 'teacher' | 'parent' | 'admin' | 'hizmetli' | 'ziyaretci';
+export type UserRole = 'student' | 'teacher' | 'parent' | 'admin' | 'ziyaretci';
 
 export interface IUser {
   _id: string;
@@ -128,7 +128,6 @@ export interface NavigationItem {
   children?: NavigationItem[];
   roles?: UserRole[];
 }
-
 
 // Theme Types
 export interface Theme {

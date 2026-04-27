@@ -77,7 +77,7 @@ router.get(
  *         required: true
  *         schema:
  *           type: string
- *           enum: [student, parent, teacher, admin, hizmetli]
+
  *       - in: query
  *         name: page
  *         schema:

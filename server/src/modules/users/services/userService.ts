@@ -22,30 +22,26 @@ export class UserService {
 
     // Build query
     const query: any = {};
-    
+
     if (role) {
       query.rol = role;
     }
-    
+
     if (isActive !== undefined) {
       query.isActive = isActive;
     }
-    
+
     if (search) {
       query.$or = [
         { adSoyad: { $regex: search, $options: 'i' } },
         { id: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
+        { email: { $regex: search, $options: 'i' } },
       ];
     }
 
     const [users, total] = await Promise.all([
-      User.find(query)
-        .select('-sifre')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-      User.countDocuments(query)
+      User.find(query).select('-sifre').sort({ createdAt: -1 }).skip(skip).limit(limit),
+      User.countDocuments(query),
     ]);
 
     return {
@@ -53,7 +49,7 @@ export class UserService {
       page,
       limit,
       total,
-      pages: Math.ceil(total / limit)
+      pages: Math.ceil(total / limit),
     };
   }
 
@@ -61,9 +57,8 @@ export class UserService {
    * Get user by ID
    */
   static async getUserById(id: string): Promise<any> {
-    const user = await User.findOne({ id, isActive: true })
-      .select('-sifre');
-    
+    const user = await User.findOne({ id, isActive: true }).select('-sifre');
+
     if (!user) {
       throw AppError.notFound('Kullanıcı bulunamadı');
     }
@@ -186,26 +181,21 @@ export class UserService {
    * Get user statistics
    */
   static async getUserStats(): Promise<any> {
-    const [
-      totalUsers,
-      activeUsers,
-      usersByRole,
-      recentLogins
-    ] = await Promise.all([
+    const [totalUsers, activeUsers, usersByRole, recentLogins] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ isActive: true }),
       User.aggregate([
         { $match: { isActive: true } },
-        { $group: { _id: '$rol', count: { $sum: 1 } } }
+        { $group: { _id: '$rol', count: { $sum: 1 } } },
       ]),
       User.countDocuments({
         lastLogin: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-        isActive: true
-      })
+        isActive: true,
+      }),
     ]);
 
     const roleStats: Record<string, number> = {};
-    usersByRole.forEach(stat => {
+    usersByRole.forEach((stat) => {
       roleStats[stat._id] = stat.count;
     });
 
@@ -214,7 +204,7 @@ export class UserService {
       activeUsers,
       inactiveUsers: totalUsers - activeUsers,
       usersByRole: roleStats,
-      recentLogins
+      recentLogins,
     };
   }
 
@@ -232,18 +222,16 @@ export class UserService {
       $or: [
         { adSoyad: { $regex: query, $options: 'i' } },
         { id: { $regex: query, $options: 'i' } },
-        { email: { $regex: query, $options: 'i' } }
+        { email: { $regex: query, $options: 'i' } },
       ],
-      isActive: true
+      isActive: true,
     };
 
     if (role) {
       searchQuery.rol = role;
     }
 
-    const users = await User.find(searchQuery)
-      .select('-sifre')
-      .limit(limit);
+    const users = await User.find(searchQuery).select('-sifre').limit(limit);
 
     return users;
   }
@@ -251,10 +239,13 @@ export class UserService {
   /**
    * Get users by role
    */
-  static async getUsersByRole(role: string, options: {
-    page: number;
-    limit: number;
-  }) {
+  static async getUsersByRole(
+    role: string,
+    options: {
+      page: number;
+      limit: number;
+    },
+  ) {
     const { page, limit } = options;
     const skip = (page - 1) * limit;
 
@@ -264,7 +255,7 @@ export class UserService {
         .sort({ adSoyad: 1 })
         .skip(skip)
         .limit(limit),
-      User.countDocuments({ rol: role, isActive: true })
+      User.countDocuments({ rol: role, isActive: true }),
     ]);
 
     return {
@@ -272,7 +263,7 @@ export class UserService {
       page,
       limit,
       total,
-      pages: Math.ceil(total / limit)
+      pages: Math.ceil(total / limit),
     };
   }
 
@@ -282,7 +273,7 @@ export class UserService {
   static async getParentChildren(parentId: string): Promise<any[]> {
     const children = await User.find({
       parentId,
-      isActive: true
+      isActive: true,
     }).select('-sifre');
 
     return children;
@@ -296,7 +287,7 @@ export class UserService {
       rol: 'student',
       sinif,
       sube,
-      isActive: true
+      isActive: true,
     }).select('-sifre');
 
     return students;
@@ -305,10 +296,7 @@ export class UserService {
   /**
    * Get dormitory students
    */
-  static async getDormitoryStudents(options: {
-    page: number;
-    limit: number;
-  }) {
+  static async getDormitoryStudents(options: { page: number; limit: number }) {
     const { page, limit } = options;
     const skip = (page - 1) * limit;
 
@@ -316,7 +304,7 @@ export class UserService {
       User.find({
         rol: 'student',
         pansiyon: true,
-        isActive: true
+        isActive: true,
       })
         .select('-sifre')
         .sort({ adSoyad: 1 })
@@ -325,8 +313,8 @@ export class UserService {
       User.countDocuments({
         rol: 'student',
         pansiyon: true,
-        isActive: true
-      })
+        isActive: true,
+      }),
     ]);
 
     return {
@@ -334,7 +322,7 @@ export class UserService {
       page,
       limit,
       total,
-      pages: Math.ceil(total / limit)
+      pages: Math.ceil(total / limit),
     };
   }
 
@@ -352,7 +340,10 @@ export class UserService {
       errors.push('Ad soyad en az 2 karakter olmalıdır');
     }
 
-    if (!userData.rol || !['admin', 'teacher', 'student', 'parent', 'hizmetli', 'ziyaretci'].includes(userData.rol)) {
+    if (
+      !userData.rol ||
+      !['admin', 'teacher', 'student', 'parent', 'ziyaretci'].includes(userData.rol)
+    ) {
       errors.push('Geçerli bir rol seçilmelidir');
     }
 
@@ -370,7 +361,7 @@ export class UserService {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 }

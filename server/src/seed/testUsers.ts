@@ -5,15 +5,33 @@ import bcrypt from 'bcryptjs';
 export const createTestUsers = async () => {
   try {
     // Mevcut test kullanıcılarını temizle
-    await User.deleteMany({ 
-      id: { 
+    await User.deleteMany({
+      id: {
         $in: [
-          'admin1', 'admin2', 'teacher1', 'teacher2', 'teacher3', 'teacher4', 'teacher5',
-          'student1', 'student2', 'student3', 'student4', 'student5', 'student6', 'student7', 'student8', 'student9', 'student10',
-          'parent1', 'parent2', 'parent3', 'parent4', 'parent5',
-          'hizmetli1', 'hizmetli2'
-        ]
-      }
+          'admin1',
+          'admin2',
+          'teacher1',
+          'teacher2',
+          'teacher3',
+          'teacher4',
+          'teacher5',
+          'student1',
+          'student2',
+          'student3',
+          'student4',
+          'student5',
+          'student6',
+          'student7',
+          'student8',
+          'student9',
+          'student10',
+          'parent1',
+          'parent2',
+          'parent3',
+          'parent4',
+          'parent5',
+        ],
+      },
     });
 
     const hashedPassword = await bcrypt.hash('123456', 8);
@@ -27,7 +45,7 @@ export const createTestUsers = async () => {
         rol: 'admin',
         sifre: hashedPassword,
         emailVerified: true,
-        isActive: true
+        isActive: true,
       },
       {
         id: 'admin2',
@@ -36,7 +54,7 @@ export const createTestUsers = async () => {
         rol: 'admin',
         sifre: hashedPassword,
         emailVerified: true,
-        isActive: true
+        isActive: true,
       },
 
       // ÖĞRETMEN KULLANICILARI
@@ -47,7 +65,7 @@ export const createTestUsers = async () => {
         rol: 'teacher',
         sifre: hashedPassword,
         emailVerified: true,
-        isActive: true
+        isActive: true,
       },
       {
         id: 'teacher2',
@@ -56,7 +74,7 @@ export const createTestUsers = async () => {
         rol: 'teacher',
         sifre: hashedPassword,
         emailVerified: true,
-        isActive: true
+        isActive: true,
       },
       {
         id: 'teacher3',
@@ -65,7 +83,7 @@ export const createTestUsers = async () => {
         rol: 'teacher',
         sifre: hashedPassword,
         emailVerified: true,
-        isActive: true
+        isActive: true,
       },
       {
         id: 'teacher4',
@@ -74,7 +92,7 @@ export const createTestUsers = async () => {
         rol: 'teacher',
         sifre: hashedPassword,
         emailVerified: true,
-        isActive: true
+        isActive: true,
       },
       {
         id: 'teacher5',
@@ -83,7 +101,7 @@ export const createTestUsers = async () => {
         rol: 'teacher',
         sifre: hashedPassword,
         emailVerified: true,
-        isActive: true
+        isActive: true,
       },
 
       // ÖĞRENCİ KULLANICILARI (9. Sınıf)
@@ -97,7 +115,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        parentId: 'parent1'
+        parentId: 'parent1',
       },
       {
         id: 'student2',
@@ -109,7 +127,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        parentId: 'parent2'
+        parentId: 'parent2',
       },
       {
         id: 'student3',
@@ -121,7 +139,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        parentId: 'parent3'
+        parentId: 'parent3',
       },
 
       // ÖĞRENCİ KULLANICILARI (10. Sınıf)
@@ -135,7 +153,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        parentId: 'parent4'
+        parentId: 'parent4',
       },
       {
         id: 'student5',
@@ -147,7 +165,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        parentId: 'parent5'
+        parentId: 'parent5',
       },
       {
         id: 'student6',
@@ -159,7 +177,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        parentId: 'parent1'
+        parentId: 'parent1',
       },
 
       // ÖĞRENCİ KULLANICILARI (11. Sınıf)
@@ -173,7 +191,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        parentId: 'parent2'
+        parentId: 'parent2',
       },
       {
         id: 'student8',
@@ -185,7 +203,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        parentId: 'parent3'
+        parentId: 'parent3',
       },
 
       // ÖĞRENCİ KULLANICILARI (12. Sınıf)
@@ -199,7 +217,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        parentId: 'parent4'
+        parentId: 'parent4',
       },
       {
         id: 'student10',
@@ -211,7 +229,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        parentId: 'parent5'
+        parentId: 'parent5',
       },
 
       // PANSİYON ÖĞRENCİLERİ
@@ -227,7 +245,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        parentId: 'parent1'
+        parentId: 'parent1',
       },
       {
         id: 'student12',
@@ -241,7 +259,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        parentId: 'parent2'
+        parentId: 'parent2',
       },
 
       // VELİ KULLANICILARI
@@ -253,7 +271,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        childId: ['student1', 'student6', 'student11']
+        childId: ['student1', 'student6', 'student11'],
       },
       {
         id: 'parent2',
@@ -263,7 +281,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        childId: ['student2', 'student7', 'student12']
+        childId: ['student2', 'student7', 'student12'],
       },
       {
         id: 'parent3',
@@ -273,7 +291,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        childId: ['student3', 'student8']
+        childId: ['student3', 'student8'],
       },
       {
         id: 'parent4',
@@ -283,7 +301,7 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        childId: ['student4', 'student9']
+        childId: ['student4', 'student9'],
       },
       {
         id: 'parent5',
@@ -293,41 +311,20 @@ export const createTestUsers = async () => {
         sifre: hashedPassword,
         emailVerified: true,
         isActive: true,
-        childId: ['student5', 'student10']
+        childId: ['student5', 'student10'],
       },
-
-      // HİZMETLİ KULLANICILARI
-      {
-        id: 'hizmetli1',
-        adSoyad: 'Osman Temizlik',
-        email: 'osman.temizlik@tofasfen.edu.tr',
-        rol: 'hizmetli',
-        sifre: hashedPassword,
-        emailVerified: true,
-        isActive: true
-      },
-      {
-        id: 'hizmetli2',
-        adSoyad: 'Hatice Güvenlik',
-        email: 'hatice.guvenlik@tofasfen.edu.tr',
-        rol: 'hizmetli',
-        sifre: hashedPassword,
-        emailVerified: true,
-        isActive: true
-      }
     ];
 
     // Kullanıcıları veritabanına ekle
     await User.insertMany(testUsers);
-    
+
     console.log('✅ Test kullanıcıları başarıyla oluşturuldu!');
     console.log('📊 Toplam kullanıcı sayısı:', testUsers.length);
-    console.log('👨‍💼 Admin:', testUsers.filter(u => u.rol === 'admin').length);
-    console.log('👨‍🏫 Öğretmen:', testUsers.filter(u => u.rol === 'teacher').length);
-    console.log('👨‍🎓 Öğrenci:', testUsers.filter(u => u.rol === 'student').length);
-    console.log('👨‍👩‍👧‍👦 Veli:', testUsers.filter(u => u.rol === 'parent').length);
-    console.log('🧹 Hizmetli:', testUsers.filter(u => u.rol === 'hizmetli').length);
-    
+    console.log('👨‍💼 Admin:', testUsers.filter((u) => u.rol === 'admin').length);
+    console.log('👨‍🏫 Öğretmen:', testUsers.filter((u) => u.rol === 'teacher').length);
+    console.log('👨‍🎓 Öğrenci:', testUsers.filter((u) => u.rol === 'student').length);
+    console.log('👨‍👩‍👧‍👦 Veli:', testUsers.filter((u) => u.rol === 'parent').length);
+
     return testUsers;
   } catch (error) {
     console.error('❌ Test kullanıcıları oluşturulurken hata:', error);
@@ -338,17 +335,37 @@ export const createTestUsers = async () => {
 // Test kullanıcılarını sil
 export const deleteTestUsers = async (): Promise<{ deletedCount?: number }> => {
   try {
-    const result = await User.deleteMany({ 
-      id: { 
+    const result = await User.deleteMany({
+      id: {
         $in: [
-          'admin1', 'admin2', 'teacher1', 'teacher2', 'teacher3', 'teacher4', 'teacher5',
-          'student1', 'student2', 'student3', 'student4', 'student5', 'student6', 'student7', 'student8', 'student9', 'student10', 'student11', 'student12',
-          'parent1', 'parent2', 'parent3', 'parent4', 'parent5',
-          'hizmetli1', 'hizmetli2'
-        ]
-      }
+          'admin1',
+          'admin2',
+          'teacher1',
+          'teacher2',
+          'teacher3',
+          'teacher4',
+          'teacher5',
+          'student1',
+          'student2',
+          'student3',
+          'student4',
+          'student5',
+          'student6',
+          'student7',
+          'student8',
+          'student9',
+          'student10',
+          'student11',
+          'student12',
+          'parent1',
+          'parent2',
+          'parent3',
+          'parent4',
+          'parent5',
+        ],
+      },
     });
-    
+
     console.log('🗑️ Test kullanıcıları silindi:', result.deletedCount);
     return result;
   } catch (error) {

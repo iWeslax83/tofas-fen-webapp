@@ -42,7 +42,6 @@ const ROLES = [
   { value: 'parent', label: 'Veliler' },
   { value: 'teacher', label: 'Öğretmenler' },
   { value: 'admin', label: 'Yöneticiler' },
-  { value: 'hizmetli', label: 'Hizmetliler' },
 ];
 
 export default function SenkronizasyonPage() {
@@ -324,11 +323,9 @@ export default function SenkronizasyonPage() {
                                 ? `Öğrenci ${u.pansiyon ? '(Yatılı)' : '(Gündüzlü)'}`
                                 : u.rol === 'parent'
                                   ? 'Veli'
-                                  : u.rol === 'hizmetli'
-                                    ? 'Hizmetli'
-                                    : u.rol === 'ziyaretci'
-                                      ? 'Ziyaretçi'
-                                      : u.rol}
+                                  : u.rol === 'ziyaretci'
+                                    ? 'Ziyaretçi'
+                                    : u.rol}
                         </span>
                       </div>
                     </div>

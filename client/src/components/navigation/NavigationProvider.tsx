@@ -67,7 +67,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
       teacher: 'Öğretmen Paneli',
       student: 'Öğrenci Paneli',
       parent: 'Veli Paneli',
-      hizmetli: 'Hizmetli Paneli',
+
       odevler: 'Ödevler',
       'ders-programi': 'Ders Programı',
       notlar: 'Notlar',
@@ -100,7 +100,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({ children
       teacher: User,
       student: GraduationCap,
       parent: Users,
-      hizmetli: Shield,
+
       odevler: BookOpen,
       'ders-programi': Calendar,
       notlar: FileText,

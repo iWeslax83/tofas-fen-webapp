@@ -42,7 +42,7 @@ export const requireStudent = requireRole(['student']);
 export const requireParent = requireRole(['parent']);
 
 // Service middleware
-export const requireService = requireRole(['hizmetli', 'admin']);
+export const requireService = requireRole(['admin']);
 
 // Visitor middleware
 export const requireVisitor = requireRole(['ziyaretci']);

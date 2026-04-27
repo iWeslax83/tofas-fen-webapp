@@ -157,7 +157,7 @@ router.get(
 router.post(
   '/meals',
   requireAuth,
-  requireRole(['admin', 'hizmetli']),
+  requireRole(['admin']),
   upload.single('file'),
   verifyUploadedFiles,
   asyncHandler(async (req, res) => {
@@ -271,7 +271,7 @@ router.get(
 router.post(
   '/supervisors',
   requireAuth,
-  requireRole(['admin', 'hizmetli']),
+  requireRole(['admin']),
   upload.single('file'),
   verifyUploadedFiles,
   asyncHandler(async (req, res) => {

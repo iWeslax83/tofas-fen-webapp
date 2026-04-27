@@ -8,7 +8,7 @@ export interface IUser extends Document {
   tckn?: string; // T.C. Kimlik No - encrypted at rest
   tcknHash?: string; // HMAC hash of TCKN for lookups
   sifre?: string; // Deprecated - artık TCKN kullanılacak, geriye dönük uyumluluk için bırakıldı
-  rol: 'student' | 'teacher' | 'parent' | 'admin' | 'hizmetli' | 'ziyaretci';
+  rol: 'student' | 'teacher' | 'parent' | 'admin' | 'ziyaretci';
   sinif?: string;
   sube?: string;
   oda?: string;
@@ -80,7 +80,7 @@ const UserSchema = new Schema<IUser>(
     },
     rol: {
       type: String,
-      enum: ['student', 'teacher', 'parent', 'admin', 'hizmetli', 'ziyaretci'],
+      enum: ['student', 'teacher', 'parent', 'admin', 'ziyaretci'],
       required: true,
       index: true, // For role-based queries
     },

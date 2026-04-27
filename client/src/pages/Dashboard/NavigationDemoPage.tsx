@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  NavigationProvider, 
-  EnhancedSidebar, 
-  EnhancedTopNavigation, 
-  EnhancedBreadcrumbs, 
-  MobileNavigation, 
-  NavigationAnalytics 
+import {
+  NavigationProvider,
+  EnhancedSidebar,
+  EnhancedTopNavigation,
+  EnhancedBreadcrumbs,
+  MobileNavigation,
+  NavigationAnalytics,
 } from '../../components/NavigationComponents';
-import { 
+import {
   // GraduationCap, // Not used
-  BookOpen, 
-  Users, 
+  BookOpen,
+  Users,
   // Calendar, // Not used
   // FileText, // Not used
-  Bell, 
+  Bell,
   // Settings, // Not used
   BarChart3,
   Award,
@@ -94,7 +94,7 @@ const NavigationDemoPage: React.FC = () => {
       component: (
         <div className="demo-overview">
           <div className="overview-grid">
-            <motion.div 
+            <motion.div
               className="overview-card"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -115,7 +115,7 @@ const NavigationDemoPage: React.FC = () => {
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="overview-card"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -136,7 +136,7 @@ const NavigationDemoPage: React.FC = () => {
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="overview-card"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -157,7 +157,7 @@ const NavigationDemoPage: React.FC = () => {
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="overview-card"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -179,7 +179,7 @@ const NavigationDemoPage: React.FC = () => {
             </motion.div>
           </div>
         </div>
-      )
+      ),
     },
     {
       id: 'sidebar',
@@ -189,20 +189,17 @@ const NavigationDemoPage: React.FC = () => {
       component: (
         <div className="demo-sidebar">
           <div className="demo-controls">
-            <button 
-              className="demo-btn primary"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              {sidebarOpen ? 'Sidebar\'ı Kapat' : 'Sidebar\'ı Aç'}
+            <button className="demo-btn primary" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              {sidebarOpen ? "Sidebar'ı Kapat" : "Sidebar'ı Aç"}
             </button>
-            <button 
+            <button
               className="demo-btn secondary"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? 'Mobil Menüyü Kapat' : 'Mobil Menüyü Aç'}
             </button>
           </div>
-          
+
           <div className="sidebar-features">
             <h3>Sidebar Özellikleri</h3>
             <div className="features-grid">
@@ -229,7 +226,7 @@ const NavigationDemoPage: React.FC = () => {
             </div>
           </div>
         </div>
-      )
+      ),
     },
     {
       id: 'breadcrumbs',
@@ -240,7 +237,7 @@ const NavigationDemoPage: React.FC = () => {
         <div className="demo-breadcrumbs">
           <div className="breadcrumb-demo">
             <h3>Breadcrumb Örnekleri</h3>
-            
+
             <div className="breadcrumb-examples">
               <div className="example-item">
                 <h4>Basit Yol</h4>
@@ -312,7 +309,7 @@ const NavigationDemoPage: React.FC = () => {
             </div>
           </div>
         </div>
-      )
+      ),
     },
     {
       id: 'top-nav',
@@ -323,16 +320,13 @@ const NavigationDemoPage: React.FC = () => {
         <div className="demo-top-nav">
           <div className="top-nav-demo">
             <h3>Üst Navigasyon Özellikleri</h3>
-            
+
             <div className="nav-features-grid">
               <div className="nav-feature">
                 <Search className="feature-icon" />
                 <h4>Global Arama</h4>
                 <p>Sayfa içeriğinde hızlı arama yapın</p>
-                <button 
-                  className="demo-btn small"
-                  onClick={() => setSearchOpen(!searchOpen)}
-                >
+                <button className="demo-btn small" onClick={() => setSearchOpen(!searchOpen)}>
                   {searchOpen ? 'Aramayı Kapat' : 'Aramayı Aç'}
                 </button>
               </div>
@@ -341,7 +335,7 @@ const NavigationDemoPage: React.FC = () => {
                 <Grid className="feature-icon" />
                 <h4>Görünüm Modları</h4>
                 <p>Grid ve liste görünümleri arasında geçiş</p>
-                <button 
+                <button
                   className="demo-btn small"
                   onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
                 >
@@ -353,10 +347,7 @@ const NavigationDemoPage: React.FC = () => {
                 <Filter className="feature-icon" />
                 <h4>Filtreler</h4>
                 <p>İçerik filtreleme seçenekleri</p>
-                <button 
-                  className="demo-btn small"
-                  onClick={() => setShowFilters(!showFilters)}
-                >
+                <button className="demo-btn small" onClick={() => setShowFilters(!showFilters)}>
                   {showFilters ? 'Filtreleri Kapat' : 'Filtreleri Aç'}
                 </button>
               </div>
@@ -373,7 +364,7 @@ const NavigationDemoPage: React.FC = () => {
             </div>
 
             {searchOpen && (
-              <motion.div 
+              <motion.div
                 className="search-demo"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -381,11 +372,7 @@ const NavigationDemoPage: React.FC = () => {
               >
                 <div className="search-container">
                   <Search className="search-icon" />
-                  <input 
-                    type="text" 
-                    placeholder="Ara..." 
-                    className="search-input"
-                  />
+                  <input type="text" placeholder="Ara..." className="search-input" />
                   <button className="search-btn">
                     <Search className="search-submit-icon" />
                   </button>
@@ -394,7 +381,7 @@ const NavigationDemoPage: React.FC = () => {
             )}
 
             {showFilters && (
-              <motion.div 
+              <motion.div
                 className="filters-demo"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -417,7 +404,6 @@ const NavigationDemoPage: React.FC = () => {
                     </label>
                     <label className="filter-option">
                       <input type="checkbox" />
-                      <span>Hizmetliler</span>
                     </label>
                   </div>
                 </div>
@@ -425,7 +411,7 @@ const NavigationDemoPage: React.FC = () => {
             )}
           </div>
         </div>
-      )
+      ),
     },
     {
       id: 'mobile',
@@ -436,7 +422,7 @@ const NavigationDemoPage: React.FC = () => {
         <div className="demo-mobile">
           <div className="mobile-demo">
             <h3>Mobil Navigasyon Özellikleri</h3>
-            
+
             <div className="mobile-features">
               <div className="mobile-feature">
                 <div className="feature-icon-container">
@@ -484,7 +470,7 @@ const NavigationDemoPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="mobile-content">
                   <div className="mobile-nav-preview">
                     <div className="mobile-nav-item active">
@@ -513,7 +499,7 @@ const NavigationDemoPage: React.FC = () => {
             </div>
           </div>
         </div>
-      )
+      ),
     },
     {
       id: 'analytics',
@@ -524,7 +510,7 @@ const NavigationDemoPage: React.FC = () => {
         <div className="demo-analytics">
           <div className="analytics-demo">
             <h3>Navigasyon Analitikleri</h3>
-            
+
             <div className="analytics-grid">
               <div className="analytics-card">
                 <div className="analytics-header">
@@ -645,24 +631,24 @@ const NavigationDemoPage: React.FC = () => {
             </div>
           </div>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
-  const currentSection = demoSections.find(section => section.id === activeSection);
+  const currentSection = demoSections.find((section) => section.id === activeSection);
 
   return (
     <NavigationProvider>
       <div className="navigation-demo-page">
         {/* Enhanced Top Navigation */}
         <EnhancedTopNavigation />
-        
+
         {/* Enhanced Sidebar */}
         <EnhancedSidebar />
-        
+
         {/* Mobile Navigation */}
         <MobileNavigation />
-        
+
         {/* Navigation Analytics */}
         <NavigationAnalytics />
 
@@ -670,7 +656,7 @@ const NavigationDemoPage: React.FC = () => {
         <main className="demo-main-content">
           <div className="demo-container">
             {/* Demo Header */}
-            <motion.div 
+            <motion.div
               className="demo-header"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -679,7 +665,10 @@ const NavigationDemoPage: React.FC = () => {
               <div className="header-content">
                 <div className="header-left">
                   <h1>Navigasyon Geliştirmeleri Demo</h1>
-                  <p>TOFAS FEN WebApp için geliştirilmiş navigasyon sisteminin özellikleri ve kullanım örnekleri</p>
+                  <p>
+                    TOFAS FEN WebApp için geliştirilmiş navigasyon sisteminin özellikleri ve
+                    kullanım örnekleri
+                  </p>
                 </div>
                 <div className="header-right">
                   <div className="demo-stats">
@@ -701,7 +690,7 @@ const NavigationDemoPage: React.FC = () => {
             </motion.div>
 
             {/* Demo Navigation */}
-            <motion.nav 
+            <motion.nav
               className="demo-navigation"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -720,7 +709,7 @@ const NavigationDemoPage: React.FC = () => {
             </motion.nav>
 
             {/* Demo Content */}
-            <motion.div 
+            <motion.div
               className="demo-content"
               key={activeSection}
               initial={{ opacity: 0, x: 20 }}
@@ -731,7 +720,7 @@ const NavigationDemoPage: React.FC = () => {
             </motion.div>
 
             {/* Demo Footer */}
-            <motion.footer 
+            <motion.footer
               className="demo-footer"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -743,9 +732,15 @@ const NavigationDemoPage: React.FC = () => {
                 </div>
                 <div className="footer-right">
                   <div className="footer-links">
-                    <a href="#" className="footer-link">Dokümantasyon</a>
-                    <a href="#" className="footer-link">API Referansı</a>
-                    <a href="#" className="footer-link">Destek</a>
+                    <a href="#" className="footer-link">
+                      Dokümantasyon
+                    </a>
+                    <a href="#" className="footer-link">
+                      API Referansı
+                    </a>
+                    <a href="#" className="footer-link">
+                      Destek
+                    </a>
                   </div>
                 </div>
               </div>
