@@ -1,0 +1,56 @@
+/* Devlet design tokens — single source of truth (CSS).
+   Mirrored in src/design-tokens/tokens.ts (parity verified by test). */
+
+html {
+  /* Smooth palette swap when [data-theme] changes. Limited to color
+     properties so layout/transform animations aren't affected. */
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
+:root {
+  /* Paper / surface */
+  --paper: #ffffff;
+  --surface: #f6f5f1;
+  --surface-2: #edeae3;
+
+  /* Ink */
+  --ink: #0d0d0d;
+  --ink-2: #2a2a2a;
+  --ink-dim: #555555;
+  --ink-dim-2: #8a8a85;
+
+  /* Rules */
+  --rule: #c9c6bc;
+  --rule-2: #8a8680;
+
+  /* State accent */
+  --state: #931a1a;
+  --state-deep: #6b0e0e;
+
+  /* Type families. Intentionally overrides --font-sans / --font-mono
+     defined in theme.css (Inter / Fira Code) — Devlet is the single
+     source of truth from PR-02 onward. */
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+[data-theme='dark'] {
+  --paper: #0a0d12;
+  --surface: #121820;
+  --surface-2: #1a2029;
+
+  --ink: #e7e5df;
+  --ink-2: #c5c2b8;
+  --ink-dim: #8c8a82;
+  --ink-dim-2: #5c5a54;
+
+  --rule: rgba(231, 229, 223, 0.1);
+  --rule-2: rgba(231, 229, 223, 0.22);
+
+  --state: #c94444;
+  --state-deep: #8b2323;
+}
