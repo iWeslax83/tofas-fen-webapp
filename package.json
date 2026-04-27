@@ -52,7 +52,7 @@
     "docs:build": "cd docs && mkdocs build",
     "generate-secrets": "node scripts/generate-secrets.js",
     "prepare-production": "node scripts/generate-secrets.js",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

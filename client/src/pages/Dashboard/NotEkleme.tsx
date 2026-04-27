@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NotesService } from '../../utils/apiService';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Upload, Plus } from 'lucide-react'; // ArrowLeft removed
 import { useAuthContext } from '../../contexts/AuthContext';
 import { UserRole } from '../../@types';
@@ -64,7 +64,7 @@ const NotEkleme: React.FC = () => {
     teacherName: '',
     gradeLevel: '',
     classSection: '',
-    notes: ''
+    notes: '',
   });
   const [isAddingNote, setIsAddingNote] = useState(false);
 
@@ -115,10 +115,11 @@ const NotEkleme: React.FC = () => {
           toast('Import tamamlandı ancak kaydedilen not bulunamadı', { icon: '⚠️' });
         }
       }
-
     } catch (error: unknown) {
       console.error('Upload hatası:', error);
-      const errorMessage = (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Dosya yükleme hatası';
+      const errorMessage =
+        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        'Dosya yükleme hatası';
       toast.error(errorMessage);
 
       if ((error as { response?: { data?: { errors?: unknown } } })?.response?.data?.errors) {
@@ -128,7 +129,7 @@ const NotEkleme: React.FC = () => {
           importedCount: 0,
           savedCount: 0,
           totalNotes: 0,
-          errors: (error as any)?.response?.data?.errors || []
+          errors: (error as any)?.response?.data?.errors || [],
         });
       }
     } finally {
@@ -161,21 +162,27 @@ const NotEkleme: React.FC = () => {
   };
 
   const calculateAverage = useCallback(() => {
-    const grades = [manualNote.exam1, manualNote.exam2, manualNote.exam3, manualNote.oral, manualNote.project];
-    const validGrades = grades.filter(grade => grade !== undefined && grade !== null) as number[];
+    const grades = [
+      manualNote.exam1,
+      manualNote.exam2,
+      manualNote.exam3,
+      manualNote.oral,
+      manualNote.project,
+    ];
+    const validGrades = grades.filter((grade) => grade !== undefined && grade !== null) as number[];
 
     if (validGrades.length === 0) {
-      setManualNote(prev => ({ ...prev, average: 0 }));
+      setManualNote((prev) => ({ ...prev, average: 0 }));
       return;
     }
 
     const sum = validGrades.reduce((a, b) => a + b, 0);
     const average = Math.round((sum / validGrades.length) * 10) / 10;
-    setManualNote(prev => ({ ...prev, average }));
+    setManualNote((prev) => ({ ...prev, average }));
   }, [manualNote.exam1, manualNote.exam2, manualNote.exam3, manualNote.oral, manualNote.project]);
 
   const handleManualNoteChange = (field: keyof ManualNote, value: string | number | undefined) => {
-    setManualNote(prev => ({ ...prev, [field]: value }));
+    setManualNote((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleAddManualNote = async () => {
@@ -188,7 +195,7 @@ const NotEkleme: React.FC = () => {
     try {
       const noteData = {
         ...manualNote,
-        source: 'manual'
+        source: 'manual',
       };
 
       const { error } = await NotesService.createNote(noteData);
@@ -213,7 +220,7 @@ const NotEkleme: React.FC = () => {
           teacherName: '',
           gradeLevel: '',
           classSection: '',
-          notes: ''
+          notes: '',
         });
       }
     } catch (error: unknown) {
@@ -226,7 +233,14 @@ const NotEkleme: React.FC = () => {
 
   useEffect(() => {
     calculateAverage();
-  }, [manualNote.exam1, manualNote.exam2, manualNote.exam3, manualNote.oral, manualNote.project, calculateAverage]);
+  }, [
+    manualNote.exam1,
+    manualNote.exam2,
+    manualNote.exam3,
+    manualNote.oral,
+    manualNote.project,
+    calculateAverage,
+  ]);
 
   if (loading) {
     return (
@@ -239,14 +253,11 @@ const NotEkleme: React.FC = () => {
 
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${user?.rol || 'student'}` },
-    { label: 'Not Ekleme' }
+    { label: 'Not Ekleme' },
   ];
 
   return (
-    <ModernDashboardLayout
-      pageTitle="Not Ekleme"
-      breadcrumb={breadcrumb}
-    >
+    <ModernDashboardLayout pageTitle="Not Ekleme" breadcrumb={breadcrumb}>
       <div className="not-ekleme-page">
         <div className="tabs-container">
           <div className="tabs">
@@ -279,7 +290,10 @@ const NotEkleme: React.FC = () => {
               <ul>
                 <li>Excel dosyasında ilk satır başlık satırı olmalıdır</li>
                 <li>Zorunlu sütunlar: Öğrenci ID, Öğrenci Adı, Ders</li>
-                <li>İsteğe bağlı sütunlar: Sınav 1, Sınav 2, Sınav 3, Sözlü, Proje, Dönem, Akademik Yıl</li>
+                <li>
+                  İsteğe bağlı sütunlar: Sınav 1, Sınav 2, Sınav 3, Sözlü, Proje, Dönem, Akademik
+                  Yıl
+                </li>
                 <li>Boş bırakılan notlar için "-" kullanın veya boş bırakın</li>
               </ul>
             </div>
@@ -287,10 +301,7 @@ const NotEkleme: React.FC = () => {
             <div className="template-download">
               <h4>📋 Excel Şablonu</h4>
               <p>Doğru format için örnek şablonu indirin ve kullanın.</p>
-              <button
-                onClick={downloadTemplate}
-                className="download-button"
-              >
+              <button onClick={downloadTemplate} className="download-button">
                 📥 Şablonu İndir
               </button>
             </div>
@@ -320,7 +331,8 @@ const NotEkleme: React.FC = () => {
 
               {file && !isValidFile(file) && (
                 <div className="file-upload-error">
-                  ⚠️ Desteklenmeyen dosya formatı. Lütfen {supportedFormats.join(', ')} formatında bir dosya seçin.
+                  ⚠️ Desteklenmeyen dosya formatı. Lütfen {supportedFormats.join(', ')} formatında
+                  bir dosya seçin.
                 </div>
               )}
 
@@ -336,9 +348,7 @@ const NotEkleme: React.FC = () => {
 
               {importResult?.saveErrors && importResult.saveErrors.length > 0 && (
                 <div className="import-save-errors">
-                  <h4 className="import-save-errors-title">
-                    💾 Kaydetme Hataları:
-                  </h4>
+                  <h4 className="import-save-errors-title">💾 Kaydetme Hataları:</h4>
                   <div className="import-save-errors-list">
                     {importResult.saveErrors.map((error, index) => (
                       <div key={index} className="import-save-error-item">
@@ -353,14 +363,9 @@ const NotEkleme: React.FC = () => {
             {/* Results */}
             {importResult && (
               <div className={`import-result ${importResult.success ? 'success' : 'error'}`}>
-                <h3 className="import-result-title">
-                  📊 Import Sonuçları
-                </h3>
+                <h3 className="import-result-title">📊 Import Sonuçları</h3>
 
-
-                <div className="import-result-message">
-                  {importResult.message}
-                </div>
+                <div className="import-result-message">{importResult.message}</div>
 
                 {/* Hatalar */}
                 {importResult.errors && importResult.errors.length > 0 && (
@@ -415,9 +420,7 @@ const NotEkleme: React.FC = () => {
               <div className="not-ekleme-form-grid">
                 {/* Öğrenci Bilgileri */}
                 <div className="form-group">
-                  <label className="form-label">
-                    Öğrenci ID *
-                  </label>
+                  <label className="form-label">Öğrenci ID *</label>
                   <input
                     type="text"
                     value={manualNote.studentId}
@@ -428,9 +431,7 @@ const NotEkleme: React.FC = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">
-                    Ad Soyad *
-                  </label>
+                  <label className="form-label">Ad Soyad *</label>
                   <input
                     type="text"
                     value={manualNote.studentName}
@@ -441,9 +442,7 @@ const NotEkleme: React.FC = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">
-                    Ders *
-                  </label>
+                  <label className="form-label">Ders *</label>
                   <input
                     type="text"
                     value={manualNote.lesson}
@@ -454,9 +453,7 @@ const NotEkleme: React.FC = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">
-                    Öğretmen
-                  </label>
+                  <label className="form-label">Öğretmen</label>
                   <input
                     type="text"
                     value={manualNote.teacherName}
@@ -472,75 +469,90 @@ const NotEkleme: React.FC = () => {
                 <h4 className="section-title">📊 Not Bilgileri</h4>
                 <div className="not-ekleme-grades-grid">
                   <div className="grade-input">
-                    <label className="grade-label">
-                      1. Sınav
-                    </label>
+                    <label className="grade-label">1. Sınav</label>
                     <input
                       type="number"
                       min="0"
                       max="100"
                       value={manualNote.exam1?.toString() ?? ''}
-                      onChange={(e) => handleManualNoteChange('exam1', e.target.value ? Number(e.target.value) : undefined)}
+                      onChange={(e) =>
+                        handleManualNoteChange(
+                          'exam1',
+                          e.target.value ? Number(e.target.value) : undefined,
+                        )
+                      }
                       className="grade-input-field"
                       placeholder="0-100"
                     />
                   </div>
 
                   <div className="grade-input">
-                    <label className="grade-label">
-                      2. Sınav
-                    </label>
+                    <label className="grade-label">2. Sınav</label>
                     <input
                       type="number"
                       min="0"
                       max="100"
                       value={manualNote.exam2?.toString() ?? ''}
-                      onChange={(e) => handleManualNoteChange('exam2', e.target.value ? Number(e.target.value) : undefined)}
+                      onChange={(e) =>
+                        handleManualNoteChange(
+                          'exam2',
+                          e.target.value ? Number(e.target.value) : undefined,
+                        )
+                      }
                       className="grade-input-field"
                       placeholder="0-100"
                     />
                   </div>
 
                   <div className="grade-input">
-                    <label className="grade-label">
-                      3. Sınav
-                    </label>
+                    <label className="grade-label">3. Sınav</label>
                     <input
                       type="number"
                       min="0"
                       max="100"
                       value={manualNote.exam3?.toString() ?? ''}
-                      onChange={(e) => handleManualNoteChange('exam3', e.target.value ? Number(e.target.value) : undefined)}
+                      onChange={(e) =>
+                        handleManualNoteChange(
+                          'exam3',
+                          e.target.value ? Number(e.target.value) : undefined,
+                        )
+                      }
                       className="grade-input-field"
                       placeholder="0-100"
                     />
                   </div>
 
                   <div className="grade-input">
-                    <label className="grade-label">
-                      Sözlü
-                    </label>
+                    <label className="grade-label">Sözlü</label>
                     <input
                       type="number"
                       min="0"
                       max="100"
                       value={manualNote.oral?.toString() ?? ''}
-                      onChange={(e) => handleManualNoteChange('oral', e.target.value ? Number(e.target.value) : undefined)}
+                      onChange={(e) =>
+                        handleManualNoteChange(
+                          'oral',
+                          e.target.value ? Number(e.target.value) : undefined,
+                        )
+                      }
                       className="grade-input-field"
                       placeholder="0-100"
                     />
                   </div>
 
                   <div className="grade-input">
-                    <label className="grade-label">
-                      Proje
-                    </label>
+                    <label className="grade-label">Proje</label>
                     <input
                       type="number"
                       min="0"
                       max="100"
                       value={manualNote.project?.toString() ?? ''}
-                      onChange={(e) => handleManualNoteChange('project', e.target.value ? Number(e.target.value) : undefined)}
+                      onChange={(e) =>
+                        handleManualNoteChange(
+                          'project',
+                          e.target.value ? Number(e.target.value) : undefined,
+                        )
+                      }
                       className="grade-input-field"
                       placeholder="0-100"
                     />
@@ -550,17 +562,13 @@ const NotEkleme: React.FC = () => {
 
               {/* Ortalama */}
               <div className="average-display">
-                <span className="average-text">
-                  📊 Ortalama: {manualNote.average}
-                </span>
+                <span className="average-text">📊 Ortalama: {manualNote.average}</span>
               </div>
 
               {/* Diğer Bilgiler */}
               <div className="not-ekleme-additional-info-grid">
                 <div className="info-group">
-                  <label className="info-label">
-                    Dönem
-                  </label>
+                  <label className="info-label">Dönem</label>
                   <select
                     value={manualNote.semester}
                     onChange={(e) => handleManualNoteChange('semester', e.target.value)}
@@ -572,9 +580,7 @@ const NotEkleme: React.FC = () => {
                 </div>
 
                 <div className="info-group">
-                  <label className="info-label">
-                    Öğretim Yılı
-                  </label>
+                  <label className="info-label">Öğretim Yılı</label>
                   <input
                     type="text"
                     value={manualNote.academicYear}
@@ -585,9 +591,7 @@ const NotEkleme: React.FC = () => {
                 </div>
 
                 <div className="info-group">
-                  <label className="info-label">
-                    Sınıf
-                  </label>
+                  <label className="info-label">Sınıf</label>
                   <input
                     type="text"
                     value={manualNote.gradeLevel}
@@ -598,9 +602,7 @@ const NotEkleme: React.FC = () => {
                 </div>
 
                 <div className="info-group">
-                  <label className="info-label">
-                    Şube
-                  </label>
+                  <label className="info-label">Şube</label>
                   <input
                     type="text"
                     value={manualNote.classSection}
@@ -613,9 +615,7 @@ const NotEkleme: React.FC = () => {
 
               {/* Notlar */}
               <div className="notes-section">
-                <label className="notes-label">
-                  Notlar
-                </label>
+                <label className="notes-label">Notlar</label>
                 <textarea
                   value={manualNote.notes}
                   onChange={(e) => handleManualNoteChange('notes', e.target.value)}

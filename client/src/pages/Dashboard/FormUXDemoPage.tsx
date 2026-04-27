@@ -1,14 +1,14 @@
 import { useState, useRef } from 'react';
 // import { Link } from 'react-router-dom'; // Not used
 import { User, Calendar, FileText, CheckCircle } from 'lucide-react'; // ArrowLeft, Mail, Lock, Phone, MapPin removed
-import { toast } from 'react-hot-toast';
-import { 
-  FormField, 
-  Form, 
-  FormFieldGroup, 
-  SearchField, 
+import { toast } from 'sonner';
+import {
+  FormField,
+  Form,
+  FormFieldGroup,
+  SearchField,
   ValidationRule,
-  FormFieldRef
+  FormFieldRef,
 } from '../../components/FormComponents';
 
 export default function FormUXDemoPage() {
@@ -22,11 +22,11 @@ export default function FormUXDemoPage() {
     address: '',
     birthDate: '',
     website: '',
-    bio: ''
+    bio: '',
   });
   const [searchValue, setSearchValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Refs for form fields
   const nameRef = useRef<FormFieldRef>(null);
   const emailRef = useRef<FormFieldRef>(null);
@@ -36,41 +36,45 @@ export default function FormUXDemoPage() {
   const nameValidation: ValidationRule[] = [
     { type: 'required', message: 'Ad alanı zorunludur' },
     { type: 'minLength', value: 2, message: 'Ad en az 2 karakter olmalıdır' },
-    { type: 'maxLength', value: 50, message: 'Ad en fazla 50 karakter olabilir' }
+    { type: 'maxLength', value: 50, message: 'Ad en fazla 50 karakter olabilir' },
   ];
 
   const emailValidation: ValidationRule[] = [
     { type: 'required', message: 'E-posta alanı zorunludur' },
-    { type: 'email', message: 'Geçerli bir e-posta adresi giriniz' }
+    { type: 'email', message: 'Geçerli bir e-posta adresi giriniz' },
   ];
 
   const passwordValidation: ValidationRule[] = [
     { type: 'required', message: 'Şifre alanı zorunludur' },
     { type: 'minLength', value: 8, message: 'Şifre en az 8 karakter olmalıdır' },
-    { type: 'custom', message: 'Şifre güvenlik gereksinimlerini karşılamıyor', validator: (value) => {
-      // Simple password validation
-      return value.length >= 8 && /[A-Z]/.test(value) && /[a-z]/.test(value) && /[0-9]/.test(value);
-    }}
+    {
+      type: 'custom',
+      message: 'Şifre güvenlik gereksinimlerini karşılamıyor',
+      validator: (value) => {
+        // Simple password validation
+        return (
+          value.length >= 8 && /[A-Z]/.test(value) && /[a-z]/.test(value) && /[0-9]/.test(value)
+        );
+      },
+    },
   ];
 
   const phoneValidation: ValidationRule[] = [
-    { type: 'phone', message: 'Geçerli bir telefon numarası giriniz' }
+    { type: 'phone', message: 'Geçerli bir telefon numarası giriniz' },
   ];
 
-  const websiteValidation: ValidationRule[] = [
-    { type: 'url', message: 'Geçerli bir URL giriniz' }
-  ];
+  const websiteValidation: ValidationRule[] = [{ type: 'url', message: 'Geçerli bir URL giriniz' }];
 
   // Handle form submission
   const handleSubmit = async () => {
     setIsLoading(true);
-    
+
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     // const data = Object.fromEntries(formData.entries()); // Not used
     // Form data processed
-    
+
     toast.success('Form başarıyla gönderildi!');
     setIsLoading(false);
   };
@@ -86,7 +90,7 @@ export default function FormUXDemoPage() {
       address: '',
       birthDate: '',
       website: '',
-      bio: ''
+      bio: '',
     });
     toast.success('Form sıfırlandı');
   };
@@ -110,7 +114,7 @@ export default function FormUXDemoPage() {
     { id: 'basic', label: 'Temel Alanlar', icon: User },
     { id: 'validation', label: 'Doğrulama', icon: CheckCircle },
     { id: 'advanced', label: 'Gelişmiş', icon: FileText },
-    { id: 'search', label: 'Arama', icon: Calendar }
+    { id: 'search', label: 'Arama', icon: Calendar },
   ];
 
   return (
@@ -124,7 +128,7 @@ export default function FormUXDemoPage() {
 
       {/* Navigation */}
       <div className="form-ux-demo-nav">
-        {sections.map(section => (
+        {sections.map((section) => (
           <button
             key={section.id}
             onClick={() => setActiveSection(section.id)}
@@ -147,14 +151,18 @@ export default function FormUXDemoPage() {
             </p>
 
             <Form onSubmit={handleSubmit} onReset={handleReset} showReset loading={isLoading}>
-              <FormFieldGroup title="Kişisel Bilgiler" description="Temel kişisel bilgileri giriniz" columns={2}>
+              <FormFieldGroup
+                title="Kişisel Bilgiler"
+                description="Temel kişisel bilgileri giriniz"
+                columns={2}
+              >
                 <FormField
                   id="name"
                   name="name"
                   label="Ad Soyad"
                   type="text"
                   value={formData.name}
-                  onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, name: value }))}
                   placeholder="Adınızı ve soyadınızı giriniz"
                   required
                   validationRules={nameValidation}
@@ -168,7 +176,7 @@ export default function FormUXDemoPage() {
                   label="E-posta"
                   type="email"
                   value={formData.email}
-                  onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, email: value }))}
                   placeholder="ornek@email.com"
                   required
                   validationRules={emailValidation}
@@ -182,7 +190,7 @@ export default function FormUXDemoPage() {
                   label="Telefon"
                   type="tel"
                   value={formData.phone}
-                  onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, phone: value }))}
                   placeholder="+90 5XX XXX XX XX"
                   validationRules={phoneValidation}
                   validateOnBlur
@@ -194,7 +202,7 @@ export default function FormUXDemoPage() {
                   label="Doğum Tarihi"
                   type="date"
                   value={formData.birthDate}
-                  onChange={(value) => setFormData(prev => ({ ...prev, birthDate: value }))}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, birthDate: value }))}
                 />
               </FormFieldGroup>
 
@@ -205,7 +213,7 @@ export default function FormUXDemoPage() {
                   label="Şifre"
                   type="password"
                   value={formData.password}
-                  onChange={(value) => setFormData(prev => ({ ...prev, password: value }))}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, password: value }))}
                   placeholder="Güçlü bir şifre oluşturun"
                   required
                   showPasswordToggle
@@ -220,13 +228,17 @@ export default function FormUXDemoPage() {
                   label="Şifre Tekrar"
                   type="password"
                   value={formData.confirmPassword}
-                  onChange={(value) => setFormData(prev => ({ ...prev, confirmPassword: value }))}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, confirmPassword: value }))}
                   placeholder="Şifrenizi tekrar giriniz"
                   required
                   showPasswordToggle
                   validationRules={[
                     { type: 'required', message: 'Şifre tekrarı zorunludur' },
-                    { type: 'custom', message: 'Şifreler eşleşmiyor', validator: (value) => value === formData.password }
+                    {
+                      type: 'custom',
+                      message: 'Şifreler eşleşmiyor',
+                      validator: (value) => value === formData.password,
+                    },
                   ]}
                   validateOnBlur
                 />
@@ -244,14 +256,18 @@ export default function FormUXDemoPage() {
             </p>
 
             <div className="form-ux-demo-validation-examples">
-              <FormFieldGroup title="Gerçek Zamanlı Doğrulama" description="Alanlar değiştikçe doğrulanır" columns={2}>
+              <FormFieldGroup
+                title="Gerçek Zamanlı Doğrulama"
+                description="Alanlar değiştikçe doğrulanır"
+                columns={2}
+              >
                 <FormField
                   id="email-realtime"
                   name="emailRealtime"
                   label="E-posta (Gerçek Zamanlı)"
                   type="email"
                   value={formData.email}
-                  onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, email: value }))}
                   placeholder="ornek@email.com"
                   validationRules={emailValidation}
                   validateOnChange
@@ -264,7 +280,7 @@ export default function FormUXDemoPage() {
                   label="Telefon (Gerçek Zamanlı)"
                   type="tel"
                   value={formData.phone}
-                  onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, phone: value }))}
                   placeholder="+90 5XX XXX XX XX"
                   validationRules={phoneValidation}
                   validateOnChange
@@ -272,14 +288,18 @@ export default function FormUXDemoPage() {
                 />
               </FormFieldGroup>
 
-              <FormFieldGroup title="Özel Doğrulama" description="Özel doğrulama kuralları" columns={1}>
+              <FormFieldGroup
+                title="Özel Doğrulama"
+                description="Özel doğrulama kuralları"
+                columns={1}
+              >
                 <FormField
                   id="website"
                   name="website"
                   label="Website"
                   type="url"
                   value={formData.website}
-                  onChange={(value) => setFormData(prev => ({ ...prev, website: value }))}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, website: value }))}
                   placeholder="https://example.com"
                   validationRules={websiteValidation}
                   validateOnBlur
@@ -292,12 +312,20 @@ export default function FormUXDemoPage() {
                   label="Biyografi"
                   type="text"
                   value={formData.bio}
-                  onChange={(value) => setFormData(prev => ({ ...prev, bio: value }))}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, bio: value }))}
                   placeholder="Kendinizden bahsedin"
                   maxLength={200}
                   validationRules={[
-                    { type: 'minLength', value: 10, message: 'Biyografi en az 10 karakter olmalıdır' },
-                    { type: 'maxLength', value: 200, message: 'Biyografi en fazla 200 karakter olabilir' }
+                    {
+                      type: 'minLength',
+                      value: 10,
+                      message: 'Biyografi en az 10 karakter olmalıdır',
+                    },
+                    {
+                      type: 'maxLength',
+                      value: 200,
+                      message: 'Biyografi en fazla 200 karakter olabilir',
+                    },
                   ]}
                   validateOnBlur
                   hint={`${formData.bio.length}/200 karakter`}
@@ -321,7 +349,11 @@ export default function FormUXDemoPage() {
               Farklı boyutlar, varyantlar ve durumlar
             </p>
 
-            <FormFieldGroup title="Boyut Varyantları" description="Farklı boyutlarda form alanları" columns={3}>
+            <FormFieldGroup
+              title="Boyut Varyantları"
+              description="Farklı boyutlarda form alanları"
+              columns={3}
+            >
               <FormField
                 id="name-small"
                 name="nameSmall"
@@ -356,7 +388,11 @@ export default function FormUXDemoPage() {
               />
             </FormFieldGroup>
 
-            <FormFieldGroup title="Varyant Türleri" description="Farklı stil varyantları" columns={2}>
+            <FormFieldGroup
+              title="Varyant Türleri"
+              description="Farklı stil varyantları"
+              columns={2}
+            >
               <FormField
                 id="name-default"
                 name="nameDefault"
@@ -465,19 +501,14 @@ export default function FormUXDemoPage() {
                 />
               </FormFieldGroup>
 
-              <FormFieldGroup title="Arama Durumları" description="Farklı arama durumları" columns={2}>
-                <SearchField
-                  value=""
-                  onChange={() => {}}
-                  placeholder="Normal arama"
-                />
+              <FormFieldGroup
+                title="Arama Durumları"
+                description="Farklı arama durumları"
+                columns={2}
+              >
+                <SearchField value="" onChange={() => {}} placeholder="Normal arama" />
 
-                <SearchField
-                  value=""
-                  onChange={() => {}}
-                  placeholder="Devre dışı arama"
-                  disabled
-                />
+                <SearchField value="" onChange={() => {}} placeholder="Devre dışı arama" disabled />
 
                 <SearchField
                   value="Arama terimi"
@@ -485,12 +516,7 @@ export default function FormUXDemoPage() {
                   placeholder="Temizleme butonu ile"
                 />
 
-                <SearchField
-                  value=""
-                  onChange={() => {}}
-                  placeholder="Yükleniyor..."
-                  loading
-                />
+                <SearchField value="" onChange={() => {}} placeholder="Yükleniyor..." loading />
               </FormFieldGroup>
 
               <div className="form-ux-demo-search-info">
@@ -514,8 +540,9 @@ export default function FormUXDemoPage() {
         <div className="form-ux-demo-footer__content">
           <h3>Form UX Bileşenleri</h3>
           <p>
-            Bu demo sayfası, TOFAS FEN WebApp için geliştirilen gelişmiş form bileşenlerini göstermektedir. 
-            Tüm bileşenler erişilebilirlik standartlarına uygun olarak tasarlanmıştır.
+            Bu demo sayfası, TOFAS FEN WebApp için geliştirilen gelişmiş form bileşenlerini
+            göstermektedir. Tüm bileşenler erişilebilirlik standartlarına uygun olarak
+            tasarlanmıştır.
           </p>
         </div>
       </div>
