@@ -1,14 +1,14 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Users, UserPlus, Link2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Users, UserPlus, Link2, AlertTriangle, X } from 'lucide-react';
 import { UserService } from '../../utils/apiService';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import EnhancedErrorBoundary from '../../components/EnhancedErrorBoundary';
+import { Card } from '../../components/ui/Card';
+import { Chip } from '../../components/ui/Chip';
 import { ParentsList, StudentsList, LinkedPairsList, ConfirmationModal } from './parent-child';
 import type { UserType, LinkedPair, ConfirmAction } from './parent-child';
-import './VeliEslestirme.css';
 
-// Turkish character normalization for surname matching
 function normalizeTurkish(str: string): string {
   return str
     .toLowerCase()
@@ -25,7 +25,6 @@ function extractSurname(adSoyad: string): string {
   return parts.length > 1 ? parts[parts.length - 1] : parts[0];
 }
 
-// Debounce hook
 function useDebouncedValue<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -45,11 +44,9 @@ function ParentChildManagementContent() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
 
-  // Selection state
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
 
-  // Search/filter state (raw input values)
   const [parentSearchRaw, setParentSearchRaw] = useState('');
   const [studentSearchRaw, setStudentSearchRaw] = useState('');
   const [linksSearchRaw, setLinksSearchRaw] = useState('');
@@ -58,12 +55,10 @@ function ParentChildManagementContent() {
   const [sinifFilter, setSinifFilter] = useState('');
   const [subeFilter, setSubeFilter] = useState('');
 
-  // Debounced search values
   const parentSearch = useDebouncedValue(parentSearchRaw, 300);
   const studentSearch = useDebouncedValue(studentSearchRaw, 300);
   const linksSearch = useDebouncedValue(linksSearchRaw, 300);
 
-  // Confirmation modal
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -85,12 +80,10 @@ function ParentChildManagementContent() {
     fetchData();
   }, [fetchData]);
 
-  // Reset multi-select when parent changes
   useEffect(() => {
     setSelectedStudentIds(new Set());
   }, [selectedParentId]);
 
-  // Build linked pairs
   const linkedPairs = useMemo<LinkedPair[]>(() => {
     const pairs: LinkedPair[] = [];
     parents.forEach((parent) => {
@@ -113,7 +106,6 @@ function ParentChildManagementContent() {
     return pairs;
   }, [parents, students]);
 
-  // Stats
   const matchedParentIds = useMemo(
     () => new Set(linkedPairs.map((p) => p.parentId)),
     [linkedPairs],
@@ -125,7 +117,6 @@ function ParentChildManagementContent() {
   const unmatchedParentCount = parents.length - matchedParentIds.size;
   const unmatchedStudentCount = students.filter((s) => !matchedStudentIds.has(s.id)).length;
 
-  // Available sinif/sube options
   const sinifOptions = useMemo(
     () => [...new Set(students.map((s) => s.sinif).filter(Boolean))].sort(),
     [students],
@@ -135,19 +126,16 @@ function ParentChildManagementContent() {
     [students],
   );
 
-  // Selected parent object
   const selectedParent = useMemo(
     () => parents.find((p) => p.id === selectedParentId) || null,
     [parents, selectedParentId],
   );
 
-  // Surname of selected parent
   const selectedParentSurname = useMemo(() => {
     if (!selectedParent) return '';
     return normalizeTurkish(extractSurname(selectedParent.adSoyad));
   }, [selectedParent]);
 
-  // Filtered parents
   const filteredParents = useMemo(() => {
     let list = parents;
     if (parentSearch) {
@@ -162,7 +150,6 @@ function ParentChildManagementContent() {
     return list;
   }, [parents, parentSearch, showUnmatchedParents, matchedParentIds]);
 
-  // Filtered and sorted students (with surname suggestions)
   const filteredStudents = useMemo(() => {
     let list = students;
     if (studentSearch) {
@@ -180,7 +167,6 @@ function ParentChildManagementContent() {
     if (subeFilter) {
       list = list.filter((s) => s.sube === subeFilter);
     }
-    // Sort: suggested (same surname) first
     if (selectedParentSurname) {
       list = [...list].sort((a, b) => {
         const aSurname = normalizeTurkish(extractSurname(a.adSoyad));
@@ -201,7 +187,6 @@ function ParentChildManagementContent() {
     selectedParentSurname,
   ]);
 
-  // Filtered linked pairs
   const filteredLinks = useMemo(() => {
     if (!linksSearch) return linkedPairs;
     const q = linksSearch.toLowerCase();
@@ -210,7 +195,6 @@ function ParentChildManagementContent() {
     );
   }, [linkedPairs, linksSearch]);
 
-  // Check if student has same surname as selected parent
   const isSuggested = useCallback(
     (student: UserType): boolean => {
       if (!selectedParentSurname) return false;
@@ -219,7 +203,6 @@ function ParentChildManagementContent() {
     [selectedParentSurname],
   );
 
-  // Check if student is already linked to selected parent
   const isLinkedToSelected = useCallback(
     (studentId: string): boolean => {
       if (!selectedParent) return false;
@@ -238,7 +221,6 @@ function ParentChildManagementContent() {
     }
   };
 
-  // Toggle student selection for multi-select
   const toggleStudentSelection = (studentId: string) => {
     setSelectedStudentIds((prev) => {
       const next = new Set(prev);
@@ -251,7 +233,6 @@ function ParentChildManagementContent() {
     });
   };
 
-  // Bulk link selected students
   const handleBulkLink = async () => {
     if (!selectedParentId || selectedStudentIds.size === 0) return;
     try {
@@ -281,7 +262,6 @@ function ParentChildManagementContent() {
     }
   };
 
-  // Unlink parent-child (with confirmation)
   const handleUnlink = async (parentId: string, childId: string) => {
     try {
       setProcessing(true);
@@ -303,7 +283,6 @@ function ParentChildManagementContent() {
     { label: 'Veli-Öğrenci Eşleştirme' },
   ];
 
-  // Count linkable selected students (not already linked)
   const linkableSelectedCount = useMemo(() => {
     let count = 0;
     for (const id of selectedStudentIds) {
@@ -315,22 +294,8 @@ function ParentChildManagementContent() {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Veli-Öğrenci Eşleştirme" breadcrumb={breadcrumb}>
-        <div className="veli-eslestirme-page">
-          <div className="ve-stats-grid">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="ve-stat-card">
-                <div className="ve-skeleton" style={{ width: '100%', height: 48 }} />
-              </div>
-            ))}
-          </div>
-          <div className="ve-main-layout">
-            <div className="ve-panel">
-              <div className="ve-skeleton" style={{ width: '100%', height: 400 }} />
-            </div>
-            <div className="ve-panel">
-              <div className="ve-skeleton" style={{ width: '100%', height: 400 }} />
-            </div>
-          </div>
+        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          Yükleniyor…
         </div>
       </ModernDashboardLayout>
     );
@@ -338,79 +303,43 @@ function ParentChildManagementContent() {
 
   return (
     <ModernDashboardLayout pageTitle="Veli-Öğrenci Eşleştirme" breadcrumb={breadcrumb}>
-      <div className="veli-eslestirme-page">
-        {/* Messages */}
-        {successMessage && (
-          <div className="ve-message success" role="status" aria-live="polite">
-            <CheckCircle size={16} />
-            {successMessage}
+      <div className="p-6 space-y-6">
+        <header>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Belge No. {new Date().getFullYear()}/E
           </div>
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Veli-Öğrenci Eşleştirme</h1>
+        </header>
+
+        {successMessage && (
+          <Card accentBar contentClassName="px-4 py-2 flex items-center gap-2">
+            <Chip tone="black">Bildirim</Chip>
+            <span className="font-serif text-sm text-[var(--ink)]">{successMessage}</span>
+          </Card>
         )}
         {error && (
-          <div className="ve-message error" role="alert">
-            <AlertTriangle size={16} />
-            {error}
+          <Card contentClassName="px-4 py-2 flex items-center gap-2 border-l-4 border-[var(--state)]">
+            <Chip tone="state">Hata</Chip>
+            <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
             <button
               onClick={() => setError(null)}
               aria-label="Hatayı kapat"
-              style={{
-                marginLeft: 'auto',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'inherit',
-                fontWeight: 700,
-              }}
+              className="text-[var(--ink-dim)] hover:text-[var(--ink)]"
             >
-              x
+              <X size={14} />
             </button>
-          </div>
+          </Card>
         )}
 
-        {/* Stats */}
-        <div className="ve-stats-grid" role="region" aria-label="İstatistikler">
-          <div className="ve-stat-card">
-            <div className="ve-stat-icon blue">
-              <Users size={20} />
-            </div>
-            <div>
-              <div className="ve-stat-value">{parents.length}</div>
-              <div className="ve-stat-label">Toplam Veli</div>
-            </div>
-          </div>
-          <div className="ve-stat-card">
-            <div className="ve-stat-icon green">
-              <UserPlus size={20} />
-            </div>
-            <div>
-              <div className="ve-stat-value">{students.length}</div>
-              <div className="ve-stat-label">Toplam Öğrenci</div>
-            </div>
-          </div>
-          <div className="ve-stat-card">
-            <div className="ve-stat-icon purple">
-              <Link2 size={20} />
-            </div>
-            <div>
-              <div className="ve-stat-value">{linkedPairs.length}</div>
-              <div className="ve-stat-label">Aktif Bağlantı</div>
-            </div>
-          </div>
-          <div className="ve-stat-card">
-            <div className="ve-stat-icon orange">
-              <AlertTriangle size={20} />
-            </div>
-            <div>
-              <div className="ve-stat-value">
-                {unmatchedParentCount} / {unmatchedStudentCount}
-              </div>
-              <div className="ve-stat-label">Eşleşmemiş Veli / Öğrenci</div>
-            </div>
-          </div>
-        </div>
+        <StatsBar
+          parents={parents.length}
+          students={students.length}
+          linked={linkedPairs.length}
+          unmatchedParents={unmatchedParentCount}
+          unmatchedStudents={unmatchedStudentCount}
+        />
 
-        {/* Main split panel */}
-        <div className="ve-main-layout">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <ParentsList
             filteredParents={filteredParents}
             selectedParentId={selectedParentId}
@@ -463,6 +392,52 @@ function ParentChildManagementContent() {
         )}
       </div>
     </ModernDashboardLayout>
+  );
+}
+
+interface StatsBarProps {
+  parents: number;
+  students: number;
+  linked: number;
+  unmatchedParents: number;
+  unmatchedStudents: number;
+}
+
+function StatsBar({
+  parents,
+  students,
+  linked,
+  unmatchedParents,
+  unmatchedStudents,
+}: StatsBarProps) {
+  const items = [
+    { label: 'Veli', value: parents, icon: Users },
+    { label: 'Öğrenci', value: students, icon: UserPlus },
+    { label: 'Aktif Bağlantı', value: linked, icon: Link2 },
+    {
+      label: 'Eşleşmemiş',
+      value: `${unmatchedParents} / ${unmatchedStudents}`,
+      icon: AlertTriangle,
+      hint: 'Veli / Öğrenci',
+    },
+  ];
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+      {items.map(({ label, value, icon: Icon, hint }) => (
+        <div key={label} className="bg-[var(--paper)] p-4">
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+            <Icon size={12} />
+            {label}
+          </div>
+          <div className="font-serif text-2xl text-[var(--ink)] mt-2">{value}</div>
+          {hint && (
+            <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim-2)] mt-1">
+              {hint}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 
