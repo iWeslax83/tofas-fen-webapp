@@ -135,18 +135,20 @@ jobs:
           npm run build
 
       - name: Upload client coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           files: ./client/coverage/lcov.info
           flags: client
           name: client-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload server coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           files: ./server/coverage/lcov.info
           flags: server
           name: server-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Check test coverage thresholds
         run: |
@@ -176,6 +178,11 @@ jobs:
   security:
     name: Security Audit
     runs-on: ubuntu-latest
+    # Surface SNYK_TOKEN at the job level so the step `if:` can gate on it.
+    # Step-level `env:` is set during execution, so an `if:` referencing it
+    # would always evaluate to empty. Job-level env is resolved before steps.
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -202,17 +209,15 @@ jobs:
           cd ../server && npm audit --omit=dev --audit-level=high
 
       - name: Run dependency review
-        uses: actions/dependency-review-action@v3
+        uses: actions/dependency-review-action@v4
         if: github.event_name == 'pull_request'
 
       # I-H8: Snyk was previously `continue-on-error: true`, turning the whole
       # scan into a warning. Keep it advisory only when no token is set, but
       # otherwise let it fail the build on HIGH severity findings.
       - name: Run Snyk security scan
+        if: env.SNYK_TOKEN != ''
         uses: snyk/actions/node@master
-        if: ${{ secrets.SNYK_TOKEN != '' }}
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high
           project: ${{ github.repository }}
@@ -393,7 +398,8 @@ jobs:
         with:
           status: ${{ job.status }}
           channel: '#deployments'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
   # Deploy to Production
   deploy-production:
@@ -423,7 +429,8 @@ jobs:
         with:
           status: ${{ job.status }}
           channel: '#deployments'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
   # Cleanup
   cleanup:
