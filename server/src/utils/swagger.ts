@@ -1,6 +1,6 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import { Express } from 'express';
+import { Express, RequestHandler } from 'express';
 
 const options = {
   definition: {
@@ -325,7 +325,12 @@ export const swaggerOptions = {
 };
 
 export const setupSwagger = (app: Express) => {
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
+  // @types/swagger-ui-express depends on @types/express@5 while server pins
+  // @types/express@4 — cast handlers to the local express RequestHandler so
+  // app.use overloads resolve.
+  const serveHandlers = swaggerUi.serve as unknown as RequestHandler[];
+  const setupHandler = swaggerUi.setup(specs, swaggerOptions) as unknown as RequestHandler;
+  app.use('/api-docs', ...serveHandlers, setupHandler);
 
   // JSON endpoint
   app.get('/api-docs.json', (_req, res) => {
