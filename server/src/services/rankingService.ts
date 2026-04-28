@@ -1,4 +1,4 @@
-import { Note } from '../models/Note';
+import Note from '../models/Note';
 import { User } from '../models/User';
 
 export interface ClassRanking {
@@ -24,7 +24,12 @@ const EMPTY: ClassRanking = { rank: 0, classSize: 0 };
  * skeleton self-contained.
  */
 export async function calculateClassRanking(userId: string): Promise<ClassRanking> {
-  const target = await User.findOne({ id: userId }).lean();
+  // findOne(...).lean() returns POJO | array | null per the broad type
+  // overload; narrow to a single document with the fields we read.
+  const target = (await User.findOne({ id: userId }).lean()) as {
+    sinif?: string;
+    sube?: string;
+  } | null;
   if (!target?.sinif || !target?.sube) return EMPTY;
 
   const aggregation = await Note.aggregate<{ _id: string; avg: number }>([
@@ -33,7 +38,7 @@ export async function calculateClassRanking(userId: string): Promise<ClassRankin
     { $sort: { avg: -1 } },
   ]);
 
-  const idx = aggregation.findIndex((row) => row._id === userId);
+  const idx = aggregation.findIndex((row: { _id: string }) => row._id === userId);
   return {
     rank: idx >= 0 ? idx + 1 : 0,
     classSize: aggregation.length,
