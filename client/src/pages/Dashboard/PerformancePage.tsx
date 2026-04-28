@@ -1,28 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Activity, 
-  Zap, 
-  Settings, 
-  BarChart3, 
-  TrendingUp, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
-  Database, 
-  HardDrive, 
-  Cpu, 
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  Activity,
+  Zap,
+  Settings,
+  BarChart3,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Database,
+  HardDrive,
+  Cpu,
   MemoryStick,
   RefreshCw,
   Trash2,
   Plus,
   Search,
   Filter,
-  Edit
+  Edit,
 } from 'lucide-react';
-import { SecureAPI } from '../../utils/api';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-import './PerformancePage.css';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Chip, type ChipProps } from '../../components/ui/Chip';
+import { Input } from '../../components/ui/Input';
+import { SecureAPI } from '../../utils/api';
+import { cn } from '../../utils/cn';
 
 interface Metric {
   id: string;
@@ -42,7 +45,7 @@ interface Metric {
     device?: string;
     timestamp: Date;
   };
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   createdAt: Date;
 }
 
@@ -71,7 +74,7 @@ interface Config {
   name: string;
   description: string;
   category: string;
-  settings: Record<string, any>;
+  settings: Record<string, unknown>;
   isEnabled: boolean;
   priority: number;
   schedule?: {
@@ -105,8 +108,36 @@ interface SystemMetrics {
   timestamp: Date;
 }
 
+type Tab = 'dashboard' | 'metrics' | 'optimizations' | 'configs';
+
+const TABS: { key: Tab; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
+  { key: 'dashboard', label: 'Dashboard', icon: Activity },
+  { key: 'metrics', label: 'Metrikler', icon: BarChart3 },
+  { key: 'optimizations', label: 'Optimizasyon', icon: Zap },
+  { key: 'configs', label: 'Konfigürasyon', icon: Settings },
+];
+
+const STATUS_TONES: Record<string, ChipProps['tone']> = {
+  normal: 'default',
+  warning: 'outline',
+  critical: 'state',
+  optimized: 'black',
+  completed: 'black',
+  running: 'outline',
+  failed: 'state',
+  pending: 'default',
+};
+
+const formatDate = (date: string | Date) => new Date(date).toLocaleString('tr-TR');
+
+const selectClasses = cn(
+  'h-10 bg-transparent border-0 border-b border-[var(--rule)] px-1 text-sm',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2',
+  'transition-colors',
+);
+
 const PerformancePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'metrics' | 'optimizations' | 'configs'>('dashboard');
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [optimizations, setOptimizations] = useState<Optimization[]>([]);
   const [configs, setConfigs] = useState<Config[]>([]);
@@ -120,125 +151,106 @@ const PerformancePage: React.FC = () => {
     category: '',
     status: '',
     startDate: '',
-    endDate: ''
+    endDate: '',
   });
-  const [, setShowCreateModal] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [sortBy] = useState('timestamp');
-  const [sortOrder] = useState<'asc' | 'desc'>('desc');
   const [autoRefresh, setAutoRefresh] = useState(false);
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
+  const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Fetch data based on active tab
-  const fetchData = async () => {
+  const sortBy = 'timestamp';
+  const sortOrder: 'asc' | 'desc' = 'desc';
+
+  const fetchDashboard = useCallback(async () => {
+    const [, systemData] = await Promise.all([
+      SecureAPI.get('/performance/dashboard'),
+      SecureAPI.get('/performance/system'),
+    ]);
+    setSystemMetrics((systemData as { data: SystemMetrics }).data);
+  }, []);
+
+  const fetchMetrics = useCallback(async () => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: '50',
+      sortBy,
+      sortOrder,
+      ...filters,
+    });
+    const response = await SecureAPI.get(`/performance/metrics?${params}`);
+    const r = response as { data: { metrics: Metric[]; totalPages: number } };
+    setMetrics(r.data.metrics);
+    setTotalPages(r.data.totalPages);
+  }, [filters, page]);
+
+  const fetchOptimizations = useCallback(async () => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: '50',
+      sortBy,
+      sortOrder,
+      ...filters,
+    });
+    const response = await SecureAPI.get(`/performance/optimizations?${params}`);
+    const r = response as { data: { optimizations: Optimization[]; totalPages: number } };
+    setOptimizations(r.data.optimizations);
+    setTotalPages(r.data.totalPages);
+  }, [filters, page]);
+
+  const fetchConfigs = useCallback(async () => {
+    const response = await SecureAPI.get('/performance/configs');
+    setConfigs((response as { data: Config[] }).data);
+  }, []);
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
     try {
-      switch (activeTab) {
-        case 'dashboard':
-          await fetchDashboardData();
-          break;
-        case 'metrics':
-          await fetchMetrics();
-          break;
-        case 'optimizations':
-          await fetchOptimizations();
-          break;
-        case 'configs':
-          await fetchConfigs();
-          break;
-      }
-    } catch (err: any) {
-      setError(err.message || 'Veri yüklenirken hata oluştu');
+      if (activeTab === 'dashboard') await fetchDashboard();
+      else if (activeTab === 'metrics') await fetchMetrics();
+      else if (activeTab === 'optimizations') await fetchOptimizations();
+      else if (activeTab === 'configs') await fetchConfigs();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Veri yüklenirken hata oluştu';
+      setError(msg);
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, fetchDashboard, fetchMetrics, fetchOptimizations, fetchConfigs]);
 
-  const fetchDashboardData = async () => {
-    const [, systemData] = await Promise.all([
-      SecureAPI.get('/performance/dashboard'),
-      SecureAPI.get('/performance/system')
-    ]);
-    
-    setSystemMetrics((systemData as any).data);
-    // Set other dashboard data as needed
-  };
-
-  const fetchMetrics = async () => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: '50',
-      sortBy,
-      sortOrder,
-      ...filters
-    });
-    
-    const response = await SecureAPI.get(`/performance/metrics?${params}`);
-    setMetrics((response as any).data.metrics);
-    setTotalPages((response as any).data.totalPages);
-  };
-
-  const fetchOptimizations = async () => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: '50',
-      sortBy,
-      sortOrder,
-      ...filters
-    });
-    
-    const response = await SecureAPI.get(`/performance/optimizations?${params}`);
-    setOptimizations((response as any).data.optimizations);
-    setTotalPages((response as any).data.totalPages);
-  };
-
-  const fetchConfigs = async () => {
-    const response = await SecureAPI.get('/performance/configs');
-    setConfigs((response as any).data);
-  };
-
-  // Manual optimization triggers
   const triggerOptimization = async (action: string) => {
     try {
       setLoading(true);
       await SecureAPI.post(`/performance/optimize/${action}`);
       await fetchOptimizations();
       setError(null);
-    } catch (err: any) {
-      setError(err.message || 'Optimizasyon başlatılırken hata oluştu');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Optimizasyon başlatılırken hata oluştu';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Auto-refresh functionality
   useEffect(() => {
     if (autoRefresh) {
-      const interval = setInterval(fetchData, 30000); // 30 seconds
-      setRefreshInterval(interval);
-    } else if (refreshInterval) {
-      clearInterval(refreshInterval);
-      setRefreshInterval(null);
+      refreshTimerRef.current = setInterval(fetchData, 30000);
+    } else if (refreshTimerRef.current) {
+      clearInterval(refreshTimerRef.current);
+      refreshTimerRef.current = null;
     }
-
     return () => {
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-      }
+      if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
     };
-  }, [autoRefresh]);
+  }, [autoRefresh, fetchData]);
 
   useEffect(() => {
     fetchData();
-  }, [activeTab, page, sortBy, sortOrder]);
+  }, [activeTab, page, fetchData]);
 
   useEffect(() => {
-    if (showFilters) {
-      fetchData();
-    }
+    if (showFilters) fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -246,442 +258,551 @@ const PerformancePage: React.FC = () => {
     fetchData();
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'normal': return 'green';
-      case 'warning': return 'yellow';
-      case 'critical': return 'red';
-      case 'optimized': return 'blue';
-      default: return 'gray';
-    }
-  };
-
-  const formatDate = (date: string | Date) => {
-    return new Date(date).toLocaleString('tr-TR');
-  };
-
-  const renderDashboard = () => (
-    <div className="performance-dashboard">
-      <div className="dashboard-header">
-        <h2>Performans Dashboard</h2>
-        <div className="dashboard-controls">
-          <button
-            className={`refresh-btn ${autoRefresh ? 'active' : ''}`}
-            onClick={() => setAutoRefresh(!autoRefresh)}
-          >
-            <RefreshCw className={autoRefresh ? 'spinning' : ''} />
-            {autoRefresh ? 'Otomatik Yenileme Açık' : 'Otomatik Yenileme'}
-          </button>
-          <button className="refresh-btn" onClick={fetchData}>
-            <RefreshCw />
-            Yenile
-          </button>
-        </div>
-      </div>
-
-      {systemMetrics && (
-        <div className="system-metrics">
-          <motion.div className="metric-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="metric-header">
-              <MemoryStick className="metric-icon" />
-              <h3>Bellek Kullanımı</h3>
-            </div>
-            <div className="metric-content">
-              <div className="metric-value">
-                <span className="value">{systemMetrics.memory.heapUsed}</span>
-                <span className="unit">MB</span>
-              </div>
-              <div className="metric-details">
-                <div>RSS: {systemMetrics.memory.rss} MB</div>
-                <div>Toplam: {systemMetrics.memory.heapTotal} MB</div>
-                <div>External: {systemMetrics.memory.external} MB</div>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div className="metric-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <div className="metric-header">
-              <Cpu className="metric-icon" />
-              <h3>CPU Kullanımı</h3>
-            </div>
-            <div className="metric-content">
-              <div className="metric-value">
-                <span className="value">{(systemMetrics.cpu.user / 1000000).toFixed(2)}</span>
-                <span className="unit">s</span>
-              </div>
-              <div className="metric-details">
-                <div>User: {(systemMetrics.cpu.user / 1000000).toFixed(2)}s</div>
-                <div>System: {(systemMetrics.cpu.system / 1000000).toFixed(2)}s</div>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div className="metric-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <div className="metric-header">
-              <HardDrive className="metric-icon" />
-              <h3>Disk Kullanımı</h3>
-            </div>
-            <div className="metric-content">
-              <div className="metric-value">
-                <span className="value">{systemMetrics.disk.usagePercent}</span>
-                <span className="unit">kullanım</span>
-              </div>
-              <div className="metric-details">
-                <div>Toplam: {systemMetrics.disk.total}</div>
-                <div>Kullanılan: {systemMetrics.disk.used}</div>
-                <div>Boş: {systemMetrics.disk.available}</div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      <div className="optimization-controls">
-        <h3>Hızlı Optimizasyonlar</h3>
-        <div className="control-buttons">
-          <button
-            className="optimize-btn cache"
-            onClick={() => triggerOptimization('cache')}
-            disabled={loading}
-          >
-            <Zap />
-            Önbellek Temizle
-          </button>
-          <button
-            className="optimize-btn database"
-            onClick={() => triggerOptimization('database')}
-            disabled={loading}
-          >
-            <Database />
-            Veritabanı Optimize Et
-          </button>
-          <button
-            className="optimize-btn memory"
-            onClick={() => triggerOptimization('memory')}
-            disabled={loading}
-          >
-            <MemoryStick />
-            Bellek Temizle
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderMetrics = () => (
-    <div className="metrics-section">
-      <div className="section-header">
-        <h2>Performans Metrikleri</h2>
-        <div className="header-controls">
-          <form onSubmit={handleSearch} className="search-form">
-            <input
-              type="text"
-              placeholder="Metrik ara..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button type="submit">
-              <Search />
-            </button>
-          </form>
-          <button
-            className="filter-btn"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter />
-            Filtreler
-          </button>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div
-            className="filters-panel"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-          >
-            <div className="filter-row">
-              <select
-                value={filters.type}
-                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-              >
-                <option value="">Tüm Tipler</option>
-                <option value="api">API</option>
-                <option value="database">Veritabanı</option>
-                <option value="frontend">Frontend</option>
-                <option value="system">Sistem</option>
-                <option value="cache">Önbellek</option>
-                <option value="memory">Bellek</option>
-                <option value="cpu">CPU</option>
-                <option value="network">Ağ</option>
-              </select>
-              <select
-                value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              >
-                <option value="">Tüm Durumlar</option>
-                <option value="normal">Normal</option>
-                <option value="warning">Uyarı</option>
-                <option value="critical">Kritik</option>
-                <option value="optimized">Optimize</option>
-              </select>
-              <input
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                placeholder="Başlangıç tarihi"
-              />
-              <input
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                placeholder="Bitiş tarihi"
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="metrics-list">
-        {metrics.map((metric) => (
-          <motion.div
-            key={metric.id}
-            className={`metric-item ${metric.status}`}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="metric-info">
-              <div className="metric-name">{metric.metric}</div>
-              <div className="metric-type">{metric.type} - {metric.category}</div>
-              <div className="metric-timestamp">{formatDate(metric.context.timestamp)}</div>
-            </div>
-            <div className="metric-value">
-              <span className="value">{metric.value}</span>
-              <span className="unit">{metric.unit}</span>
-            </div>
-            <div className={`metric-status ${metric.status}`}>
-              <span className={`status-dot ${getStatusColor(metric.status)}`}></span>
-              {metric.status}
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {totalPages > 1 && (
-        <div className="pagination">
-          <button
-            onClick={() => setPage(page - 1)}
-            disabled={page === 1}
-          >
-            Önceki
-          </button>
-          <span>{page} / {totalPages}</span>
-          <button
-            onClick={() => setPage(page + 1)}
-            disabled={page === totalPages}
-          >
-            Sonraki
-          </button>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderOptimizations = () => (
-    <div className="optimizations-section">
-      <div className="section-header">
-        <h2>Optimizasyon Geçmişi</h2>
-        <button
-          className="create-btn"
-          onClick={() => setShowCreateModal(true)}
-        >
-          <Plus />
-          Yeni Optimizasyon
-        </button>
-      </div>
-
-      <div className="optimizations-list">
-        {optimizations.map((optimization) => (
-          <motion.div
-            key={optimization.id}
-            className={`optimization-item ${optimization.status}`}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="optimization-header">
-              <div className="optimization-action">{optimization.action}</div>
-              <div className={`optimization-status ${optimization.status}`}>
-                {optimization.status === 'completed' && <CheckCircle />}
-                {optimization.status === 'running' && <RefreshCw className="spinning" />}
-                {optimization.status === 'failed' && <AlertTriangle />}
-                {optimization.status === 'pending' && <Clock />}
-                {optimization.status}
-              </div>
-            </div>
-            <div className="optimization-details">
-              <div className="optimization-description">{optimization.description}</div>
-              <div className="optimization-meta">
-                <span className="optimization-type">{optimization.type}</span>
-                <span className={`optimization-impact ${optimization.impact}`}>
-                  {optimization.impact} etki
-                </span>
-                <span className="optimization-executor">{optimization.executedBy}</span>
-                <span className="optimization-time">{formatDate(optimization.executedAt)}</span>
-              </div>
-            </div>
-            {optimization.status === 'completed' && optimization.results && (
-              <div className="optimization-results">
-                <div className="improvement">
-                  <TrendingUp />
-                  {optimization.results.improvement.toFixed(2)}% iyileştirme
-                </div>
-                <div className="duration">
-                  {optimization.results.duration}ms sürdü
-                </div>
-              </div>
-            )}
-            {optimization.status === 'failed' && optimization.error && (
-              <div className="optimization-error">
-                <AlertTriangle />
-                {optimization.error}
-              </div>
-            )}
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderConfigs = () => (
-    <div className="configs-section">
-      <div className="section-header">
-        <h2>Performans Konfigürasyonları</h2>
-        <button
-          className="create-btn"
-          onClick={() => setShowCreateModal(true)}
-        >
-          <Plus />
-          Yeni Konfigürasyon
-        </button>
-      </div>
-
-      <div className="configs-list">
-        {configs.map((config) => (
-          <motion.div
-            key={config.id}
-            className="config-item"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="config-header">
-              <div className="config-name">{config.name}</div>
-              <div className="config-controls">
-                <button className="config-btn edit">
-                  <Edit />
-                </button>
-                <button className="config-btn delete">
-                  <Trash2 />
-                </button>
-              </div>
-            </div>
-            <div className="config-description">{config.description}</div>
-            <div className="config-meta">
-              <span className={`config-category ${config.category}`}>{config.category}</span>
-              <span className={`config-status ${config.isEnabled ? 'enabled' : 'disabled'}`}>
-                {config.isEnabled ? 'Aktif' : 'Pasif'}
-              </span>
-              <span className="config-priority">Öncelik: {config.priority}</span>
-            </div>
-            {config.schedule && (
-              <div className="config-schedule">
-                <Clock />
-                {config.schedule.type}: {config.schedule.value}
-              </div>
-            )}
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const breadcrumb = [
-    { label: 'Ana Sayfa', path: '/' },
-    { label: 'Performans Optimizasyonu' }
-  ];
+  const breadcrumb = [{ label: 'Ana Sayfa', path: '/admin' }, { label: 'Performans' }];
 
   return (
-    <ModernDashboardLayout
-      pageTitle="Performans Optimizasyonu"
-      breadcrumb={breadcrumb}
-    >
-      <div className="performance-page">
-        <div className="page-description">
-          <p>Sistem performansını izle ve optimize et</p>
+    <ModernDashboardLayout pageTitle="Performans Optimizasyonu" breadcrumb={breadcrumb}>
+      <div className="p-6 space-y-6">
+        <header>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Belge No. {new Date().getFullYear()}/P-O
+          </div>
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Performans Optimizasyonu</h1>
+          <p className="font-serif text-sm text-[var(--ink-2)] mt-1">
+            Sistem performansını izle ve optimize et.
+          </p>
+        </header>
+
+        <div className="flex items-center gap-1 flex-wrap border-b border-[var(--rule)] pb-2">
+          {TABS.map((t) => {
+            const Icon = t.icon;
+            const active = activeTab === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setActiveTab(t.key)}
+                className={cn(
+                  'h-9 px-3 text-xs font-mono uppercase tracking-wider border transition-colors flex items-center gap-2',
+                  active
+                    ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
+                    : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                )}
+                aria-pressed={active}
+              >
+                <Icon size={12} />
+                {t.label}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="tab-navigation">
-          <button
-            className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            <Activity />
-            Dashboard
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'metrics' ? 'active' : ''}`}
-            onClick={() => setActiveTab('metrics')}
-          >
-            <BarChart3 />
-            Metrikler
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'optimizations' ? 'active' : ''}`}
-            onClick={() => setActiveTab('optimizations')}
-          >
-            <Zap />
-            Optimizasyonlar
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'configs' ? 'active' : ''}`}
-            onClick={() => setActiveTab('configs')}
-          >
-            <Settings />
-            Konfigürasyonlar
-          </button>
-        </div>
+        {error && (
+          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--state)]">
+            <Chip tone="state">Hata</Chip>
+            <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
+          </Card>
+        )}
 
-      {error && (
-        <motion.div
-          className="error-message"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <AlertTriangle />
-          {error}
-        </motion.div>
-      )}
+        {loading && (
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            <RefreshCw size={12} className="animate-spin" />
+            Yükleniyor…
+          </div>
+        )}
 
-      {loading && (
-        <div className="loading-spinner">
-          <RefreshCw className="spinning" />
-          Yükleniyor...
-        </div>
-      )}
+        {activeTab === 'dashboard' && (
+          <DashboardTab
+            systemMetrics={systemMetrics}
+            autoRefresh={autoRefresh}
+            onToggleAutoRefresh={() => setAutoRefresh((v) => !v)}
+            onRefresh={fetchData}
+            onTriggerOptimization={triggerOptimization}
+            loading={loading}
+          />
+        )}
 
-      <div className="page-content">
-        {activeTab === 'dashboard' && renderDashboard()}
-        {activeTab === 'metrics' && renderMetrics()}
-        {activeTab === 'optimizations' && renderOptimizations()}
-        {activeTab === 'configs' && renderConfigs()}
-        </div>
+        {activeTab === 'metrics' && (
+          <MetricsTab
+            metrics={metrics}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+            onSearch={handleSearch}
+            showFilters={showFilters}
+            onToggleFilters={() => setShowFilters((v) => !v)}
+            filters={filters}
+            onFilterChange={(updates) => setFilters({ ...filters, ...updates })}
+          />
+        )}
+
+        {activeTab === 'optimizations' && <OptimizationsTab optimizations={optimizations} />}
+
+        {activeTab === 'configs' && <ConfigsTab configs={configs} />}
       </div>
     </ModernDashboardLayout>
   );
 };
 
 export default PerformancePage;
+
+interface DashboardTabProps {
+  systemMetrics: SystemMetrics | null;
+  autoRefresh: boolean;
+  onToggleAutoRefresh: () => void;
+  onRefresh: () => void;
+  onTriggerOptimization: (action: string) => void;
+  loading: boolean;
+}
+
+function DashboardTab({
+  systemMetrics,
+  autoRefresh,
+  onToggleAutoRefresh,
+  onRefresh,
+  onTriggerOptimization,
+  loading,
+}: DashboardTabProps) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h2 className="font-serif text-lg text-[var(--ink)]">Sistem Durumu</h2>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={autoRefresh ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={onToggleAutoRefresh}
+          >
+            <RefreshCw size={14} className={autoRefresh ? 'animate-spin' : ''} />
+            {autoRefresh ? 'Otomatik AÇIK' : 'Otomatik Yenile'}
+          </Button>
+          <Button variant="secondary" size="sm" onClick={onRefresh}>
+            <RefreshCw size={14} />
+            Yenile
+          </Button>
+        </div>
+      </div>
+
+      {systemMetrics ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+          <SystemCard
+            icon={MemoryStick}
+            label="Bellek (Heap)"
+            value={`${systemMetrics.memory.heapUsed}`}
+            unit="MB"
+            details={[
+              `RSS: ${systemMetrics.memory.rss} MB`,
+              `Toplam: ${systemMetrics.memory.heapTotal} MB`,
+              `External: ${systemMetrics.memory.external} MB`,
+            ]}
+          />
+          <SystemCard
+            icon={Cpu}
+            label="CPU"
+            value={`${(systemMetrics.cpu.user / 1_000_000).toFixed(2)}`}
+            unit="s"
+            details={[
+              `User: ${(systemMetrics.cpu.user / 1_000_000).toFixed(2)}s`,
+              `System: ${(systemMetrics.cpu.system / 1_000_000).toFixed(2)}s`,
+            ]}
+          />
+          <SystemCard
+            icon={HardDrive}
+            label="Disk"
+            value={systemMetrics.disk.usagePercent}
+            unit="kullanım"
+            details={[
+              `Toplam: ${systemMetrics.disk.total}`,
+              `Kullanılan: ${systemMetrics.disk.used}`,
+              `Boş: ${systemMetrics.disk.available}`,
+            ]}
+          />
+        </div>
+      ) : (
+        <Card contentClassName="p-6 font-serif text-sm text-[var(--ink-dim)]">
+          Sistem verisi henüz yüklenmedi.
+        </Card>
+      )}
+
+      <Card contentClassName="p-0">
+        <div className="px-4 py-2 border-b border-[var(--rule)] flex items-center gap-2">
+          <Zap size={12} className="text-[var(--ink-dim)]" />
+          <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Hızlı Optimizasyonlar
+          </span>
+        </div>
+        <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => onTriggerOptimization('cache')}
+            disabled={loading}
+          >
+            <Zap size={14} />
+            Önbellek Temizle
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => onTriggerOptimization('database')}
+            disabled={loading}
+          >
+            <Database size={14} />
+            Veritabanı Optimize Et
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => onTriggerOptimization('memory')}
+            disabled={loading}
+          >
+            <MemoryStick size={14} />
+            Bellek Temizle
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function SystemCard({
+  icon: Icon,
+  label,
+  value,
+  unit,
+  details,
+}: {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
+  value: string;
+  unit: string;
+  details: string[];
+}) {
+  return (
+    <div className="bg-[var(--paper)] p-4 space-y-2">
+      <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+        <Icon size={12} />
+        {label}
+      </div>
+      <div className="flex items-baseline gap-1">
+        <span className="font-serif text-3xl text-[var(--ink)]">{value}</span>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+          {unit}
+        </span>
+      </div>
+      <ul className="space-y-0.5">
+        {details.map((d) => (
+          <li key={d} className="font-mono text-[10px] text-[var(--ink-dim-2)]">
+            {d}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+interface MetricsTabProps {
+  metrics: Metric[];
+  page: number;
+  totalPages: number;
+  onPageChange: (n: number) => void;
+  searchQuery: string;
+  onSearchQueryChange: (s: string) => void;
+  onSearch: (e: React.FormEvent) => void;
+  showFilters: boolean;
+  onToggleFilters: () => void;
+  filters: { type: string; category: string; status: string; startDate: string; endDate: string };
+  onFilterChange: (
+    updates: Partial<{
+      type: string;
+      category: string;
+      status: string;
+      startDate: string;
+      endDate: string;
+    }>,
+  ) => void;
+}
+
+function MetricsTab({
+  metrics,
+  page,
+  totalPages,
+  onPageChange,
+  searchQuery,
+  onSearchQueryChange,
+  onSearch,
+  showFilters,
+  onToggleFilters,
+  filters,
+  onFilterChange,
+}: MetricsTabProps) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h2 className="font-serif text-lg text-[var(--ink)]">Performans Metrikleri</h2>
+        <form onSubmit={onSearch} className="flex items-center gap-2 flex-wrap">
+          <div className="relative">
+            <Search
+              size={12}
+              className="absolute left-1 top-1/2 -translate-y-1/2 text-[var(--ink-dim)] pointer-events-none"
+            />
+            <Input
+              value={searchQuery}
+              onChange={(e) => onSearchQueryChange(e.target.value)}
+              placeholder="Metrik ara…"
+              className="pl-5"
+            />
+          </div>
+          <Button type="submit" variant="secondary" size="sm">
+            <Search size={14} />
+          </Button>
+          <Button type="button" variant="secondary" size="sm" onClick={onToggleFilters}>
+            <Filter size={14} />
+            Filtreler
+          </Button>
+        </form>
+      </div>
+
+      {showFilters && (
+        <Card contentClassName="p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+          <select
+            value={filters.type}
+            onChange={(e) => onFilterChange({ type: e.target.value })}
+            className={selectClasses}
+            aria-label="Tip filtrele"
+          >
+            <option value="">Tüm Tipler</option>
+            {['api', 'database', 'frontend', 'system', 'cache', 'memory', 'cpu', 'network'].map(
+              (t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ),
+            )}
+          </select>
+          <select
+            value={filters.status}
+            onChange={(e) => onFilterChange({ status: e.target.value })}
+            className={selectClasses}
+            aria-label="Durum filtrele"
+          >
+            <option value="">Tüm Durumlar</option>
+            {['normal', 'warning', 'critical', 'optimized'].map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <Input
+            type="date"
+            value={filters.startDate}
+            onChange={(e) => onFilterChange({ startDate: e.target.value })}
+            placeholder="Başlangıç"
+            aria-label="Başlangıç tarihi"
+          />
+          <Input
+            type="date"
+            value={filters.endDate}
+            onChange={(e) => onFilterChange({ endDate: e.target.value })}
+            placeholder="Bitiş"
+            aria-label="Bitiş tarihi"
+          />
+        </Card>
+      )}
+
+      {metrics.length === 0 ? (
+        <Card contentClassName="p-10 text-center font-serif text-sm text-[var(--ink-dim)]">
+          Metrik bulunamadı.
+        </Card>
+      ) : (
+        <Card contentClassName="p-0">
+          <ul className="divide-y divide-[var(--rule)]">
+            {metrics.map((m) => (
+              <li key={m.id} className="p-4 flex items-center gap-4 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <div className="font-serif text-sm text-[var(--ink)]">{m.metric}</div>
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)] mt-0.5">
+                    {m.type} · {m.category}
+                  </div>
+                  <div className="font-mono text-[10px] text-[var(--ink-dim-2)] mt-0.5">
+                    {formatDate(m.context.timestamp)}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className="font-serif text-xl text-[var(--ink)]">{m.value}</span>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                    {m.unit}
+                  </span>
+                </div>
+                <Chip tone={STATUS_TONES[m.status] ?? 'default'}>{m.status}</Chip>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+            Sayfa {page} / {totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => onPageChange(page - 1)}
+              disabled={page <= 1}
+            >
+              Önceki
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages}
+            >
+              Sonraki
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OptimizationsTab({ optimizations }: { optimizations: Optimization[] }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h2 className="font-serif text-lg text-[var(--ink)]">Optimizasyon Geçmişi</h2>
+        <Button variant="primary" size="sm">
+          <Plus size={14} />
+          Yeni Optimizasyon
+        </Button>
+      </div>
+
+      {optimizations.length === 0 ? (
+        <Card contentClassName="p-10 text-center font-serif text-sm text-[var(--ink-dim)]">
+          Optimizasyon kaydı bulunamadı.
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {optimizations.map((o) => (
+            <Card key={o.id} contentClassName="p-0">
+              <div className="px-4 py-2 border-b border-[var(--rule)] flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  {o.status === 'completed' && (
+                    <CheckCircle size={12} className="text-[var(--ink)]" />
+                  )}
+                  {o.status === 'running' && (
+                    <RefreshCw size={12} className="animate-spin text-[var(--ink-dim)]" />
+                  )}
+                  {o.status === 'failed' && (
+                    <AlertTriangle size={12} className="text-[var(--state)]" />
+                  )}
+                  {o.status === 'pending' && <Clock size={12} className="text-[var(--ink-dim)]" />}
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                    {o.action}
+                  </span>
+                </div>
+                <Chip tone={STATUS_TONES[o.status] ?? 'default'}>{o.status}</Chip>
+              </div>
+              <div className="p-4 space-y-2">
+                <p className="font-serif text-sm text-[var(--ink)]">{o.description}</p>
+                <div className="flex items-center gap-3 flex-wrap font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                  <span>{o.type}</span>
+                  <Chip tone="outline">{o.impact} etki</Chip>
+                  <span>· {o.executedBy}</span>
+                  <span>· {formatDate(o.executedAt)}</span>
+                </div>
+                {o.status === 'completed' && o.results && (
+                  <div className="flex items-center gap-3 pt-2 border-t border-[var(--rule)] font-mono text-[10px] text-[var(--ink-dim)]">
+                    <span className="inline-flex items-center gap-1">
+                      <TrendingUp size={10} />
+                      {o.results.improvement.toFixed(2)}% iyileşme
+                    </span>
+                    <span>· {o.results.duration}ms</span>
+                  </div>
+                )}
+                {o.status === 'failed' && o.error && (
+                  <div className="flex items-start gap-2 pt-2 border-t border-[var(--rule)]">
+                    <AlertTriangle size={12} className="text-[var(--state)] mt-0.5 shrink-0" />
+                    <span className="font-serif text-sm text-[var(--ink-2)]">{o.error}</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConfigsTab({ configs }: { configs: Config[] }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h2 className="font-serif text-lg text-[var(--ink)]">Performans Konfigürasyonları</h2>
+        <Button variant="primary" size="sm">
+          <Plus size={14} />
+          Yeni Konfigürasyon
+        </Button>
+      </div>
+
+      {configs.length === 0 ? (
+        <Card contentClassName="p-10 text-center font-serif text-sm text-[var(--ink-dim)]">
+          Konfigürasyon bulunamadı.
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {configs.map((c) => (
+            <Card key={c.id} contentClassName="p-0">
+              <div className="px-4 py-2 border-b border-[var(--rule)] flex items-center justify-between gap-2">
+                <span className="font-serif text-base text-[var(--ink)]">{c.name}</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="text-[var(--ink-dim)] hover:text-[var(--ink)] p-1"
+                    aria-label="Düzenle"
+                    title="Düzenle"
+                  >
+                    <Edit size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    className="text-[var(--ink-dim)] hover:text-[var(--state)] p-1"
+                    aria-label="Sil"
+                    title="Sil"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+              <div className="p-4 space-y-2">
+                <p className="font-serif text-sm text-[var(--ink-2)]">{c.description}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Chip tone="outline">{c.category}</Chip>
+                  <Chip tone={c.isEnabled ? 'black' : 'default'}>
+                    {c.isEnabled ? 'Aktif' : 'Pasif'}
+                  </Chip>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                    Öncelik: {c.priority}
+                  </span>
+                </div>
+                {c.schedule && (
+                  <div className="flex items-center gap-1 pt-2 border-t border-[var(--rule)] font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                    <Clock size={10} />
+                    {c.schedule.type}: {c.schedule.value}
+                  </div>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
