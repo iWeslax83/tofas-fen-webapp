@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { FileText, X, Plus, Calendar, Tag, Trash2, Mail } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { FileText, X, Plus, Trash2, Eye, Paperclip } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-import './DilekcePage.css';
+import { DataTable } from '../../components/ui/DataTable';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Chip, type ChipProps } from '../../components/ui/Chip';
+import { Input } from '../../components/ui/Input';
 import { apiClient } from '../../utils/api';
 import { extractError } from '../../utils/apiResponseHandler';
+import { cn } from '../../utils/cn';
 
 interface Dilekce {
   _id: string;
@@ -30,45 +36,110 @@ interface Dilekce {
   updatedAt: string;
 }
 
+type DilekceType = Dilekce['type'];
+type Priority = Dilekce['priority'];
+type Status = Dilekce['status'];
+
+const TYPE_LABELS: Record<DilekceType, string> = {
+  izin: 'İzin',
+  rapor: 'Rapor',
+  nakil: 'Nakil',
+  diger: 'Diğer',
+};
+
+const STATUS_LABELS: Record<Status, string> = {
+  pending: 'Beklemede',
+  in_review: 'İnceleniyor',
+  approved: 'Onaylandı',
+  rejected: 'Reddedildi',
+  completed: 'Tamamlandı',
+};
+
+const STATUS_TONES: Record<Status, ChipProps['tone']> = {
+  pending: 'default',
+  in_review: 'outline',
+  approved: 'black',
+  rejected: 'state',
+  completed: 'black',
+};
+
+const PRIORITY_LABELS: Record<Priority, string> = {
+  low: 'Düşük',
+  medium: 'Orta',
+  high: 'Yüksek',
+};
+
+const PRIORITY_TONES: Record<Priority, ChipProps['tone']> = {
+  low: 'default',
+  medium: 'outline',
+  high: 'state',
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  student: 'Öğrenci',
+  parent: 'Veli',
+  teacher: 'Öğretmen',
+};
+
+const selectClasses = cn(
+  'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+  'transition-colors',
+);
+
+const formatDate = (raw: string): string =>
+  new Date(raw).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+
+const formatDateTime = (raw: string): string =>
+  new Date(raw).toLocaleDateString('tr-TR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+interface FieldProps {
+  label: string;
+  children: React.ReactNode;
+  fullWidth?: boolean;
+}
+
+const Field = ({ label, children, fullWidth }: FieldProps) => (
+  <label className={cn('flex flex-col gap-1', fullWidth && 'md:col-span-2')}>
+    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+      {label}
+    </span>
+    {children}
+  </label>
+);
+
 const DilekcePage: React.FC = () => {
   const { user } = useAuthContext();
   const navigate = useNavigate();
 
   const [dilekceler, setDilekceler] = useState<Dilekce[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
-
-  // Form state
-  const [type, setType] = useState<'izin' | 'rapor' | 'nakil' | 'diger'>('izin');
-  const [subject, setSubject] = useState('');
-  const [content, setContent] = useState('');
-  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
-  const [category, setCategory] = useState('');
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const [selected, setSelected] = useState<Dilekce | null>(null);
 
   useEffect(() => {
     if (!user || !['student', 'teacher', 'parent'].includes(user.rol || '')) {
       navigate('/login');
       return;
     }
-
     loadDilekceler();
   }, [user, navigate]);
 
   const loadDilekceler = async () => {
     try {
       setLoading(true);
-
-      // Veliler için hem kendi hem çocuklarının dilekçelerini çek
       const includeChildren = user?.rol === 'parent' ? '?includeChildren=true' : '';
-
       const response = await apiClient.get(`/api/dilekce${includeChildren}`);
-
       if (response.data.success) {
         setDilekceler(response.data.dilekceler || []);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error loading dilekce:', error);
       toast.error('Dilekçeler yüklenemedi');
     } finally {
@@ -76,15 +147,181 @@ const DilekcePage: React.FC = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      if (attachments.length + files.length > 5) {
-        toast.error('Maksimum 5 dosya yükleyebilirsiniz');
-        return;
+  const handleDelete = useCallback(async (id: string) => {
+    if (!window.confirm('Bu dilekçeyi silmek istediğinizden emin misiniz?')) return;
+    try {
+      const response = await apiClient.delete(`/api/dilekce/${id}`);
+      if (response.data.success) {
+        toast.success('Dilekçe silindi');
+        loadDilekceler();
       }
-      setAttachments((prev) => [...prev, ...files]);
+    } catch (error) {
+      console.error('Error deleting dilekce:', error);
+      const message = extractError(error) || 'Dilekçe silinemedi';
+      toast.error(message);
     }
+  }, []);
+
+  const columns = useMemo<ColumnDef<Dilekce>[]>(
+    () => [
+      {
+        accessorKey: 'subject',
+        header: 'Konu',
+        cell: (info) => (
+          <span className="font-serif text-[var(--ink)]">{info.getValue<string>()}</span>
+        ),
+        filterFn: 'includesString',
+      },
+      {
+        accessorKey: 'type',
+        header: 'Tür',
+        cell: (info) => (
+          <span className="font-mono text-xs uppercase tracking-wider text-[var(--ink-dim)]">
+            {TYPE_LABELS[info.getValue<DilekceType>()]}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'priority',
+        header: 'Öncelik',
+        cell: (info) => {
+          const p = info.getValue<Priority>();
+          return <Chip tone={PRIORITY_TONES[p]}>{PRIORITY_LABELS[p]}</Chip>;
+        },
+      },
+      {
+        accessorKey: 'createdAt',
+        header: 'Tarih',
+        cell: (info) => (
+          <span className="font-mono text-xs text-[var(--ink-dim)]">
+            {formatDate(info.getValue<string>())}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: 'Durum',
+        cell: (info) => {
+          const s = info.getValue<Status>();
+          return <Chip tone={STATUS_TONES[s]}>{STATUS_LABELS[s]}</Chip>;
+        },
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const d = row.original;
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <button
+                type="button"
+                onClick={() => setSelected(d)}
+                className="text-[var(--ink-dim)] hover:text-[var(--ink)] p-1"
+                aria-label="Detay"
+                title="Detay"
+              >
+                <Eye size={16} />
+              </button>
+              {d.status === 'pending' && (
+                <button
+                  type="button"
+                  onClick={() => handleDelete(d._id)}
+                  className="text-[var(--ink-dim)] hover:text-[var(--state)] p-1"
+                  aria-label="Başvuruyu iptal et"
+                  title="Başvuruyu iptal et"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    [handleDelete],
+  );
+
+  const breadcrumb = [
+    { label: 'Ana Sayfa', path: `/${user?.rol || 'login'}` },
+    { label: 'Dilekçe' },
+  ];
+
+  if (loading) {
+    return (
+      <ModernDashboardLayout pageTitle="Dilekçe" breadcrumb={breadcrumb}>
+        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          Yükleniyor…
+        </div>
+      </ModernDashboardLayout>
+    );
+  }
+
+  return (
+    <ModernDashboardLayout pageTitle="Dilekçe" breadcrumb={breadcrumb}>
+      <div className="p-6 space-y-6">
+        <header>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Belge No. {new Date().getFullYear()}/D
+          </div>
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Dilekçelerim</h1>
+        </header>
+
+        <DataTable
+          caption="Tablo I — Dilekçe Listesi"
+          columns={columns}
+          data={dilekceler}
+          emptyState="Henüz bir dilekçeniz yok."
+          toolbar={
+            <div className="flex items-center justify-end">
+              <Button variant="primary" size="sm" onClick={() => setShowForm(true)}>
+                <Plus size={14} />
+                Yeni Dilekçe
+              </Button>
+            </div>
+          }
+        />
+      </div>
+
+      {showForm && (
+        <NewDilekceModal
+          onClose={() => setShowForm(false)}
+          onCreated={() => {
+            setShowForm(false);
+            loadDilekceler();
+          }}
+        />
+      )}
+
+      {selected && <DilekceDetailModal dilekce={selected} onClose={() => setSelected(null)} />}
+    </ModernDashboardLayout>
+  );
+};
+
+export default DilekcePage;
+
+interface NewDilekceModalProps {
+  onClose: () => void;
+  onCreated: () => void;
+}
+
+function NewDilekceModal({ onClose, onCreated }: NewDilekceModalProps) {
+  const [type, setType] = useState<DilekceType>('izin');
+  const [subject, setSubject] = useState('');
+  const [content, setContent] = useState('');
+  const [priority, setPriority] = useState<Priority>('medium');
+  const [category, setCategory] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const files = Array.from(e.target.files);
+    if (attachments.length + files.length > 5) {
+      toast.error('Maksimum 5 dosya yükleyebilirsiniz');
+      return;
+    }
+    setAttachments((prev) => [...prev, ...files]);
   };
 
   const removeFile = (index: number) => {
@@ -93,12 +330,10 @@ const DilekcePage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!subject || !content) {
       toast.error('Lütfen konu ve içerik alanlarını doldurun');
       return;
     }
-
     setSubmitting(true);
     try {
       const formData = new FormData();
@@ -107,29 +342,16 @@ const DilekcePage: React.FC = () => {
       formData.append('content', content);
       formData.append('priority', priority);
       if (category) formData.append('category', category);
-
-      attachments.forEach((file) => {
-        formData.append('attachments', file);
-      });
+      attachments.forEach((file) => formData.append('attachments', file));
 
       const response = await apiClient.post('/api/dilekce', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-
       if (response.data.success) {
         toast.success('Dilekçe oluşturuldu');
-        setShowForm(false);
-        setType('izin');
-        setSubject('');
-        setContent('');
-        setPriority('medium');
-        setCategory('');
-        setAttachments([]);
-        loadDilekceler();
+        onCreated();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error submitting dilekce:', error);
       const message = extractError(error) || 'Dilekçe oluşturulamadı';
       toast.error(message);
@@ -138,371 +360,257 @@ const DilekcePage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Bu dilekçeyi silmek istediğinizden emin misiniz?')) {
-      return;
-    }
-
-    try {
-      const response = await apiClient.delete(`/api/dilekce/${id}`);
-
-      if (response.data.success) {
-        toast.success('Dilekçe silindi');
-        loadDilekceler();
-      }
-    } catch (error: any) {
-      console.error('Error deleting dilekce:', error);
-      const message = extractError(error) || 'Dilekçe silinemedi';
-      toast.error(message);
-    }
-  };
-
-  const getStatusBadge = (dilekce: Dilekce) => {
-    const statusConfig: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: '#dbeafe', color: '#1e40af', label: 'Beklemede' },
-      in_review: { bg: '#fef3c7', color: '#92400e', label: 'İnceleniyor' },
-      approved: { bg: '#d1fae5', color: '#065f46', label: 'Onaylandı' },
-      rejected: { bg: '#f3f4f6', color: '#6b7280', label: 'Reddedildi' },
-      completed: { bg: '#d1fae5', color: '#065f46', label: 'Tamamlandı' },
-    };
-
-    const config = statusConfig[dilekce.status] || statusConfig.pending;
-    return (
-      <span
-        className="badge"
-        style={{
-          backgroundColor: config.bg,
-          color: config.color,
-        }}
-      >
-        {config.label}
-      </span>
-    );
-  };
-
-  const getPriorityBadge = (priority: string) => {
-    const priorityConfig: Record<string, { bg: string; color: string; label: string }> = {
-      low: { bg: '#f3f4f6', color: '#6b7280', label: 'Düşük' },
-      medium: { bg: '#fef3c7', color: '#92400e', label: 'Orta' },
-      high: { bg: '#fef3c7', color: '#92400e', label: 'Yüksek' },
-    };
-
-    const config = priorityConfig[priority] || priorityConfig.medium;
-    return (
-      <span
-        className="badge"
-        style={{
-          backgroundColor: config.bg,
-          color: config.color,
-        }}
-      >
-        {config.label}
-      </span>
-    );
-  };
-
-  if (loading) {
-    return (
-      <ModernDashboardLayout
-        pageTitle="Dilekçe"
-        breadcrumb={[{ label: 'Ana Sayfa', path: `/${user?.rol}` }, { label: 'Dilekçe' }]}
-      >
-        <div className="dilekce-page">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Dilekçeler yükleniyor...</p>
-          </div>
-        </div>
-      </ModernDashboardLayout>
-    );
-  }
-
   return (
-    <ModernDashboardLayout
-      pageTitle="Dilekçe"
-      breadcrumb={[{ label: 'Ana Sayfa', path: `/${user?.rol}` }, { label: 'Dilekçe' }]}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+      role="presentation"
     >
-      <div className="dilekce-page">
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="page-title-section">
-              <FileText className="page-icon" />
-              <h1 className="page-title-main">Dilekçelerim</h1>
-            </div>
-            {!showForm && (
-              <button
-                onClick={() => setShowForm(true)}
-                className="btn btn-primary"
-                style={{ fontSize: '1.125rem', padding: '10px 20px', minHeight: '50px' }}
-              >
-                <Plus className="w-4 h-4" />
-                Yeni Dilekçe Oluştur
-              </button>
-            )}
+      <Card
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        contentClassName="p-0"
+      >
+        <div onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+              Yeni Dilekçe Başvurusu
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-white hover:opacity-80"
+              aria-label="Kapat"
+            >
+              <X size={16} />
+            </button>
           </div>
-        </div>
 
-        {showForm && (
-          <div className="form-container">
-            <div className="form-header">
-              <h3 className="form-title">Yeni Dilekçe Başvurusu</h3>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label className="form-label">Dilekçe Türü *</label>
-                  <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value as any)}
-                    required
-                    className="form-control"
-                  >
-                    <option value="izin">İzin</option>
-                    <option value="rapor">Rapor</option>
-                    <option value="nakil">Nakil</option>
-                    <option value="diger">Diğer</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Öncelik</label>
-                  <select
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value as any)}
-                    className="form-control"
-                  >
-                    <option value="low">Düşük</option>
-                    <option value="medium">Orta</option>
-                    <option value="high">Yüksek</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Kategori (Opsiyonel)</label>
-                  <input
-                    type="text"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    placeholder="Örn: Sağlık, Spor, Aile vb."
-                    className="form-control"
-                  />
-                </div>
-
-                <div className="form-group full-width">
-                  <label className="form-label">Konu *</label>
-                  <input
-                    type="text"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    required
-                    maxLength={200}
-                    placeholder="Dilekçenizin kısa özet konusu"
-                    className="form-control"
-                  />
-                </div>
-
-                <div className="form-group full-width">
-                  <label className="form-label">İçerik *</label>
-                  <textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    required
-                    maxLength={5000}
-                    placeholder="Dilekçenizin detaylı içeriğini buraya yazınız..."
-                    className="form-control form-textarea"
-                  />
-                  <p
-                    style={{
-                      fontSize: '12px',
-                      color: '#6b7280',
-                      marginTop: '5px',
-                      textAlign: 'right',
-                    }}
-                  >
-                    {content.length} / 5000 karakter
-                  </p>
-                </div>
-
-                <div className="form-group full-width">
-                  <label className="form-label">Ek Dosyalar (Opsiyonel, Max 5 dosya, 10MB)</label>
-                  <div className="file-input-wrapper">
-                    <label className="file-input-label">
-                      <Mail className="w-5 h-5" />
-                      Dosya Seçin veya Sürükleyin
-                      <input
-                        type="file"
-                        onChange={handleFileChange}
-                        multiple
-                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                        className="file-input"
-                      />
-                    </label>
-                  </div>
-                  {attachments.length > 0 && (
-                    <div className="file-list">
-                      {attachments.map((file, index) => (
-                        <div key={index} className="file-item">
-                          <FileText className="w-4 h-4" />
-                          <span>{file.name}</span>
-                          <button
-                            type="button"
-                            onClick={() => removeFile(index)}
-                            className="file-remove"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="form-actions">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setType('izin');
-                    setSubject('');
-                    setContent('');
-                    setPriority('medium');
-                    setCategory('');
-                    setAttachments([]);
-                  }}
-                  className="btn btn-secondary"
+          <form className="p-6 space-y-4" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Dilekçe Türü">
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value as DilekceType)}
+                  required
+                  className={selectClasses}
                 >
-                  İptal
-                </button>
-                <button type="submit" disabled={submitting} className="btn btn-primary">
-                  {submitting ? 'Gönderiliyor...' : 'Dilekçe Gönder'}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        <div className="requests-container">
-          {dilekceler.length === 0 ? (
-            <div className="empty-state">
-              <FileText className="empty-icon" />
-              <h3>Henüz bir dilekçeniz yok</h3>
-              <p>Yeni bir dilekçe başvurusu oluşturmak için yukarıdaki butonu kullanabilirsiniz.</p>
-            </div>
-          ) : (
-            <div className="requests-grid">
-              {dilekceler.map((dilekce) => (
-                <div key={dilekce._id} className="request-card">
-                  <div className="card-header">
-                    <div className="card-header-left">
-                      <h3 className="card-title">
-                        {dilekce.subject}
-                        {getPriorityBadge(dilekce.priority)}
-                      </h3>
-                    </div>
-                    <div className="card-header-right">{getStatusBadge(dilekce)}</div>
-                  </div>
-
-                  <div className="card-content">
-                    <div className="request-owner">
-                      <span className="owner-label">Gönderen:</span>
-                      <span className="owner-value">
-                        {dilekce.userName}
-                        {dilekce.userRole === 'student'
-                          ? ' (Öğrenci)'
-                          : dilekce.userRole === 'parent'
-                            ? ' (Veli)'
-                            : dilekce.userRole === 'teacher'
-                              ? ' (Öğretmen)'
-                              : ''}
-                      </span>
-                    </div>
-
-                    <div className="request-owner">
-                      <Tag className="info-icon" />
-                      <span className="info-label">Tür:</span>
-                      <span className="info-value">
-                        {dilekce.type === 'izin'
-                          ? 'İzin'
-                          : dilekce.type === 'rapor'
-                            ? 'Rapor'
-                            : dilekce.type === 'nakil'
-                              ? 'Nakil'
-                              : 'Diğer'}
-                        {dilekce.category && ` - ${dilekce.category}`}
-                      </span>
-                    </div>
-                    <div className="request-owner">
-                      <Calendar className="info-icon" />
-                      <span className="info-label">Tarih:</span>
-                      <span className="info-value">
-                        {new Date(dilekce.createdAt).toLocaleDateString('tr-TR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                    </div>
-
-                    <div className="content-box">{dilekce.content}</div>
-
-                    {dilekce.attachments && dilekce.attachments.length > 0 && (
-                      <div className="attachment-list">
-                        {dilekce.attachments.map((file, index) => (
-                          <a
-                            key={index}
-                            href={file}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="attachment-link"
-                          >
-                            <FileText className="w-3 h-3" />
-                            Dosya {index + 1}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-
-                    {dilekce.reviewNote && (
-                      <div className="note-box">
-                        <strong>İnceleme Notu:</strong> {dilekce.reviewNote}
-                      </div>
-                    )}
-
-                    {dilekce.response && (
-                      <div className="response-box">
-                        <strong>Yanıt:</strong> {dilekce.response}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="card-footer">
-                    <div className="card-date">
-                      Son Güncelleme: {new Date(dilekce.updatedAt).toLocaleDateString('tr-TR')}
-                    </div>
-                    {dilekce.status === 'pending' && (
-                      <div className="action-buttons">
+                  {(Object.keys(TYPE_LABELS) as DilekceType[]).map((t) => (
+                    <option key={t} value={t}>
+                      {TYPE_LABELS[t]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Öncelik">
+                <select
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value as Priority)}
+                  className={selectClasses}
+                >
+                  {(Object.keys(PRIORITY_LABELS) as Priority[]).map((p) => (
+                    <option key={p} value={p}>
+                      {PRIORITY_LABELS[p]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Kategori (opsiyonel)" fullWidth>
+                <Input
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="Örn: Sağlık, Spor, Aile"
+                />
+              </Field>
+              <Field label="Konu" fullWidth>
+                <Input
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  required
+                  maxLength={200}
+                  placeholder="Dilekçenizin kısa özet konusu"
+                />
+              </Field>
+              <Field label="İçerik" fullWidth>
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  required
+                  maxLength={5000}
+                  rows={6}
+                  placeholder="Dilekçenizin detaylı içeriğini buraya yazınız…"
+                  className={cn(selectClasses, 'resize-y min-h-[8rem]')}
+                />
+                <span className="text-right font-mono text-[10px] text-[var(--ink-dim)]">
+                  {content.length} / 5000
+                </span>
+              </Field>
+              <Field label="Ek Dosyalar (max 5)" fullWidth>
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  multiple
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  className="font-serif text-sm text-[var(--ink-2)] file:mr-3 file:px-3 file:py-1 file:border file:border-[var(--ink)] file:bg-transparent file:text-[var(--ink)] file:font-medium file:cursor-pointer"
+                />
+                {attachments.length > 0 && (
+                  <ul className="mt-2 space-y-1">
+                    {attachments.map((file, index) => (
+                      <li
+                        key={index}
+                        className="flex items-center gap-2 text-sm text-[var(--ink-2)]"
+                      >
+                        <Paperclip size={12} className="text-[var(--ink-dim)]" />
+                        <span className="font-serif flex-1 truncate">{file.name}</span>
                         <button
-                          onClick={() => handleDelete(dilekce._id)}
-                          className="btn btn-danger"
+                          type="button"
+                          onClick={() => removeFile(index)}
+                          className="text-[var(--ink-dim)] hover:text-[var(--state)]"
+                          aria-label="Dosyayı kaldır"
                         >
-                          <Trash2 className="w-4 h-4" />
-                          Başvuruyu İptal Et
+                          <X size={12} />
                         </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Field>
             </div>
-          )}
-        </div>
-      </div>
-    </ModernDashboardLayout>
-  );
-};
 
-export default DilekcePage;
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button type="button" variant="ghost" onClick={onClose}>
+                İptal
+              </Button>
+              <Button type="submit" variant="primary" loading={submitting}>
+                Dilekçe Gönder
+              </Button>
+            </div>
+          </form>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+interface DilekceDetailModalProps {
+  dilekce: Dilekce;
+  onClose: () => void;
+}
+
+function DilekceDetailModal({ dilekce, onClose }: DilekceDetailModalProps) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+      role="presentation"
+    >
+      <Card
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        contentClassName="p-0"
+      >
+        <div onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+              Dilekçe · No. {dilekce._id.slice(-6).toUpperCase()}
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-white hover:opacity-80"
+              aria-label="Kapat"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Chip tone={STATUS_TONES[dilekce.status]}>{STATUS_LABELS[dilekce.status]}</Chip>
+              <Chip tone={PRIORITY_TONES[dilekce.priority]}>
+                {PRIORITY_LABELS[dilekce.priority]} öncelik
+              </Chip>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)] ml-auto">
+                {formatDateTime(dilekce.createdAt)}
+              </span>
+            </div>
+
+            <header>
+              <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                {TYPE_LABELS[dilekce.type]}
+                {dilekce.category && ` · ${dilekce.category}`}
+              </div>
+              <h2 className="font-serif text-xl text-[var(--ink)] mt-1">{dilekce.subject}</h2>
+            </header>
+
+            <Section title="Gönderen">
+              <p className="font-serif text-sm text-[var(--ink)]">
+                {dilekce.userName}
+                {ROLE_LABELS[dilekce.userRole] && (
+                  <span className="text-[var(--ink-dim)]"> · {ROLE_LABELS[dilekce.userRole]}</span>
+                )}
+              </p>
+            </Section>
+
+            <Section title="İçerik">
+              <p className="font-serif text-sm text-[var(--ink-2)] leading-relaxed whitespace-pre-wrap">
+                {dilekce.content}
+              </p>
+            </Section>
+
+            {dilekce.attachments && dilekce.attachments.length > 0 && (
+              <Section title="Ek Dosyalar">
+                <ul className="space-y-1">
+                  {dilekce.attachments.map((file, i) => (
+                    <li key={i}>
+                      <a
+                        href={file}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm text-[var(--ink)] hover:text-[var(--state)]"
+                      >
+                        <FileText size={12} />
+                        Dosya {i + 1}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
+
+            {dilekce.reviewNote && (
+              <Section title="İnceleme Notu">
+                <p className="font-serif text-sm text-[var(--ink-2)] leading-relaxed">
+                  {dilekce.reviewNote}
+                </p>
+              </Section>
+            )}
+
+            {dilekce.response && (
+              <Section title="Yanıt">
+                <p className="font-serif text-sm text-[var(--ink-2)] leading-relaxed">
+                  {dilekce.response}
+                </p>
+              </Section>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                Kapat
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1">
+        {title}
+      </div>
+      <div>{children}</div>
+    </div>
+  );
+}
