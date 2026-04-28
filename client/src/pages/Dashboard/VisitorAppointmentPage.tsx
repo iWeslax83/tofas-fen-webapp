@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
-import { apiClient } from '../../utils/api';
-import { CalendarDays, Clock, Check, AlertCircle, XCircle } from 'lucide-react';
+import { CalendarDays, Clock, AlertCircle, XCircle, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Chip, type ChipProps } from '../../components/ui/Chip';
+import { Input } from '../../components/ui/Input';
+import { apiClient } from '../../utils/api';
+import { cn } from '../../utils/cn';
 
 interface Appointment {
   _id: string;
@@ -14,7 +19,7 @@ interface Appointment {
   createdAt: string;
 }
 
-const statusLabels: Record<string, string> = {
+const STATUS_LABELS: Record<string, string> = {
   pending: 'Beklemede',
   approved: 'Onaylandı',
   rejected: 'Reddedildi',
@@ -22,13 +27,38 @@ const statusLabels: Record<string, string> = {
   cancelled: 'İptal Edildi',
 };
 
-const statusColors: Record<string, string> = {
-  pending: '#f59e0b',
-  approved: '#10b981',
-  rejected: '#ef4444',
-  completed: '#6b7280',
-  cancelled: '#9ca3af',
+const STATUS_TONES: Record<string, ChipProps['tone']> = {
+  pending: 'default',
+  approved: 'black',
+  rejected: 'state',
+  completed: 'outline',
+  cancelled: 'default',
 };
+
+const PURPOSES = ['Okul Tanıtımı', 'Kayıt İşlemi', 'Bilgi Alma', 'Mülakat', 'Diğer'];
+
+const selectClasses = cn(
+  'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+  'transition-colors',
+);
+
+interface FieldProps {
+  label: string;
+  htmlFor?: string;
+  required?: boolean;
+  children: React.ReactNode;
+}
+
+const Field = ({ label, htmlFor, required, children }: FieldProps) => (
+  <label htmlFor={htmlFor} className="flex flex-col gap-1">
+    <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+      {label}
+      {required && <span className="text-[var(--state)] ml-1">*</span>}
+    </span>
+    {children}
+  </label>
+);
 
 export default function VisitorAppointmentPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -41,9 +71,8 @@ export default function VisitorAppointmentPage() {
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-
+  const [successMsg, setSuccessMsg] = useState('');
   const [cancelling, setCancelling] = useState<string | null>(null);
 
   const fetchAppointments = useCallback(async () => {
@@ -66,7 +95,7 @@ export default function VisitorAppointmentPage() {
     setTimeSlot('');
     try {
       const res = await apiClient.get(`/api/appointments/available-slots?date=${selectedDate}`);
-      setAvailableSlots((res.data as any).availableSlots || []);
+      setAvailableSlots((res.data as { availableSlots?: string[] }).availableSlots || []);
     } catch {
       setAvailableSlots([]);
       toast.error('Müsait saatler alınırken hata oluştu');
@@ -91,7 +120,7 @@ export default function VisitorAppointmentPage() {
     setErrorMsg('');
     try {
       await apiClient.post('/api/appointments', { date, timeSlot, purpose, notes });
-      setSuccessMsg('Randevu talebiniz başarıyla oluşturuldu!');
+      setSuccessMsg('Randevu talebiniz başarıyla oluşturuldu.');
       setShowForm(false);
       setDate('');
       setTimeSlot('');
@@ -99,8 +128,9 @@ export default function VisitorAppointmentPage() {
       setNotes('');
       await fetchAppointments();
       setTimeout(() => setSuccessMsg(''), 5000);
-    } catch (err: any) {
-      setErrorMsg(err?.response?.data?.error || 'Randevu oluşturulurken hata oluştu');
+    } catch (err: unknown) {
+      const e2 = err as { response?: { data?: { error?: string } } };
+      setErrorMsg(e2?.response?.data?.error || 'Randevu oluşturulurken hata oluştu');
     } finally {
       setSubmitting(false);
     }
@@ -112,353 +142,212 @@ export default function VisitorAppointmentPage() {
       await apiClient.put(`/api/appointments/my/${id}/cancel`);
       toast.success('Randevu iptal edildi');
       await fetchAppointments();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Randevu iptal edilirken hata oluştu');
+    } catch (err: unknown) {
+      const e2 = err as { response?: { data?: { error?: string } } };
+      toast.error(e2?.response?.data?.error || 'Randevu iptal edilirken hata oluştu');
     } finally {
       setCancelling(null);
     }
   };
 
-  // Min date: tomorrow
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
 
   return (
     <ModernDashboardLayout pageTitle="Randevu Al">
-      <div style={{ padding: '24px', maxWidth: 800, margin: '0 auto' }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 24,
-            flexWrap: 'wrap',
-            gap: 12,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <CalendarDays size={28} />
-            <h1 style={{ margin: 0, fontSize: 24 }}>Randevu Al</h1>
+      <div className="p-6 space-y-6 max-w-3xl mx-auto">
+        <header className="flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+              Belge No. {new Date().getFullYear()}/R-Z
+            </div>
+            <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Randevu Al</h1>
           </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            style={{
-              padding: '10px 20px',
-              borderRadius: 8,
-              border: 'none',
-              cursor: 'pointer',
-              background: '#3b82f6',
-              color: '#fff',
-              fontWeight: 600,
-              fontSize: 14,
-            }}
-          >
+          <Button variant="primary" size="sm" onClick={() => setShowForm((v) => !v)}>
             {showForm ? 'İptal' : 'Yeni Randevu'}
-          </button>
-        </div>
+          </Button>
+        </header>
 
         {successMsg && (
-          <div
-            style={{
-              background: '#f0fdf4',
-              border: '1px solid #bbf7d0',
-              borderRadius: 8,
-              padding: '12px 16px',
-              marginBottom: 16,
-              color: '#166534',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <Check size={16} /> {successMsg}
-          </div>
+          <Card contentClassName="px-4 py-2 flex items-center gap-2">
+            <Chip tone="black">Bildirim</Chip>
+            <span className="font-serif text-sm text-[var(--ink)] flex-1 inline-flex items-center gap-1">
+              <CheckCircle size={12} />
+              {successMsg}
+            </span>
+          </Card>
         )}
 
         {errorMsg && (
-          <div
-            style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              borderRadius: 8,
-              padding: '12px 16px',
-              marginBottom: 16,
-              color: '#991b1b',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <AlertCircle size={16} /> {errorMsg}
-          </div>
+          <Card contentClassName="px-4 py-2 flex items-center gap-2 border-l-4 border-[var(--state)]">
+            <Chip tone="state">Hata</Chip>
+            <span className="font-serif text-sm text-[var(--ink)] flex-1 inline-flex items-center gap-1">
+              <AlertCircle size={12} />
+              {errorMsg}
+            </span>
+          </Card>
         )}
 
-        {/* New Appointment Form */}
         {showForm && (
-          <form
-            onSubmit={handleSubmit}
-            style={{
-              background: '#fff',
-              borderRadius: 12,
-              padding: 24,
-              marginBottom: 24,
-              border: '1px solid #f1f5f9',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-            }}
-          >
-            <h2 style={{ margin: '0 0 20px', fontSize: 18 }}>Yeni Randevu Talebi</h2>
-
-            <div style={{ display: 'grid', gap: 16 }}>
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    marginBottom: 6,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: '#374151',
-                  }}
-                >
-                  Tarih *
-                </label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={handleDateChange}
-                  min={minDate}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: 8,
-                    border: '1px solid #e5e7eb',
-                    fontSize: 14,
-                    boxSizing: 'border-box',
-                  }}
-                />
+          <Card>
+            <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center gap-2">
+              <CalendarDays size={12} />
+              <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+                Yeni Randevu Talebi
+              </span>
+            </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label="Tarih" htmlFor="apt-date" required>
+                  <Input
+                    id="apt-date"
+                    type="date"
+                    value={date}
+                    onChange={handleDateChange}
+                    min={minDate}
+                  />
+                </Field>
+                <Field label="Randevu Amacı" htmlFor="apt-purpose" required>
+                  <select
+                    id="apt-purpose"
+                    value={purpose}
+                    onChange={(e) => setPurpose(e.target.value)}
+                    className={selectClasses}
+                  >
+                    <option value="">Seçin…</option>
+                    {PURPOSES.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
               </div>
 
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    marginBottom: 6,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: '#374151',
-                  }}
-                >
-                  Saat Dilimi *
-                </label>
+              <Field label="Saat Dilimi" required>
                 {!date ? (
-                  <p style={{ color: '#9ca3af', fontSize: 13 }}>Önce bir tarih seçin</p>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                    Önce bir tarih seçin
+                  </span>
                 ) : loadingSlots ? (
-                  <p style={{ color: '#9ca3af', fontSize: 13 }}>Müsait saatler yükleniyor...</p>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                    Müsait saatler yükleniyor…
+                  </span>
                 ) : availableSlots.length === 0 ? (
-                  <p style={{ color: '#ef4444', fontSize: 13 }}>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--state)]">
                     Bu tarihte müsait saat bulunmuyor
-                  </p>
+                  </span>
                 ) : (
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {availableSlots.map((slot) => (
-                      <button
-                        type="button"
-                        key={slot}
-                        onClick={() => setTimeSlot(slot)}
-                        style={{
-                          padding: '8px 14px',
-                          borderRadius: 8,
-                          border: '1px solid',
-                          cursor: 'pointer',
-                          fontSize: 13,
-                          fontWeight: 500,
-                          borderColor: timeSlot === slot ? '#3b82f6' : '#e5e7eb',
-                          background: timeSlot === slot ? '#eff6ff' : '#fff',
-                          color: timeSlot === slot ? '#3b82f6' : '#374151',
-                        }}
-                      >
-                        <Clock size={12} style={{ marginRight: 4 }} />
-                        {slot}
-                      </button>
-                    ))}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {availableSlots.map((slot) => {
+                      const active = timeSlot === slot;
+                      return (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => setTimeSlot(slot)}
+                          aria-pressed={active}
+                          className={cn(
+                            'h-8 px-3 text-xs font-mono uppercase tracking-wider border transition-colors flex items-center gap-1',
+                            active
+                              ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
+                              : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                          )}
+                        >
+                          <Clock size={10} />
+                          {slot}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
-              </div>
+              </Field>
 
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    marginBottom: 6,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: '#374151',
-                  }}
-                >
-                  Randevu Amacı *
-                </label>
-                <select
-                  value={purpose}
-                  onChange={(e) => setPurpose(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: 8,
-                    border: '1px solid #e5e7eb',
-                    fontSize: 14,
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <option value="">Seçin...</option>
-                  <option value="Okul Tanıtımı">Okul Tanıtımı</option>
-                  <option value="Kayıt İşlemi">Kayıt İşlemi</option>
-                  <option value="Bilgi Alma">Bilgi Alma</option>
-                  <option value="Mülakat">Mülakat</option>
-                  <option value="Diğer">Diğer</option>
-                </select>
-              </div>
-
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    marginBottom: 6,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: '#374151',
-                  }}
-                >
-                  Ek Notlar
-                </label>
+              <Field label="Ek Notlar" htmlFor="apt-notes">
                 <textarea
+                  id="apt-notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Eklemek istediğiniz notlar..."
+                  placeholder="Eklemek istediğiniz notlar…"
                   rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: 8,
-                    border: '1px solid #e5e7eb',
-                    fontSize: 14,
-                    resize: 'vertical',
-                    boxSizing: 'border-box',
-                  }}
+                  className={cn(selectClasses, 'resize-y min-h-[5rem]')}
                 />
-              </div>
+              </Field>
 
-              <button
-                type="submit"
-                disabled={submitting || !date || !timeSlot || !purpose}
-                style={{
-                  padding: '12px 20px',
-                  borderRadius: 8,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: date && timeSlot && purpose ? '#3b82f6' : '#e5e7eb',
-                  color: date && timeSlot && purpose ? '#fff' : '#9ca3af',
-                  fontWeight: 600,
-                  fontSize: 14,
-                }}
-              >
-                {submitting ? 'Gönderiliyor...' : 'Randevu Talebi Oluştur'}
-              </button>
+              <div className="flex justify-end pt-2">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  loading={submitting}
+                  disabled={submitting || !date || !timeSlot || !purpose}
+                >
+                  Randevu Talebi Oluştur
+                </Button>
+              </div>
+            </form>
+          </Card>
+        )}
+
+        <section className="space-y-3">
+          <div className="flex items-center gap-2 border-b border-[var(--rule)] pb-1">
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+              Bölüm I
+            </span>
+            <h2 className="font-serif text-base text-[var(--ink)]">Randevularım</h2>
+          </div>
+
+          {loading ? (
+            <div className="px-4 py-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+              Yükleniyor…
             </div>
-          </form>
-        )}
-
-        {/* Existing Appointments */}
-        <h2 style={{ fontSize: 18, marginBottom: 16 }}>Randevularım</h2>
-
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>Yükleniyor...</div>
-        ) : appointments.length === 0 ? (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: 40,
-              color: '#9ca3af',
-              background: '#fff',
-              borderRadius: 12,
-              border: '1px solid #f1f5f9',
-            }}
-          >
-            <CalendarDays size={40} style={{ marginBottom: 8, opacity: 0.3 }} />
-            <p>Henüz randevunuz bulunmuyor</p>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gap: 12 }}>
-            {appointments.map((apt) => (
-              <div
-                key={apt._id}
-                style={{
-                  background: '#fff',
-                  borderRadius: 12,
-                  padding: 16,
-                  border: '1px solid #f1f5f9',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 12,
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 4 }}>
-                    <CalendarDays size={16} style={{ color: '#6b7280' }} />
-                    <span style={{ fontWeight: 600, fontSize: 14 }}>
-                      {new Date(apt.date).toLocaleDateString('tr-TR')} - {apt.timeSlot}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 14, color: '#374151', marginLeft: 28 }}>
-                    {apt.purpose}
-                  </div>
-                  {apt.notes && (
-                    <div style={{ fontSize: 13, color: '#9ca3af', marginLeft: 28 }}>
-                      {apt.notes}
+          ) : appointments.length === 0 ? (
+            <Card contentClassName="p-10 flex flex-col items-center text-center gap-3">
+              <CalendarDays size={32} className="text-[var(--ink-dim)]" />
+              <p className="font-serif text-sm text-[var(--ink-2)]">Henüz randevunuz bulunmuyor.</p>
+            </Card>
+          ) : (
+            <Card contentClassName="p-0">
+              <ul className="divide-y divide-[var(--rule)]">
+                {appointments.map((apt) => (
+                  <li key={apt._id} className="p-4 flex items-center gap-4 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                        <CalendarDays size={10} />
+                        {new Date(apt.date).toLocaleDateString('tr-TR')} · {apt.timeSlot}
+                      </div>
+                      <h3 className="font-serif text-base text-[var(--ink)] mt-0.5">
+                        {apt.purpose}
+                      </h3>
+                      {apt.notes && (
+                        <p className="font-serif text-sm text-[var(--ink-2)] mt-1">{apt.notes}</p>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: 6,
-                      background: `${statusColors[apt.status] || '#6b7280'}15`,
-                      color: statusColors[apt.status] || '#6b7280',
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {statusLabels[apt.status] || apt.status}
-                  </span>
-                  {apt.status === 'pending' && (
-                    <button
-                      onClick={() => cancelAppointment(apt._id)}
-                      disabled={cancelling === apt._id}
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: 6,
-                        border: 'none',
-                        cursor: 'pointer',
-                        background: '#fef2f2',
-                        color: '#ef4444',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <XCircle size={12} />{' '}
-                      {cancelling === apt._id ? 'İptal ediliyor...' : 'Iptal Et'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                    <div className="flex items-center gap-2">
+                      <Chip tone={STATUS_TONES[apt.status] ?? 'default'}>
+                        {STATUS_LABELS[apt.status] || apt.status}
+                      </Chip>
+                      {apt.status === 'pending' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => cancelAppointment(apt._id)}
+                          disabled={cancelling === apt._id}
+                          loading={cancelling === apt._id}
+                          className="text-[var(--state)]"
+                        >
+                          <XCircle size={12} />
+                          İptal Et
+                        </Button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+        </section>
       </div>
     </ModernDashboardLayout>
   );
