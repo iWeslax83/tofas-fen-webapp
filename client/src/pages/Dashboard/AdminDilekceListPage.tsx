@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { FileText, Filter, Search, User, Mail, Calendar, Tag } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { FileText, Search, Eye, X } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-import './AdminDilekceListPage.css';
-
+import { DataTable } from '../../components/ui/DataTable';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Chip, type ChipProps } from '../../components/ui/Chip';
+import { Input } from '../../components/ui/Input';
 import { apiClient } from '../../utils/api';
+import { cn } from '../../utils/cn';
 
 interface Dilekce {
   _id: string;
@@ -30,23 +35,135 @@ interface Dilekce {
   updatedAt: string;
 }
 
+type DilekceType = Dilekce['type'];
+type Priority = Dilekce['priority'];
+type Status = Dilekce['status'];
+
+const TYPE_LABELS: Record<DilekceType, string> = {
+  izin: 'İzin',
+  rapor: 'Rapor',
+  nakil: 'Nakil',
+  diger: 'Diğer',
+};
+
+const STATUS_LABELS: Record<Status, string> = {
+  pending: 'Beklemede',
+  in_review: 'İnceleniyor',
+  approved: 'Onaylandı',
+  rejected: 'Reddedildi',
+  completed: 'Tamamlandı',
+};
+
+const STATUS_TONES: Record<Status, ChipProps['tone']> = {
+  pending: 'default',
+  in_review: 'outline',
+  approved: 'black',
+  rejected: 'state',
+  completed: 'black',
+};
+
+const PRIORITY_LABELS: Record<Priority, string> = {
+  low: 'Düşük',
+  medium: 'Orta',
+  high: 'Yüksek',
+};
+
+const PRIORITY_TONES: Record<Priority, ChipProps['tone']> = {
+  low: 'default',
+  medium: 'outline',
+  high: 'state',
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  student: 'Öğrenci',
+  parent: 'Veli',
+  teacher: 'Öğretmen',
+};
+
+type StatusFilter = 'all' | Status;
+type TypeFilter = 'all' | DilekceType;
+type PriorityFilter = 'all' | Priority;
+
+const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
+  { key: 'all', label: 'Tüm Durumlar' },
+  { key: 'pending', label: 'Beklemede' },
+  { key: 'in_review', label: 'İnceleniyor' },
+  { key: 'approved', label: 'Onaylandı' },
+  { key: 'rejected', label: 'Reddedildi' },
+  { key: 'completed', label: 'Tamamlandı' },
+];
+
+const selectClasses = cn(
+  'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+  'transition-colors',
+);
+
+const formatDate = (raw: string): string =>
+  new Date(raw).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+
+const formatDateTime = (raw: string): string =>
+  new Date(raw).toLocaleDateString('tr-TR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+interface ReviewIntent {
+  status: Status;
+  noteLabel: string;
+  buttonLabel: string;
+  buttonVariant: 'primary' | 'secondary' | 'danger';
+  responseField?: boolean;
+}
+
+const REVIEW_ACTIONS: Record<string, ReviewIntent> = {
+  in_review: {
+    status: 'in_review',
+    noteLabel: 'İnceleme Notu (opsiyonel)',
+    buttonLabel: 'İncelemeye Al',
+    buttonVariant: 'secondary',
+  },
+  approved: {
+    status: 'approved',
+    noteLabel: 'Onay Notu (opsiyonel)',
+    buttonLabel: 'Onayla',
+    buttonVariant: 'primary',
+  },
+  rejected: {
+    status: 'rejected',
+    noteLabel: 'Red Nedeni',
+    buttonLabel: 'Reddet',
+    buttonVariant: 'danger',
+  },
+  completed: {
+    status: 'completed',
+    noteLabel: 'Yanıt',
+    buttonLabel: 'Tamamla',
+    buttonVariant: 'primary',
+    responseField: true,
+  },
+};
+
 const AdminDilekceListPage: React.FC = () => {
   const { user } = useAuthContext();
   const navigate = useNavigate();
 
   const [dilekceler, setDilekceler] = useState<Dilekce[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterType, setFilterType] = useState<string>('all');
-  const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
+  const [filterType, setFilterType] = useState<TypeFilter>('all');
+  const [filterPriority, setFilterPriority] = useState<PriorityFilter>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selected, setSelected] = useState<Dilekce | null>(null);
 
   useEffect(() => {
     if (!user || user.rol !== 'admin') {
       navigate('/login');
       return;
     }
-
     loadDilekceler();
   }, [user, navigate]);
 
@@ -54,11 +171,10 @@ const AdminDilekceListPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await apiClient.get('/api/dilekce');
-
       if (response.data.success) {
         setDilekceler(response.data.dilekceler || []);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error loading dilekce:', error);
       toast.error('Dilekçeler yüklenemedi');
     } finally {
@@ -66,371 +182,459 @@ const AdminDilekceListPage: React.FC = () => {
     }
   };
 
-  const handleStatusUpdate = async (
-    id: string,
-    status: string,
-    reviewNote?: string,
-    response?: string,
-  ) => {
-    try {
-      const response_data = await apiClient.put(`/api/dilekce/${id}/status`, {
-        status,
-        reviewNote,
-        response,
-      });
-
-      if (response_data.data.success) {
-        toast.success('Dilekçe durumu güncellendi');
-        loadDilekceler();
+  const handleStatusUpdate = useCallback(
+    async (id: string, status: Status, reviewNote?: string, response?: string) => {
+      try {
+        const r = await apiClient.put(`/api/dilekce/${id}/status`, {
+          status,
+          reviewNote,
+          response,
+        });
+        if (r.data.success) {
+          toast.success('Dilekçe durumu güncellendi');
+          await loadDilekceler();
+          setSelected(null);
+        }
+      } catch (error: unknown) {
+        console.error('Error updating status:', error);
+        const msg =
+          (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+          'İşlem başarısız';
+        toast.error(msg);
       }
-    } catch (error: unknown) {
-      console.error('Error updating status:', error);
-      const msg = (error as any)?.response?.data?.error || 'İşlem başarısız';
-      toast.error(msg);
-    }
-  };
+    },
+    [],
+  );
 
-  const filteredDilekceler = dilekceler.filter((dilekce) => {
-    if (filterStatus !== 'all' && dilekce.status !== filterStatus) return false;
-    if (filterType !== 'all' && dilekce.type !== filterType) return false;
-    if (filterPriority !== 'all' && dilekce.priority !== filterPriority) return false;
-    if (
-      searchTerm &&
-      !dilekce.subject.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !dilekce.userName.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-      return false;
-    return true;
-  });
+  const filteredDilekceler = useMemo(
+    () =>
+      dilekceler.filter((d) => {
+        if (filterStatus !== 'all' && d.status !== filterStatus) return false;
+        if (filterType !== 'all' && d.type !== filterType) return false;
+        if (filterPriority !== 'all' && d.priority !== filterPriority) return false;
+        if (searchTerm) {
+          const q = searchTerm.toLowerCase();
+          if (!d.subject.toLowerCase().includes(q) && !d.userName.toLowerCase().includes(q)) {
+            return false;
+          }
+        }
+        return true;
+      }),
+    [dilekceler, filterStatus, filterType, filterPriority, searchTerm],
+  );
 
-  const getStatusBadge = (dilekce: Dilekce) => {
-    const statusConfig: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: '#dbeafe', color: '#1e40af', label: 'Beklemede' },
-      in_review: { bg: '#fef3c7', color: '#92400e', label: 'İnceleniyor' },
-      approved: { bg: '#d1fae5', color: '#065f46', label: 'Onaylandı' },
-      rejected: { bg: '#f3f4f6', color: '#6b7280', label: 'Reddedildi' },
-      completed: { bg: '#d1fae5', color: '#065f46', label: 'Tamamlandı' },
-    };
+  const columns = useMemo<ColumnDef<Dilekce>[]>(
+    () => [
+      {
+        accessorKey: 'subject',
+        header: 'Konu',
+        cell: (info) => (
+          <span className="font-serif text-[var(--ink)]">{info.getValue<string>()}</span>
+        ),
+        filterFn: 'includesString',
+      },
+      {
+        id: 'sender',
+        header: 'Gönderen',
+        accessorFn: (d) => d.userName,
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <span className="text-[var(--ink-2)]">{row.original.userName}</span>
+            <span className="font-mono text-[10px] uppercase text-[var(--ink-dim)]">
+              {ROLE_LABELS[row.original.userRole] || row.original.userRole}
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'type',
+        header: 'Tür',
+        cell: (info) => (
+          <span className="font-mono text-xs uppercase tracking-wider text-[var(--ink-dim)]">
+            {TYPE_LABELS[info.getValue<DilekceType>()]}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'priority',
+        header: 'Öncelik',
+        cell: (info) => {
+          const p = info.getValue<Priority>();
+          return <Chip tone={PRIORITY_TONES[p]}>{PRIORITY_LABELS[p]}</Chip>;
+        },
+      },
+      {
+        accessorKey: 'createdAt',
+        header: 'Tarih',
+        cell: (info) => (
+          <span className="font-mono text-xs text-[var(--ink-dim)]">
+            {formatDate(info.getValue<string>())}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: 'Durum',
+        cell: (info) => {
+          const s = info.getValue<Status>();
+          return <Chip tone={STATUS_TONES[s]}>{STATUS_LABELS[s]}</Chip>;
+        },
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end">
+            <Button variant="ghost" size="sm" onClick={() => setSelected(row.original)}>
+              <Eye size={14} />
+              Detay
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
 
-    const config = statusConfig[dilekce.status] || statusConfig.pending;
-    return (
-      <span
-        className="badge"
-        style={{
-          padding: '4px 12px',
-          backgroundColor: config.bg,
-          color: config.color,
-          borderRadius: '12px',
-          fontSize: '12px',
-          fontWeight: '500',
-        }}
-      >
-        {config.label}
-      </span>
-    );
-  };
-
-  const getPriorityBadge = (priority: string) => {
-    const priorityConfig: Record<string, { bg: string; color: string; label: string }> = {
-      low: { bg: '#f3f4f6', color: '#6b7280', label: 'Düşük' },
-      medium: { bg: '#fef3c7', color: '#92400e', label: 'Orta' },
-      high: { bg: '#fef3c7', color: '#92400e', label: 'Yüksek' },
-    };
-
-    const config = priorityConfig[priority] || priorityConfig.medium;
-    return (
-      <span
-        style={{
-          padding: '4px 8px',
-          backgroundColor: config.bg,
-          color: config.color,
-          borderRadius: '8px',
-          fontSize: '11px',
-          fontWeight: '500',
-        }}
-      >
-        {config.label}
-      </span>
-    );
-  };
+  const breadcrumb = [{ label: 'Ana Sayfa', path: '/admin' }, { label: 'Dilekçe Yönetimi' }];
 
   if (loading) {
     return (
-      <ModernDashboardLayout
-        pageTitle="Dilekçe Yönetimi"
-        breadcrumb={[{ label: 'Ana Sayfa', path: '/admin' }, { label: 'Dilekçe Yönetimi' }]}
-      >
-        <div className="admin-dilekce-page">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Dilekçeler yükleniyor...</p>
-          </div>
+      <ModernDashboardLayout pageTitle="Dilekçe Yönetimi" breadcrumb={breadcrumb}>
+        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          Yükleniyor…
         </div>
       </ModernDashboardLayout>
     );
   }
 
   return (
-    <ModernDashboardLayout
-      pageTitle="Dilekçe Yönetimi"
-      breadcrumb={[{ label: 'Ana Sayfa', path: '/admin' }, { label: 'Dilekçe Yönetimi' }]}
-    >
-      <div className="admin-dilekce-page">
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="page-title-section">
-              <FileText className="page-icon" />
-              <h1 className="page-title-main">Dilekçe Yönetimi</h1>
-            </div>
+    <ModernDashboardLayout pageTitle="Dilekçe Yönetimi" breadcrumb={breadcrumb}>
+      <div className="p-6 space-y-6">
+        <header>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Belge No. {new Date().getFullYear()}/D-Y
           </div>
-        </div>
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Dilekçe Yönetimi</h1>
+        </header>
 
-        {/* Filters */}
-        <div className="filter-section">
-          <div className="filter-group">
-            <Search className="filter-icon" />
-            <input
-              type="text"
-              placeholder="Konu veya kullanıcı ara..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="filter-input"
-              style={{ width: '250px' }}
-            />
-          </div>
-
-          <div className="filter-group">
-            <Filter className="filter-icon" />
-            <label className="filter-label">Durum:</label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">Tüm Durumlar</option>
-              <option value="pending">Beklemede</option>
-              <option value="in_review">İnceleniyor</option>
-              <option value="approved">Onaylandı</option>
-              <option value="rejected">Reddedildi</option>
-              <option value="completed">Tamamlandı</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <Filter className="filter-icon" />
-            <label className="filter-label">Tür:</label>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">Tüm Türler</option>
-              <option value="izin">İzin</option>
-              <option value="rapor">Rapor</option>
-              <option value="nakil">Nakil</option>
-              <option value="diger">Diğer</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <Filter className="filter-icon" />
-            <label className="filter-label">Öncelik:</label>
-            <select
-              value={filterPriority}
-              onChange={(e) => setFilterPriority(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">Tüm Öncelikler</option>
-              <option value="low">Düşük</option>
-              <option value="medium">Orta</option>
-              <option value="high">Yüksek</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="requests-container">
-          {filteredDilekceler.length === 0 ? (
-            <div className="empty-state">
-              <FileText className="empty-icon" />
-              <h3>Dilekçe bulunamadı</h3>
-              <p>Filtrelenen kriterlere uygun dilekçe başvurusu bulunamadı.</p>
-            </div>
-          ) : (
-            <div className="requests-grid">
-              {filteredDilekceler.map((dilekce) => (
-                <div key={dilekce._id} className="request-card">
-                  <div className="card-header">
-                    <div className="card-header-left">
-                      <h3 className="card-title">
-                        {dilekce.subject}
-                        {getPriorityBadge(dilekce.priority)}
-                      </h3>
-                    </div>
-                    <div className="card-header-right">{getStatusBadge(dilekce)}</div>
-                  </div>
-
-                  <div className="card-content">
-                    <div className="request-info">
-                      <div className="info-item">
-                        <User className="info-icon" />
-                        <span className="info-label">Gönderen:</span>
-                        <span className="info-value">
-                          {dilekce.userName} (
-                          {dilekce.userRole === 'student'
-                            ? 'Öğrenci'
-                            : dilekce.userRole === 'teacher'
-                              ? 'Öğretmen'
-                              : 'Veli'}
-                          )
-                        </span>
-                      </div>
-                      <div className="info-item">
-                        <Tag className="info-icon" />
-                        <span className="info-label">Tür:</span>
-                        <span className="info-value">
-                          {dilekce.type === 'izin'
-                            ? 'İzin'
-                            : dilekce.type === 'rapor'
-                              ? 'Rapor'
-                              : dilekce.type === 'nakil'
-                                ? 'Nakil'
-                                : 'Diğer'}
-                          {dilekce.category && ` - ${dilekce.category}`}
-                        </span>
-                      </div>
-                      <div className="info-item">
-                        <Calendar className="info-icon" />
-                        <span className="info-label">Tarih:</span>
-                        <span className="info-value">
-                          {new Date(dilekce.createdAt).toLocaleDateString('tr-TR', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="content-box">{dilekce.content}</div>
-
-                    {dilekce.attachments && dilekce.attachments.length > 0 && (
-                      <div className="attachment-list">
-                        {dilekce.attachments.map((file, index) => (
-                          <a
-                            key={index}
-                            href={file}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="attachment-link"
-                          >
-                            <Mail className="w-3 h-3" />
-                            Dosya {index + 1}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-
-                    {dilekce.reviewNote && (
-                      <div className="note-box">
-                        <strong>İnceleme Notu:</strong> {dilekce.reviewNote}
-                      </div>
-                    )}
-
-                    {dilekce.response && (
-                      <div className="response-box">
-                        <strong>Yanıt:</strong> {dilekce.response}
-                      </div>
-                    )}
-
-                    <div className="action-buttons">
-                      {dilekce.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => {
-                              const note = window.prompt('İnceleme notu (opsiyonel):');
-                              handleStatusUpdate(dilekce._id, 'in_review', note || undefined);
-                            }}
-                            className="btn btn-warning"
-                          >
-                            İncelemeye Al
-                          </button>
-                          <button
-                            onClick={() => {
-                              const note = window.prompt('Onay notu (opsiyonel):');
-                              handleStatusUpdate(dilekce._id, 'approved', note || undefined);
-                            }}
-                            className="btn btn-success"
-                          >
-                            Onayla
-                          </button>
-                          <button
-                            onClick={() => {
-                              const note = window.prompt('Red nedeni (opsiyonel):');
-                              handleStatusUpdate(dilekce._id, 'rejected', note || undefined);
-                            }}
-                            className="btn btn-danger"
-                          >
-                            Reddet
-                          </button>
-                        </>
-                      )}
-                      {dilekce.status === 'in_review' && (
-                        <>
-                          <button
-                            onClick={() => {
-                              const response = window.prompt('Yanıt (opsiyonel):');
-                              handleStatusUpdate(
-                                dilekce._id,
-                                'completed',
-                                undefined,
-                                response || undefined,
-                              );
-                            }}
-                            className="btn btn-success"
-                          >
-                            Tamamla
-                          </button>
-                          <button
-                            onClick={() => {
-                              const note = window.prompt('Red nedeni (opsiyonel):');
-                              handleStatusUpdate(dilekce._id, 'rejected', note || undefined);
-                            }}
-                            className="btn btn-danger"
-                          >
-                            Reddet
-                          </button>
-                        </>
-                      )}
-                      {dilekce.status === 'approved' && (
-                        <button
-                          onClick={() => {
-                            const response = window.prompt('Yanıt:');
-                            if (response) {
-                              handleStatusUpdate(
-                                dilekce._id,
-                                'completed',
-                                undefined,
-                                response || undefined,
-                              );
-                            }
-                          }}
-                          className="btn btn-success"
-                        >
-                          Tamamla
-                        </button>
-                      )}
-                    </div>
-                  </div>
+        <DataTable
+          caption="Tablo I — Başvuru Listesi"
+          columns={columns}
+          data={filteredDilekceler}
+          emptyState="Filtrelenen kriterlere uygun dilekçe bulunamadı."
+          toolbar={
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative flex-1 min-w-[200px] max-w-sm">
+                  <Search
+                    size={14}
+                    className="absolute left-1 top-1/2 -translate-y-1/2 text-[var(--ink-dim)] pointer-events-none"
+                  />
+                  <Input
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Konu veya kullanıcı ara…"
+                    className="pl-6"
+                  />
                 </div>
-              ))}
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value as TypeFilter)}
+                  className={cn(selectClasses, 'h-10 w-auto min-w-[120px]')}
+                  aria-label="Tür filtrele"
+                >
+                  <option value="all">Tüm Türler</option>
+                  {(Object.keys(TYPE_LABELS) as DilekceType[]).map((t) => (
+                    <option key={t} value={t}>
+                      {TYPE_LABELS[t]}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={filterPriority}
+                  onChange={(e) => setFilterPriority(e.target.value as PriorityFilter)}
+                  className={cn(selectClasses, 'h-10 w-auto min-w-[120px]')}
+                  aria-label="Öncelik filtrele"
+                >
+                  <option value="all">Tüm Öncelikler</option>
+                  {(Object.keys(PRIORITY_LABELS) as Priority[]).map((p) => (
+                    <option key={p} value={p}>
+                      {PRIORITY_LABELS[p]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {STATUS_FILTERS.map((f) => {
+                  const active = filterStatus === f.key;
+                  return (
+                    <button
+                      key={f.key}
+                      type="button"
+                      onClick={() => setFilterStatus(f.key)}
+                      className={cn(
+                        'h-8 px-3 text-xs font-mono uppercase tracking-wider border transition-colors',
+                        active
+                          ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
+                          : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                      )}
+                      aria-pressed={active}
+                    >
+                      {f.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          )}
-        </div>
+          }
+        />
       </div>
+
+      {selected && (
+        <DilekceReviewModal
+          dilekce={selected}
+          onClose={() => setSelected(null)}
+          onUpdateStatus={handleStatusUpdate}
+        />
+      )}
     </ModernDashboardLayout>
   );
 };
 
 export default AdminDilekceListPage;
+
+interface DilekceReviewModalProps {
+  dilekce: Dilekce;
+  onClose: () => void;
+  onUpdateStatus: (id: string, status: Status, reviewNote?: string, response?: string) => void;
+}
+
+function DilekceReviewModal({ dilekce, onClose, onUpdateStatus }: DilekceReviewModalProps) {
+  const [intent, setIntent] = useState<keyof typeof REVIEW_ACTIONS | null>(null);
+  const [note, setNote] = useState('');
+  const [response, setResponse] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const availableIntents = useMemo<(keyof typeof REVIEW_ACTIONS)[]>(() => {
+    if (dilekce.status === 'pending') return ['in_review', 'approved', 'rejected'];
+    if (dilekce.status === 'in_review') return ['completed', 'rejected'];
+    if (dilekce.status === 'approved') return ['completed'];
+    return [];
+  }, [dilekce.status]);
+
+  const submit = async () => {
+    if (!intent) return;
+    const action = REVIEW_ACTIONS[intent];
+    setSubmitting(true);
+    try {
+      await onUpdateStatus(
+        dilekce._id,
+        action.status,
+        note || undefined,
+        action.responseField ? response || undefined : undefined,
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+      role="presentation"
+    >
+      <Card
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        contentClassName="p-0"
+      >
+        <div onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+              Dilekçe İncelemesi · No. {dilekce._id.slice(-6).toUpperCase()}
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-white hover:opacity-80"
+              aria-label="Kapat"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Chip tone={STATUS_TONES[dilekce.status]}>{STATUS_LABELS[dilekce.status]}</Chip>
+              <Chip tone={PRIORITY_TONES[dilekce.priority]}>
+                {PRIORITY_LABELS[dilekce.priority]} öncelik
+              </Chip>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)] ml-auto">
+                {formatDateTime(dilekce.createdAt)}
+              </span>
+            </div>
+
+            <header>
+              <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                {TYPE_LABELS[dilekce.type]}
+                {dilekce.category && ` · ${dilekce.category}`}
+              </div>
+              <h2 className="font-serif text-xl text-[var(--ink)] mt-1">{dilekce.subject}</h2>
+            </header>
+
+            <Section title="Gönderen">
+              <p className="font-serif text-sm text-[var(--ink)]">
+                {dilekce.userName}
+                {ROLE_LABELS[dilekce.userRole] && (
+                  <span className="text-[var(--ink-dim)]"> · {ROLE_LABELS[dilekce.userRole]}</span>
+                )}
+              </p>
+            </Section>
+
+            <Section title="İçerik">
+              <p className="font-serif text-sm text-[var(--ink-2)] leading-relaxed whitespace-pre-wrap">
+                {dilekce.content}
+              </p>
+            </Section>
+
+            {dilekce.attachments && dilekce.attachments.length > 0 && (
+              <Section title="Ek Dosyalar">
+                <ul className="space-y-1">
+                  {dilekce.attachments.map((file, i) => (
+                    <li key={i}>
+                      <a
+                        href={file}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm text-[var(--ink)] hover:text-[var(--state)]"
+                      >
+                        <FileText size={12} />
+                        Dosya {i + 1}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
+
+            {dilekce.reviewNote && (
+              <Section title="Önceki İnceleme Notu">
+                <p className="font-serif text-sm text-[var(--ink-2)] leading-relaxed">
+                  {dilekce.reviewNote}
+                </p>
+              </Section>
+            )}
+
+            {dilekce.response && (
+              <Section title="Yanıt">
+                <p className="font-serif text-sm text-[var(--ink-2)] leading-relaxed">
+                  {dilekce.response}
+                </p>
+              </Section>
+            )}
+
+            {availableIntents.length > 0 && (
+              <div className="border-t border-[var(--rule)] pt-4 space-y-3">
+                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                  İşlem
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {availableIntents.map((key) => {
+                    const action = REVIEW_ACTIONS[key];
+                    const active = intent === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          setIntent(key);
+                          setNote('');
+                          setResponse('');
+                        }}
+                        className={cn(
+                          'h-8 px-3 text-xs font-mono uppercase tracking-wider border transition-colors',
+                          active
+                            ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
+                            : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                        )}
+                        aria-pressed={active}
+                      >
+                        {action.buttonLabel}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {intent && (
+                  <div className="space-y-3">
+                    <label className="flex flex-col gap-1">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                        {REVIEW_ACTIONS[intent].noteLabel}
+                      </span>
+                      <textarea
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        rows={3}
+                        className={cn(selectClasses, 'resize-y min-h-[4rem]')}
+                      />
+                    </label>
+                    {REVIEW_ACTIONS[intent].responseField && (
+                      <label className="flex flex-col gap-1">
+                        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                          Resmi Yanıt
+                        </span>
+                        <textarea
+                          value={response}
+                          onChange={(e) => setResponse(e.target.value)}
+                          rows={3}
+                          className={cn(selectClasses, 'resize-y min-h-[4rem]')}
+                        />
+                      </label>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="ghost" size="sm" onClick={onClose}>
+                    Kapat
+                  </Button>
+                  {intent && (
+                    <Button
+                      variant={REVIEW_ACTIONS[intent].buttonVariant}
+                      size="sm"
+                      onClick={submit}
+                      loading={submitting}
+                    >
+                      {REVIEW_ACTIONS[intent].buttonLabel}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {availableIntents.length === 0 && (
+              <div className="flex justify-end pt-2">
+                <Button variant="ghost" size="sm" onClick={onClose}>
+                  Kapat
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1">
+        {title}
+      </div>
+      <div>{children}</div>
+    </div>
+  );
+}
