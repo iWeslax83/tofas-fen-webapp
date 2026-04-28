@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardPanel from '../../components/DashboardPanel';
 import { useAuthContext } from '../../contexts/AuthContext';
-import './AdminPanel.css';
 
 const AdminPanel: React.FC = () => {
   const { user } = useAuthContext();

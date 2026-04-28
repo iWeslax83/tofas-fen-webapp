@@ -1,8 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
-import { apiClient } from '../../utils/api';
-import { ClipboardList, Check, X, Eye, UserPlus, MessageSquare } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Check, X, Eye, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import { DataTable } from '../../components/ui/DataTable';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Chip, type ChipProps } from '../../components/ui/Chip';
+import { apiClient } from '../../utils/api';
+import { cn } from '../../utils/cn';
 
 interface Registration {
   _id: string;
@@ -33,27 +39,44 @@ interface Stats {
   total: number;
 }
 
-const statusLabels: Record<string, string> = {
+type StatusKey = Registration['status'];
+type FilterKey = '' | StatusKey;
+
+const STATUS_LABELS: Record<StatusKey, string> = {
   pending: 'Beklemede',
   approved: 'Onaylandı',
   rejected: 'Reddedildi',
   interview: 'Mülakat',
 };
 
-const statusColors: Record<string, string> = {
-  pending: '#f59e0b',
-  approved: '#10b981',
-  rejected: '#ef4444',
-  interview: '#3b82f6',
+const STATUS_TONES: Record<StatusKey, ChipProps['tone']> = {
+  pending: 'default',
+  approved: 'black',
+  rejected: 'state',
+  interview: 'outline',
+};
+
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: '', label: 'Tümü' },
+  { key: 'pending', label: 'Beklemede' },
+  { key: 'approved', label: 'Onaylandı' },
+  { key: 'interview', label: 'Mülakat' },
+  { key: 'rejected', label: 'Reddedildi' },
+];
+
+const formatDate = (raw: string | undefined): string => {
+  if (!raw) return '—';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
 export default function AdminRegistrationsPage() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('');
+  const [filter, setFilter] = useState<FilterKey>('');
   const [selectedReg, setSelectedReg] = useState<Registration | null>(null);
-  const [showDetail, setShowDetail] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [updating, setUpdating] = useState(false);
 
@@ -64,7 +87,7 @@ export default function AdminRegistrationsPage() {
         apiClient.get(`/api/registrations${params}`),
         apiClient.get('/api/registrations/stats/summary'),
       ]);
-      setRegistrations((regsRes.data as any).data || []);
+      setRegistrations((regsRes.data as { data?: Registration[] }).data || []);
       setStats(statsRes.data as Stats);
     } catch {
       toast.error('Başvurular yüklenirken hata oluştu');
@@ -77,7 +100,7 @@ export default function AdminRegistrationsPage() {
     fetchData();
   }, [fetchData]);
 
-  const updateStatus = async (id: string, status: string) => {
+  const updateStatus = async (id: string, status: StatusKey) => {
     setUpdating(true);
     try {
       await apiClient.put(`/api/registrations/${id}/status`, {
@@ -85,14 +108,14 @@ export default function AdminRegistrationsPage() {
         rejectionReason: status === 'rejected' ? rejectionReason : undefined,
       });
       setRejectionReason('');
-      setShowDetail(false);
       setSelectedReg(null);
-      const statusMsg: Record<string, string> = {
+      const verb: Record<StatusKey, string> = {
         approved: 'onaylandı',
         rejected: 'reddedildi',
         interview: 'mülakat için seçildi',
+        pending: 'güncellendi',
       };
-      toast.success(`Başvuru ${statusMsg[status] || 'güncellendi'}`);
+      toast.success(`Başvuru ${verb[status]}`);
       await fetchData();
     } catch {
       toast.error('Başvuru güncellenirken hata oluştu');
@@ -101,407 +124,343 @@ export default function AdminRegistrationsPage() {
     }
   };
 
+  const columns = useMemo<ColumnDef<Registration>[]>(
+    () => [
+      {
+        accessorKey: 'studentName',
+        header: 'Öğrenci',
+        cell: (info) => (
+          <span className="font-serif text-[var(--ink)]">{info.getValue<string>()}</span>
+        ),
+        filterFn: 'includesString',
+      },
+      {
+        id: 'applicant',
+        header: 'Başvuran',
+        accessorFn: (r) => r.applicantName,
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <span className="text-[var(--ink-2)]">{row.original.applicantName}</span>
+            <span className="font-mono text-[10px] text-[var(--ink-dim)]">
+              {row.original.applicantEmail}
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'targetClass',
+        header: 'Sınıf',
+        cell: (info) => (
+          <span className="font-mono text-xs text-[var(--ink-dim)] uppercase tracking-wider">
+            {info.getValue<string>()}. Sınıf
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'createdAt',
+        header: 'Tarih',
+        cell: (info) => (
+          <span className="font-mono text-xs text-[var(--ink-dim)]">
+            {formatDate(info.getValue<string>())}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: 'Durum',
+        cell: (info) => {
+          const status = info.getValue<StatusKey>();
+          return <Chip tone={STATUS_TONES[status]}>{STATUS_LABELS[status]}</Chip>;
+        },
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedReg(row.original);
+                setRejectionReason('');
+              }}
+            >
+              <Eye size={14} />
+              Detay
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const breadcrumb = [{ label: 'Ana Sayfa', path: '/admin' }, { label: 'Yeni Kayıt Başvuruları' }];
+
+  if (loading) {
+    return (
+      <ModernDashboardLayout pageTitle="Yeni Kayıt Başvuruları" breadcrumb={breadcrumb}>
+        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          Yükleniyor…
+        </div>
+      </ModernDashboardLayout>
+    );
+  }
+
   return (
-    <ModernDashboardLayout pageTitle="Yeni Kayıt Başvuruları">
-      <div style={{ padding: '24px', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <UserPlus size={28} />
-          <h1 style={{ margin: 0, fontSize: 24 }}>Yeni Kayıt Başvuruları</h1>
-        </div>
-
-        {/* Stats Cards */}
-        {stats && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-              gap: 16,
-              marginBottom: 24,
-            }}
-          >
-            {[
-              { label: 'Toplam', value: stats.total, color: '#6b7280' },
-              { label: 'Beklemede', value: stats.pending, color: '#f59e0b' },
-              { label: 'Onaylandı', value: stats.approved, color: '#10b981' },
-              { label: 'Reddedildi', value: stats.rejected, color: '#ef4444' },
-              { label: 'Mülakat', value: stats.interview, color: '#3b82f6' },
-            ].map((s) => (
-              <div
-                key={s.label}
-                style={{
-                  background: '#fff',
-                  borderRadius: 12,
-                  padding: 16,
-                  textAlign: 'center',
-                  border: `2px solid ${s.color}20`,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                }}
-              >
-                <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</div>
-                <div style={{ color: '#6b7280', fontSize: 13 }}>{s.label}</div>
-              </div>
-            ))}
+    <ModernDashboardLayout pageTitle="Yeni Kayıt Başvuruları" breadcrumb={breadcrumb}>
+      <div className="p-6 space-y-6">
+        <header>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Belge No. {new Date().getFullYear()}/K
           </div>
-        )}
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Yeni Kayıt Başvuruları</h1>
+        </header>
 
-        {/* Filter */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-          {['', 'pending', 'approved', 'rejected', 'interview'].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 8,
-                border: 'none',
-                cursor: 'pointer',
-                background: filter === f ? '#3b82f6' : '#f1f5f9',
-                color: filter === f ? '#fff' : '#374151',
-                fontWeight: 500,
-                fontSize: 13,
-              }}
-            >
-              {f === '' ? 'Tümü' : statusLabels[f]}
-            </button>
-          ))}
-        </div>
+        {stats && <StatsBar stats={stats} />}
 
-        {/* Table */}
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>Yükleniyor...</div>
-        ) : registrations.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>
-            <ClipboardList size={48} style={{ marginBottom: 12, opacity: 0.5 }} />
-            <p>Başvuru bulunamadı</p>
-          </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table
-              style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                background: '#fff',
-                borderRadius: 12,
-                overflow: 'hidden',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              }}
-            >
-              <thead>
-                <tr style={{ background: '#f8fafc' }}>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: 13,
-                      color: '#6b7280',
-                      fontWeight: 600,
-                    }}
+        <DataTable
+          caption="Tablo I — Başvuru Listesi"
+          columns={columns}
+          data={registrations}
+          emptyState="Seçilen kriterlere uygun başvuru bulunamadı."
+          toolbar={
+            <div className="flex items-center gap-2 flex-wrap">
+              {FILTERS.map((f) => {
+                const active = filter === f.key;
+                return (
+                  <button
+                    key={f.key || 'all'}
+                    type="button"
+                    onClick={() => setFilter(f.key)}
+                    className={cn(
+                      'h-8 px-3 text-xs font-mono uppercase tracking-wider border transition-colors',
+                      active
+                        ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
+                        : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                    )}
+                    aria-pressed={active}
                   >
-                    Öğrenci
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: 13,
-                      color: '#6b7280',
-                      fontWeight: 600,
-                    }}
-                  >
-                    Başvuran
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: 13,
-                      color: '#6b7280',
-                      fontWeight: 600,
-                    }}
-                  >
-                    Sınıf
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: 13,
-                      color: '#6b7280',
-                      fontWeight: 600,
-                    }}
-                  >
-                    Tarih
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontSize: 13,
-                      color: '#6b7280',
-                      fontWeight: 600,
-                    }}
-                  >
-                    Durum
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'center',
-                      fontSize: 13,
-                      color: '#6b7280',
-                      fontWeight: 600,
-                    }}
-                  >
-                    İşlem
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {registrations.map((reg) => (
-                  <tr key={reg._id} style={{ borderTop: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '12px 16px', fontSize: 14 }}>{reg.studentName}</td>
-                    <td style={{ padding: '12px 16px', fontSize: 14 }}>
-                      <div>{reg.applicantName}</div>
-                      <div style={{ color: '#9ca3af', fontSize: 12 }}>{reg.applicantEmail}</div>
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 14 }}>{reg.targetClass}. Sınıf</td>
-                    <td style={{ padding: '12px 16px', fontSize: 13, color: '#6b7280' }}>
-                      {new Date(reg.createdAt).toLocaleDateString('tr-TR')}
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          padding: '4px 10px',
-                          borderRadius: 6,
-                          background: `${statusColors[reg.status]}15`,
-                          color: statusColors[reg.status],
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {statusLabels[reg.status]}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                      <button
-                        onClick={() => {
-                          setSelectedReg(reg);
-                          setShowDetail(true);
-                        }}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: 6,
-                          border: 'none',
-                          cursor: 'pointer',
-                          background: '#f1f5f9',
-                          color: '#374151',
-                          fontSize: 13,
-                        }}
-                      >
-                        <Eye size={14} style={{ marginRight: 4 }} /> Detay
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Detail Modal */}
-        {showDetail && selectedReg && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-              padding: 20,
-            }}
-            onClick={() => setShowDetail(false)}
-          >
-            <div
-              style={{
-                background: '#fff',
-                borderRadius: 16,
-                padding: 32,
-                maxWidth: 560,
-                width: '100%',
-                maxHeight: '90vh',
-                overflow: 'auto',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 style={{ margin: '0 0 20px', fontSize: 20 }}>Başvuru Detayı</h2>
-
-              <div style={{ display: 'grid', gap: 12 }}>
-                <InfoRow label="Öğrenci Adı" value={selectedReg.studentName} />
-                <InfoRow label="Hedef Sınıf" value={`${selectedReg.targetClass}. Sınıf`} />
-                {selectedReg.currentSchool && (
-                  <InfoRow label="Mevcut Okul" value={selectedReg.currentSchool} />
-                )}
-                {selectedReg.studentBirthDate && (
-                  <InfoRow
-                    label="Doğum Tarihi"
-                    value={new Date(selectedReg.studentBirthDate).toLocaleDateString('tr-TR')}
-                  />
-                )}
-                <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12 }} />
-                <InfoRow label="Başvuran" value={selectedReg.applicantName} />
-                <InfoRow label="E-posta" value={selectedReg.applicantEmail} />
-                <InfoRow label="Telefon" value={selectedReg.applicantPhone} />
-                <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12 }} />
-                <InfoRow label="Veli Adı" value={selectedReg.parentName} />
-                <InfoRow label="Veli Telefon" value={selectedReg.parentPhone} />
-                {selectedReg.parentEmail && (
-                  <InfoRow label="Veli E-posta" value={selectedReg.parentEmail} />
-                )}
-                {selectedReg.notes && (
-                  <>
-                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12 }} />
-                    <InfoRow label="Notlar" value={selectedReg.notes} />
-                  </>
-                )}
-                {selectedReg.createdUserId && (
-                  <InfoRow label="Oluşturulan Hesap ID" value={selectedReg.createdUserId} />
-                )}
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 20 }}>
-                <span
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: 6,
-                    background: `${statusColors[selectedReg.status]}15`,
-                    color: statusColors[selectedReg.status],
-                    fontSize: 12,
-                    fontWeight: 600,
-                  }}
-                >
-                  {statusLabels[selectedReg.status]}
-                </span>
-              </div>
-
-              {(selectedReg.status === 'pending' || selectedReg.status === 'interview') && (
-                <div style={{ marginTop: 20 }}>
-                  <textarea
-                    placeholder="Ret sebebi (opsiyonel)"
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: 12,
-                      borderRadius: 8,
-                      border: '1px solid #e5e7eb',
-                      fontSize: 14,
-                      resize: 'vertical',
-                      minHeight: 60,
-                      marginBottom: 12,
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button
-                      onClick={() => updateStatus(selectedReg._id, 'approved')}
-                      disabled={updating}
-                      style={{
-                        flex: 1,
-                        padding: '10px 16px',
-                        borderRadius: 8,
-                        border: 'none',
-                        cursor: 'pointer',
-                        background: '#10b981',
-                        color: '#fff',
-                        fontWeight: 600,
-                        fontSize: 14,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                      }}
-                    >
-                      <Check size={16} /> Onayla
-                    </button>
-                    <button
-                      onClick={() => updateStatus(selectedReg._id, 'interview')}
-                      disabled={updating}
-                      style={{
-                        flex: 1,
-                        padding: '10px 16px',
-                        borderRadius: 8,
-                        border: 'none',
-                        cursor: 'pointer',
-                        background: '#3b82f6',
-                        color: '#fff',
-                        fontWeight: 600,
-                        fontSize: 14,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                      }}
-                    >
-                      <MessageSquare size={16} /> Mülakat
-                    </button>
-                    <button
-                      onClick={() => updateStatus(selectedReg._id, 'rejected')}
-                      disabled={updating}
-                      style={{
-                        flex: 1,
-                        padding: '10px 16px',
-                        borderRadius: 8,
-                        border: 'none',
-                        cursor: 'pointer',
-                        background: '#ef4444',
-                        color: '#fff',
-                        fontWeight: 600,
-                        fontSize: 14,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                      }}
-                    >
-                      <X size={16} /> Reddet
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <button
-                onClick={() => setShowDetail(false)}
-                style={{
-                  marginTop: 16,
-                  width: '100%',
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid #e5e7eb',
-                  cursor: 'pointer',
-                  background: '#fff',
-                  color: '#374151',
-                  fontSize: 14,
-                }}
-              >
-                Kapat
-              </button>
+                    {f.label}
+                  </button>
+                );
+              })}
             </div>
-          </div>
-        )}
+          }
+        />
       </div>
+
+      {selectedReg && (
+        <RegistrationDetailModal
+          reg={selectedReg}
+          updating={updating}
+          rejectionReason={rejectionReason}
+          onRejectionChange={setRejectionReason}
+          onClose={() => setSelectedReg(null)}
+          onUpdateStatus={updateStatus}
+        />
+      )}
     </ModernDashboardLayout>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function StatsBar({ stats }: { stats: Stats }) {
+  const items: { label: string; value: number; tone: ChipProps['tone'] }[] = [
+    { label: 'Toplam', value: stats.total, tone: 'outline' },
+    { label: 'Beklemede', value: stats.pending, tone: 'default' },
+    { label: 'Onaylandı', value: stats.approved, tone: 'black' },
+    { label: 'Mülakat', value: stats.interview, tone: 'outline' },
+    { label: 'Reddedildi', value: stats.rejected, tone: 'state' },
+  ];
   return (
-    <div style={{ display: 'flex', gap: 8 }}>
-      <span style={{ color: '#6b7280', fontSize: 13, minWidth: 120 }}>{label}:</span>
-      <span style={{ fontSize: 14, fontWeight: 500 }}>{value}</span>
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+      {items.map((s) => (
+        <div key={s.label} className="bg-[var(--paper)] p-4">
+          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+            {s.label}
+          </div>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="font-serif text-2xl text-[var(--ink)]">{s.value}</span>
+            <Chip tone={s.tone}>{s.label}</Chip>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+interface RegistrationDetailModalProps {
+  reg: Registration;
+  updating: boolean;
+  rejectionReason: string;
+  onRejectionChange: (v: string) => void;
+  onClose: () => void;
+  onUpdateStatus: (id: string, status: StatusKey) => void;
+}
+
+function RegistrationDetailModal({
+  reg,
+  updating,
+  rejectionReason,
+  onRejectionChange,
+  onClose,
+  onUpdateStatus,
+}: RegistrationDetailModalProps) {
+  const canDecide = reg.status === 'pending' || reg.status === 'interview';
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+      role="presentation"
+    >
+      <Card
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        contentClassName="p-0"
+      >
+        <div onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+              Başvuru Detayı · No. {reg._id.slice(-6).toUpperCase()}
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-white hover:opacity-80"
+              aria-label="Kapat"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-5">
+            <div className="flex items-center gap-3">
+              <Chip tone={STATUS_TONES[reg.status]}>{STATUS_LABELS[reg.status]}</Chip>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                {formatDate(reg.createdAt)}
+              </span>
+            </div>
+
+            <Section title="Öğrenci Bilgileri">
+              <InfoRow label="Adı Soyadı" value={reg.studentName} />
+              <InfoRow label="Hedef Sınıf" value={`${reg.targetClass}. Sınıf`} />
+              {reg.currentSchool && <InfoRow label="Mevcut Okul" value={reg.currentSchool} />}
+              {reg.studentBirthDate && (
+                <InfoRow label="Doğum Tarihi" value={formatDate(reg.studentBirthDate)} />
+              )}
+            </Section>
+
+            <Section title="Başvuran">
+              <InfoRow label="Adı Soyadı" value={reg.applicantName} />
+              <InfoRow label="E-posta" value={reg.applicantEmail} mono />
+              <InfoRow label="Telefon" value={reg.applicantPhone} mono />
+            </Section>
+
+            <Section title="Veli Bilgileri">
+              <InfoRow label="Adı Soyadı" value={reg.parentName} />
+              <InfoRow label="Telefon" value={reg.parentPhone} mono />
+              {reg.parentEmail && <InfoRow label="E-posta" value={reg.parentEmail} mono />}
+            </Section>
+
+            {reg.notes && (
+              <Section title="Notlar">
+                <p className="font-serif text-sm text-[var(--ink-2)] leading-relaxed">
+                  {reg.notes}
+                </p>
+              </Section>
+            )}
+
+            {reg.createdUserId && (
+              <Section title="Sistem">
+                <InfoRow label="Hesap ID" value={reg.createdUserId} mono />
+              </Section>
+            )}
+
+            {canDecide && (
+              <div className="pt-3 border-t border-[var(--rule)] space-y-3">
+                <label className="flex flex-col gap-1">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                    Ret Sebebi (opsiyonel)
+                  </span>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={(e) => onRejectionChange(e.target.value)}
+                    rows={2}
+                    placeholder="Reddedilirse açıklama…"
+                    className={cn(
+                      'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+                      'text-[var(--ink)] placeholder:text-[var(--ink-dim)]',
+                      'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+                      'transition-colors resize-y min-h-[3rem]',
+                    )}
+                  />
+                </label>
+
+                <div className="flex flex-wrap gap-2 justify-end">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => onUpdateStatus(reg._id, 'approved')}
+                    loading={updating}
+                  >
+                    <Check size={14} />
+                    Onayla
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => onUpdateStatus(reg._id, 'interview')}
+                    loading={updating}
+                  >
+                    <MessageSquare size={14} />
+                    Mülakat
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => onUpdateStatus(reg._id, 'rejected')}
+                    loading={updating}
+                  >
+                    <X size={14} />
+                    Reddet
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                Kapat
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1">
+        {title}
+      </div>
+      <div className="space-y-1.5">{children}</div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="grid grid-cols-[140px_1fr] gap-3 text-sm">
+      <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)] pt-0.5">
+        {label}
+      </span>
+      <span className={cn('text-[var(--ink)]', mono ? 'font-mono text-xs' : 'font-serif')}>
+        {value}
+      </span>
     </div>
   );
 }
