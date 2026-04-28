@@ -1,6 +1,7 @@
-// src/pages/LoginPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff, ShieldCheck, RefreshCw, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   useAuthStore,
   useAuthActions,
@@ -9,10 +10,32 @@ import {
   useTwoFactorUser,
   useTwoFactorExpiresAt,
 } from '../stores/authStore';
-import { Eye, EyeOff, Lock, User, ShieldCheck, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Chip } from '../components/ui/Chip';
 import { AppError } from '../utils/AppError';
-import './LoginPage.css';
+import { cn } from '../utils/cn';
+
+interface FieldProps {
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+}
+
+const Field = ({ label, htmlFor, children }: FieldProps) => (
+  <label htmlFor={htmlFor} className="flex flex-col gap-1">
+    <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+      {label}
+    </span>
+    {children}
+  </label>
+);
+
+const formatCountdown = (seconds: number) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
 
 export default function LoginPage() {
   const [id, setId] = useState('');
@@ -23,7 +46,7 @@ export default function LoginPage() {
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [rememberDevice, setRememberDevice] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [countdown, setCountdown] = useState(0); // #14: seconds remaining
+  const [countdown, setCountdown] = useState(0);
   const navigate = useNavigate();
   const { login, verify2FA, resend2FA, cancel2FA } = useAuthActions();
   const user = useUser();
@@ -31,31 +54,24 @@ export default function LoginPage() {
   const twoFactorUser = useTwoFactorUser();
   const twoFactorExpiresAt = useTwoFactorExpiresAt();
 
-  // Handle redirect when user logs in successfully
   useEffect(() => {
-    if (user?.rol) {
-      navigate(`/${user.rol}`, { replace: true });
-    }
+    if (user?.rol) navigate(`/${user.rol}`, { replace: true });
   }, [user, navigate]);
 
-  // #14: Countdown timer for 2FA code expiry
   useEffect(() => {
     if (!twoFactorExpiresAt) {
       setCountdown(0);
       return;
     }
-
-    const updateCountdown = () => {
+    const update = () => {
       const remaining = Math.max(0, Math.ceil((twoFactorExpiresAt - Date.now()) / 1000));
       setCountdown(remaining);
     };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
+    update();
+    const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [twoFactorExpiresAt]);
 
-  // #13: Handle resend 2FA code
   const handleResend = useCallback(async () => {
     setIsResending(true);
     setError('');
@@ -64,9 +80,10 @@ export default function LoginPage() {
       toast.success('Yeni doğrulama kodu gönderildi');
       setTwoFactorCode('');
     } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: { message?: string }; message?: string } } };
       const msg =
-        (err as any)?.response?.data?.error?.message ||
-        (err as any)?.response?.data?.message ||
+        e?.response?.data?.error?.message ||
+        e?.response?.data?.message ||
         (err instanceof Error ? err.message : 'Kod gönderilemedi');
       setError(msg);
       toast.error(msg);
@@ -75,82 +92,67 @@ export default function LoginPage() {
     }
   }, [resend2FA]);
 
-  // If user is already logged in, redirect them
   if (user?.rol) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Yönlendiriliyor...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--paper)]">
+        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          Yönlendiriliyor…
+        </div>
       </div>
     );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Basic validation
     if (!id.trim()) {
       setError('Kullanıcı ID gereklidir');
       return;
     }
-
     if (!sifre.trim()) {
       setError('Şifre gereklidir');
       return;
     }
-
     setIsSubmitting(true);
     setError('');
-
     try {
       await login(id.trim(), sifre);
-      // If 2FA is required, the store will update requires2FA
       if (!useAuthStore.getState().requires2FA) {
         toast.success('Giriş başarılı!');
       }
-    } catch (error: unknown) {
+    } catch (err: unknown) {
       let errorMessage = 'Giriş başarısız. Lütfen kullanıcı ID ve şifrenizi kontrol edin.';
-
       try {
-        if (error instanceof AppError) {
-          errorMessage = error.getUserMessage() || error.message || errorMessage;
-        } else if (error instanceof Error) {
-          errorMessage = error.message || errorMessage;
+        if (err instanceof AppError) {
+          errorMessage = err.getUserMessage() || err.message || errorMessage;
+        } else if (err instanceof Error) {
+          errorMessage = err.message || errorMessage;
         } else {
-          const apiError = (error as any)?.response?.data;
-
+          const apiError = (err as { response?: { data?: unknown } })?.response?.data;
           if (apiError) {
             if (typeof apiError === 'string') {
               errorMessage = apiError;
-            } else if (apiError?.error?.message && typeof apiError.error.message === 'string') {
-              errorMessage = apiError.error.message;
-            } else if (apiError?.message && typeof apiError.message === 'string') {
-              errorMessage = apiError.message;
-            } else if (apiError?.error && typeof apiError.error === 'string') {
-              errorMessage = apiError.error;
-            } else if (Array.isArray(apiError?.errors) && apiError.errors.length > 0) {
-              const firstError = apiError.errors[0];
-              if (typeof firstError === 'string') {
-                errorMessage = firstError;
-              } else if (firstError?.message && typeof firstError.message === 'string') {
-                errorMessage = firstError.message;
+            } else if (typeof apiError === 'object' && apiError) {
+              const a = apiError as {
+                error?: { message?: string } | string;
+                message?: string;
+                errors?: Array<string | { message?: string }>;
+              };
+              if (typeof a.error === 'object' && a.error?.message) errorMessage = a.error.message;
+              else if (typeof a.message === 'string') errorMessage = a.message;
+              else if (typeof a.error === 'string') errorMessage = a.error;
+              else if (Array.isArray(a.errors) && a.errors.length > 0) {
+                const first = a.errors[0];
+                if (typeof first === 'string') errorMessage = first;
+                else if (first?.message) errorMessage = first.message;
               }
             }
-          } else if ((error as any)?.message && typeof (error as any).message === 'string') {
-            errorMessage = (error as any).message;
           }
         }
-      } catch (e) {
-        errorMessage = 'Giriş başarısız. Lütfen kullanıcı ID ve şifrenizi kontrol edin.';
+      } catch {
+        // fall back to default message
       }
-
-      if (typeof errorMessage !== 'string' || errorMessage.trim() === '') {
-        errorMessage = 'Giriş başarısız. Lütfen kullanıcı ID ve şifrenizi kontrol edin.';
-      }
-
       const shortMessage =
-        errorMessage.length > 300 ? `${errorMessage.slice(0, 300)}...` : errorMessage;
-
+        errorMessage.length > 300 ? `${errorMessage.slice(0, 300)}…` : errorMessage;
       setError(shortMessage);
       toast.error(shortMessage);
     } finally {
@@ -158,292 +160,271 @@ export default function LoginPage() {
     }
   };
 
-  // Format countdown as mm:ss
-  const formatCountdown = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
   return (
-    <div className="login-bg" role="main">
-      {/* Gradient Border */}
-      <div className="login-gradient-border">
-        <div className="login-container">
-          {/* Header */}
-          <header className="login-header">
-            <div className="login-logo">
-              <img src="/tofaslogo.png" alt="Tofaş Fen Lisesi logosu" className="login-logo-img" />
-            </div>
-            <h1 className="login-title">Tofaş Fen Lisesi</h1>
-            <p className="login-subtitle">Bilgi Sistemi</p>
-          </header>
+    <div className="min-h-screen bg-[var(--paper)] flex flex-col">
+      <div className="h-1.5 bg-[var(--state)]" aria-hidden="true" />
 
-          {/* Conditional: Login Form or 2FA Form */}
-          {!requires2FA ? (
-            <>
-              <form
-                onSubmit={handleSubmit}
-                className="login-form"
-                role="form"
-                aria-label="Giriş formu"
-              >
-                <div className="login-form-group">
-                  <label htmlFor="id" className="login-label">
-                    <User className="login-icon" />
-                    Kullanıcı ID
-                  </label>
-                  <input
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[5fr_7fr]">
+        <aside className="bg-[var(--ink)] text-[var(--paper)] p-8 lg:p-12 flex flex-col justify-between min-h-[40vh] lg:min-h-screen">
+          <div className="space-y-6">
+            <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/60">
+              Türkiye Cumhuriyeti · Resmî Belge
+            </div>
+            <div className="flex items-center gap-4">
+              <img
+                src="/tofaslogo.png"
+                alt="Tofaş Fen Lisesi logosu"
+                className="w-16 h-16 bg-white p-2 border border-white/20"
+              />
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/60">
+                  Bilgi Sistemi
+                </div>
+                <h1 className="font-serif text-3xl text-white leading-tight">Tofaş Fen Lisesi</h1>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3 border-t border-white/15 pt-6">
+            <p className="font-serif text-sm text-white/85 leading-relaxed">
+              Bu sistem yalnızca yetkili kullanıcılarca erişilebilir. Tüm oturumlar kaydedilir ve
+              denetlenir.
+            </p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/50">
+              © {new Date().getFullYear()} Tofaş Fen Lisesi. Tüm hakları saklıdır.
+            </p>
+          </div>
+        </aside>
+
+        <main className="p-8 lg:p-12 flex flex-col justify-center min-h-[60vh] lg:min-h-screen">
+          <div className="w-full max-w-md mx-auto">
+            <header className="mb-8">
+              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                {requires2FA ? 'Form 02 · Doğrulama' : 'Form 01 · Giriş'}
+              </div>
+              <h2 className="font-serif text-2xl text-[var(--ink)] mt-1">
+                {requires2FA ? 'İki Adımlı Doğrulama' : 'Sisteme Giriş'}
+              </h2>
+            </header>
+
+            {!requires2FA ? (
+              <form onSubmit={handleSubmit} className="space-y-5" aria-label="Giriş formu">
+                <Field label="Kullanıcı ID" htmlFor="login-id">
+                  <Input
+                    id="login-id"
                     type="text"
-                    id="id"
                     value={id}
                     onChange={(e) => {
                       setId(e.target.value);
                       if (error) setError('');
                     }}
-                    className="login-input"
                     placeholder="Kullanıcı ID'nizi girin"
                     required
                     disabled={isSubmitting}
                     autoComplete="username"
                     maxLength={50}
                   />
-                </div>
+                </Field>
 
-                <div className="login-form-group">
-                  <label htmlFor="sifre" className="login-label">
-                    <Lock className="login-icon" />
-                    Şifre(TCKN)
-                  </label>
-                  <div className="login-password-container">
-                    <input
+                <Field label="Şifre (TCKN)" htmlFor="login-sifre">
+                  <div className="relative">
+                    <Input
+                      id="login-sifre"
                       type={showPassword ? 'text' : 'password'}
-                      id="sifre"
                       value={sifre}
                       onChange={(e) => {
                         setSifre(e.target.value);
                         if (error) setError('');
                       }}
-                      className="login-input"
                       placeholder="Şifrenizi girin"
                       required
                       disabled={isSubmitting}
                       autoComplete="current-password"
                       maxLength={100}
+                      className="pr-8"
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="login-password-toggle"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 text-[var(--ink-dim)] hover:text-[var(--ink)] p-1"
                       disabled={isSubmitting}
                       aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
                       title={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
                     >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                   </div>
-                </div>
+                </Field>
 
                 {error && (
-                  <div id="error-message" className="login-error" role="alert" aria-live="polite">
-                    {error}
+                  <div
+                    id="login-error"
+                    role="alert"
+                    aria-live="polite"
+                    className="border-l-4 border-[var(--state)] bg-[var(--surface)] px-3 py-2 flex items-start gap-2"
+                  >
+                    <Chip tone="state">Hata</Chip>
+                    <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
                   </div>
                 )}
 
-                <button
+                <Button
                   type="submit"
-                  className="login-button"
-                  disabled={isSubmitting}
-                  aria-describedby={error ? 'error-message' : undefined}
+                  variant="primary"
+                  fullWidth
+                  loading={isSubmitting}
+                  aria-describedby={error ? 'login-error' : undefined}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <div className="loading-spinner" style={{ marginRight: '8px' }}></div>
-                      Giriş yapılıyor...
-                    </>
-                  ) : (
-                    'Giriş Yap'
-                  )}
-                </button>
+                  Giriş Yap
+                </Button>
+
+                <div className="pt-3 border-t border-[var(--rule)] text-center">
+                  <Link
+                    to="/kayit-basvurusu"
+                    className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] hover:text-[var(--state)]"
+                  >
+                    Yeni kayıt başvurusu
+                  </Link>
+                </div>
               </form>
-            </>
-          ) : (
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (twoFactorCode.length !== 6) {
-                  setError('Lütfen 6 haneli doğrulama kodunu girin');
-                  return;
-                }
-                setIsSubmitting(true);
-                setError('');
-                try {
-                  await verify2FA(twoFactorCode, rememberDevice);
-                  toast.success('Giriş başarılı!');
-                } catch (err: unknown) {
-                  const msg =
-                    (err as any)?.response?.data?.error?.message ||
-                    (err as any)?.response?.data?.message ||
-                    (err instanceof Error ? err.message : 'Doğrulama başarısız');
-                  setError(msg);
-                  toast.error(msg);
-                } finally {
-                  setIsSubmitting(false);
-                }
-              }}
-              className="login-form"
-              role="form"
-              aria-label="İki faktörlü doğrulama formu"
-            >
-              <div className="login-2fa-info">
-                <ShieldCheck size={24} />
-                <p>
-                  Merhaba <strong>{twoFactorUser?.adSoyad}</strong>,<br />
-                  E-posta adresinize gönderilen 6 haneli doğrulama kodunu girin.
-                </p>
-              </div>
-
-              {/* #14: Countdown timer */}
-              {countdown > 0 && (
-                <div className="login-2fa-countdown">
-                  Kod geçerlilik süresi: <strong>{formatCountdown(countdown)}</strong>
-                </div>
-              )}
-              {countdown === 0 && twoFactorExpiresAt && (
-                <div className="login-2fa-countdown login-2fa-expired">
-                  Kodun süresi doldu. Lütfen yeni kod isteyin.
-                </div>
-              )}
-
-              <div className="login-form-group">
-                <label htmlFor="twoFactorCode" className="login-label">
-                  <Lock className="login-icon" />
-                  Doğrulama Kodu
-                </label>
-                <input
-                  type="text"
-                  id="twoFactorCode"
-                  value={twoFactorCode}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                    setTwoFactorCode(val);
-                    if (error) setError('');
-                  }}
-                  className="login-input login-2fa-code-input"
-                  placeholder="000000"
-                  required
-                  disabled={isSubmitting}
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  maxLength={6}
-                  autoFocus
-                />
-              </div>
-
-              <label className="login-remember-device">
-                <input
-                  type="checkbox"
-                  checked={rememberDevice}
-                  onChange={(e) => setRememberDevice(e.target.checked)}
-                  disabled={isSubmitting}
-                />
-                <span className="login-checkbox-label">Bu cihazı 30 gün hatırla</span>
-              </label>
-
-              {error && (
-                <div id="error-message" className="login-error" role="alert" aria-live="polite">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className="login-button"
-                disabled={isSubmitting || twoFactorCode.length !== 6}
+            ) : (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (twoFactorCode.length !== 6) {
+                    setError('Lütfen 6 haneli doğrulama kodunu girin');
+                    return;
+                  }
+                  setIsSubmitting(true);
+                  setError('');
+                  try {
+                    await verify2FA(twoFactorCode, rememberDevice);
+                    toast.success('Giriş başarılı!');
+                  } catch (err: unknown) {
+                    const e2 = err as {
+                      response?: { data?: { error?: { message?: string }; message?: string } };
+                    };
+                    const msg =
+                      e2?.response?.data?.error?.message ||
+                      e2?.response?.data?.message ||
+                      (err instanceof Error ? err.message : 'Doğrulama başarısız');
+                    setError(msg);
+                    toast.error(msg);
+                  } finally {
+                    setIsSubmitting(false);
+                  }
+                }}
+                className="space-y-5"
+                aria-label="İki faktörlü doğrulama formu"
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="loading-spinner" style={{ marginRight: '8px' }}></div>
-                    Doğrulanıyor...
-                  </>
-                ) : (
-                  'Doğrula'
+                <div className="border-l-4 border-[var(--state)] bg-[var(--surface)] px-4 py-3 flex items-start gap-3">
+                  <ShieldCheck size={16} className="text-[var(--state)] mt-1 shrink-0" />
+                  <p className="font-serif text-sm text-[var(--ink)] leading-relaxed">
+                    Merhaba <strong>{twoFactorUser?.adSoyad}</strong>. E-posta adresinize gönderilen
+                    6 haneli doğrulama kodunu girin.
+                  </p>
+                </div>
+
+                {countdown > 0 && (
+                  <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                    Kod geçerlilik süresi:{' '}
+                    <strong className="text-[var(--ink)]">{formatCountdown(countdown)}</strong>
+                  </div>
                 )}
-              </button>
+                {countdown === 0 && twoFactorExpiresAt && (
+                  <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--state)]">
+                    Kodun süresi doldu. Lütfen yeni kod isteyin.
+                  </div>
+                )}
 
-              {/* #13: Resend code button */}
-              <button
-                type="button"
-                className="login-resend-button"
-                onClick={handleResend}
-                disabled={isSubmitting || isResending}
-              >
-                {isResending ? (
-                  <>
-                    <div
-                      className="loading-spinner"
-                      style={{ marginRight: '6px', width: '14px', height: '14px' }}
-                    ></div>
-                    Gönderiliyor...
-                  </>
-                ) : (
-                  <>
+                <Field label="Doğrulama Kodu" htmlFor="login-2fa-code">
+                  <Input
+                    id="login-2fa-code"
+                    type="text"
+                    value={twoFactorCode}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setTwoFactorCode(val);
+                      if (error) setError('');
+                    }}
+                    placeholder="000000"
+                    required
+                    disabled={isSubmitting}
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
+                    maxLength={6}
+                    autoFocus
+                    className={cn('font-mono text-center text-2xl tracking-[0.5em]', '!pl-1')}
+                  />
+                </Field>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rememberDevice}
+                    onChange={(e) => setRememberDevice(e.target.checked)}
+                    disabled={isSubmitting}
+                    className="accent-[var(--state)]"
+                  />
+                  <span className="font-serif text-sm text-[var(--ink-2)]">
+                    Bu cihazı 30 gün hatırla
+                  </span>
+                </label>
+
+                {error && (
+                  <div
+                    role="alert"
+                    aria-live="polite"
+                    className="border-l-4 border-[var(--state)] bg-[var(--surface)] px-3 py-2 flex items-start gap-2"
+                  >
+                    <Chip tone="state">Hata</Chip>
+                    <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  fullWidth
+                  loading={isSubmitting}
+                  disabled={isSubmitting || twoFactorCode.length !== 6}
+                >
+                  Doğrula
+                </Button>
+
+                <div className="flex flex-col items-stretch gap-2 pt-3 border-t border-[var(--rule)]">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleResend}
+                    disabled={isSubmitting || isResending}
+                    loading={isResending}
+                  >
                     <RefreshCw size={14} />
                     Kodu Tekrar Gönder
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                className="login-back-button"
-                onClick={() => {
-                  cancel2FA();
-                  setTwoFactorCode('');
-                  setRememberDevice(false);
-                  setError('');
-                  setCountdown(0);
-                }}
-                disabled={isSubmitting}
-              >
-                Girişi İptal Et
-              </button>
-            </form>
-          )}
-
-          {/* Registration Link */}
-          <div style={{ textAlign: 'center', margin: '16px 0' }}>
-            <Link
-              to="/kayit-basvurusu"
-              style={{ color: '#3b82f6', fontSize: 14, textDecoration: 'none', fontWeight: 500 }}
-            >
-              Yeni kayıt başvurusu yapın
-            </Link>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      cancel2FA();
+                      setTwoFactorCode('');
+                      setRememberDevice(false);
+                      setError('');
+                      setCountdown(0);
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    <ArrowLeft size={14} />
+                    Girişi İptal Et
+                  </Button>
+                </div>
+              </form>
+            )}
           </div>
-
-          {/* Footer */}
-          <footer className="login-footer">
-            <p className="login-footer-text">© 2025 Tofaş Fen Lisesi. Tüm hakları saklıdır.</p>
-            <a
-              href="https://github.com/iWeslax83/tofas-fen-webapp"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub"
-              style={{
-                display: 'inline-block',
-                marginTop: 8,
-                color: '#9ca3af',
-                transition: 'color 0.2s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#1f2937')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = '#9ca3af')}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
-              </svg>
-            </a>
-          </footer>
-        </div>
+        </main>
       </div>
     </div>
   );
