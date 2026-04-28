@@ -8,15 +8,17 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  Shield,
   Clock,
+  X,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { EvciService } from '../../utils/apiService';
-import { toast } from 'sonner';
-
-import './ParentEvciPage.css';
+import { cn } from '../../utils/cn';
 
 interface EvciTalep {
   _id: string;
@@ -43,6 +45,38 @@ interface Student {
   pansiyon?: boolean;
 }
 
+type ApprovalStatus = EvciTalep['parentApproval'];
+
+const APPROVAL_LABELS: Record<ApprovalStatus, string> = {
+  pending: 'Onay Bekliyor',
+  approved: 'Onaylandı',
+  rejected: 'Reddedildi',
+};
+
+const APPROVAL_TONES: Record<ApprovalStatus, ChipProps['tone']> = {
+  pending: 'default',
+  approved: 'black',
+  rejected: 'state',
+};
+
+const selectClasses = cn(
+  'h-9 bg-transparent border-0 border-b border-[var(--rule)] px-1 text-sm',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2',
+  'transition-colors',
+);
+
+const formatDate = (dateString: string) => {
+  const parsed = new Date(dateString);
+  if (isNaN(parsed.getTime())) return dateString;
+  return parsed.toLocaleString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
 export default function ParentEvciPage() {
   const { user: authUser } = useAuthGuard(['parent']);
 
@@ -57,24 +91,17 @@ export default function ParentEvciPage() {
 
   const fetchData = async () => {
     if (!authUser) return;
-
     setIsLoading(true);
     setError(null);
-
     try {
       const { data, error: apiError } = await EvciService.getEvciRequestsByParent(authUser.id);
       if (apiError) {
         setError('Veriler yüklenirken bir hata oluştu: ' + apiError);
         return;
       }
-
       const response = data as { requests: EvciTalep[]; children: Student[] };
       setChildren(response.children || []);
       setRequests(response.requests || []);
-
-      if (response.children?.length > 0 && selectedChild === 'all') {
-        // Default: tüm çocuklar
-      }
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.');
@@ -85,9 +112,9 @@ export default function ParentEvciPage() {
 
   useEffect(() => {
     fetchData();
-  }, [authUser]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser]);
 
-  // Modal escape key handler and body scroll lock
   useEffect(() => {
     if (!rejectModalOpen) return;
     document.body.style.overflow = 'hidden';
@@ -117,7 +144,6 @@ export default function ParentEvciPage() {
         toast.error('Onaylama hatası: ' + apiError);
         return;
       }
-      // Local state güncelle
       setRequests((prev) =>
         prev.map((r) =>
           r._id === id
@@ -144,7 +170,6 @@ export default function ParentEvciPage() {
 
   const confirmReject = async () => {
     if (!rejectingId) return;
-
     try {
       const { error: apiError } = await EvciService.rejectEvciRequest(
         rejectingId,
@@ -178,44 +203,13 @@ export default function ParentEvciPage() {
   const filteredRequests =
     selectedChild === 'all' ? requests : requests.filter((r) => r.studentId === selectedChild);
 
-  const formatDate = (dateString: string) => {
-    // startDate/endDate may contain day names like "Perşembe 16:00" (not ISO dates)
-    const parsed = new Date(dateString);
-    if (isNaN(parsed.getTime())) {
-      return dateString; // Zaten okunabilir format (ör. "Perşembe 16:00")
-    }
-    const options: Intl.DateTimeFormatOptions = {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    };
-    return parsed.toLocaleString('tr-TR', options);
-  };
-
-  const getParentApprovalBadge = (approval: string) => {
-    switch (approval) {
-      case 'approved':
-        return { text: 'Onaylandı', className: 'parent-approved', icon: <CheckCircle size={14} /> };
-      case 'rejected':
-        return { text: 'Reddedildi', className: 'parent-rejected', icon: <XCircle size={14} /> };
-      case 'pending':
-      default:
-        return { text: 'Onay Bekliyor', className: 'parent-pending', icon: <Clock size={14} /> };
-    }
-  };
-
   const breadcrumb = [{ label: 'Ana Sayfa', path: '/parent' }, { label: 'Evci Çıkış İşlemleri' }];
 
   if (isLoading) {
     return (
       <ModernDashboardLayout pageTitle="Evci Çıkış İşlemleri" breadcrumb={breadcrumb}>
-        <div className="parent-evci-page">
-          <div className="loading-container">
-            <RefreshCw className="loading-icon spin" />
-            <p>Yükleniyor...</p>
-          </div>
+        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          Yükleniyor…
         </div>
       </ModernDashboardLayout>
     );
@@ -224,15 +218,14 @@ export default function ParentEvciPage() {
   if (error) {
     return (
       <ModernDashboardLayout pageTitle="Evci Çıkış İşlemleri" breadcrumb={breadcrumb}>
-        <div className="parent-evci-page">
-          <div className="error-container">
-            <AlertCircle className="error-icon" />
-            <h2>Hata Oluştu</h2>
-            <p>{error}</p>
-            <button onClick={handleRefresh} className="btn btn-primary">
+        <div className="p-6 max-w-xl">
+          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--state)]">
+            <Chip tone="state">Hata</Chip>
+            <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
+            <Button variant="secondary" size="sm" onClick={handleRefresh}>
               Tekrar Dene
-            </button>
-          </div>
+            </Button>
+          </Card>
         </div>
       </ModernDashboardLayout>
     );
@@ -240,192 +233,203 @@ export default function ParentEvciPage() {
 
   return (
     <ModernDashboardLayout pageTitle="Evci Çıkış İşlemleri" breadcrumb={breadcrumb}>
-      <div className="parent-evci-page">
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="page-title-section">
-              <Home className="page-icon" />
-              <h1 className="page-title-main">Evci Çıkış İşlemleri</h1>
-            </div>
-            <button
-              onClick={handleRefresh}
-              className="btn btn-primary"
+      <div className="p-6 space-y-6">
+        <header>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Belge No. {new Date().getFullYear()}/E-V
+          </div>
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Evci Çıkış İşlemleri</h1>
+        </header>
+
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <label className="flex items-center gap-2">
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+              Öğrenci
+            </span>
+            <select
+              value={selectedChild}
+              onChange={(e) => setSelectedChild(e.target.value)}
+              className={cn(selectClasses, 'min-w-[180px]')}
               disabled={isLoading}
-              aria-label="Yenile"
+              aria-label="Öğrenci seçin"
             >
-              <RefreshCw className={`icon ${isLoading ? 'spin' : ''}`} />
-              <span>Yenile</span>
-            </button>
-          </div>
+              <option value="all">Tüm Çocuklar</option>
+              {children.map((child) => (
+                <option key={child.id} value={child.id}>
+                  {child.adSoyad} {child.sinif ? `(${child.sinif}${child.sube || ''})` : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            aria-label="Yenile"
+          >
+            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+            Yenile
+          </Button>
         </div>
 
-        <div className="content-card">
-          <div className="card-actions">
-            <div className="child-selector">
-              <label htmlFor="childSelect" className="selector-label">
-                Öğrenci Seçin:
-              </label>
-              <select
-                id="childSelect"
-                value={selectedChild}
-                onChange={(e) => setSelectedChild(e.target.value)}
-                className="select-input"
-                disabled={isLoading}
-              >
-                <option value="all">Tüm Çocuklar</option>
-                {children.map((child) => (
-                  <option key={child.id} value={child.id}>
-                    {child.adSoyad} {child.sinif ? `(${child.sinif}${child.sube || ''})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+        {filteredRequests.length === 0 ? (
+          <Card contentClassName="p-10 flex flex-col items-center text-center gap-3">
+            <Home size={40} className="text-[var(--ink-dim)]" />
+            <h3 className="font-serif text-lg text-[var(--ink)]">
+              Henüz evci çıkış talebi bulunmuyor
+            </h3>
+            <p className="font-serif text-sm text-[var(--ink-2)]">
+              Öğrencinize ait evci çıkış talepleri burada görünecektir.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredRequests.map((request) => {
+              const status = request.parentApproval;
+              return (
+                <Card key={request._id} contentClassName="p-0">
+                  <div className="px-4 py-2 border-b border-[var(--rule)] flex items-center gap-2 flex-wrap">
+                    <Chip tone={request.willGo ? 'outline' : 'default'}>
+                      {request.willGo ? 'Gidecek' : 'Gitmeyecek'}
+                    </Chip>
+                    <Chip tone={APPROVAL_TONES[status]}>{APPROVAL_LABELS[status]}</Chip>
+                  </div>
 
-          <div className="card-content">
-            {filteredRequests.length === 0 ? (
-              <div className="empty-state">
-                <Home className="empty-icon" />
-                <h3>Henüz evci çıkış talebi bulunmuyor</h3>
-                <p>Öğrencinize ait evci çıkış talepleri burada görünecektir.</p>
-              </div>
-            ) : (
-              <div className="parent-evci-requests-grid">
-                {filteredRequests.map((request) => {
-                  const badge = getParentApprovalBadge(request.parentApproval);
-                  return (
-                    <div key={request._id} className="request-card">
-                      <div className="request-header">
-                        <h3 className="request-title">
-                          {request.willGo ? request.destination || 'Evci' : 'Evciye Gitmeyecek'}
-                        </h3>
-                        <div className="request-badges">
-                          <span
-                            className={`status-badge ${request.willGo ? 'going' : 'not-going'}`}
-                          >
-                            {request.willGo ? 'Gidecek' : 'Gitmeyecek'}
-                          </span>
-                          <span className={`parent-approval-badge ${badge.className}`}>
-                            {badge.icon} {badge.text}
-                          </span>
-                        </div>
+                  <div className="p-4 space-y-3">
+                    <div>
+                      <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                        Hedef
                       </div>
-
-                      <div className="request-details">
-                        <div className="detail-row">
-                          <User className="detail-icon" />
-                          <div>
-                            <span className="detail-label">Öğrenci:</span>
-                            <span className="detail-value">{request.studentName}</span>
-                          </div>
-                        </div>
-
-                        {request.willGo && (
-                          <>
-                            <div className="detail-row">
-                              <Calendar className="detail-icon" />
-                              <div>
-                                <span className="detail-label">Tarih:</span>
-                                <span className="detail-value">
-                                  {formatDate(request.startDate)} - {formatDate(request.endDate)}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="detail-row">
-                              <MapPin className="detail-icon" />
-                              <div>
-                                <span className="detail-label">Yer:</span>
-                                <span className="detail-value">{request.destination}</span>
-                              </div>
-                            </div>
-                          </>
-                        )}
-
-                        <div className="detail-row">
-                          <Clock className="detail-icon" />
-                          <div>
-                            <span className="detail-label">Oluşturulma:</span>
-                            <span className="detail-value">{formatDate(request.createdAt)}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {request.parentApproval === 'pending' && (
-                        <div className="approval-actions">
-                          <button
-                            onClick={() => handleApprove(request._id)}
-                            className="btn btn-approve"
-                          >
-                            <CheckCircle size={18} />
-                            Onayla
-                          </button>
-                          <button
-                            onClick={() => handleRejectClick(request._id)}
-                            className="btn btn-reject"
-                          >
-                            <XCircle size={18} />
-                            Reddet
-                          </button>
-                        </div>
-                      )}
-
-                      {request.parentApproval !== 'pending' && request.parentApprovalAt && (
-                        <div className="request-footer">
-                          <span className="approval-date">
-                            <Shield size={14} />
-                            {request.parentApproval === 'approved' ? 'Onay' : 'Red'} tarihi:{' '}
-                            {formatDate(request.parentApprovalAt)}
-                          </span>
-                        </div>
-                      )}
+                      <h3 className="font-serif text-lg text-[var(--ink)] mt-0.5">
+                        {request.willGo ? request.destination || 'Evci' : 'Evciye Gitmeyecek'}
+                      </h3>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+
+                    <div className="space-y-1.5">
+                      <InfoRow icon={User} label="Öğrenci" value={request.studentName} />
+                      {request.willGo && (
+                        <>
+                          <InfoRow
+                            icon={Calendar}
+                            label="Tarih"
+                            value={`${formatDate(request.startDate)} → ${formatDate(request.endDate)}`}
+                          />
+                          <InfoRow icon={MapPin} label="Yer" value={request.destination} />
+                        </>
+                      )}
+                      <InfoRow
+                        icon={Clock}
+                        label="Oluşturulma"
+                        value={formatDate(request.createdAt)}
+                      />
+                    </div>
+
+                    {status === 'pending' && (
+                      <div className="flex items-center gap-2 pt-2 border-t border-[var(--rule)]">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleApprove(request._id)}
+                        >
+                          <CheckCircle size={14} />
+                          Onayla
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleRejectClick(request._id)}
+                        >
+                          <XCircle size={14} />
+                          Reddet
+                        </Button>
+                      </div>
+                    )}
+
+                    {status !== 'pending' && request.parentApprovalAt && (
+                      <div className="pt-2 border-t border-[var(--rule)] flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                        <AlertCircle size={10} />
+                        {status === 'approved' ? 'Onay' : 'Red'} ·{' '}
+                        {formatDate(request.parentApprovalAt)}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
-        </div>
-        {/* Reject Reason Modal */}
-        {rejectModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h3 className="modal-title">Red Sebebi</h3>
+        )}
+      </div>
+
+      {rejectModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => setRejectModalOpen(false)}
+          role="presentation"
+        >
+          <Card className="relative w-full max-w-md" contentClassName="p-0">
+            <div onClick={(e) => e.stopPropagation()}>
+              <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+                  Red Sebebi
+                </span>
                 <button
                   type="button"
                   onClick={() => setRejectModalOpen(false)}
-                  className="modal-close"
+                  className="text-white hover:opacity-80"
                   aria-label="Kapat"
                 >
-                  <XCircle size={20} />
+                  <X size={16} />
                 </button>
               </div>
-              <div className="modal-body">
-                <p className="reject-modal-desc">
+              <div className="p-6 space-y-3">
+                <p className="font-serif text-sm text-[var(--ink-2)]">
                   Evci talebini neden reddettiğinizi belirtebilirsiniz (isteğe bağlı):
                 </p>
                 <textarea
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  className="form-control reject-textarea"
                   rows={3}
-                  placeholder="Red sebebi (isteğe bağlı)"
+                  placeholder="Red sebebi…"
+                  className={cn(
+                    'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+                    'text-[var(--ink)] placeholder:text-[var(--ink-dim)]',
+                    'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+                    'transition-colors resize-y min-h-[4rem]',
+                  )}
                 />
-                <div className="form-actions reject-modal-actions">
-                  <button onClick={() => setRejectModalOpen(false)} className="btn btn-secondary">
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="ghost" size="sm" onClick={() => setRejectModalOpen(false)}>
                     İptal
-                  </button>
-                  <button onClick={confirmReject} className="btn btn-reject">
-                    <XCircle size={16} />
+                  </Button>
+                  <Button variant="danger" size="sm" onClick={confirmReject}>
+                    <XCircle size={14} />
                     Reddet
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          </Card>
+        </div>
+      )}
     </ModernDashboardLayout>
+  );
+}
+
+interface InfoRowProps {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
+  value: string;
+}
+
+function InfoRow({ icon: Icon, label, value }: InfoRowProps) {
+  return (
+    <div className="grid grid-cols-[110px_1fr] items-center gap-3 text-sm">
+      <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+        <Icon size={10} />
+        {label}
+      </span>
+      <span className="font-serif text-[var(--ink)]">{value}</span>
+    </div>
   );
 }
