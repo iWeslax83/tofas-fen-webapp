@@ -1,17 +1,12 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Calendar, 
-  MapPin, 
-  User, 
-  BookOpen, 
-  Plus,
-  Edit,
-  Trash2,
-  Search
-} from 'lucide-react';
-import { ScheduleService } from '../../utils/apiService';
+import { useState, useEffect, useMemo } from 'react';
+import { Calendar, MapPin, User, BookOpen, Plus, Edit, Trash2, Search, X } from 'lucide-react';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Chip, type ChipProps } from '../../components/ui/Chip';
+import { Input } from '../../components/ui/Input';
+import { ScheduleService } from '../../utils/apiService';
+import { cn } from '../../utils/cn';
 
 interface ScheduleItem {
   id: string;
@@ -38,6 +33,38 @@ interface ScheduleFilters {
   type: string;
 }
 
+type ScheduleType = ScheduleItem['type'];
+
+const TYPE_LABELS: Record<ScheduleType, string> = {
+  class: 'Ders',
+  exam: 'Sınav',
+  activity: 'Etkinlik',
+  meeting: 'Toplantı',
+};
+
+const TYPE_TONES: Record<ScheduleType, ChipProps['tone']> = {
+  class: 'default',
+  exam: 'state',
+  activity: 'outline',
+  meeting: 'black',
+};
+
+const TYPE_ICONS: Record<
+  ScheduleType,
+  React.ComponentType<{ size?: number; className?: string }>
+> = {
+  class: BookOpen,
+  exam: Edit,
+  activity: Calendar,
+  meeting: User,
+};
+
+const selectClasses = cn(
+  'h-10 bg-transparent border-0 border-b border-[var(--rule)] px-1 text-sm',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2',
+  'transition-colors',
+);
+
 export default function SchedulePage() {
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,22 +74,20 @@ export default function SchedulePage() {
     subject: '',
     teacher: '',
     classLevel: '',
-    type: ''
+    type: '',
   });
   const [showAddForm, setShowAddForm] = useState(false);
-  const [, setEditingItem] = useState<ScheduleItem | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const fetchSchedule = async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const { data, error } = await ScheduleService.getSchedule();
-      if (error) {
-        setError(error);
+      const { data, error: apiError } = await ScheduleService.getSchedule();
+      if (apiError) {
+        setError(apiError);
       } else {
-        setSchedule(Array.isArray(data) ? data as ScheduleItem[] : []);
+        setSchedule(Array.isArray(data) ? (data as ScheduleItem[]) : []);
       }
     } catch (err) {
       console.error('Error fetching schedule:', err);
@@ -76,326 +101,309 @@ export default function SchedulePage() {
     fetchSchedule();
   }, []);
 
-  const filteredSchedule = schedule.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.teacher.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesDate = !filters.date || item.date === filters.date;
-    const matchesSubject = !filters.subject || item.subject === filters.subject;
-    const matchesTeacher = !filters.teacher || item.teacher === filters.teacher;
-    const matchesClassLevel = !filters.classLevel || item.classLevel === filters.classLevel;
-    const matchesType = !filters.type || item.type === filters.type;
+  const filtered = useMemo(
+    () =>
+      schedule.filter((item) => {
+        const q = searchTerm.toLowerCase();
+        const matchesSearch =
+          !q ||
+          item.title.toLowerCase().includes(q) ||
+          item.subject.toLowerCase().includes(q) ||
+          item.teacher.toLowerCase().includes(q);
+        return (
+          matchesSearch &&
+          (!filters.date || item.date === filters.date) &&
+          (!filters.subject || item.subject === filters.subject) &&
+          (!filters.teacher || item.teacher === filters.teacher) &&
+          (!filters.classLevel || item.classLevel === filters.classLevel) &&
+          (!filters.type || item.type === filters.type)
+        );
+      }),
+    [schedule, filters, searchTerm],
+  );
 
-    return matchesSearch && matchesDate && matchesSubject && matchesTeacher && matchesClassLevel && matchesType;
-  });
-
-  const groupedSchedule = filteredSchedule.reduce((groups, item) => {
-    const date = item.date;
-    if (!groups[date]) {
-      groups[date] = [];
-    }
-    groups[date].push(item);
-    return groups;
-  }, {} as Record<string, ScheduleItem[]>);
-
-  const sortedDates = Object.keys(groupedSchedule).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-
-  const formatTime = (time: string) => {
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString('tr-TR', {
-      hour: '2-digit',
-      minute: '2-digit'
+  const grouped = useMemo(() => {
+    const map: Record<string, ScheduleItem[]> = {};
+    filtered.forEach((item) => {
+      (map[item.date] = map[item.date] || []).push(item);
     });
-  };
+    return map;
+  }, [filtered]);
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('tr-TR', {
+  const sortedDates = useMemo(
+    () => Object.keys(grouped).sort((a, b) => new Date(a).getTime() - new Date(b).getTime()),
+    [grouped],
+  );
+
+  const formatTime = (time: string) =>
+    new Date(`2000-01-01T${time}`).toLocaleTimeString('tr-TR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString('tr-TR', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
-  };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'class': return 'schedule-item-type-class';
-      case 'exam': return 'schedule-item-type-exam';
-      case 'activity': return 'schedule-item-type-activity';
-      case 'meeting': return 'schedule-item-type-meeting';
-      default: return 'schedule-item-type-class';
-    }
-  };
+  const breadcrumb = [{ label: 'Ana Sayfa', path: '/' }, { label: 'Ders Programı' }];
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'class': return <BookOpen className="icon-small" />;
-      case 'exam': return <Edit className="icon-small" />;
-      case 'activity': return <Calendar className="icon-small" />;
-      case 'meeting': return <User className="icon-small" />;
-      default: return <Calendar className="icon-small" />;
-    }
-  };
+  const subjects = useMemo(
+    () => Array.from(new Set(schedule.map((s) => s.subject))).filter(Boolean),
+    [schedule],
+  );
+  const teachers = useMemo(
+    () => Array.from(new Set(schedule.map((s) => s.teacher))).filter(Boolean),
+    [schedule],
+  );
 
   if (loading) {
     return (
-      <div className="schedule-loading">
-        <div className="schedule-loading-content">
-          <div className="schedule-loading-skeleton">
-            <div className="schedule-loading-title"></div>
-            <div className="schedule-loading-grid">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="schedule-loading-card"></div>
-              ))}
-            </div>
-          </div>
+      <ModernDashboardLayout pageTitle="Ders Programı" breadcrumb={breadcrumb}>
+        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          Yükleniyor…
         </div>
-      </div>
+      </ModernDashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="schedule-error">
-        <div className="schedule-error-content">
-          <div className="schedule-error-card">
-            <h2 className="schedule-error-title">Hata</h2>
-            <p className="schedule-error-message">{error}</p>
-            <button
-              onClick={fetchSchedule}
-              className="schedule-error-button"
-            >
+      <ModernDashboardLayout pageTitle="Ders Programı" breadcrumb={breadcrumb}>
+        <div className="p-6 max-w-xl">
+          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--state)]">
+            <Chip tone="state">Hata</Chip>
+            <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
+            <Button variant="secondary" size="sm" onClick={fetchSchedule}>
               Tekrar Dene
-            </button>
-          </div>
+            </Button>
+          </Card>
         </div>
-      </div>
+      </ModernDashboardLayout>
     );
   }
 
-  const breadcrumb = [
-    { label: 'Ana Sayfa', path: '/' },
-    { label: 'Ders Programı' }
-  ];
-
-  const headerActions = (
-    <button
-      onClick={() => setShowAddForm(true)}
-      className="schedule-add-button"
-    >
-      <Plus className="icon-small" />
-      Yeni Etkinlik
-    </button>
-  );
-
   return (
-    <ModernDashboardLayout
-      pageTitle="Ders Programı"
-      breadcrumb={breadcrumb}
-      customHeaderActions={headerActions}
-    >
-      <div className="schedule-container">
-        <div className="schedule-content">
-          {/* Page Description */}
-          <div className="schedule-description">
-            <p>Günlük ders programı ve etkinlik takvimi</p>
+    <ModernDashboardLayout pageTitle="Ders Programı" breadcrumb={breadcrumb}>
+      <div className="p-6 space-y-6">
+        <header className="flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+              Belge No. {new Date().getFullYear()}/D-S
+            </div>
+            <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Ders Programı</h1>
+            <p className="font-serif text-sm text-[var(--ink-2)] mt-1">
+              Günlük ders programı ve etkinlik takvimi
+            </p>
           </div>
+          <Button variant="primary" size="sm" onClick={() => setShowAddForm(true)}>
+            <Plus size={14} />
+            Yeni Etkinlik
+          </Button>
+        </header>
 
-        {/* Search and Filters */}
-        <div className="schedule-filters">
-          <div className="schedule-filters-grid">
-            {/* Search */}
-            <div className="schedule-filters-search">
-              <div className="relative">
-                <Search className="schedule-filters-search-icon" />
-                <input
-                  type="text"
-                  placeholder="Ara..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="schedule-filters-input"
-                />
-              </div>
-            </div>
-
-            {/* Date Filter */}
-            <div>
-              <input
-                type="date"
-                value={filters.date}
-                onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-                className="schedule-filters-input"
-              />
-            </div>
-
-            {/* Subject Filter */}
-            <div>
-              <select
-                value={filters.subject}
-                onChange={(e) => setFilters({ ...filters, subject: e.target.value })}
-                className="schedule-filters-select"
-              >
-                <option value="">Tüm Dersler</option>
-                {Array.from(new Set(schedule.map(item => item.subject))).map(subject => (
-                  <option key={subject} value={subject}>{subject}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Teacher Filter */}
-            <div>
-              <select
-                value={filters.teacher}
-                onChange={(e) => setFilters({ ...filters, teacher: e.target.value })}
-                className="schedule-filters-select"
-              >
-                <option value="">Tüm Öğretmenler</option>
-                {Array.from(new Set(schedule.map(item => item.teacher))).map(teacher => (
-                  <option key={teacher} value={teacher}>{teacher}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Type Filter */}
-            <div>
-              <select
-                value={filters.type}
-                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-                className="schedule-filters-select"
-              >
-                <option value="">Tüm Türler</option>
-                <option value="class">Ders</option>
-                <option value="exam">Sınav</option>
-                <option value="activity">Etkinlik</option>
-                <option value="meeting">Toplantı</option>
-              </select>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="relative">
+            <Search
+              size={12}
+              className="absolute left-1 top-1/2 -translate-y-1/2 text-[var(--ink-dim)] pointer-events-none"
+            />
+            <Input
+              placeholder="Ara…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-5"
+            />
           </div>
+          <Input
+            type="date"
+            value={filters.date}
+            onChange={(e) => setFilters({ ...filters, date: e.target.value })}
+            aria-label="Tarih filtrele"
+          />
+          <select
+            value={filters.subject}
+            onChange={(e) => setFilters({ ...filters, subject: e.target.value })}
+            className={selectClasses}
+            aria-label="Ders filtrele"
+          >
+            <option value="">Tüm Dersler</option>
+            {subjects.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filters.teacher}
+            onChange={(e) => setFilters({ ...filters, teacher: e.target.value })}
+            className={selectClasses}
+            aria-label="Öğretmen filtrele"
+          >
+            <option value="">Tüm Öğretmenler</option>
+            {teachers.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filters.type}
+            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+            className={selectClasses}
+            aria-label="Tür filtrele"
+          >
+            <option value="">Tüm Türler</option>
+            {(Object.keys(TYPE_LABELS) as ScheduleType[]).map((t) => (
+              <option key={t} value={t}>
+                {TYPE_LABELS[t]}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Schedule Display */}
         {sortedDates.length === 0 ? (
-          <div className="schedule-empty">
-            <Calendar className="schedule-empty-icon" />
-            <h3 className="schedule-empty-title">Henüz etkinlik yok</h3>
-            <p className="schedule-empty-description">Yeni etkinlik ekleyerek başlayın</p>
-          </div>
+          <Card contentClassName="p-10 flex flex-col items-center text-center gap-3">
+            <Calendar size={40} className="text-[var(--ink-dim)]" />
+            <h3 className="font-serif text-lg text-[var(--ink)]">Henüz etkinlik yok</h3>
+            <p className="font-serif text-sm text-[var(--ink-2)]">
+              Yeni etkinlik ekleyerek başlayın.
+            </p>
+          </Card>
         ) : (
-          <div className="schedule-days">
-            {sortedDates.map(date => (
-                              <motion.div
-                  key={date}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="schedule-day-card"
-                >
-                  <div className="schedule-day-header">
-                    <h2 className="schedule-day-title">{formatDate(date)}</h2>
-                  </div>
-                  
-                  <div className="schedule-day-content">
-                  <div className="schedule-day-events-list">
-                    {groupedSchedule[date]
-                      .sort((a, b) => new Date(`2000-01-01T${a.startTime}`).getTime() - new Date(`2000-01-01T${b.startTime}`).getTime())
-                      .map(item => (
-                        <motion.div
-                          key={item.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="schedule-item"
-                        >
-                          <div className="schedule-item-time">
-                            {/* Time */}
-                            <div className="schedule-item-time-start">
-                              <div className="schedule-item-time-start-label">Başlangıç</div>
-                              <div className="schedule-item-time-start-value">{formatTime(item.startTime)}</div>
-                              <div className="schedule-item-time-end">{formatTime(item.endTime)}</div>
-                            </div>
-
-                            {/* Divider */}
-                            <div className="schedule-item-time-divider"></div>
-
-                            {/* Content */}
-                            <div className="schedule-item-content">
-                              <div className="schedule-item-header">
-                                <span className={`schedule-item-type ${getTypeColor(item.type)}`}>
-                                  {getTypeIcon(item.type)}
-                                  {item.type === 'class' ? 'Ders' : 
-                                   item.type === 'exam' ? 'Sınav' : 
-                                   item.type === 'activity' ? 'Etkinlik' : 
-                                   item.type === 'meeting' ? 'Toplantı' : item.type}
-                                </span>
-                                <span className="schedule-item-subject">{item.subject}</span>
-                              </div>
-                              
-                              <h3 className="schedule-item-title">{item.title}</h3>
-                              {item.description && (
-                                <p className="schedule-item-description">{item.description}</p>
-                              )}
-                              
-                              <div className="schedule-item-meta">
-                                <div className="schedule-item-meta-item">
-                                  <User className="icon-small" />
-                                  {item.teacher}
-                                </div>
-                                <div className="schedule-item-meta-item">
-                                  <MapPin className="icon-small" />
-                                  {item.location}
-                                </div>
-                                <div className="schedule-item-meta-item">
-                                  <BookOpen className="icon-small" />
-                                  {item.classLevel}/{item.classSection}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="schedule-item-actions">
-                            <button
-                              onClick={() => setEditingItem(item)}
-                              className="schedule-item-action-button"
-                            >
-                              <Edit className="icon-small" />
-                            </button>
-                            <button
-                              onClick={() => {/* Handle delete */}}
-                              className="schedule-item-action-button schedule-item-action-button-delete"
-                            >
-                              <Trash2 className="icon-small" />
-                            </button>
-                          </div>
-                        </motion.div>
-                      ))}
-                  </div>
+          <div className="space-y-4">
+            {sortedDates.map((date) => (
+              <Card key={date} contentClassName="p-0">
+                <div className="px-4 py-2 border-b border-[var(--rule)] flex items-center gap-2">
+                  <Calendar size={12} className="text-[var(--ink-dim)]" />
+                  <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                    Bölüm
+                  </span>
+                  <h2 className="font-serif text-base text-[var(--ink)]">{formatDate(date)}</h2>
                 </div>
-              </motion.div>
+                <ul className="divide-y divide-[var(--rule)]">
+                  {grouped[date]
+                    .sort(
+                      (a, b) =>
+                        new Date(`2000-01-01T${a.startTime}`).getTime() -
+                        new Date(`2000-01-01T${b.startTime}`).getTime(),
+                    )
+                    .map((item) => {
+                      const Icon = TYPE_ICONS[item.type];
+                      return (
+                        <li key={item.id} className="p-4 flex items-start gap-4 flex-wrap">
+                          <div className="flex flex-col items-center text-center min-w-[64px]">
+                            <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                              Başlangıç
+                            </span>
+                            <span className="font-serif text-base text-[var(--ink)]">
+                              {formatTime(item.startTime)}
+                            </span>
+                            <span className="font-mono text-[10px] text-[var(--ink-dim)] mt-0.5">
+                              → {formatTime(item.endTime)}
+                            </span>
+                          </div>
+
+                          <div className="border-l border-[var(--rule)] self-stretch" />
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <Chip tone={TYPE_TONES[item.type]}>
+                                <Icon size={10} />
+                                {TYPE_LABELS[item.type]}
+                              </Chip>
+                              <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                                {item.subject}
+                              </span>
+                            </div>
+                            <h3 className="font-serif text-base text-[var(--ink)]">{item.title}</h3>
+                            {item.description && (
+                              <p className="font-serif text-sm text-[var(--ink-2)] mt-1">
+                                {item.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-4 mt-2 flex-wrap text-xs">
+                              <span className="inline-flex items-center gap-1 text-[var(--ink-dim)]">
+                                <User size={10} />
+                                {item.teacher}
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-[var(--ink-dim)]">
+                                <MapPin size={10} />
+                                {item.location}
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-[var(--ink-dim)]">
+                                <BookOpen size={10} />
+                                {item.classLevel}/{item.classSection}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              className="text-[var(--ink-dim)] hover:text-[var(--ink)] p-1"
+                              aria-label="Düzenle"
+                              title="Düzenle"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              className="text-[var(--ink-dim)] hover:text-[var(--state)] p-1"
+                              aria-label="Sil"
+                              title="Sil"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                </ul>
+              </Card>
             ))}
           </div>
         )}
+      </div>
 
-        {/* Add/Edit Form Modal */}
-        {showAddForm && (
-          <div className="schedule-modal-overlay">
-            <div className="schedule-modal">
-              <h2 className="schedule-modal-title">Yeni Etkinlik Ekle</h2>
-              {/* Form content would go here */}
-              <div className="schedule-modal-actions">
+      {showAddForm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => setShowAddForm(false)}
+          role="presentation"
+        >
+          <Card className="relative w-full max-w-md" contentClassName="p-0">
+            <div onClick={(e) => e.stopPropagation()}>
+              <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+                  Yeni Etkinlik Ekle
+                </span>
                 <button
+                  type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="schedule-modal-button schedule-modal-button-cancel"
+                  className="text-white hover:opacity-80"
+                  aria-label="Kapat"
                 >
-                  İptal
-                </button>
-                <button className="schedule-modal-button schedule-modal-button-save">
-                  Kaydet
+                  <X size={16} />
                 </button>
               </div>
+              <div className="p-6 space-y-3">
+                <p className="font-serif text-sm text-[var(--ink-2)]">
+                  Etkinlik formu yakında eklenecek.
+                </p>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="ghost" size="sm" onClick={() => setShowAddForm(false)}>
+                    Kapat
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          </Card>
         </div>
-      </div>
+      )}
     </ModernDashboardLayout>
   );
 }
