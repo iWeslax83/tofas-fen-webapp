@@ -1,4 +1,4 @@
-import { Note } from '../../models/Note';
+import Note from '../../models/Note';
 import { Homework } from '../../models/Homework';
 import { Notification } from '../../models/Notification';
 import { calculateClassRanking, type ClassRanking } from '../../services/rankingService';
