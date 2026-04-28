@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
-import { apiClient } from '../../utils/api';
-import { useAuthContext } from '../../contexts/AuthContext';
-import { useTheme } from '../../hooks/useTheme';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { apiClient } from '../../utils/api';
+import { useAuthContext } from '../../contexts/AuthContext';
+import { cn } from '../../utils/cn';
 
 interface ChatMessage {
   _id: string;
@@ -28,64 +30,7 @@ interface Conversation {
 
 export default function VisitorChatPage() {
   const { user } = useAuthContext();
-  const { theme } = useTheme();
   const isAdmin = user?.rol === 'admin';
-
-  // Resolve effective theme (system -> actual)
-  const isDark = useMemo(() => {
-    if (theme === 'dark') return true;
-    if (theme === 'light') return false;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }, [theme]);
-
-  // Theme-aware colors
-  const colors = useMemo(
-    () =>
-      isDark
-        ? {
-            bg: '#111827',
-            card: '#1f2937',
-            cardHover: '#374151',
-            border: '#374151',
-            borderLight: '#4b5563',
-            text: '#f9fafb',
-            textSecondary: '#d1d5db',
-            textMuted: '#9ca3af',
-            input: '#374151',
-            inputBorder: '#4b5563',
-            myBubble: '#0f766e',
-            myBubbleText: '#fff',
-            otherBubble: '#374151',
-            otherBubbleText: '#f3f4f6',
-            activeConv: '#1e3a5f',
-            placeholder: '#6b7280',
-            sendBtn: '#0f766e',
-            sendBtnDisabled: '#374151',
-            sendBtnTextDisabled: '#6b7280',
-          }
-        : {
-            bg: '#f8fafc',
-            card: '#ffffff',
-            cardHover: '#f1f5f9',
-            border: '#e2e8f0',
-            borderLight: '#f1f5f9',
-            text: '#0f172a',
-            textSecondary: '#374151',
-            textMuted: '#9ca3af',
-            input: '#ffffff',
-            inputBorder: '#e5e7eb',
-            myBubble: '#0f766e',
-            myBubbleText: '#fff',
-            otherBubble: '#f1f5f9',
-            otherBubbleText: '#1f2937',
-            activeConv: '#eff6ff',
-            placeholder: '#9ca3af',
-            sendBtn: '#0f766e',
-            sendBtnDisabled: '#e5e7eb',
-            sendBtnTextDisabled: '#9ca3af',
-          },
-    [isDark],
-  );
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -95,7 +40,7 @@ export default function VisitorChatPage() {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isNearBottomRef = useRef(true);
 
   const scrollToBottom = () => {
@@ -110,16 +55,14 @@ export default function VisitorChatPage() {
     isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
   };
 
-  // For visitors: auto-create/get conversation
-  // For admins: list all visitor conversations
   const initChat = useCallback(async () => {
     try {
       if (isAdmin) {
         const res = await apiClient.get('/api/visitor-chat/conversations');
         const convs = (res.data as Conversation[]) || [];
         setConversations(convs);
-        if (convs.length > 0 && !activeConversationId) {
-          setActiveConversationId(convs[0].id);
+        if (convs.length > 0) {
+          setActiveConversationId((curr) => curr ?? convs[0].id);
         }
       } else {
         const res = await apiClient.post('/api/visitor-chat/conversation');
@@ -132,7 +75,6 @@ export default function VisitorChatPage() {
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
   const fetchMessages = useCallback(async () => {
@@ -141,7 +83,7 @@ export default function VisitorChatPage() {
       const res = await apiClient.get(`/api/visitor-chat/messages/${activeConversationId}`);
       setMessages((res.data as { messages?: ChatMessage[] }).messages || []);
     } catch {
-      // error
+      // silent — polled periodically
     }
   }, [activeConversationId]);
 
@@ -150,14 +92,12 @@ export default function VisitorChatPage() {
   }, [initChat]);
 
   useEffect(() => {
-    if (activeConversationId) {
-      fetchMessages();
-      // Poll every 5 seconds for new messages
-      pollRef.current = setInterval(fetchMessages, 5000);
-      return () => {
-        if (pollRef.current) clearInterval(pollRef.current);
-      };
-    }
+    if (!activeConversationId) return;
+    fetchMessages();
+    pollRef.current = setInterval(fetchMessages, 5000);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, [activeConversationId, fetchMessages]);
 
   useEffect(() => {
@@ -188,173 +128,96 @@ export default function VisitorChatPage() {
     }
   };
 
-  return (
-    <ModernDashboardLayout pageTitle={isAdmin ? 'Ziyaretçi Sohbetleri' : 'Yönetici ile Sohbet'}>
-      <div
-        style={{
-          padding: '24px',
-          maxWidth: 1000,
-          margin: '0 auto',
-          height: 'calc(100vh - 160px)',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            marginBottom: 16,
-            color: colors.text,
-          }}
-        >
-          <MessageCircle size={28} />
-          <h1 style={{ margin: 0, fontSize: 24 }}>
-            {isAdmin ? 'Ziyaretçi Sohbetleri' : 'Yönetici ile Sohbet'}
-          </h1>
-        </div>
+  const pageTitle = isAdmin ? 'Ziyaretçi Sohbetleri' : 'Yönetici ile Sohbet';
 
-        <div style={{ flex: 1, display: 'flex', gap: 16, minHeight: 0 }}>
-          {/* Conversation List (admin only) */}
+  return (
+    <ModernDashboardLayout pageTitle={pageTitle}>
+      <div className="p-6 max-w-5xl mx-auto h-[calc(100vh-160px)] flex flex-col">
+        <header className="mb-4">
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Belge No. {new Date().getFullYear()}/Z-S
+          </div>
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1 flex items-center gap-2">
+            <MessageCircle size={20} className="text-[var(--ink-dim)]" />
+            {pageTitle}
+          </h1>
+        </header>
+
+        <div className="flex-1 flex gap-4 min-h-0">
           {isAdmin && (
-            <div
-              style={{
-                width: 260,
-                background: colors.card,
-                borderRadius: 12,
-                border: `1px solid ${colors.border}`,
-                overflow: 'auto',
-                flexShrink: 0,
-              }}
+            <Card
+              className="w-64 shrink-0 flex flex-col"
+              contentClassName="p-0 flex flex-col h-full"
             >
-              <div
-                style={{
-                  padding: '12px 16px',
-                  borderBottom: `1px solid ${colors.border}`,
-                  fontWeight: 600,
-                  fontSize: 14,
-                  color: colors.textSecondary,
-                }}
-              >
-                Sohbetler ({conversations.length})
+              <div className="border-b border-[var(--rule)] px-4 py-2 flex items-center gap-2">
+                <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                  Sohbetler
+                </span>
+                <span className="font-serif text-xs text-[var(--ink-2)] ml-auto">
+                  {conversations.length}
+                </span>
               </div>
               {conversations.length === 0 ? (
-                <div
-                  style={{
-                    padding: 20,
-                    textAlign: 'center',
-                    color: colors.textMuted,
-                    fontSize: 13,
-                  }}
-                >
+                <div className="flex-1 flex items-center justify-center px-4 py-6 font-serif text-sm text-[var(--ink-dim)] text-center">
                   Henüz sohbet yok
                 </div>
               ) : (
-                conversations.map((conv) => (
-                  <button
-                    key={conv.id}
-                    onClick={() => setActiveConversationId(conv.id)}
-                    style={{
-                      width: '100%',
-                      textAlign: 'left',
-                      padding: '12px 16px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      borderBottom: `1px solid ${colors.borderLight}`,
-                      background:
-                        activeConversationId === conv.id ? colors.activeConv : colors.card,
-                      color: colors.text,
-                    }}
-                  >
-                    <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 2 }}>
-                      {conv.title}
-                    </div>
-                    {conv.lastMessage && (
-                      <div
-                        style={{
-                          color: colors.textMuted,
-                          fontSize: 12,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {conv.lastMessage.senderName}: {conv.lastMessage.content}
-                      </div>
-                    )}
-                  </button>
-                ))
+                <ul className="flex-1 overflow-auto divide-y divide-[var(--rule)]">
+                  {conversations.map((conv) => {
+                    const active = activeConversationId === conv.id;
+                    return (
+                      <li key={conv.id}>
+                        <button
+                          type="button"
+                          onClick={() => setActiveConversationId(conv.id)}
+                          className={cn(
+                            'w-full text-left px-4 py-3 transition-colors',
+                            active
+                              ? 'bg-[var(--surface-2)]'
+                              : 'bg-transparent hover:bg-[var(--surface)]',
+                          )}
+                          aria-pressed={active}
+                        >
+                          <div className="font-serif text-sm text-[var(--ink)] truncate">
+                            {conv.title}
+                          </div>
+                          {conv.lastMessage && (
+                            <div className="font-mono text-[10px] text-[var(--ink-dim)] truncate mt-0.5">
+                              {conv.lastMessage.senderName}: {conv.lastMessage.content}
+                            </div>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
-            </div>
+            </Card>
           )}
 
-          {/* Chat Area */}
-          <div
-            style={{
-              flex: 1,
-              background: colors.card,
-              borderRadius: 12,
-              border: `1px solid ${colors.border}`,
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 0,
-            }}
+          <Card
+            className="flex-1 flex flex-col min-w-0"
+            contentClassName="p-0 flex flex-col h-full"
           >
             {loading ? (
-              <div
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: colors.textMuted,
-                }}
-              >
-                Yükleniyor...
+              <div className="flex-1 flex items-center justify-center font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                Yükleniyor…
               </div>
             ) : !activeConversationId ? (
-              <div
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: colors.textMuted,
-                }}
-              >
+              <div className="flex-1 flex items-center justify-center font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
                 Bir sohbet seçin
               </div>
             ) : (
               <>
-                {/* Messages */}
                 <div
                   ref={messagesContainerRef}
                   onScroll={handleScroll}
-                  style={{
-                    flex: 1,
-                    overflow: 'auto',
-                    padding: 16,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                  }}
+                  className="flex-1 overflow-auto p-4 space-y-2"
                 >
                   {messages.length === 0 ? (
-                    <div
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: colors.textMuted,
-                        fontSize: 14,
-                      }}
-                    >
-                      <div style={{ textAlign: 'center' }}>
-                        <MessageCircle size={40} style={{ marginBottom: 8, opacity: 0.3 }} />
-                        <p>Henüz mesaj yok. Bir soru sorun!</p>
-                      </div>
+                    <div className="h-full flex flex-col items-center justify-center gap-2 text-[var(--ink-dim)]">
+                      <MessageCircle size={32} />
+                      <p className="font-serif text-sm">Henüz mesaj yok. Bir soru sorun.</p>
                     </div>
                   ) : (
                     messages.map((msg) => {
@@ -362,43 +225,35 @@ export default function VisitorChatPage() {
                       return (
                         <div
                           key={msg._id || msg.id}
-                          style={{
-                            display: 'flex',
-                            justifyContent: isMe ? 'flex-end' : 'flex-start',
-                          }}
+                          className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
                         >
                           <div
-                            style={{
-                              maxWidth: '70%',
-                              padding: '10px 14px',
-                              borderRadius: 12,
-                              background: isMe ? colors.myBubble : colors.otherBubble,
-                              color: isMe ? colors.myBubbleText : colors.otherBubbleText,
-                            }}
+                            className={cn(
+                              'max-w-[70%] px-3 py-2 border',
+                              isMe
+                                ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
+                                : 'bg-[var(--surface)] text-[var(--ink)] border-[var(--rule)]',
+                            )}
                           >
                             {!isMe && (
                               <div
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 600,
-                                  marginBottom: 2,
-                                  color: colors.textMuted,
-                                }}
+                                className={cn(
+                                  'font-mono text-[10px] uppercase tracking-wider mb-1',
+                                  'text-[var(--ink-dim)]',
+                                )}
                               >
-                                {msg.senderName} (
-                                {msg.senderRole === 'admin' ? 'Yönetici' : 'Ziyaretçi'})
+                                {msg.senderName} ·{' '}
+                                {msg.senderRole === 'admin' ? 'Yönetici' : 'Ziyaretçi'}
                               </div>
                             )}
-                            <div style={{ fontSize: 14, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                            <div className="font-serif text-sm leading-relaxed whitespace-pre-wrap">
                               {msg.content}
                             </div>
                             <div
-                              style={{
-                                fontSize: 11,
-                                marginTop: 4,
-                                opacity: 0.7,
-                                textAlign: 'right',
-                              }}
+                              className={cn(
+                                'font-mono text-[10px] mt-1 text-right',
+                                isMe ? 'text-white/60' : 'text-[var(--ink-dim)]',
+                              )}
                             >
                               {new Date(msg.createdAt).toLocaleTimeString('tr-TR', {
                                 hour: '2-digit',
@@ -413,57 +268,34 @@ export default function VisitorChatPage() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input */}
-                <div
-                  style={{
-                    padding: 16,
-                    borderTop: `1px solid ${colors.border}`,
-                    display: 'flex',
-                    gap: 8,
-                  }}
-                >
+                <div className="border-t border-[var(--rule)] p-3 flex items-end gap-2">
                   <textarea
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Mesajınızı yazın..."
+                    placeholder="Mesajınızı yazın…"
                     rows={1}
-                    style={{
-                      flex: 1,
-                      padding: '10px 14px',
-                      borderRadius: 8,
-                      border: `1px solid ${colors.inputBorder}`,
-                      fontSize: 14,
-                      resize: 'none',
-                      outline: 'none',
-                      lineHeight: 1.5,
-                      background: colors.input,
-                      color: colors.text,
-                    }}
+                    className={cn(
+                      'flex-1 bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+                      'text-[var(--ink)] placeholder:text-[var(--ink-dim)]',
+                      'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+                      'transition-colors resize-none',
+                    )}
                   />
-                  <button
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={sendMessage}
                     disabled={!newMessage.trim() || sending}
-                    style={{
-                      padding: '10px 16px',
-                      borderRadius: 8,
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: newMessage.trim() ? colors.sendBtn : colors.sendBtnDisabled,
-                      color: newMessage.trim() ? '#fff' : colors.sendBtnTextDisabled,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      fontWeight: 600,
-                      fontSize: 14,
-                    }}
+                    loading={sending}
+                    aria-label="Mesaj gönder"
                   >
-                    <Send size={16} />
-                  </button>
+                    <Send size={14} />
+                  </Button>
                 </div>
               </>
             )}
-          </div>
+          </Card>
         </div>
       </div>
     </ModernDashboardLayout>
