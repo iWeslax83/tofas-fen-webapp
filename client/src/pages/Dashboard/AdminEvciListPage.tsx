@@ -1,32 +1,31 @@
-// src/pages/AdminEvciListPage.tsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { EvciService, UserService } from '../../utils/apiService';
-import { toast } from 'sonner';
+import type { ColumnDef } from '@tanstack/react-table';
 import {
-  Home,
   Plus,
   Trash2,
-  Calendar,
-  MapPin,
-  User,
-  Filter,
-  Shield,
-  Download,
   CheckSquare,
-  XCircle,
-  AlertCircle,
-  BarChart3,
+  Square,
   ChevronLeft,
   ChevronRight,
   Check,
   X,
   Settings2,
+  BarChart3,
+  Download,
+  Filter,
+  AlertCircle,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-
-import './AdminEvciListPage.css';
+import { DataTable } from '../../components/ui/DataTable';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Chip, type ChipProps } from '../../components/ui/Chip';
+import { Input } from '../../components/ui/Input';
+import { EvciService, UserService } from '../../utils/apiService';
+import { cn } from '../../utils/cn';
 
 interface EvciTalep {
   _id: string;
@@ -52,17 +51,45 @@ interface Student {
   pansiyon?: boolean;
 }
 
-function getParentApprovalBadge(approval?: string) {
-  switch (approval) {
-    case 'approved':
-      return { text: 'Veli Onayladı', className: 'parent-approved' };
-    case 'rejected':
-      return { text: 'Veli Reddetti', className: 'parent-rejected' };
-    case 'pending':
-    default:
-      return { text: 'Veli Bekliyor', className: 'parent-pending' };
-  }
+type ApprovalKey = NonNullable<EvciTalep['parentApproval']>;
+
+const APPROVAL_LABELS: Record<ApprovalKey, string> = {
+  pending: 'Veli Bekliyor',
+  approved: 'Veli Onayladı',
+  rejected: 'Veli Reddetti',
+};
+
+const APPROVAL_TONES: Record<ApprovalKey, ChipProps['tone']> = {
+  pending: 'default',
+  approved: 'black',
+  rejected: 'state',
+};
+
+const APPROVAL_FILTERS: { key: 'All' | ApprovalKey; label: string }[] = [
+  { key: 'All', label: 'Tümü' },
+  { key: 'pending', label: 'Beklemede' },
+  { key: 'approved', label: 'Onaylandı' },
+  { key: 'rejected', label: 'Reddedildi' },
+];
+
+const selectClasses = cn(
+  'h-10 bg-transparent border-0 border-b border-[var(--rule)] px-1 text-sm',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2',
+  'transition-colors',
+);
+
+interface FieldProps {
+  label: string;
+  children: React.ReactNode;
 }
+const Field = ({ label, children }: FieldProps) => (
+  <label className="flex flex-col gap-1">
+    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+      {label}
+    </span>
+    {children}
+  </label>
+);
 
 export default function AdminEvciListPage() {
   const { user: authUser } = useAuthGuard(['admin', 'teacher']);
@@ -72,7 +99,7 @@ export default function AdminEvciListPage() {
   const [newReq, setNewReq] = useState<Partial<EvciTalep>>({ willGo: true });
   const [filterClass, setFilterClass] = useState<string>('All');
   const [filterRoom, setFilterRoom] = useState<string>('All');
-  const [filterParentApproval, setFilterParentApproval] = useState<string>('All');
+  const [filterParentApproval, setFilterParentApproval] = useState<'All' | ApprovalKey>('All');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -80,17 +107,11 @@ export default function AdminEvciListPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  // Window override
   const [showOverride, setShowOverride] = useState(false);
   const [overrideWeekOf, setOverrideWeekOf] = useState('');
   const [overrideIsOpen, setOverrideIsOpen] = useState(true);
   const [overrideReason, setOverrideReason] = useState('');
 
-  // F-M3/F-M4: previously two useEffects with exhaustive-deps disabled
-  // called fetchData at the same time with stale closures. Consolidated into
-  // one effect with a stable useCallback that tracks both authUser and page.
-  // Validates the server response shape explicitly instead of optimistic
-  // `as any` casts.
   const fetchData = useCallback(async (currentPage: number) => {
     try {
       setIsLoading(true);
@@ -98,14 +119,9 @@ export default function AdminEvciListPage() {
         currentPage,
         50,
       );
-
       if (requestsError) {
-        if (import.meta.env.DEV) console.error('Error fetching evci requests:', requestsError);
         toast.error('Talepler yüklenirken hata oluştu');
       } else {
-        // Runtime shape check — accept either the paginated object
-        // { requests, pagination } or a raw array for backwards
-        // compatibility, and ignore anything else.
         const resp = requestsData as unknown;
         if (
           resp &&
@@ -133,13 +149,11 @@ export default function AdminEvciListPage() {
 
       const { data: studentsData, error: studentsError } =
         await UserService.getUsersByRole('student');
-      if (studentsError) {
-        if (import.meta.env.DEV) console.error('Error fetching students:', studentsError);
-      } else {
+      if (!studentsError) {
         setStudents(Array.isArray(studentsData) ? (studentsData as Student[]) : []);
       }
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Error fetching data:', error);
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Error fetching data:', err);
       toast.error('Veriler yüklenirken hata oluştu');
     } finally {
       setIsLoading(false);
@@ -152,51 +166,49 @@ export default function AdminEvciListPage() {
 
   const saveNew = async () => {
     if (
-      newReq.studentId &&
-      newReq.studentName &&
-      newReq.startDate &&
-      newReq.endDate &&
-      newReq.destination &&
-      typeof newReq.willGo === 'boolean'
+      !(
+        newReq.studentId &&
+        newReq.studentName &&
+        newReq.startDate &&
+        newReq.endDate &&
+        newReq.destination &&
+        typeof newReq.willGo === 'boolean'
+      )
     ) {
-      setIsSubmitting(true);
-      try {
-        const { error } = await EvciService.createEvciRequest({
-          studentId: newReq.studentId,
-          willGo: newReq.willGo,
-          startDate: newReq.startDate,
-          endDate: newReq.endDate,
-          destination: newReq.destination,
-        });
-
-        if (error) {
-          toast.error(error);
-        } else {
-          toast.success('Evci talebi başarıyla eklendi');
-          await fetchData(page);
-          setShowForm(false);
-          setNewReq({ willGo: true });
-        }
-      } catch (error) {
-        if (import.meta.env.DEV) console.error('Error creating evci request:', error);
-        toast.error('Evci talebi oluşturulurken hata oluştu');
-      } finally {
-        setIsSubmitting(false);
-      }
-    } else {
       toast.error('Lütfen tüm alanları doldurun');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const { error: apiError } = await EvciService.createEvciRequest({
+        studentId: newReq.studentId,
+        willGo: newReq.willGo,
+        startDate: newReq.startDate,
+        endDate: newReq.endDate,
+        destination: newReq.destination,
+      });
+      if (apiError) {
+        toast.error(apiError);
+      } else {
+        toast.success('Evci talebi başarıyla eklendi');
+        await fetchData(page);
+        setShowForm(false);
+        setNewReq({ willGo: true });
+      }
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Error creating evci request:', err);
+      toast.error('Evci talebi oluşturulurken hata oluştu');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // F-M6: memoize row-level handlers so row components (Trash button,
-  // checkbox) get a stable function identity and don't re-render on every
-  // parent state change (filters, pagination, etc).
   const handleDelete = useCallback(async (id: string) => {
     if (!window.confirm('Bu talebi silmek istediğinize emin misiniz?')) return;
     try {
-      const { error } = await EvciService.deleteEvciRequest(id);
-      if (error) {
-        toast.error(error);
+      const { error: apiError } = await EvciService.deleteEvciRequest(id);
+      if (apiError) {
+        toast.error(apiError);
       } else {
         setRequests((reqs) => reqs.filter((r) => r._id !== id));
         setSelectedIds((prev) => {
@@ -206,8 +218,8 @@ export default function AdminEvciListPage() {
         });
         toast.success('Evci talebi başarıyla silindi');
       }
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Error deleting evci request:', error);
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Error deleting evci request:', err);
       toast.error('Evci talebi silinirken hata oluştu');
     }
   }, []);
@@ -221,34 +233,24 @@ export default function AdminEvciListPage() {
     });
   }, []);
 
-  const toggleSelectAll = () => {
-    if (selectedIds.size === filteredRequests.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredRequests.map((r) => r._id)));
-    }
-  };
-
   const handleBulkAction = async (status: 'approved' | 'rejected') => {
     if (selectedIds.size === 0) return;
     const label = status === 'approved' ? 'onaylamak' : 'reddetmek';
     if (!window.confirm(`Seçili ${selectedIds.size} talebi ${label} istediğinize emin misiniz?`))
       return;
-
     try {
-      const { error } = (await EvciService.bulkUpdateStatus(
-        Array.from(selectedIds),
-        status,
-      )) as any;
-      if (error) {
-        toast.error(error);
+      const result = (await EvciService.bulkUpdateStatus(Array.from(selectedIds), status)) as {
+        error?: string;
+      };
+      if (result.error) {
+        toast.error(result.error);
       } else {
         toast.success(`${selectedIds.size} talep başarıyla güncellendi`);
         setSelectedIds(new Set());
         await fetchData(page);
       }
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Error bulk updating:', error);
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Error bulk updating:', err);
       toast.error('Toplu güncelleme sırasında hata oluştu');
     }
   };
@@ -270,29 +272,31 @@ export default function AdminEvciListPage() {
       a.click();
       window.URL.revokeObjectURL(url);
       toast.success(`${format.toUpperCase()} dosyası indirildi`);
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Error exporting:', error);
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Error exporting:', err);
       toast.error('Dışa aktarma sırasında hata oluştu');
     }
   };
 
-  const handleAdminAction = async (id: string, action: 'approve' | 'reject') => {
-    const label = action === 'approve' ? 'onaylamak' : 'reddetmek';
-    if (!window.confirm(`Bu talebi ${label} istediğinize emin misiniz?`)) return;
-
-    try {
-      const { error } = await EvciService.adminApproveEvciRequest(id, action);
-      if (error) {
-        toast.error(error);
-      } else {
-        toast.success(`Talep ${action === 'approve' ? 'onaylandı' : 'reddedildi'}`);
-        await fetchData(page);
+  const handleAdminAction = useCallback(
+    async (id: string, action: 'approve' | 'reject') => {
+      const label = action === 'approve' ? 'onaylamak' : 'reddetmek';
+      if (!window.confirm(`Bu talebi ${label} istediğinize emin misiniz?`)) return;
+      try {
+        const { error: apiError } = await EvciService.adminApproveEvciRequest(id, action);
+        if (apiError) {
+          toast.error(apiError);
+        } else {
+          toast.success(`Talep ${action === 'approve' ? 'onaylandı' : 'reddedildi'}`);
+          await fetchData(page);
+        }
+      } catch (err) {
+        if (import.meta.env.DEV) console.error('Error admin action:', err);
+        toast.error('İşlem sırasında hata oluştu');
       }
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Error admin action:', error);
-      toast.error('İşlem sırasında hata oluştu');
-    }
-  };
+    },
+    [fetchData, page],
+  );
 
   const handleWindowOverride = async () => {
     if (!overrideWeekOf) {
@@ -300,55 +304,244 @@ export default function AdminEvciListPage() {
       return;
     }
     try {
-      const { error } = (await EvciService.setWindowOverride(
+      const result = (await EvciService.setWindowOverride(
         overrideWeekOf,
         overrideIsOpen,
         overrideReason,
-      )) as any;
-      if (error) {
-        toast.error(error);
+      )) as { error?: string };
+      if (result.error) {
+        toast.error(result.error);
       } else {
         toast.success(`Pencere override ${overrideIsOpen ? 'açık' : 'kapalı'} olarak ayarlandı`);
         setShowOverride(false);
         setOverrideReason('');
       }
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Error setting override:', error);
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Error setting override:', err);
       toast.error('Override ayarlanırken hata oluştu');
     }
   };
 
-  const classes = Array.from(
-    new Set(
-      requests.map((r) => students.find((s) => s.id === r.studentId)?.sinif || '').filter(Boolean),
-    ),
+  const studentMap = useMemo(() => {
+    const m = new Map<string, Student>();
+    students.forEach((s) => m.set(s.id, s));
+    return m;
+  }, [students]);
+
+  const classes = useMemo(
+    () =>
+      Array.from(
+        new Set(requests.map((r) => studentMap.get(r.studentId)?.sinif || '').filter(Boolean)),
+      ),
+    [requests, studentMap],
   );
 
-  const rooms = Array.from(
-    new Set(
-      requests
-        .map((r) => {
-          const st = students.find((s) => s.id === r.studentId);
-          return st?.pansiyon ? String(st.oda) : '';
-        })
-        .filter(Boolean),
-    ),
+  const rooms = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          requests
+            .map((r) => {
+              const st = studentMap.get(r.studentId);
+              return st?.pansiyon ? String(st.oda) : '';
+            })
+            .filter(Boolean),
+        ),
+      ),
+    [requests, studentMap],
   );
 
-  const filteredRequests = requests.filter((r) => {
-    const st = students.find((s) => s.id === r.studentId);
-    if (!st) return false;
-    if (filterClass !== 'All' && st.sinif !== filterClass) return false;
-    if (filterRoom !== 'All' && String(st.oda) !== filterRoom) return false;
-    if (filterParentApproval !== 'All' && (r.parentApproval || 'pending') !== filterParentApproval)
-      return false;
-    return true;
-  });
+  const filteredRequests = useMemo(
+    () =>
+      requests.filter((r) => {
+        const st = studentMap.get(r.studentId);
+        if (!st) return false;
+        if (filterClass !== 'All' && st.sinif !== filterClass) return false;
+        if (filterRoom !== 'All' && String(st.oda) !== filterRoom) return false;
+        if (
+          filterParentApproval !== 'All' &&
+          (r.parentApproval || 'pending') !== filterParentApproval
+        )
+          return false;
+        return true;
+      }),
+    [requests, studentMap, filterClass, filterRoom, filterParentApproval],
+  );
 
-  const resetForm = () => {
-    setNewReq({ willGo: true });
-    setShowForm(false);
+  const allSelected = filteredRequests.length > 0 && selectedIds.size === filteredRequests.length;
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredRequests.map((r) => r._id)));
+    }
   };
+
+  const columns = useMemo<ColumnDef<EvciTalep>[]>(
+    () => [
+      {
+        id: 'select',
+        header: () => (
+          <button
+            type="button"
+            onClick={toggleSelectAll}
+            className="text-[var(--ink-2)]"
+            aria-label={allSelected ? 'Seçimi kaldır' : 'Tümünü seç'}
+          >
+            {allSelected ? <CheckSquare size={14} /> : <Square size={14} />}
+          </button>
+        ),
+        enableSorting: false,
+        cell: ({ row }) => {
+          const checked = selectedIds.has(row.original._id);
+          return (
+            <button
+              type="button"
+              onClick={() => toggleSelect(row.original._id)}
+              className="text-[var(--ink-2)]"
+              aria-label={checked ? 'Seçimi kaldır' : 'Seç'}
+            >
+              {checked ? <CheckSquare size={14} /> : <Square size={14} />}
+            </button>
+          );
+        },
+      },
+      {
+        accessorKey: 'studentName',
+        header: 'Öğrenci',
+        cell: ({ row }) => {
+          const r = row.original;
+          const st = studentMap.get(r.studentId);
+          return (
+            <div className="flex flex-col">
+              <span className="font-serif text-[var(--ink)]">
+                {r.studentName || st?.adSoyad || '—'}
+              </span>
+              <span className="font-mono text-[10px] text-[var(--ink-dim)]">{r.studentId}</span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'class',
+        header: 'Sınıf',
+        accessorFn: (r) => {
+          const st = studentMap.get(r.studentId);
+          return st?.sinif ? `${st.sinif}${st.sube || ''}` : '—';
+        },
+        cell: (info) => (
+          <span className="font-mono text-xs uppercase text-[var(--ink-dim)]">
+            {info.getValue<string>()}
+          </span>
+        ),
+      },
+      {
+        id: 'room',
+        header: 'Oda',
+        accessorFn: (r) => {
+          const st = studentMap.get(r.studentId);
+          return st?.pansiyon ? st.oda || '—' : '—';
+        },
+        cell: (info) => (
+          <span className="font-mono text-xs text-[var(--ink-dim)]">{info.getValue<string>()}</span>
+        ),
+      },
+      {
+        id: 'period',
+        header: 'Çıkış / Dönüş',
+        accessorFn: (r) => `${r.startDate || '—'} → ${r.endDate || '—'}`,
+        cell: (info) => (
+          <span className="font-serif text-sm text-[var(--ink-2)]">{info.getValue<string>()}</span>
+        ),
+      },
+      {
+        accessorKey: 'destination',
+        header: 'Yer',
+        cell: (info) => (
+          <span className="font-serif text-sm text-[var(--ink-2)]">
+            {info.getValue<string>() || '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'willGo',
+        header: 'Durum',
+        accessorFn: (r) => r.willGo,
+        cell: ({ row }) => (
+          <Chip tone={row.original.willGo ? 'outline' : 'default'}>
+            {row.original.willGo ? 'Gidecek' : 'Gitmeyecek'}
+          </Chip>
+        ),
+      },
+      {
+        id: 'parentApproval',
+        header: 'Veli',
+        accessorFn: (r) => r.parentApproval || 'pending',
+        cell: ({ row }) => {
+          const k = (row.original.parentApproval || 'pending') as ApprovalKey;
+          return <Chip tone={APPROVAL_TONES[k]}>{APPROVAL_LABELS[k]}</Chip>;
+        },
+      },
+      {
+        id: 'adminStatus',
+        header: 'Yönetici',
+        accessorFn: (r) => r.status || 'pending',
+        cell: ({ row }) => {
+          const s = row.original.status;
+          if (!s || s === 'pending') return <Chip tone="default">Beklemede</Chip>;
+          if (s === 'approved') return <Chip tone="black">Onaylandı</Chip>;
+          if (s === 'rejected') return <Chip tone="state">Reddedildi</Chip>;
+          return <Chip tone="default">{s}</Chip>;
+        },
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const r = row.original;
+          const adminPending = !r.status || r.status === 'pending';
+          return (
+            <div className="flex items-center justify-end gap-1">
+              {adminPending && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleAdminAction(r._id, 'approve')}
+                    className="text-[var(--ink-dim)] hover:text-[var(--ink)] p-1"
+                    aria-label="Onayla"
+                    title="Onayla"
+                  >
+                    <Check size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAdminAction(r._id, 'reject')}
+                    className="text-[var(--ink-dim)] hover:text-[var(--state)] p-1"
+                    aria-label="Reddet"
+                    title="Reddet"
+                  >
+                    <X size={14} />
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => handleDelete(r._id)}
+                className="text-[var(--ink-dim)] hover:text-[var(--state)] p-1"
+                aria-label="Sil"
+                title="Sil"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [allSelected, handleAdminAction, handleDelete, selectedIds, studentMap, toggleSelect],
+  );
 
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${authUser?.rol || 'admin'}` },
@@ -358,11 +551,8 @@ export default function AdminEvciListPage() {
   if (isLoading) {
     return (
       <ModernDashboardLayout pageTitle="Evci Talepleri Yönetimi" breadcrumb={breadcrumb}>
-        <div className="admin-evci-page">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Veriler yükleniyor...</p>
-          </div>
+        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          Yükleniyor…
         </div>
       </ModernDashboardLayout>
     );
@@ -370,417 +560,304 @@ export default function AdminEvciListPage() {
 
   return (
     <ModernDashboardLayout pageTitle="Evci Talepleri Yönetimi" breadcrumb={breadcrumb}>
-      <div className="admin-evci-page">
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="page-title-section">
-              <Home className="page-icon" />
-              <h1 className="page-title-main">Evci Talepleri Yönetimi</h1>
+      <div className="p-6 space-y-6">
+        <header className="flex items-end justify-between gap-4 flex-wrap">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+              Belge No. {new Date().getFullYear()}/E-Y
             </div>
-            <div className="page-header-actions">
-              <Link
-                to={`/${authUser?.rol || 'admin'}/evci-istatistik`}
-                className="btn btn-secondary"
-              >
-                <BarChart3 size={18} />
+            <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Evci Talepleri Yönetimi</h1>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link to={`/${authUser?.rol || 'admin'}/evci-istatistik`}>
+              <Button variant="secondary" size="sm">
+                <BarChart3 size={14} />
                 İstatistikler
-              </Link>
-              <button onClick={() => setShowOverride(!showOverride)} className="btn btn-secondary">
-                <Settings2 size={18} />
-                Pencere
-              </button>
-              <div className="export-dropdown">
-                <button
-                  onClick={() => setShowExportMenu(!showExportMenu)}
-                  className="btn btn-secondary"
-                >
-                  <Download size={18} />
-                  Dışa Aktar
-                </button>
-                {showExportMenu && (
-                  <div className="export-menu">
-                    <button onClick={() => handleExport('excel')} className="export-menu-item">
-                      Excel (.xlsx)
-                    </button>
-                    <button onClick={() => handleExport('pdf')} className="export-menu-item">
-                      PDF
-                    </button>
-                  </div>
-                )}
-              </div>
-              <button onClick={() => setShowForm(!showForm)} className="btn btn-primary">
-                <Plus size={18} />
-                {showForm ? 'Formu Gizle' : 'Evci Ekle'}
-              </button>
+              </Button>
+            </Link>
+            <Button variant="secondary" size="sm" onClick={() => setShowOverride((v) => !v)}>
+              <Settings2 size={14} />
+              Pencere
+            </Button>
+            <div className="relative">
+              <Button variant="secondary" size="sm" onClick={() => setShowExportMenu((v) => !v)}>
+                <Download size={14} />
+                Dışa Aktar
+              </Button>
+              {showExportMenu && (
+                <div className="absolute right-0 mt-1 z-20 bg-[var(--paper)] border border-[var(--rule)] shadow-lg min-w-[140px]">
+                  <button
+                    type="button"
+                    onClick={() => handleExport('excel')}
+                    className="block w-full text-left px-3 py-2 font-mono text-xs uppercase tracking-wider text-[var(--ink)] hover:bg-[var(--surface)]"
+                  >
+                    Excel (.xlsx)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExport('pdf')}
+                    className="block w-full text-left px-3 py-2 font-mono text-xs uppercase tracking-wider text-[var(--ink)] hover:bg-[var(--surface)] border-t border-[var(--rule)]"
+                  >
+                    PDF
+                  </button>
+                </div>
+              )}
             </div>
+            <Button variant="primary" size="sm" onClick={() => setShowForm((v) => !v)}>
+              <Plus size={14} />
+              {showForm ? 'Formu Gizle' : 'Evci Ekle'}
+            </Button>
           </div>
-        </div>
+        </header>
 
-        {/* Bulk Action Bar */}
         {selectedIds.size > 0 && (
-          <div className="bulk-action-bar">
-            <span className="bulk-count">{selectedIds.size} talep seçili</span>
-            <button onClick={() => handleBulkAction('approved')} className="btn btn-approve btn-sm">
-              <CheckSquare size={16} />
+          <Card accentBar contentClassName="px-4 py-2 flex items-center gap-2 flex-wrap">
+            <Chip tone="black">{selectedIds.size} seçili</Chip>
+            <div className="flex-1" />
+            <Button variant="primary" size="sm" onClick={() => handleBulkAction('approved')}>
+              <Check size={14} />
               Toplu Onayla
-            </button>
-            <button onClick={() => handleBulkAction('rejected')} className="btn btn-reject btn-sm">
-              <XCircle size={16} />
+            </Button>
+            <Button variant="danger" size="sm" onClick={() => handleBulkAction('rejected')}>
+              <X size={14} />
               Toplu Reddet
-            </button>
-            <button onClick={() => setSelectedIds(new Set())} className="btn btn-secondary btn-sm">
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
               Seçimi Temizle
-            </button>
-          </div>
+            </Button>
+          </Card>
         )}
 
-        {/* Window Override Panel */}
         {showOverride && (
-          <div className="override-panel">
-            <h3 className="override-title">Talep Penceresi Override</h3>
-            <div className="override-form">
-              <div className="form-group">
-                <label className="form-label">Hafta Başlangıcı (Pazartesi)</label>
-                <input
+          <Card>
+            <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center gap-2">
+              <Settings2 size={12} />
+              <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+                Talep Penceresi Override
+              </span>
+            </div>
+            <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Field label="Hafta Başlangıcı (Pazartesi)">
+                <Input
                   type="date"
                   value={overrideWeekOf}
                   onChange={(e) => setOverrideWeekOf(e.target.value)}
-                  className="form-control"
                 />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Pencere Durumu</label>
+              </Field>
+              <Field label="Pencere Durumu">
                 <select
                   value={overrideIsOpen ? 'true' : 'false'}
                   onChange={(e) => setOverrideIsOpen(e.target.value === 'true')}
-                  className="form-control"
+                  className={selectClasses}
                 >
-                  <option value="true">Açık (talep alınabilir)</option>
-                  <option value="false">Kapalı (talep alınamaz)</option>
+                  <option value="true">Açık</option>
+                  <option value="false">Kapalı</option>
                 </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Sebep</label>
-                <input
-                  type="text"
+              </Field>
+              <Field label="Sebep">
+                <Input
                   value={overrideReason}
                   onChange={(e) => setOverrideReason(e.target.value)}
-                  className="form-control"
-                  placeholder="Örn: Tatil haftası, sınav haftası..."
+                  placeholder="Tatil, sınav haftası…"
                   maxLength={500}
                 />
-              </div>
-              <div className="override-actions">
-                <button onClick={() => setShowOverride(false)} className="btn btn-secondary">
-                  İptal
-                </button>
-                <button onClick={handleWindowOverride} className="btn btn-primary">
-                  Kaydet
-                </button>
-              </div>
+              </Field>
             </div>
-          </div>
+            <div className="px-4 pb-4 flex justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setShowOverride(false)}>
+                İptal
+              </Button>
+              <Button variant="primary" size="sm" onClick={handleWindowOverride}>
+                Kaydet
+              </Button>
+            </div>
+          </Card>
         )}
 
-        <div className="filter-section">
-          <div className="filter-group">
-            <Filter className="filter-icon" />
-            <label className="filter-label">Sınıf:</label>
-            <select
-              value={filterClass}
-              onChange={(e) => setFilterClass(e.target.value)}
-              className="filter-select"
-            >
-              <option value="All">Tüm Sınıflar</option>
-              {classes.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <Filter className="filter-icon" />
-            <label className="filter-label">Oda:</label>
-            <select
-              value={filterRoom}
-              onChange={(e) => setFilterRoom(e.target.value)}
-              className="filter-select"
-            >
-              <option value="All">Tüm Odalar</option>
-              {rooms.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <Shield className="filter-icon" />
-            <label className="filter-label">Veli Onayı:</label>
-            <select
-              value={filterParentApproval}
-              onChange={(e) => setFilterParentApproval(e.target.value)}
-              className="filter-select"
-            >
-              <option value="All">Tümü</option>
-              <option value="pending">Beklemede</option>
-              <option value="approved">Onaylandı</option>
-              <option value="rejected">Reddedildi</option>
-            </select>
-          </div>
-        </div>
-
         {showForm && (
-          <div className="form-container">
-            <div className="form-header">
-              <h3 className="form-title">Yeni Evci Talebi Ekle</h3>
+          <Card>
+            <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center gap-2">
+              <Plus size={12} />
+              <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+                Yeni Evci Talebi
+              </span>
             </div>
-            <div className="admin-form-grid">
-              <div className="form-group">
-                <label className="form-label">Öğrenci ID</label>
-                <input
-                  type="text"
+            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Öğrenci ID">
+                <Input
                   value={newReq.studentId || ''}
                   onChange={(e) => setNewReq({ ...newReq, studentId: e.target.value })}
                   placeholder="Öğrenci ID"
-                  className="form-control"
                 />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Öğrenci Adı</label>
-                <input
-                  type="text"
+              </Field>
+              <Field label="Öğrenci Adı">
+                <Input
                   value={newReq.studentName || ''}
                   onChange={(e) => setNewReq({ ...newReq, studentName: e.target.value })}
                   placeholder="Öğrenci Adı"
-                  className="form-control"
                 />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Başlangıç Tarihi</label>
-                <input
+              </Field>
+              <Field label="Başlangıç">
+                <Input
                   type="date"
                   value={newReq.startDate || ''}
                   onChange={(e) => setNewReq({ ...newReq, startDate: e.target.value })}
-                  className="form-control"
                 />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Bitiş Tarihi</label>
-                <input
+              </Field>
+              <Field label="Bitiş">
+                <Input
                   type="date"
                   value={newReq.endDate || ''}
                   onChange={(e) => setNewReq({ ...newReq, endDate: e.target.value })}
-                  className="form-control"
                 />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Gideceği Yer</label>
-                <input
-                  type="text"
+              </Field>
+              <Field label="Gideceği Yer">
+                <Input
                   value={newReq.destination || ''}
                   onChange={(e) => setNewReq({ ...newReq, destination: e.target.value })}
-                  placeholder="Gideceği Yer"
-                  className="form-control"
+                  placeholder="Gideceği yer"
                 />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Durum</label>
+              </Field>
+              <Field label="Durum">
                 <select
                   value={newReq.willGo ? 'true' : 'false'}
                   onChange={(e) => setNewReq({ ...newReq, willGo: e.target.value === 'true' })}
-                  className="form-control"
+                  className={selectClasses}
                 >
-                  <option value="true">Evci GİDECEK</option>
-                  <option value="false">Evci GİTMEYECEK</option>
+                  <option value="true">Gidecek</option>
+                  <option value="false">Gitmeyecek</option>
                 </select>
+              </Field>
+            </div>
+            <div className="px-4 pb-4 flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setNewReq({ willGo: true });
+                  setShowForm(false);
+                }}
+              >
+                İptal
+              </Button>
+              <Button variant="primary" size="sm" onClick={saveNew} loading={isSubmitting}>
+                Kaydet
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        <DataTable
+          caption="Tablo I — Evci Talepleri"
+          columns={columns}
+          data={filteredRequests}
+          paginated={false}
+          emptyState="Filtrelenen kriterlere uygun evci talebi bulunamadı."
+          toolbar={
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter size={12} className="text-[var(--ink-dim)]" />
+              <select
+                value={filterClass}
+                onChange={(e) => setFilterClass(e.target.value)}
+                className={cn(selectClasses, 'h-8 min-w-[120px]')}
+                aria-label="Sınıf filtrele"
+              >
+                <option value="All">Tüm Sınıflar</option>
+                {classes.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={filterRoom}
+                onChange={(e) => setFilterRoom(e.target.value)}
+                className={cn(selectClasses, 'h-8 min-w-[120px]')}
+                aria-label="Oda filtrele"
+              >
+                <option value="All">Tüm Odalar</option>
+                {rooms.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+              <div className="flex items-center gap-1 flex-wrap">
+                {APPROVAL_FILTERS.map((f) => {
+                  const active = filterParentApproval === f.key;
+                  return (
+                    <button
+                      key={f.key}
+                      type="button"
+                      onClick={() => setFilterParentApproval(f.key)}
+                      className={cn(
+                        'h-8 px-3 text-xs font-mono uppercase tracking-wider border transition-colors',
+                        active
+                          ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
+                          : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                      )}
+                      aria-pressed={active}
+                    >
+                      {f.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
+          }
+        />
 
-            <div className="form-actions">
-              <button onClick={resetForm} className="btn btn-secondary">
-                İptal
-              </button>
-              <button onClick={saveNew} disabled={isSubmitting} className="btn btn-primary">
-                {isSubmitting ? 'Kaydediliyor...' : 'Kaydet'}
-              </button>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+              Sayfa {page} / {totalPages} · Toplam {totalCount} talep
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+              >
+                <ChevronLeft size={14} />
+                Önceki
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+              >
+                Sonraki
+                <ChevronRight size={14} />
+              </Button>
             </div>
           </div>
         )}
 
-        <div className="requests-container">
-          {filteredRequests.length === 0 ? (
-            <div className="empty-state">
-              <Home className="empty-icon" />
-              <h3>Evci talebi bulunamadı</h3>
-              <p>Filtrelenen kriterlere uygun evci talebi bulunamadı.</p>
+        {filteredRequests.some((r) => r.parentApproval === 'rejected' && r.rejectionReason) && (
+          <Card contentClassName="p-4 space-y-2">
+            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1">
+              Red Sebepleri
             </div>
-          ) : (
-            <>
-              {filteredRequests.length > 0 && (
-                <div className="select-all-row">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={
-                        selectedIds.size === filteredRequests.length && filteredRequests.length > 0
-                      }
-                      onChange={toggleSelectAll}
-                    />
-                    <span>Tümünü Seç ({filteredRequests.length})</span>
-                  </label>
-                </div>
-              )}
-              <div className="requests-grid">
-                {filteredRequests.map((r) => {
-                  const st = students.find((s) => s.id === r.studentId);
-                  const pBadge = getParentApprovalBadge(r.parentApproval);
+            <ul className="space-y-1">
+              {filteredRequests
+                .filter((r) => r.parentApproval === 'rejected' && r.rejectionReason)
+                .map((r) => {
+                  const st = studentMap.get(r.studentId);
                   return (
-                    <div
-                      key={r._id}
-                      className={`request-card ${selectedIds.has(r._id) ? 'selected' : ''}`}
-                    >
-                      <div className="card-header">
-                        <label className="card-checkbox">
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(r._id)}
-                            onChange={() => toggleSelect(r._id)}
-                          />
-                        </label>
-                        <div className="card-icon">
-                          <User size={20} />
-                        </div>
-                        <button
-                          onClick={() => handleDelete(r._id)}
-                          className="action-button delete-button"
-                          title="Sil"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      <div className="card-content">
-                        <h3 className="card-title">{r.studentName || st?.adSoyad || '-'}</h3>
-                        <div className="request-info">
-                          <div className="info-item">
-                            <User className="info-icon" />
-                            <span className="info-label">ID:</span>
-                            <span className="info-value">{r.studentId}</span>
-                          </div>
-                          <div className="info-item">
-                            <Calendar className="info-icon" />
-                            <span className="info-label">Sınıf:</span>
-                            <span className="info-value">
-                              {st?.sinif
-                                ? `${String(st.sinif)}${st.sube ? String(st.sube) : ''}`
-                                : '-'}
-                            </span>
-                          </div>
-                          <div className="info-item">
-                            <MapPin className="info-icon" />
-                            <span className="info-label">Oda:</span>
-                            <span className="info-value">{st?.pansiyon ? st.oda : '-'}</span>
-                          </div>
-                          <div className="info-item">
-                            <Calendar className="info-icon" />
-                            <span className="info-label">Başlangıç:</span>
-                            <span className="info-value">{r.startDate || '-'}</span>
-                          </div>
-                          <div className="info-item">
-                            <Calendar className="info-icon" />
-                            <span className="info-label">Bitiş:</span>
-                            <span className="info-value">{r.endDate || '-'}</span>
-                          </div>
-                          <div className="info-item">
-                            <MapPin className="info-icon" />
-                            <span className="info-label">Yer:</span>
-                            <span className="info-value">{r.destination || '-'}</span>
-                          </div>
-                          <div className="info-item">
-                            <Calendar className="info-icon" />
-                            <span className="info-label">Talep Tarihi:</span>
-                            <span className="info-value">
-                              {new Date(r.createdAt).toLocaleString('tr-TR')}
-                            </span>
-                          </div>
-                          {r.parentApproval === 'rejected' && r.rejectionReason && (
-                            <div className="info-item rejection-reason">
-                              <AlertCircle className="info-icon" />
-                              <span className="info-label">Red Sebebi:</span>
-                              <span className="info-value">{r.rejectionReason}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="status-badge-container">
-                          <span className={`status-badge ${r.willGo ? 'going' : 'not-going'}`}>
-                            {r.willGo ? 'Evci gidecek' : 'Evci gitmeyecek'}
-                          </span>
-                          <span className={`parent-approval-badge ${pBadge.className}`}>
-                            <Shield size={14} /> {pBadge.text}
-                          </span>
-                        </div>
-                        {(!r.status || r.status === 'pending') && (
-                          <div className="admin-card-actions">
-                            <button
-                              onClick={() => handleAdminAction(r._id, 'approve')}
-                              className="btn btn-approve btn-sm"
-                              title="Onayla"
-                            >
-                              <Check size={14} /> Onayla
-                            </button>
-                            <button
-                              onClick={() => handleAdminAction(r._id, 'reject')}
-                              className="btn btn-reject btn-sm"
-                              title="Reddet"
-                            >
-                              <X size={14} /> Reddet
-                            </button>
-                          </div>
-                        )}
-                        {r.status && r.status !== 'pending' && (
-                          <div className={`admin-status-badge ${r.status}`}>
-                            {r.status === 'approved' ? 'Admin Onayladı' : 'Admin Reddetti'}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    <li key={r._id} className="flex items-start gap-2 text-sm">
+                      <AlertCircle size={12} className="text-[var(--state)] mt-1 shrink-0" />
+                      <span className="font-serif text-[var(--ink)]">
+                        <strong>{r.studentName || st?.adSoyad || r.studentId}</strong>:{' '}
+                        <span className="text-[var(--ink-2)]">{r.rejectionReason}</span>
+                      </span>
+                    </li>
                   );
                 })}
-              </div>
-            </>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="pagination-controls">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="btn btn-secondary btn-sm"
-              >
-                <ChevronLeft size={16} /> Önceki
-              </button>
-              <span className="pagination-info">
-                Sayfa {page} / {totalPages} ({totalCount} talep)
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="btn btn-secondary btn-sm"
-              >
-                Sonraki <ChevronRight size={16} />
-              </button>
-            </div>
-          )}
-        </div>
+            </ul>
+          </Card>
+        )}
       </div>
     </ModernDashboardLayout>
   );
