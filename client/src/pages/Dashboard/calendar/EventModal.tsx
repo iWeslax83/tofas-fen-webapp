@@ -1,5 +1,6 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, MapPin, Users } from 'lucide-react';
+import { Clock, MapPin, Users, X } from 'lucide-react';
+import { Card } from '../../../components/ui/Card';
+import { Button } from '../../../components/ui/Button';
 import type { CalendarEvent } from './types';
 import { formatTime } from './utils';
 
@@ -10,63 +11,80 @@ interface EventModalProps {
 }
 
 export default function EventModal({ show, selectedEvent, onClose }: EventModalProps) {
+  if (!show) return null;
   return (
-    <AnimatePresence>
-      {show && (
-        <div className="calendar-modal-overlay" onClick={onClose}>
-          <motion.div
-            className="calendar-modal"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {selectedEvent ? (
-              <div className="calendar-event-details">
-                <h2>{selectedEvent.title}</h2>
-                <div className="calendar-event-meta">
-                  <div className="calendar-event-meta-item">
-                    <Clock className="icon-small" />
-                    {formatTime(selectedEvent.startDate)} - {formatTime(selectedEvent.endDate)}
-                  </div>
-                  {selectedEvent.location && (
-                    <div className="calendar-event-meta-item">
-                      <MapPin className="icon-small" />
-                      {selectedEvent.location}
-                    </div>
-                  )}
-                  <div className="calendar-event-meta-item">
-                    <Users className="icon-small" />
-                    {selectedEvent.attendees.length} katılımcı
-                  </div>
-                </div>
-                {selectedEvent.description && (
-                  <p className="calendar-event-description">{selectedEvent.description}</p>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+      role="presentation"
+    >
+      <Card className="relative w-full max-w-md" contentClassName="p-0">
+        <div onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+              {selectedEvent ? 'Etkinlik Detayı' : 'Yeni Etkinlik'}
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-white hover:opacity-80"
+              aria-label="Kapat"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          {selectedEvent ? (
+            <div className="p-6 space-y-4">
+              <h2 className="font-serif text-xl text-[var(--ink)]">{selectedEvent.title}</h2>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                  <Clock size={10} />
+                  <span className="text-[var(--ink-2)]">
+                    {formatTime(selectedEvent.startDate)} → {formatTime(selectedEvent.endDate)}
+                  </span>
+                </li>
+                {selectedEvent.location && (
+                  <li className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                    <MapPin size={10} />
+                    <span className="text-[var(--ink-2)]">{selectedEvent.location}</span>
+                  </li>
                 )}
-                <div className="calendar-event-actions">
-                  <button className="calendar-event-action-button">Düzenle</button>
-                  <button className="calendar-event-action-button calendar-event-action-button-delete">
-                    Sil
-                  </button>
-                </div>
+                <li className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                  <Users size={10} />
+                  <span className="text-[var(--ink-2)]">
+                    {selectedEvent.attendees.length} katılımcı
+                  </span>
+                </li>
+              </ul>
+              {selectedEvent.description && (
+                <p className="font-serif text-sm text-[var(--ink-2)] leading-relaxed border-t border-[var(--rule)] pt-3">
+                  {selectedEvent.description}
+                </p>
+              )}
+              <div className="flex justify-end gap-2 pt-2 border-t border-[var(--rule)]">
+                <Button variant="secondary" size="sm">
+                  Düzenle
+                </Button>
+                <Button variant="danger" size="sm">
+                  Sil
+                </Button>
               </div>
-            ) : (
-              <div className="calendar-event-form">
-                <h2>Yeni Etkinlik</h2>
-                {/* Event form would go here */}
-                <div className="calendar-event-form-actions">
-                  <button onClick={onClose} className="calendar-event-action-button">
-                    İptal
-                  </button>
-                  <button className="calendar-event-action-button calendar-event-action-button-save">
-                    Kaydet
-                  </button>
-                </div>
+            </div>
+          ) : (
+            <div className="p-6 space-y-3">
+              <p className="font-serif text-sm text-[var(--ink-2)]">
+                Etkinlik formu yakında eklenecek.
+              </p>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="ghost" size="sm" onClick={onClose}>
+                  Kapat
+                </Button>
               </div>
-            )}
-          </motion.div>
+            </div>
+          )}
         </div>
-      )}
-    </AnimatePresence>
+      </Card>
+    </div>
   );
 }
