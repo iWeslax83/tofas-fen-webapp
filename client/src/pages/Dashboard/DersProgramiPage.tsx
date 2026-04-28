@@ -1,67 +1,62 @@
 import { useState, useEffect, useCallback } from 'react';
+import { BookOpen, ChevronDown, Clock } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
 import { UserService } from '../../utils/apiService';
-import { User } from '../../types/user';
+import type { User } from '../../types/user';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-
-import './DersProgramiPage.css';
-import { BookOpen, Clock, ChevronDown } from 'lucide-react';
+import { Card } from '../../components/ui/Card';
+import { Chip } from '../../components/ui/Chip';
+import { cn } from '../../utils/cn';
 import scheduleData from './DersProgramlari.json';
-import { toast } from 'sonner';
-import { LoadingState, Skeleton } from '../../components/SkeletonComponents';
 
-// Type definitions for the schedule data
 interface DaySchedule {
   Pazartesi?: string[];
   Salı?: string[];
   Çarşamba?: string[];
   Perşembe?: string[];
   Cuma?: string[];
-  [key: string]: string[] | undefined; // Index signature for dynamic access
+  [key: string]: string[] | undefined;
 }
 
 interface ClassSchedule {
   [key: string]: DaySchedule;
 }
 
-// Local interface removed in favor of global User type
-
 interface Schedule {
   [key: string]: ClassSchedule;
 }
 
-// Type guard for the imported JSON data
-const isSchedule = (data: unknown): data is Schedule => {
-  return data !== null && typeof data === 'object';
-};
+const isSchedule = (data: unknown): data is Schedule => data !== null && typeof data === 'object';
 
 const schedules = isSchedule(scheduleData) ? scheduleData : {};
+
+const DAY_NAMES: (keyof DaySchedule)[] = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
+
+interface ClassEntry {
+  sinif: string;
+  sube: string;
+  label: string;
+}
 
 export default function DersProgramiPage() {
   const { user: authUser } = useAuthGuard(['admin', 'teacher', 'student', 'parent']);
   const [user, setUser] = useState<User | null>(null);
-  const [classes, setClasses] = useState<{ sinif: string; sube: string; label: string }[]>([]);
+  const [classes, setClasses] = useState<ClassEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
 
-  // Safely access the schedule data with type checking
   const getClassSchedule = (sinif: string, sube: string): DaySchedule | null => {
     const classData = (schedules as Record<string, ClassSchedule>)[sinif];
     if (!classData) return null;
     return classData[sube] || null;
   };
 
-  // Helper to get day names in correct order
-  const getDayNames = (): string[] => {
-    return ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
-  };
-
   const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
       const { data: userData, error: userError } = await UserService.getCurrentUser();
-
       if (
         userError ||
         !userData ||
@@ -73,31 +68,25 @@ export default function DersProgramiPage() {
       }
 
       setUser(userData);
-      let allClasses: { sinif: string; sube: string; label: string }[] = [];
+      let allClasses: ClassEntry[] = [];
 
-      // For students, show their own class
       if (userData.rol === 'student' && userData.sinif && userData.sube) {
         allClasses.push({
           sinif: userData.sinif,
           sube: userData.sube,
-          label: `${String(userData.sinif)}/${String(userData.sube)} - ${userData.adSoyad}`,
+          label: `${String(userData.sinif)}/${String(userData.sube)} · ${userData.adSoyad}`,
         });
       }
-
-      // For parents, show their children's classes
       if (userData.rol === 'parent' && userData.childrenSiniflar) {
         userData.childrenSiniflar.forEach((child) => {
           allClasses.push({
             sinif: child.sinif,
             sube: child.sube,
-            label: `${String(child.sinif)}/${String(child.sube)} - ${child.adSoyad || 'Çocuk'}`,
+            label: `${String(child.sinif)}/${String(child.sube)} · ${child.adSoyad || 'Çocuk'}`,
           });
         });
       }
-
-      // For teachers/admins, allow selecting any class
       if (['teacher', 'admin'].includes(userData.rol)) {
-        // This would be populated from an API in a real app
         allClasses = [
           { sinif: '9', sube: 'A', label: '9/A Sınıfı' },
           { sinif: '9', sube: 'B', label: '9/B Sınıfı' },
@@ -112,8 +101,7 @@ export default function DersProgramiPage() {
 
       setClasses(allClasses);
       setError(null);
-    } catch (err: unknown) {
-      // Error fetching user data
+    } catch {
       setError('Kullanıcı bilgileri yüklenirken bir hata oluştu.');
       toast.error('Ders programı yüklenirken bir hata oluştu.');
     } finally {
@@ -122,16 +110,11 @@ export default function DersProgramiPage() {
   }, []);
 
   useEffect(() => {
-    if (authUser) {
-      fetchUserData();
-    }
+    if (authUser) fetchUserData();
   }, [authUser, fetchUserData]);
 
-  const toggleDay = (day: string) => {
-    setExpandedDays((prev) => ({
-      ...prev,
-      [day]: !prev[day],
-    }));
+  const toggleDay = (key: string) => {
+    setExpandedDays((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const breadcrumb = [
@@ -139,152 +122,124 @@ export default function DersProgramiPage() {
     { label: 'Ders Programı' },
   ];
 
-  // Skeleton for schedule loading
-  const ScheduleSkeleton = () => (
-    <div className="ders-programi-page">
-      <div className="page-header">
-        <div className="page-header-content">
-          <div className="page-title-section">
-            <BookOpen className="page-icon" />
-          </div>
+  if (loading) {
+    return (
+      <ModernDashboardLayout pageTitle="Ders Programı" breadcrumb={breadcrumb}>
+        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          Yükleniyor…
         </div>
-      </div>
+      </ModernDashboardLayout>
+    );
+  }
 
-      <div className="ders-programi-container">
-        <div className="timetable-grid">
-          <div className="class-schedule-card">
-            <div className="class-header">
-              <div className="class-info">
-                <Skeleton style={{ width: '60px', height: '60px', borderRadius: '12px' }} />
-                <div className="class-details">
-                  <Skeleton style={{ width: '200px', height: '28px', marginBottom: '8px' }} />
-                  <Skeleton style={{ width: '150px', height: '20px' }} />
-                </div>
-              </div>
-            </div>
-
-            <div className="schedule-grid">
-              {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'].map((day) => (
-                <div key={day} className="day-column">
-                  <div className="day-header">
-                    <Skeleton style={{ width: '100px', height: '24px', margin: '0 auto 8px' }} />
-                    <Skeleton style={{ width: '60px', height: '16px', margin: '0 auto' }} />
-                  </div>
-                  <div className="lessons-list">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="lesson-item">
-                        <Skeleton style={{ width: '50px', height: '50px', borderRadius: '8px' }} />
-                        <Skeleton style={{ flex: 1, height: '20px', borderRadius: '4px' }} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+  if (error) {
+    return (
+      <ModernDashboardLayout pageTitle="Ders Programı" breadcrumb={breadcrumb}>
+        <div className="p-6 max-w-xl">
+          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--state)]">
+            <Chip tone="state">Hata</Chip>
+            <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
+          </Card>
         </div>
-      </div>
-    </div>
-  );
+      </ModernDashboardLayout>
+    );
+  }
 
   return (
     <ModernDashboardLayout pageTitle="Ders Programı" breadcrumb={breadcrumb}>
-      <LoadingState
-        isLoading={loading}
-        error={error}
-        onRetry={fetchUserData}
-        skeleton={<ScheduleSkeleton />}
-      >
-        <div className="ders-programi-page">
-          <div className="page-header">
-            <div className="page-header-content">
-              <div className="page-title-section">
-                <BookOpen className="page-icon" />
-                <h1 className="page-title-main">Ders Programı</h1>
-              </div>
-            </div>
+      <div className="p-6 space-y-6">
+        <header>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Belge No. {new Date().getFullYear()}/D-P
           </div>
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Ders Programı</h1>
+        </header>
 
-          <div className="ders-programi-container">
-            {classes.length === 0 ? (
-              <div className="empty-state">
-                <BookOpen className="empty-icon" />
-                <h3>Ders programı bulunamadı</h3>
-                <p>Sistemde kayıtlı ders programı bulunmuyor.</p>
-              </div>
-            ) : (
-              <div className="timetable-grid">
-                {classes.map(({ sinif, sube, label }) => {
-                  const schedule = getClassSchedule(sinif, sube);
-                  if (!schedule) return null;
-
-                  return (
-                    <div key={`${sinif}-${sube}`} className="class-schedule-card">
-                      <div className="class-header">
-                        <div className="class-info">
-                          <div className="class-icon">
-                            <BookOpen size={24} />
-                          </div>
-                          <div className="class-details">
-                            <h3 className="class-title">{label}</h3>
-                            <p className="class-subtitle">
-                              {sinif}. Sınıf - {sube} Şubesi
-                            </p>
-                          </div>
+        {classes.length === 0 ? (
+          <Card contentClassName="p-10 flex flex-col items-center text-center gap-3">
+            <BookOpen size={40} className="text-[var(--ink-dim)]" />
+            <h3 className="font-serif text-lg text-[var(--ink)]">Ders programı bulunamadı</h3>
+            <p className="font-serif text-sm text-[var(--ink-2)]">
+              Sistemde kayıtlı ders programı bulunmuyor.
+            </p>
+          </Card>
+        ) : (
+          <div className="space-y-6">
+            {classes.map(({ sinif, sube, label }) => {
+              const schedule = getClassSchedule(sinif, sube);
+              if (!schedule) return null;
+              return (
+                <Card key={`${sinif}-${sube}`} contentClassName="p-0">
+                  <div className="px-4 py-3 border-b border-[var(--rule)] flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <BookOpen size={18} className="text-[var(--ink-dim)]" />
+                      <div>
+                        <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                          Sınıf {sinif} · Şube {sube}
                         </div>
-                      </div>
-
-                      <div className="schedule-grid">
-                        {getDayNames().map((day) => {
-                          if (!schedule[day]) return null;
-                          const lessons = schedule[day] || [];
-                          const isExpanded = !!expandedDays[day];
-                          return (
-                            <div key={day} className={`day-column ${isExpanded ? 'expanded' : ''}`}>
-                              <div className="day-header" onClick={() => toggleDay(day)}>
-                                <div className="day-header-content">
-                                  <h4 className="day-name">{day}</h4>
-                                  <span className="lesson-count">{lessons.length} ders</span>
-                                </div>
-                                <ChevronDown
-                                  size={20}
-                                  className={`day-chevron ${isExpanded ? 'rotated' : ''}`}
-                                />
-                              </div>
-                              {isExpanded && (
-                                <div className="lessons-list">
-                                  {lessons.map((lesson: string, i: number) => (
-                                    <div key={i} className="lesson-item">
-                                      <div className="lesson-time">
-                                        <span className="time-number">{i + 1}</span>
-                                        <span className="time-text">Ders</span>
-                                      </div>
-                                      <div className="lesson-content">
-                                        <span className="lesson-name">{lesson}</span>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="schedule-footer">
-                        <div className="update-info">
-                          <Clock size={14} />
-                          <span>Son Güncelleme: {new Date().toLocaleDateString('tr-TR')}</span>
-                        </div>
+                        <h2 className="font-serif text-lg text-[var(--ink)]">{label}</h2>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                    <div className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                      <Clock size={10} />
+                      Son güncelleme: {new Date().toLocaleDateString('tr-TR')}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-px bg-[var(--rule)]">
+                    {DAY_NAMES.map((day) => {
+                      if (!schedule[day]) return null;
+                      const lessons = schedule[day] || [];
+                      const key = `${sinif}-${sube}-${day}`;
+                      const isExpanded = !!expandedDays[key];
+                      return (
+                        <div key={key} className="bg-[var(--paper)]">
+                          <button
+                            type="button"
+                            onClick={() => toggleDay(key)}
+                            className="w-full px-3 py-2 flex items-center justify-between gap-2 hover:bg-[var(--surface)] transition-colors"
+                            aria-expanded={isExpanded}
+                          >
+                            <div className="flex flex-col items-start">
+                              <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                                {day}
+                              </span>
+                              <span className="font-serif text-sm text-[var(--ink)]">
+                                {lessons.length} ders
+                              </span>
+                            </div>
+                            <ChevronDown
+                              size={14}
+                              className={cn(
+                                'text-[var(--ink-dim)] transition-transform',
+                                isExpanded && 'rotate-180',
+                              )}
+                            />
+                          </button>
+                          {isExpanded && (
+                            <ol className="border-t border-[var(--rule)] divide-y divide-[var(--rule)]">
+                              {lessons.map((lesson, i) => (
+                                <li key={i} className="px-3 py-2 flex items-center gap-3 text-sm">
+                                  <span className="inline-flex items-center justify-center w-6 h-6 border border-[var(--rule)] font-mono text-[10px] text-[var(--ink-dim)] shrink-0">
+                                    {i + 1}
+                                  </span>
+                                  <span className="font-serif text-[var(--ink)] truncate">
+                                    {lesson}
+                                  </span>
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
-        </div>
-      </LoadingState>
+        )}
+      </div>
     </ModernDashboardLayout>
   );
 }
