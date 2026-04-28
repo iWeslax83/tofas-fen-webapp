@@ -49,10 +49,12 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm ci
-          cd server && npm ci
-          cd ../client && npm ci
+        # Root-only install: this repo uses npm workspaces and the root
+        # package-lock.json already covers client + server. Running
+        # `npm ci` inside each workspace child was redundant and was
+        # invalidating the hoisted root `.bin/` so `turbo` was missing
+        # by the time `npm run lint` ran.
+        run: npm ci
 
       - name: Lint
         run: npm run lint --if-present
@@ -82,9 +84,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm ci
-          cd server && npm ci
+        run: npm ci
 
       - name: Generate OpenAPI spec
         run: |
