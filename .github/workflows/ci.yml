@@ -45,7 +45,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          # Bumped 18 → 20: jsdom's html-encoding-sniffer pulls in @exodus/bytes
+          # as ESM-only and Node 18's require() can't load ESM, so client tests
+          # blew up with ERR_REQUIRE_ESM.
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -80,7 +83,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          # Bumped 18 → 20: jsdom's html-encoding-sniffer pulls in @exodus/bytes
+          # as ESM-only and Node 18's require() can't load ESM, so client tests
+          # blew up with ERR_REQUIRE_ESM.
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies

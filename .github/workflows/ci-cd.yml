@@ -7,7 +7,10 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: '18'
+  # Bumped from 18 → 20 because jsdom's html-encoding-sniffer now pulls in
+  # @exodus/bytes as ESM-only, which triggers ERR_REQUIRE_ESM on Node 18.
+  # Node 20 supports the synthetic require-of-ESM path that jsdom relies on.
+  NODE_VERSION: '20'
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
