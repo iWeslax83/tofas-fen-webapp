@@ -237,6 +237,8 @@ global.testUtils = {
 
 // Extend global types
 declare global {
+  // `var` is the only declarator that augments globalThis here — let/const
+  // wouldn't, so this is intentional even though the rule flags it elsewhere.
    
   var testUtils: any;
 }

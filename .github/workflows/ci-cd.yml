@@ -53,18 +53,14 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install root dependencies
+      - name: Install dependencies
+        # Root-only install: this repo uses npm workspaces and the root
+        # package-lock.json already covers client + server. Per-workspace
+        # `npm ci` calls were running outside workspace mode and stripping
+        # root devDependencies (e.g. `globals`) that the shared
+        # eslint.config.mjs imports — so the next `npm run lint` blew up
+        # with "Cannot find package 'globals'".
         run: npm ci
-
-      - name: Install client dependencies
-        run: |
-          cd client
-          npm ci
-
-      - name: Install server dependencies
-        run: |
-          cd server
-          npm ci
 
       - name: Run client type checking
         run: |
@@ -195,18 +191,16 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm ci
-          cd client && npm ci
-          cd ../server && npm ci
+        # Root-only install: workspaces handle the rest. See the test job.
+        run: npm ci
 
       # I-H8: hard gate on HIGH/CRITICAL production vulnerabilities.
       # Dev-only deps (test runners, type packages) are excluded via --omit=dev.
+      # `--workspaces` walks every workspace; the root run covers shared deps.
       - name: Run security audit
         run: |
           npm audit --omit=dev --audit-level=high
-          cd client && npm audit --omit=dev --audit-level=high
-          cd ../server && npm audit --omit=dev --audit-level=high
+          npm audit --omit=dev --audit-level=high --workspaces
 
       - name: Run dependency review
         uses: actions/dependency-review-action@v4
