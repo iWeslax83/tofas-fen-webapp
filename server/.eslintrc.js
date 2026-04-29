@@ -25,5 +25,16 @@ module.exports = {
     node: true,
     es2020: true,
   },
+  // `declare global { var X: T }` is the canonical way to augment globalThis
+  // in TS (let/const create block-scoped, non-globalThis bindings) — turn off
+  // no-var inside the test setup. Inline disable comments here get stripped
+  // by the lint-staged formatter pipeline, so a config-level override is the
+  // only stable form.
+  overrides: [
+    {
+      files: ['src/test/setup.ts'],
+      rules: { 'no-var': 'off' },
+    },
+  ],
   ignorePatterns: ['dist/', 'node_modules/'],
 };
