@@ -25,7 +25,7 @@ interface CaptchaChallenge {
 const failedAttemptsByIP = new Map<string, { count: number; firstAt: number }>();
 const captchaChallenges = new Map<string, CaptchaChallenge>();
 
-const CAPTCHA_THRESHOLD = 3;         // Require CAPTCHA after 3 failed attempts
+const CAPTCHA_THRESHOLD = 3; // Require CAPTCHA after 3 failed attempts
 const FAILED_WINDOW_MS = 15 * 60 * 1000; // 15 minute window
 const CAPTCHA_EXPIRY_MS = 5 * 60 * 1000; // CAPTCHA valid for 5 minutes
 const MAX_CAPTCHA_ATTEMPTS = 5;
@@ -37,7 +37,7 @@ export function trackFailedLogin(ip: string): void {
   const now = Date.now();
   const entry = failedAttemptsByIP.get(ip);
 
-  if (entry && (now - entry.firstAt) < FAILED_WINDOW_MS) {
+  if (entry && now - entry.firstAt < FAILED_WINDOW_MS) {
     entry.count++;
   } else {
     failedAttemptsByIP.set(ip, { count: 1, firstAt: now });
@@ -94,12 +94,13 @@ export function generateCaptcha(ip: string): { token: string; question: string }
       answer = a - b;
       question = `${a} - ${b} = ?`;
       break;
-    case '*':
+    case '*': {
       const smallA = Math.floor(Math.random() * 10) + 1;
       const smallB = Math.floor(Math.random() * 10) + 1;
       answer = smallA * smallB;
       question = `${smallA} x ${smallB} = ?`;
       break;
+    }
     default:
       answer = a + b;
       question = `${a} + ${b} = ?`;
@@ -129,7 +130,10 @@ export function verifyCaptcha(token: string, answer: number): { valid: boolean; 
   const challenge = captchaChallenges.get(token);
 
   if (!challenge) {
-    return { valid: false, error: 'CAPTCHA süresi dolmuş veya geçersiz. Lütfen yeni bir CAPTCHA alın.' };
+    return {
+      valid: false,
+      error: 'CAPTCHA süresi dolmuş veya geçersiz. Lütfen yeni bir CAPTCHA alın.',
+    };
   }
 
   // Check expiry
@@ -174,7 +178,7 @@ export function captchaMiddleware(req: Request, res: Response, next: NextFunctio
       captchaRequired: true,
       captchaToken: challenge.token,
       captchaQuestion: challenge.question,
-      message: 'Çok fazla başarısız giriş denemesi. Lütfen CAPTCHA\'yı çözün.',
+      message: "Çok fazla başarısız giriş denemesi. Lütfen CAPTCHA'yı çözün.",
     });
     return;
   }

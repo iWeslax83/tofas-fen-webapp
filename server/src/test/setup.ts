@@ -237,7 +237,6 @@ global.testUtils = {
 
 // Extend global types
 declare global {
-   
   var testUtils: any;
 }
 
