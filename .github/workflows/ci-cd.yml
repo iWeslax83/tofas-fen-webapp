@@ -332,14 +332,14 @@ jobs:
       # uploaded in separate steps with distinct categories.
       - name: Upload Trivy results — client image
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-client.sarif
           category: trivy-client
 
       - name: Upload Trivy results — server image
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-server.sarif
           category: trivy-server
