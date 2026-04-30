@@ -1,0 +1,33 @@
+# Gitleaks v7 config — narrow the default ruleset to suppress chronic
+# false positives so the CI secret-scan step is signal, not noise.
+#
+# v7 expects ONE [allowlist] table (not the v8 [[allowlist]] array form).
+title = "tofas-fen-webapp gitleaks config"
+
+[allowlist]
+description = """
+Combined allowlist:
+- Skip third-party libraries — historic commits accidentally checked
+  node_modules into git, and gitleaks v7 happily flags every README
+  link in there.
+- Skip lockfiles — package-lock entries trip the URL-with-credentials
+  rule when registry tarballs include `?token=` parameters.
+- Skip vendored design mockups + generated docs.
+- LinkedIn / GitHub profile URLs in markdown are not secrets — gitleaks'
+  default URL-credentials regex over-matches markdown link parens.
+"""
+paths = [
+  '''node_modules/.*''',
+  '''.*/node_modules/.*''',
+  '''package-lock\.json''',
+  '''.*/package-lock\.json''',
+  '''yarn\.lock''',
+  '''.*/yarn\.lock''',
+  '''docs/ui-mockups/.*''',
+  '''docs/.*\.html''',
+  '''openapi\.(yaml|json)''',
+]
+regexes = [
+  '''https://(www\.)?linkedin\.com/in/[A-Za-z0-9_-]+/?''',
+  '''https://github\.com/[A-Za-z0-9_-]+/?''',
+]
