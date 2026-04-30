@@ -398,19 +398,29 @@ jobs:
         with:
           cosign-release: v2.4.1
 
+      # OCI references must be all lowercase. github.repository preserves
+      # the original case (e.g. iWeslax83/...), and cosign barfs on the
+      # uppercase letter:
+      #   could not parse reference: ghcr.io/iWeslax83/...
+      # The metadata-action handles this automatically for tags, but the
+      # cosign command builds the ref by hand — lowercase via ${var,,}.
       - name: Sign client image with cosign
         env:
           COSIGN_EXPERIMENTAL: 'true'
+          IMG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-client
+          DIGEST: ${{ steps.push-client.outputs.digest }}
         run: |
-          cosign sign --yes \
-            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-client@${{ steps.push-client.outputs.digest }}"
+          IMG_LC="${IMG,,}"
+          cosign sign --yes "${IMG_LC}@${DIGEST}"
 
       - name: Sign server image with cosign
         env:
           COSIGN_EXPERIMENTAL: 'true'
+          IMG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-server
+          DIGEST: ${{ steps.push-server.outputs.digest }}
         run: |
-          cosign sign --yes \
-            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-server@${{ steps.push-server.outputs.digest }}"
+          IMG_LC="${IMG,,}"
+          cosign sign --yes "${IMG_LC}@${DIGEST}"
 
   # Deploy to Staging
   deploy-staging:
