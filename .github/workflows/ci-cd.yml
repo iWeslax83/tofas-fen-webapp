@@ -445,7 +445,13 @@ jobs:
           echo "Running integration tests against staging..."
           # Add integration test commands here
 
+      # Best-effort Slack notification. Until SLACK_WEBHOOK is wired up
+      # in repo secrets, the action errors with `Specify
+      # secrets.SLACK_WEBHOOK_URL` and fails the whole deploy job
+      # (which is otherwise just placeholder echoes). continue-on-error
+      # preserves the intent without blocking the pipeline.
       - name: Notify deployment
+        continue-on-error: true
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
@@ -476,7 +482,13 @@ jobs:
           echo "Running smoke tests against production..."
           # Add smoke test commands here
 
+      # Best-effort Slack notification. Until SLACK_WEBHOOK is wired up
+      # in repo secrets, the action errors with `Specify
+      # secrets.SLACK_WEBHOOK_URL` and fails the whole deploy job
+      # (which is otherwise just placeholder echoes). continue-on-error
+      # preserves the intent without blocking the pipeline.
       - name: Notify deployment
+        continue-on-error: true
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
