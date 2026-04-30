@@ -262,11 +262,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
+      # One metadata block per image. The previous single block emitted
+      # full image refs (e.g. `ghcr.io/.../tofas-fen-webapp:main`) under
+      # `outputs.tags`, which the push step then concatenated as
+      # `…-client:ghcr.io/.../tofas-fen-webapp:main` — invalid reference.
+      - name: Extract metadata — client
+        id: meta-client
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-client
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Extract metadata — server
+        id: meta-server
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-server
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -355,8 +370,8 @@ jobs:
           context: ./client
           file: ./client/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-client:${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-client.outputs.tags }}
+          labels: ${{ steps.meta-client.outputs.labels }}
           cache-from: type=gha
           provenance: mode=max
           sbom: true
@@ -368,8 +383,8 @@ jobs:
           context: ./server
           file: ./server/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-server:${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-server.outputs.tags }}
+          labels: ${{ steps.meta-server.outputs.labels }}
           cache-from: type=gha
           provenance: mode=max
           sbom: true
