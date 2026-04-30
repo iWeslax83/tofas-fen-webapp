@@ -327,11 +327,22 @@ jobs:
           # is just noise. Re-promote to '1' once that pass lands.
           exit-code: '0'
 
-      - name: Upload Trivy results to GitHub Security tab
+      # As of 2025-07-21 the CodeQL Action no longer accepts multiple
+      # SARIF runs under one category, so client + server scans must be
+      # uploaded in separate steps with distinct categories.
+      - name: Upload Trivy results — client image
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: .
+          sarif_file: trivy-client.sarif
+          category: trivy-client
+
+      - name: Upload Trivy results — server image
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-server.sarif
+          category: trivy-server
 
       # I-C9: produce SBOMs and SLSA provenance attestations directly from
       # buildx, attached to the pushed image as referrers in the registry.
