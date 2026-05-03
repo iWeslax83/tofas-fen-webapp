@@ -5,12 +5,27 @@ services:
   # Backend with production optimizations
   backend:
     environment:
+      # NOTE: docker compose merges `environment:` blocks wholesale, not
+      # key-by-key. Every var defined in the base file MUST appear here too,
+      # otherwise the override silently drops it.
       NODE_ENV: production
-      MONGODB_URI: mongodb://admin:${MONGO_PASSWORD}@mongodb:27017/tofas-fen?authSource=admin
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      CORS_ORIGIN: ${FRONTEND_URL}
-      REDIS_URL: redis://redis:6379
+      MONGODB_URI: mongodb://admin:${MONGO_PASSWORD:?MONGO_PASSWORD environment variable is required}@mongodb:27017/tofas-fen?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET environment variable is required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET environment variable is required}
+      # N-M9: ENCRYPTION_KEY MUST be present in the prod override; B-C5 makes
+      # the backend fail-closed if it's missing.
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY environment variable is required}
+      MONGODB_TLS: ${MONGODB_TLS:-false}
+      SKIP_EVCI_MIGRATION: 'true'
+      PORT: 3001
+      CORS_ORIGIN: ${FRONTEND_URL:?FRONTEND_URL environment variable is required}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD environment variable is required}@redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      BCRYPT_ROUNDS: 13
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
     deploy:
       resources:
         limits:
@@ -24,10 +39,10 @@ services:
         delay: 5s
         max_attempts: 3
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   # Frontend with production optimizations
   frontend:
@@ -47,10 +62,10 @@ services:
         delay: 5s
         max_attempts: 3
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   # MongoDB with production optimizations
   mongodb:
@@ -69,10 +84,10 @@ services:
         delay: 10s
         max_attempts: 3
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   # Redis with production optimizations
   redis:
@@ -89,10 +104,10 @@ services:
         delay: 5s
         max_attempts: 3
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   # Nginx with production optimizations
   nginx:
@@ -109,7 +124,7 @@ services:
         delay: 5s
         max_attempts: 3
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
