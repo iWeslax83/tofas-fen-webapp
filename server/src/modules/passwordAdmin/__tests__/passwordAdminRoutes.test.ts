@@ -87,7 +87,11 @@ describe('POST /api/admin/passwords/bulk-import', () => {
       .attach('file', fixturePath);
     expect(res.status).toBe(200);
     expect(res.body.imported).toBe(444);
-    expect(typeof res.body.credentialsFileBase64).toBe('string');
+    // N-C1: credentials are now served via downloadUrl, not inline base64.
+    expect(res.body.credentialsFileBase64).toBeUndefined();
+    expect(typeof res.body.downloadUrl).toBe('string');
+    expect(res.body.downloadUrl).toMatch(/\/credentials\.xlsx$/);
+    expect(typeof res.body.credentialsFilename).toBe('string');
     expect(res.body.batchId).toMatch(/^[0-9a-f-]{36}$/);
     const inactive = await User.countDocuments({
       importBatchId: res.body.batchId,

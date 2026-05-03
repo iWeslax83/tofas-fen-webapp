@@ -19,8 +19,17 @@ export interface BulkImportResponse {
   imported: number;
   skipped: string[];
   warnings: string[];
-  credentialsFileBase64: string;
   credentialsFilename: string;
+  // N-C1: server no longer sends base64. Frontend follows this URL to download.
+  downloadUrl: string;
+}
+
+export interface RegenerateBatchResponse {
+  imported: number;
+  failures: { userId: string; error: string }[];
+  credentialsFilename: string;
+  // N-C1: server no longer sends base64. Frontend follows this URL to download.
+  downloadUrl: string;
 }
 
 export interface PendingBatch {
@@ -78,7 +87,7 @@ export class PasswordAdminService {
   }
 
   static async regenerateBatch(batchId: string) {
-    const { data } = await apiClient.post<BulkImportResponse>(
+    const { data } = await apiClient.post<RegenerateBatchResponse>(
       PASSWORD_ADMIN_ENDPOINTS.REGENERATE_BATCH(batchId),
     );
     return data;

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { parseClassListFile } from '../classListParser';
+import { buildClassListXls } from '../../../test/helpers/buildClassListXls';
 
 const fixture = () => readFileSync(join(__dirname, '../../../test/fixtures/class-list-sample.xls'));
 
@@ -54,5 +55,21 @@ describe('parseClassListFile', () => {
     const { rows, warnings } = parseClassListFile(Buffer.alloc(0));
     expect(rows).toHaveLength(0);
     expect(warnings.length).toBeGreaterThan(0);
+  });
+});
+
+describe('parseClassListFile row cap (N-M2)', () => {
+  it('truncates at 500 rows with a warning', () => {
+    const buf = buildClassListXls(600);
+    const { rows, warnings } = parseClassListFile(buf);
+    expect(rows.length).toBe(500);
+    expect(warnings.some((w) => w.includes('500'))).toBe(true);
+  });
+
+  it('does not warn when under the cap', () => {
+    const buf = buildClassListXls(50);
+    const { rows, warnings } = parseClassListFile(buf);
+    expect(rows.length).toBe(50);
+    expect(warnings.some((w) => w.includes('500'))).toBe(false);
   });
 });

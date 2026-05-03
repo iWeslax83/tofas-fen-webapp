@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import {
   resetUserPassword,
   generateUserPassword,
@@ -8,11 +8,13 @@ import {
   cancelImportBatch,
   listPendingBatches,
   previewClassList,
+  loadBatchCredentialsXlsx,
   AdminContext,
 } from './passwordAdminService';
 import { queryAuditLog } from './passwordAuditService';
-import { buildCredentialsXlsx } from './credentialsExporter';
 import { User } from '../../models';
+import logger from '../../utils/logger';
+import { asyncHandler } from '../../middleware/errorHandler';
 
 async function getAdminContext(req: Request): Promise<AdminContext> {
   const anyReq = req as unknown as { user?: { userId?: string } };
@@ -53,12 +55,19 @@ function httpStatusForCode(code?: string): number {
 function handleServiceError(err: unknown, res: Response) {
   const e = err as NodeJS.ErrnoException;
   const status = httpStatusForCode(e.code);
+  // N-L1: previously this branch was silent server-side. Log at warn for
+  // expected-but-mapped errors and let unmapped (status 500) escalate.
+  if (status >= 500) {
+    logger.error('passwordAdmin service error', { code: e.code, message: e.message });
+  } else {
+    logger.warn('passwordAdmin domain error', { code: e.code, message: e.message });
+  }
   res.status(status).json({ error: e.message, code: e.code });
 }
 
-export async function resetPassword(req: Request, res: Response, _next: NextFunction) {
+export const resetPassword = asyncHandler(async (req, res) => {
+  const admin = await getAdminContext(req);
   try {
-    const admin = await getAdminContext(req);
     const result = await resetUserPassword({
       userId: req.params.userId,
       admin,
@@ -70,9 +79,9 @@ export async function resetPassword(req: Request, res: Response, _next: NextFunc
   } catch (err) {
     handleServiceError(err, res);
   }
-}
+});
 
-export async function generatePasswordForUser(req: Request, res: Response) {
+export const generatePasswordForUser = asyncHandler(async (req, res) => {
   try {
     const admin = await getAdminContext(req);
     const result = await generateUserPassword({
@@ -86,9 +95,9 @@ export async function generatePasswordForUser(req: Request, res: Response) {
   } catch (err) {
     handleServiceError(err, res);
   }
-}
+});
 
-export async function bulkImport(req: Request, res: Response) {
+export const bulkImport = asyncHandler(async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Dosya yüklenmedi' });
     const admin = await getAdminContext(req);
@@ -109,22 +118,22 @@ export async function bulkImport(req: Request, res: Response) {
     }
 
     const result = await bulkImportClassList({ fileBuffer: req.file.buffer, admin });
-    const xlsx = await buildCredentialsXlsx(result.credentialsRows);
     setNoStore(res);
     res.json({
       batchId: result.batchId,
-      imported: result.credentialsRows.length,
+      imported: result.imported,
       skipped: result.skipped,
       warnings: result.warnings,
-      credentialsFileBase64: xlsx.toString('base64'),
-      credentialsFilename: `credentials-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${result.batchId}.xlsx`,
+      // N-C1: no credentialsFileBase64 in JSON. Frontend follows downloadUrl.
+      credentialsFilename: result.credentialsFilename,
+      downloadUrl: `/api/admin/passwords/batch/${encodeURIComponent(result.batchId)}/credentials.xlsx`,
     });
   } catch (err) {
     handleServiceError(err, res);
   }
-}
+});
 
-export async function activateBatch(req: Request, res: Response) {
+export const activateBatch = asyncHandler(async (req, res) => {
   try {
     const admin = await getAdminContext(req);
     const result = await activateImportBatch({ batchId: req.body.batchId, admin });
@@ -132,25 +141,47 @@ export async function activateBatch(req: Request, res: Response) {
   } catch (err) {
     handleServiceError(err, res);
   }
-}
+});
 
-export async function regenerateBatch(req: Request, res: Response) {
+export const regenerateBatch = asyncHandler(async (req, res) => {
   try {
     const admin = await getAdminContext(req);
     const result = await regenerateImportBatchPasswords({ batchId: req.params.batchId, admin });
-    const xlsx = await buildCredentialsXlsx(result.credentialsRows);
     setNoStore(res);
     res.json({
-      imported: result.credentialsRows.length,
-      credentialsFileBase64: xlsx.toString('base64'),
-      credentialsFilename: `credentials-regen-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${req.params.batchId}.xlsx`,
+      imported: result.imported,
+      failures: result.failures,
+      credentialsFilename: result.credentialsFilename,
+      downloadUrl: `/api/admin/passwords/batch/${encodeURIComponent(req.params.batchId)}/credentials.xlsx`,
     });
   } catch (err) {
     handleServiceError(err, res);
   }
-}
+});
 
-export async function cancelBatch(req: Request, res: Response) {
+export const downloadBatchCredentials = asyncHandler(async (req, res) => {
+  try {
+    const batchId = req.params.batchId;
+    const file = await loadBatchCredentialsXlsx(batchId);
+    if (!file) {
+      return res.status(404).json({ error: 'Bulunamadı veya batch zaten aktif/iptal' });
+    }
+    setNoStore(res);
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${file.filename.replace(/[^a-zA-Z0-9._-]/g, '_')}"`,
+    );
+    return res.end(file.buffer);
+  } catch (err) {
+    handleServiceError(err, res);
+  }
+});
+
+export const cancelBatch = asyncHandler(async (req, res) => {
   try {
     const admin = await getAdminContext(req);
     const result = await cancelImportBatch({ batchId: req.params.batchId, admin });
@@ -158,18 +189,18 @@ export async function cancelBatch(req: Request, res: Response) {
   } catch (err) {
     handleServiceError(err, res);
   }
-}
+});
 
-export async function pendingBatches(_req: Request, res: Response) {
+export const pendingBatches = asyncHandler(async (_req, res) => {
   try {
     const items = await listPendingBatches();
     res.json({ items });
   } catch (err) {
     handleServiceError(err, res);
   }
-}
+});
 
-export async function auditLog(req: Request, res: Response) {
+export const auditLog = asyncHandler(async (req, res) => {
   try {
     const result = await queryAuditLog({
       userId: req.query.userId as string | undefined,
@@ -191,4 +222,4 @@ export async function auditLog(req: Request, res: Response) {
   } catch (err) {
     handleServiceError(err, res);
   }
-}
+});

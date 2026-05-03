@@ -15,6 +15,7 @@ export interface ParseResult {
 }
 
 const CLASS_HEADER_RE = /(\d+)\.\s*Sınıf\s*\/\s*([A-F])/;
+const MAX_IMPORT_ROWS = 500;
 const COL_SINO = 0;
 const COL_OGRENCI_NO = 1;
 const COL_AD = 3;
@@ -95,6 +96,13 @@ export function parseClassListFile(buffer: Buffer): ParseResult {
       sube: currentSube,
       pansiyon: String(row[COL_PANSIYON] ?? '').trim() === 'Yatılı',
     });
+  }
+
+  if (rows.length > MAX_IMPORT_ROWS) {
+    warnings.push(
+      `En fazla ${MAX_IMPORT_ROWS} öğrenci içe aktarılabilir; ${rows.length} satır bulundu.`,
+    );
+    rows.length = MAX_IMPORT_ROWS;
   }
 
   return { rows, warnings };

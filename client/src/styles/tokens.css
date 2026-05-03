@@ -30,6 +30,10 @@ html {
   --state: #931a1a;
   --state-deep: #6b0e0e;
 
+  /* Semantic status */
+  --ok: #1a6b2f;
+  --warn: #7a5500;
+
   /* Type families. Intentionally overrides --font-sans / --font-mono
      defined in theme.css (Inter / Fira Code) — Devlet is the single
      source of truth from PR-02 onward. */
@@ -53,4 +57,8 @@ html {
 
   --state: #c94444;
   --state-deep: #8b2323;
+
+  /* Semantic status */
+  --ok: #4caf72;
+  --warn: #e6a817;
 }
