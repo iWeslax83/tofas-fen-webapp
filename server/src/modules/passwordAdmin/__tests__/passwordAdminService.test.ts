@@ -202,3 +202,29 @@ describe('listPendingBatches', () => {
     expect(pending.map((p) => p.batchId)).toEqual([b]);
   });
 });
+
+describe('batch atomic transitions (N-H2)', () => {
+  it('two concurrent activate calls — exactly one succeeds', async () => {
+    // Arrange: a known-pending batch (insert directly).
+    const batchId = 'test-batch-' + Date.now();
+    await PasswordImportBatch.create({
+      batchId,
+      adminId: 'admin1',
+      userIds: [],
+      totalCount: 0,
+      status: 'pending',
+    });
+
+    const admin = { id: 'admin1', adSoyad: 'Test Admin' };
+    const results = await Promise.allSettled([
+      activateImportBatch({ batchId, admin }),
+      activateImportBatch({ batchId, admin }),
+    ]);
+
+    const successes = results.filter((r) => r.status === 'fulfilled');
+    const failures = results.filter((r) => r.status === 'rejected');
+    expect(successes.length).toBe(1);
+    expect(failures.length).toBe(1);
+    expect((failures[0] as PromiseRejectedResult).reason.code).toBe('BATCH_NOT_PENDING');
+  });
+});

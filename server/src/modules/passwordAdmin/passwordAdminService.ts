@@ -226,12 +226,25 @@ export async function activateImportBatch(input: {
   batchId: string;
   admin: AdminContext;
 }): Promise<{ activated: number }> {
-  const batch = await loadPendingBatchOrThrow(input.batchId);
-  await User.updateMany({ importBatchId: batch.batchId }, { $set: { isActive: true } });
-  batch.status = 'activated';
-  batch.activatedAt = new Date();
-  await batch.save();
-  return { activated: batch.userIds.length };
+  // N-H2: atomic compare-and-swap on status. Two concurrent requests can
+  // no longer both pass the status check.
+  const updated = await PasswordImportBatch.findOneAndUpdate(
+    { batchId: input.batchId, status: 'pending' },
+    {
+      $set: { status: 'activated', activatedAt: new Date() },
+      $unset: { credentialsXlsx: '', credentialsFilename: '' },
+    },
+    { new: true },
+  );
+  if (!updated) {
+    const err: NodeJS.ErrnoException = new Error(
+      `Batch bulunamadı veya zaten işlenmiş: ${input.batchId}`,
+    );
+    err.code = 'BATCH_NOT_PENDING';
+    throw err;
+  }
+  await User.updateMany({ importBatchId: updated.batchId }, { $set: { isActive: true } });
+  return { activated: updated.userIds.length };
 }
 
 export async function regenerateImportBatchPasswords(input: {
@@ -295,12 +308,23 @@ export async function cancelImportBatch(input: {
   batchId: string;
   admin: AdminContext;
 }): Promise<{ cancelled: number }> {
-  const batch = await loadPendingBatchOrThrow(input.batchId);
-  await User.deleteMany({ importBatchId: batch.batchId });
-  batch.status = 'cancelled';
-  batch.cancelledAt = new Date();
-  await batch.save();
-  return { cancelled: batch.userIds.length };
+  const updated = await PasswordImportBatch.findOneAndUpdate(
+    { batchId: input.batchId, status: 'pending' },
+    {
+      $set: { status: 'cancelled', cancelledAt: new Date() },
+      $unset: { credentialsXlsx: '', credentialsFilename: '' },
+    },
+    { new: true },
+  );
+  if (!updated) {
+    const err: NodeJS.ErrnoException = new Error(
+      `Batch bulunamadı veya zaten işlenmiş: ${input.batchId}`,
+    );
+    err.code = 'BATCH_NOT_PENDING';
+    throw err;
+  }
+  await User.deleteMany({ importBatchId: updated.batchId });
+  return { cancelled: updated.userIds.length };
 }
 
 export async function listPendingBatches(): Promise<IPasswordImportBatch[]> {
