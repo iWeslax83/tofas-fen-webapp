@@ -7,15 +7,11 @@ import multer from 'multer';
 import { verifyUploadedFiles } from '../config/upload';
 import { parseParentChildFile, bulkLinkParentChild } from '../services/bulkImportService';
 import logger from '../utils/logger';
+import { safeSearchRegex } from '../utils/regex';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const router = Router();
-
-// Regex özel karakterlerini escape et (ReDoS/injection koruması)
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 /**
  * @swagger
@@ -137,18 +133,13 @@ router.get(
       const filter: any = { rol: role };
 
       if (search) {
-        // B-C6: cap the search length to prevent ReDoS / expensive $regex
-        // scans, and ignore prefixes that look like regex metacharacters even
-        // after escaping (defense in depth).
-        const rawSearch = String(search).trim();
-        if (rawSearch.length > 100) {
+        const re = safeSearchRegex(String(search));
+        if (re === null) {
+          // Empty after trim, or > 100 chars — return early with a 400 to
+          // preserve the prior contract.
           return res.status(400).json({ error: 'Arama terimi çok uzun (en fazla 100 karakter)' });
         }
-        const safeSearch = escapeRegex(rawSearch);
-        filter.$or = [
-          { adSoyad: { $regex: safeSearch, $options: 'i' } },
-          { id: { $regex: safeSearch, $options: 'i' } },
-        ];
+        filter.$or = [{ adSoyad: re }, { id: re }];
       }
 
       // Clamp pagination (B-H5) — previously page/limit were declared but the
