@@ -187,14 +187,6 @@ export async function bulkImportClassList(input: BulkImportInput): Promise<BulkI
     ),
   );
 
-  await PasswordImportBatch.create({
-    batchId,
-    adminId: input.admin.id,
-    userIds: written.map((r) => r.id),
-    totalCount: written.length,
-    status: 'pending',
-  });
-
   const credentialsRows: CredentialsRow[] = written.map((r) => ({
     id: r.id,
     adSoyad: r.adSoyad,
@@ -204,6 +196,17 @@ export async function bulkImportClassList(input: BulkImportInput): Promise<BulkI
     pansiyon: r.pansiyon,
     password: passwords.get(r.id)!,
   }));
+
+  // N-M3: passwords are now in credentialsRows; the Map can go.
+  passwords.clear();
+
+  await PasswordImportBatch.create({
+    batchId,
+    adminId: input.admin.id,
+    userIds: written.map((r) => r.id),
+    totalCount: written.length,
+    status: 'pending',
+  });
 
   return { batchId, credentialsRows, skipped, warnings };
 }
