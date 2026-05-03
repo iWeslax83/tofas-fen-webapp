@@ -58,7 +58,7 @@ export class AuthService {
     twoFactorExpiresAt?: number;
   }> {
     // Find user by ID
-    const user = await User.findOne({ id, isActive: true });
+    const user = await User.findOne({ id, isActive: true }).select('+sifre');
     if (!user) {
       // Timing-safe: compare against a REAL bcrypt hash pre-computed at module
       // load. The previous placeholder string was not a valid bcrypt hash, so

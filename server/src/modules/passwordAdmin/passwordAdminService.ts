@@ -28,7 +28,7 @@ export interface PasswordOperationResult {
 }
 
 async function loadUserOrThrow(userId: string) {
-  const user = await User.findOne({ id: userId });
+  const user = await User.findOne({ id: userId }).select('+sifre');
   if (!user) {
     const err: NodeJS.ErrnoException = new Error(`Kullanıcı bulunamadı: ${userId}`);
     err.code = 'USER_NOT_FOUND';

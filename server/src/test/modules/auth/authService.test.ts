@@ -28,7 +28,7 @@ describe('AuthService', () => {
         save: vi.fn(),
       };
 
-      (User.findOne as any).mockResolvedValue(mockUser);
+      (User.findOne as any).mockReturnValue({ select: vi.fn().mockResolvedValue(mockUser) });
       (bcrypt.compare as any).mockResolvedValue(true);
 
       const result = await AuthService.authenticateUser('user123', 'password123');
@@ -47,7 +47,7 @@ describe('AuthService', () => {
     });
 
     it('should throw unauthorized error for non-existent user', async () => {
-      (User.findOne as any).mockResolvedValue(null);
+      (User.findOne as any).mockReturnValue({ select: vi.fn().mockResolvedValue(null) });
 
       await expect(AuthService.authenticateUser('user123', 'password123')).rejects.toThrow(
         AppError,
@@ -64,7 +64,7 @@ describe('AuthService', () => {
         save: vi.fn(),
       };
 
-      (User.findOne as any).mockResolvedValue(mockUser);
+      (User.findOne as any).mockReturnValue({ select: vi.fn().mockResolvedValue(mockUser) });
       (bcrypt.compare as any).mockResolvedValue(false);
 
       await expect(AuthService.authenticateUser('user123', 'wrongpassword')).rejects.toThrow(

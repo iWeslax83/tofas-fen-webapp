@@ -46,7 +46,7 @@ describe('resetUserPassword', () => {
       reason: 'forgot',
     });
     expect(password).toHaveLength(8);
-    const after = await User.findOne({ id: 'u1' });
+    const after = await User.findOne({ id: 'u1' }).select('+sifre');
     expect(after!.tokenVersion).toBe(4);
     expect(await bcrypt.compare(password, after!.sifre!)).toBe(true);
     expect(await bcrypt.compare('old', after!.sifre!)).toBe(false);
@@ -111,7 +111,11 @@ describe('bulkImportClassList', () => {
     const users = await User.find({ importBatchId: batchId });
     expect(users).toHaveLength(444);
     expect(users.every((u) => u.isActive === false)).toBe(true);
-    expect(users.every((u) => typeof u.sifre === 'string' && u.sifre.length > 20)).toBe(true);
+    // N-H4: sifre is select:false — opt-in to verify hashed passwords were stored.
+    const usersWithSifre = await User.find({ importBatchId: batchId }).select('+sifre');
+    expect(usersWithSifre.every((u) => typeof u.sifre === 'string' && u.sifre.length > 20)).toBe(
+      true,
+    );
     const batch = await PasswordImportBatch.findOne({ batchId });
     expect(batch!.status).toBe('pending');
     expect(batch!.totalCount).toBe(444);

@@ -9,6 +9,7 @@ import { MongoFilter } from '../types';
 import logger from '../utils/logger';
 import { asyncHandler } from '../middleware/errorHandler';
 import { logSecurityEvent, SecurityEvent } from '../utils/securityLogger';
+import { safeSearchRegex } from '../utils/regex';
 
 /** Shape of a note update entry in bulk-update */
 interface NoteUpdateEntry {
@@ -925,16 +926,21 @@ router.get(
         return;
       }
 
+      // N-H3: cap length and escape metacharacters before piping into $regex.
+      const searchRe = safeSearchRegex(String(q));
+      if (searchRe === null) {
+        res
+          .status(400)
+          .json({ success: false, error: 'Arama terimi geçersiz veya çok uzun (≤100 karakter)' });
+        return;
+      }
+
       const role = req.user?.role;
       const userId = req.user?.userId;
 
       const filter: any = {
         isActive: true,
-        $or: [
-          { studentId: { $regex: q, $options: 'i' } },
-          { lesson: { $regex: q, $options: 'i' } },
-          { description: { $regex: q, $options: 'i' } },
-        ],
+        $or: [{ studentId: searchRe }, { lesson: searchRe }, { description: searchRe }],
       };
 
       // Role-based filtering
