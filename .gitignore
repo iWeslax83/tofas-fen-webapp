@@ -112,3 +112,39 @@ playwright/.cache/
 # Production files with secrets
 .env.production
 env.production
+
+# AI assistants & tooling
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.claude.json
+.claude.local.json
+.aider*
+.cursor/
+.cursorrules
+.cursorignore
+.windsurfrules
+.continue/
+.codeium/
+.github/copilot-instructions.md
+.copilot/
+.gemini/
+GEMINI.md
+.openai/
+.codex/
+.anthropic/
+.zed/
+.roo/
+.cline/
+.tabnine/
+.sourcegraph/
+.codewhisperer/
+
+# AI-generated artifacts
+**/.omc/
+.superpowers/
+docs/superpowers/
+.playwright-mcp/
+CODE_REVIEW_REPORT*.md
+AI_*.md
+ai-notes/
