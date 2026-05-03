@@ -10,6 +10,7 @@ const sampleRows = [
     sinif: '9',
     sube: 'A',
     pansiyon: false,
+    // fixture only — not a real password (N-L5)
     password: 'abc12345',
   },
   {
@@ -19,6 +20,7 @@ const sampleRows = [
     sinif: '9',
     sube: 'A',
     pansiyon: true,
+    // fixture only — not a real password (N-L5)
     password: 'xyz67890',
   },
 ];

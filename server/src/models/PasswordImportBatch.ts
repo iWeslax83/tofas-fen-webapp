@@ -17,6 +17,8 @@ export interface IPasswordImportBatch extends Document {
   createdAt: Date;
   activatedAt?: Date;
   cancelledAt?: Date;
+  credentialsXlsx?: Buffer;
+  credentialsFilename?: string;
 }
 
 const PasswordImportBatchSchema = new Schema<IPasswordImportBatch>(
@@ -34,6 +36,11 @@ const PasswordImportBatchSchema = new Schema<IPasswordImportBatch>(
     },
     activatedAt: Date,
     cancelledAt: Date,
+    // N-C1: bulk-import XLSX is held on the batch document instead of being
+    // returned in JSON. Cleared (`$unset`) when the batch transitions to
+    // activated/cancelled by the atomic findOneAndUpdate flows.
+    credentialsXlsx: { type: Buffer, select: false },
+    credentialsFilename: { type: String, select: false },
   },
   { timestamps: { createdAt: true, updatedAt: false } },
 );
