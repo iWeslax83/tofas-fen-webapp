@@ -1,7 +1,34 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import * as XLSX from 'xlsx';
 import { parseClassListFile } from '../classListParser';
+
+function buildClassListXls(numRows: number): Buffer {
+  const data: any[][] = [['9. Sınıf / A Şubesi 2026 Sınıf Listesi']];
+  for (let i = 1; i <= numRows; i++) {
+    data.push([
+      i,
+      `2026${i.toString().padStart(4, '0')}`,
+      '',
+      `Ad${i}`,
+      '',
+      '',
+      '',
+      `Soyad${i}`,
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+    ]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  return Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+}
 
 const fixture = () => readFileSync(join(__dirname, '../../../test/fixtures/class-list-sample.xls'));
 
@@ -54,5 +81,23 @@ describe('parseClassListFile', () => {
     const { rows, warnings } = parseClassListFile(Buffer.alloc(0));
     expect(rows).toHaveLength(0);
     expect(warnings.length).toBeGreaterThan(0);
+  });
+});
+
+// Note: Task 3.7 Step 5 extracts buildClassListXls into
+// server/src/test/helpers/buildClassListXls.ts and imports it here.
+describe('parseClassListFile row cap (N-M2)', () => {
+  it('truncates at 500 rows with a warning', () => {
+    const buf = buildClassListXls(600);
+    const { rows, warnings } = parseClassListFile(buf);
+    expect(rows.length).toBe(500);
+    expect(warnings.some((w) => w.includes('500'))).toBe(true);
+  });
+
+  it('does not warn when under the cap', () => {
+    const buf = buildClassListXls(50);
+    const { rows, warnings } = parseClassListFile(buf);
+    expect(rows.length).toBe(50);
+    expect(warnings.some((w) => w.includes('500'))).toBe(false);
   });
 });

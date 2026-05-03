@@ -162,6 +162,13 @@ async function writeUsersForBatch(
 
 export async function bulkImportClassList(input: BulkImportInput): Promise<BulkImportResult> {
   const { rows, warnings } = parseClassListFile(input.fileBuffer);
+  if (rows.length === 0) {
+    const err: NodeJS.ErrnoException = new Error('Dosyada içe aktarılacak satır yok');
+    err.code = 'EMPTY_IMPORT';
+    throw err;
+  }
+  // rows is already truncated to <= MAX_IMPORT_ROWS by the parser; warnings
+  // surface the truncation to the admin.
   const batchId = randomUUID();
   const { written, skipped, passwords } = await writeUsersForBatch(batchId, rows);
 
