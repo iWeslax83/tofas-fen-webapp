@@ -115,6 +115,7 @@ env.production
 
 # AI assistants & tooling
 .claude/
+/claude
 CLAUDE.md
 CLAUDE.local.md
 .claude.json
