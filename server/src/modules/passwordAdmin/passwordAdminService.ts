@@ -5,7 +5,7 @@ import { User, PasswordAuditReason, PasswordImportBatch, IPasswordImportBatch } 
 import { generatePassword } from './passwordGenerator';
 import { recordPasswordEvent } from './passwordAuditService';
 import { parseClassListFile, ParsedStudentRow } from './classListParser';
-import { CredentialsRow } from './credentialsExporter';
+import { buildCredentialsXlsx, CredentialsRow } from './credentialsExporter';
 
 const BCRYPT_ROUNDS = process.env.NODE_ENV === 'test' ? 1 : 10;
 
@@ -98,9 +98,10 @@ export interface BulkImportInput {
 
 export interface BulkImportResult {
   batchId: string;
-  credentialsRows: CredentialsRow[];
+  imported: number;
   skipped: string[];
   warnings: string[];
+  credentialsFilename: string;
 }
 
 export async function previewClassList(buffer: Buffer): Promise<{
@@ -196,9 +197,13 @@ export async function bulkImportClassList(input: BulkImportInput): Promise<BulkI
     pansiyon: r.pansiyon,
     password: passwords.get(r.id)!,
   }));
-
-  // N-M3: passwords are now in credentialsRows; the Map can go.
   passwords.clear();
+
+  const xlsx = await buildCredentialsXlsx(credentialsRows);
+  const credentialsFilename = `credentials-${new Date()
+    .toISOString()
+    .slice(0, 10)
+    .replace(/-/g, '')}-${batchId}.xlsx`;
 
   await PasswordImportBatch.create({
     batchId,
@@ -206,9 +211,17 @@ export async function bulkImportClassList(input: BulkImportInput): Promise<BulkI
     userIds: written.map((r) => r.id),
     totalCount: written.length,
     status: 'pending',
+    credentialsXlsx: xlsx,
+    credentialsFilename,
   });
 
-  return { batchId, credentialsRows, skipped, warnings };
+  return {
+    batchId,
+    imported: written.length,
+    skipped,
+    warnings,
+    credentialsFilename,
+  };
 }
 
 async function loadPendingBatchOrThrow(batchId: string): Promise<IPasswordImportBatch> {
@@ -252,8 +265,9 @@ export async function activateImportBatch(input: {
 }
 
 export interface RegenerateResult {
-  credentialsRows: CredentialsRow[];
+  imported: number;
   failures: { userId: string; error: string }[];
+  credentialsFilename: string;
 }
 
 export async function regenerateImportBatchPasswords(input: {
@@ -352,7 +366,23 @@ export async function regenerateImportBatchPasswords(input: {
       password: pw,
     }));
 
-  return { credentialsRows, failures };
+  // Build & persist the XLSX, then drop plaintext from memory.
+  const xlsx = await buildCredentialsXlsx(credentialsRows);
+  credentialsRows.length = 0;
+  const credentialsFilename = `credentials-regen-${new Date()
+    .toISOString()
+    .slice(0, 10)
+    .replace(/-/g, '')}-${batch.batchId}.xlsx`;
+  await PasswordImportBatch.findOneAndUpdate(
+    { batchId: batch.batchId },
+    { $set: { credentialsXlsx: xlsx, credentialsFilename } },
+  );
+
+  return {
+    imported: succeededIds.length,
+    failures,
+    credentialsFilename,
+  };
 }
 
 export async function cancelImportBatch(input: {
@@ -382,4 +412,19 @@ export async function listPendingBatches(): Promise<IPasswordImportBatch[]> {
   return PasswordImportBatch.find({ status: 'pending' })
     .sort({ createdAt: -1 })
     .lean() as unknown as IPasswordImportBatch[];
+}
+
+export async function loadBatchCredentialsXlsx(
+  batchId: string,
+): Promise<{ buffer: Buffer; filename: string } | null> {
+  const batch = (await PasswordImportBatch.findOne({ batchId, status: 'pending' })
+    .select('+credentialsXlsx +credentialsFilename')
+    .lean()) as
+    | (IPasswordImportBatch & { credentialsXlsx?: Buffer; credentialsFilename?: string })
+    | null;
+  if (!batch || !batch.credentialsXlsx || !batch.credentialsFilename) return null;
+  return {
+    buffer: Buffer.from(batch.credentialsXlsx),
+    filename: batch.credentialsFilename,
+  };
 }

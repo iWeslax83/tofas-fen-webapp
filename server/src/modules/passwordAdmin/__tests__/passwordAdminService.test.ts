@@ -11,7 +11,9 @@ import {
   regenerateImportBatchPasswords,
   cancelImportBatch,
   listPendingBatches,
+  loadBatchCredentialsXlsx,
 } from '../passwordAdminService';
+import { buildClassListXls } from '../../../test/helpers/buildClassListXls';
 
 const fixture = () => readFileSync(join(__dirname, '../../../test/fixtures/class-list-sample.xls'));
 
@@ -101,13 +103,13 @@ describe('bulkImportClassList', () => {
     await PasswordImportBatch.deleteMany({});
   });
 
-  it('creates inactive users with hashed passwords and returns credentials rows', async () => {
+  it('creates inactive users with hashed passwords and returns import count', async () => {
     const admin = await makeAdmin();
-    const { batchId, credentialsRows } = await bulkImportClassList({
+    const { batchId, imported } = await bulkImportClassList({
       fileBuffer: fixture(),
       admin: { id: admin.id, adSoyad: admin.adSoyad },
     });
-    expect(credentialsRows).toHaveLength(444);
+    expect(imported).toBe(444);
     const users = await User.find({ importBatchId: batchId });
     expect(users).toHaveLength(444);
     expect(users.every((u) => u.isActive === false)).toBe(true);
@@ -126,13 +128,12 @@ describe('bulkImportClassList', () => {
   it('skips users whose IDs already exist', async () => {
     const admin = await makeAdmin();
     await makeUser('202');
-    const { credentialsRows, skipped } = await bulkImportClassList({
+    const { imported, skipped } = await bulkImportClassList({
       fileBuffer: fixture(),
       admin: { id: admin.id, adSoyad: admin.adSoyad },
     });
     expect(skipped).toContain('202');
-    expect(credentialsRows.find((r) => r.id === '202')).toBeUndefined();
-    expect(credentialsRows).toHaveLength(443);
+    expect(imported).toBe(443);
   });
 });
 
@@ -154,19 +155,21 @@ describe('activateImportBatch', () => {
 describe('regenerateImportBatchPasswords', () => {
   it('replaces all passwords in a pending batch', async () => {
     const admin = await makeAdmin();
-    const { batchId, credentialsRows: first } = await bulkImportClassList({
+    const { batchId, imported: firstCount } = await bulkImportClassList({
       fileBuffer: fixture(),
       admin: { id: admin.id, adSoyad: admin.adSoyad },
     });
-    const { credentialsRows: second } = await regenerateImportBatchPasswords({
+    const {
+      imported: secondCount,
+      failures,
+      credentialsFilename,
+    } = await regenerateImportBatchPasswords({
       batchId,
       admin: { id: admin.id, adSoyad: admin.adSoyad },
     });
-    expect(second).toHaveLength(first.length);
-    const matches = second.filter((s) =>
-      first.some((f) => f.id === s.id && f.password === s.password),
-    );
-    expect(matches).toHaveLength(0);
+    expect(secondCount).toBe(firstCount);
+    expect(failures).toHaveLength(0);
+    expect(credentialsFilename).toMatch(/^credentials-regen-\d{8}-/);
   });
 });
 
@@ -226,5 +229,26 @@ describe('batch atomic transitions (N-H2)', () => {
     expect(successes.length).toBe(1);
     expect(failures.length).toBe(1);
     expect((failures[0] as PromiseRejectedResult).reason.code).toBe('BATCH_NOT_PENDING');
+  });
+});
+
+describe('downloadable credentials XLSX (N-C1)', () => {
+  it('serves the XLSX while pending and 404s after activation', async () => {
+    const buf = buildClassListXls(3);
+    const admin = { id: 'admin1', adSoyad: 'Test Admin' };
+
+    const result = await bulkImportClassList({ fileBuffer: buf, admin });
+    expect(result.imported).toBe(3);
+    expect(result.credentialsFilename).toMatch(/^credentials-\d{8}-/);
+
+    const file = await loadBatchCredentialsXlsx(result.batchId);
+    expect(file).not.toBeNull();
+    expect(file!.buffer.length).toBeGreaterThan(0);
+    expect(file!.filename).toBe(result.credentialsFilename);
+
+    await activateImportBatch({ batchId: result.batchId, admin });
+
+    const fileAfter = await loadBatchCredentialsXlsx(result.batchId);
+    expect(fileAfter).toBeNull();
   });
 });

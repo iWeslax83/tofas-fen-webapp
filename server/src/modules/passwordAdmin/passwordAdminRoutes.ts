@@ -11,6 +11,7 @@ import {
   cancelBatch,
   pendingBatches,
   auditLog,
+  downloadBatchCredentials,
 } from './passwordAdminController';
 import {
   validateResetBody,
@@ -30,6 +31,7 @@ router.post('/reset/:userId', validateUserIdParam, validateResetBody, resetPassw
 router.post('/generate/:userId', validateUserIdParam, validateResetBody, generatePasswordForUser);
 router.post('/bulk-import', upload.single('file'), verifyUploadedFiles, bulkImport);
 router.post('/activate-batch', validateActivateBody, activateBatch);
+router.get('/batch/:batchId/credentials.xlsx', validateBatchIdParam, downloadBatchCredentials);
 router.post('/batch/:batchId/regenerate', validateBatchIdParam, regenerateBatch);
 router.delete('/batch/:batchId', validateBatchIdParam, cancelBatch);
 router.get('/batches', pendingBatches);
