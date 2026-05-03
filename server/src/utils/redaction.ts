@@ -6,7 +6,7 @@ const DEPTH_LIMIT = '[DEPTH_LIMIT]';
 const MAX_DEPTH = 8;
 
 function clone(value: unknown, depth: number, seen: WeakSet<object>): unknown {
-  if (depth > MAX_DEPTH) return DEPTH_LIMIT;
+  if (depth >= MAX_DEPTH) return DEPTH_LIMIT;
   if (value === null || typeof value !== 'object') return value;
 
   const obj = value as object;

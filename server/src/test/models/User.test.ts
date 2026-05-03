@@ -250,8 +250,17 @@ describe('User Model', () => {
 import bcrypt from 'bcryptjs';
 
 describe('User schema sifre `select: false` (N-H4)', () => {
-  // The project's setup.ts beforeEach clears all collections, so seed
-  // inside a beforeAll-scoped helper that re-creates per test.
+  beforeEach(async () => {
+    await connectDB();
+    await User.deleteMany({});
+  });
+
+  afterEach(async () => {
+    await User.deleteMany({});
+    await closeDB();
+  });
+
+  // Seed helper re-creates the test user for each test.
   const seed = async () => {
     await User.create({
       id: 't-sifre-1',
