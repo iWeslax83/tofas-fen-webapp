@@ -149,3 +149,8 @@ docs/superpowers/
 CODE_REVIEW_REPORT*.md
 AI_*.md
 ai-notes/
+
+# Generated credentials exports — never commit (N-L3 in CODE_REVIEW_REPORT_2026-04-29.md)
+credentials-*.xlsx
+credentials-*.xls
+local-data/
