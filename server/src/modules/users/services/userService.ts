@@ -1,6 +1,7 @@
 import { User } from '../../../models/User';
 import { AppError } from '../../../utils/AppError';
 import bcrypt from 'bcryptjs';
+import { safeSearchRegex } from '../../../utils/regex';
 
 /**
  * User Service
@@ -32,11 +33,12 @@ export class UserService {
     }
 
     if (search) {
-      query.$or = [
-        { adSoyad: { $regex: search, $options: 'i' } },
-        { id: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-      ];
+      const re = safeSearchRegex(search);
+      if (re !== null) {
+        query.$or = [{ adSoyad: re }, { id: re }, { email: re }];
+      }
+      // Silently drop the filter when re is null (>100 chars or empty);
+      // listing endpoints prefer permissive behavior over a 400.
     }
 
     const [users, total] = await Promise.all([
@@ -218,12 +220,13 @@ export class UserService {
   }): Promise<any[]> {
     const { query, role, limit } = options;
 
+    const re = safeSearchRegex(query);
+    if (re === null) {
+      // Empty / too-long input → no results rather than running an unbounded scan.
+      return [];
+    }
     const searchQuery: any = {
-      $or: [
-        { adSoyad: { $regex: query, $options: 'i' } },
-        { id: { $regex: query, $options: 'i' } },
-        { email: { $regex: query, $options: 'i' } },
-      ],
+      $or: [{ adSoyad: re }, { id: re }, { email: re }],
       isActive: true,
     };
 

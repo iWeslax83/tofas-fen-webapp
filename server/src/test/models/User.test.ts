@@ -246,3 +246,51 @@ describe('User Model', () => {
     });
   });
 });
+
+import bcrypt from 'bcryptjs';
+
+describe('User schema sifre `select: false` (N-H4)', () => {
+  beforeEach(async () => {
+    await connectDB();
+    await User.deleteMany({});
+  });
+
+  afterEach(async () => {
+    await User.deleteMany({});
+    await closeDB();
+  });
+
+  // Seed helper re-creates the test user for each test.
+  const seed = async () => {
+    await User.create({
+      id: 't-sifre-1',
+      adSoyad: 'Test',
+      rol: 'student',
+      sifre: await bcrypt.hash('pw', 4),
+      emailVerified: false,
+      pansiyon: false,
+      childId: [],
+      tokenVersion: 0,
+      isActive: true,
+      kvkkConsent: false,
+      twoFactorEnabled: false,
+      twoFactorAttempts: 0,
+      failedLoginAttempts: 0,
+      isLocked: false,
+      loginCount: 0,
+    });
+  };
+
+  it('omits sifre by default on find', async () => {
+    await seed();
+    const u = await User.findOne({ id: 't-sifre-1' });
+    expect(u).toBeTruthy();
+    expect((u as any).sifre).toBeUndefined();
+  });
+
+  it('returns sifre when explicitly selected', async () => {
+    await seed();
+    const u = await User.findOne({ id: 't-sifre-1' }).select('+sifre');
+    expect((u as any).sifre).toMatch(/^\$2[abxy]?\$/);
+  });
+});

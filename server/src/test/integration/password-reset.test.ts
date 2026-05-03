@@ -140,10 +140,12 @@ describe('Password reset flow (B-H4)', () => {
       // tokenVersion should have bumped so any existing sessions are dead.
       expect(after!.tokenVersion).toBe(previousTokenVersion + 1);
       // The stored password must be a bcrypt hash, not the plaintext.
-      expect(after!.sifre).toBeDefined();
-      expect(after!.sifre!.startsWith('$2')).toBe(true);
+      // N-H4: sifre is select:false — opt-in explicitly to verify the hash was stored.
+      const afterWithSifre = await User.findOne({ id: 'pwreset_user' }).select('+sifre');
+      expect(afterWithSifre!.sifre).toBeDefined();
+      expect(afterWithSifre!.sifre!.startsWith('$2')).toBe(true);
       // And it must verify.
-      const ok = await bcrypt.compare('NewStrongPassword123', after!.sifre!);
+      const ok = await bcrypt.compare('NewStrongPassword123', afterWithSifre!.sifre!);
       expect(ok).toBe(true);
     });
 

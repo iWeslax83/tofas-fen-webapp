@@ -11,7 +11,7 @@ export const SecureAPI = {
       throw new Error('ID ve şifre gereklidir');
     }
 
-    const user = await User.findOne({ id, isActive: true });
+    const user = await User.findOne({ id, isActive: true }).select('+sifre');
     if (!user) throw new Error('Geçersiz kimlik bilgileri');
 
     if (!user.sifre) throw new Error('Şifre ayarlanmamış');
@@ -26,9 +26,9 @@ export const SecureAPI = {
         id: user.id,
         adSoyad: user.adSoyad,
         rol: user.rol,
-      }
+      },
     };
-  }
+  },
 };
 
 export default SecureAPI;

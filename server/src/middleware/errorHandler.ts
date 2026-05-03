@@ -1,6 +1,25 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError, ErrorContext, ErrorSeverity, ErrorType } from '../utils/AppError';
 import logger from '../utils/logger';
+import { redactSensitive } from '../utils/redaction';
+
+const SAFE_HEADER_KEYS = new Set([
+  'content-type',
+  'user-agent',
+  'referer',
+  'x-request-id',
+  'x-forwarded-for',
+]);
+
+function pickSafeHeaders(headers: Record<string, string | string[] | undefined>) {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(headers)) {
+    if (SAFE_HEADER_KEYS.has(k.toLowerCase())) {
+      out[k] = Array.isArray(v) ? v.join(',') : String(v ?? '');
+    }
+  }
+  return out;
+}
 
 /**
  * Global error handler middleware
@@ -45,10 +64,15 @@ export const globalErrorHandler = (
     ip: req.ip || req.connection.remoteAddress || '',
     path: req.path,
     method: req.method,
-    body: req.body,
-    query: req.query,
+    // N-C2: deep-clone + redact before logging. req.body / req.query may
+    // carry plaintext credentials on auth endpoints; req.headers carries
+    // Authorization / Cookie. Strip them all before they hit Winston.
+    body: redactSensitive(req.body),
+    query: redactSensitive(req.query),
     params: req.params,
-    headers: req.headers as Record<string, string>,
+    headers: pickSafeHeaders(
+      req.headers as Record<string, string | string[] | undefined>,
+    ) as unknown as Record<string, string>,
     severity: getErrorSeverity(appError.statusCode),
     type: getErrorType(appError.statusCode),
     additionalData: {
