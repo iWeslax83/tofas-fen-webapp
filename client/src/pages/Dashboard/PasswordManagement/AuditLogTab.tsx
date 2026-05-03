@@ -12,7 +12,7 @@ export default function AuditLogTab() {
     reason: reason || undefined,
   });
 
-  if (isLoading) return <p>Yükleniyor...</p>;
+  if (isLoading) return <p className="text-[var(--ink-dim)]">Yükleniyor...</p>;
   if (!data) return null;
 
   return (
@@ -21,7 +21,7 @@ export default function AuditLogTab() {
         <select
           value={action}
           onChange={(e) => setAction(e.target.value)}
-          className="px-3 py-1.5 border rounded"
+          className="px-3 py-1.5 border border-[var(--rule)] rounded bg-[var(--paper)] text-[var(--ink)]"
         >
           <option value="">Tüm aksiyonlar</option>
           <option value="bulk_import">Toplu İçe Aktar</option>
@@ -31,7 +31,7 @@ export default function AuditLogTab() {
         <select
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          className="px-3 py-1.5 border rounded"
+          className="px-3 py-1.5 border border-[var(--rule)] rounded bg-[var(--paper)] text-[var(--ink)]"
         >
           <option value="">Tüm sebepler</option>
           <option value="forgot">Unuttu</option>
@@ -42,28 +42,42 @@ export default function AuditLogTab() {
         </select>
       </div>
       <table className="w-full text-sm border-collapse">
-        <thead className="bg-gray-50">
+        <thead className="bg-[var(--surface)]">
           <tr>
-            <th className="text-left px-3 py-2 border-b">Zaman</th>
-            <th className="text-left px-3 py-2 border-b">Kullanıcı</th>
-            <th className="text-left px-3 py-2 border-b">Admin</th>
-            <th className="text-left px-3 py-2 border-b">Aksiyon</th>
-            <th className="text-left px-3 py-2 border-b">Sebep</th>
-            <th className="text-left px-3 py-2 border-b">Not</th>
+            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
+              Zaman
+            </th>
+            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
+              Kullanıcı
+            </th>
+            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
+              Admin
+            </th>
+            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
+              Aksiyon
+            </th>
+            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
+              Sebep
+            </th>
+            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
+              Not
+            </th>
           </tr>
         </thead>
         <tbody>
           {data.items.map((it) => (
-            <tr key={it._id} className="border-b hover:bg-gray-50">
-              <td className="px-3 py-2">{new Date(it.createdAt).toLocaleString('tr-TR')}</td>
-              <td className="px-3 py-2">
-                {it.userSnapshot.adSoyad}{' '}
-                <span className="text-xs text-gray-500">({it.userId})</span>
+            <tr key={it._id} className="border-b border-[var(--rule)] hover:bg-[var(--surface)]">
+              <td className="px-3 py-2 text-[var(--ink)]">
+                {new Date(it.createdAt).toLocaleString('tr-TR')}
               </td>
-              <td className="px-3 py-2">{it.adminSnapshot.adSoyad}</td>
-              <td className="px-3 py-2">{it.action}</td>
-              <td className="px-3 py-2">{it.reason}</td>
-              <td className="px-3 py-2">{it.reasonNote ?? '-'}</td>
+              <td className="px-3 py-2 text-[var(--ink)]">
+                {it.userSnapshot.adSoyad}{' '}
+                <span className="text-xs text-[var(--ink-dim)]">({it.userId})</span>
+              </td>
+              <td className="px-3 py-2 text-[var(--ink)]">{it.adminSnapshot.adSoyad}</td>
+              <td className="px-3 py-2 text-[var(--ink)]">{it.action}</td>
+              <td className="px-3 py-2 text-[var(--ink)]">{it.reason}</td>
+              <td className="px-3 py-2 text-[var(--ink)]">{it.reasonNote ?? '-'}</td>
             </tr>
           ))}
         </tbody>
@@ -72,17 +86,17 @@ export default function AuditLogTab() {
         <button
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={page === 1}
-          className="px-3 py-1 border rounded disabled:opacity-50"
+          className="px-3 py-1 border border-[var(--rule)] rounded text-[var(--ink)] hover:bg-[var(--surface)] disabled:opacity-50"
         >
           Önceki
         </button>
-        <span className="text-sm">
+        <span className="text-sm text-[var(--ink-dim)]">
           Sayfa {page} / {Math.max(1, Math.ceil(data.total / data.limit))}
         </span>
         <button
           onClick={() => setPage((p) => p + 1)}
           disabled={page * data.limit >= data.total}
-          className="px-3 py-1 border rounded disabled:opacity-50"
+          className="px-3 py-1 border border-[var(--rule)] rounded text-[var(--ink)] hover:bg-[var(--surface)] disabled:opacity-50"
         >
           Sonraki
         </button>
