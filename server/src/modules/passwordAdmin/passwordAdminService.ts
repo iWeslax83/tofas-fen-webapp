@@ -417,14 +417,15 @@ export async function listPendingBatches(): Promise<IPasswordImportBatch[]> {
 export async function loadBatchCredentialsXlsx(
   batchId: string,
 ): Promise<{ buffer: Buffer; filename: string } | null> {
-  const batch = (await PasswordImportBatch.findOne({ batchId, status: 'pending' })
-    .select('+credentialsXlsx +credentialsFilename')
-    .lean()) as
-    | (IPasswordImportBatch & { credentialsXlsx?: Buffer; credentialsFilename?: string })
-    | null;
+  // No `.lean()` here: lean queries return BSON `Binary` for Buffer paths,
+  // which `Buffer.from(...)` reads as an empty buffer. Hydrating through the
+  // Mongoose document cast gives us a proper Node Buffer.
+  const batch = (await PasswordImportBatch.findOne({ batchId, status: 'pending' }).select(
+    '+credentialsXlsx +credentialsFilename',
+  )) as (IPasswordImportBatch & { credentialsXlsx?: Buffer; credentialsFilename?: string }) | null;
   if (!batch || !batch.credentialsXlsx || !batch.credentialsFilename) return null;
   return {
-    buffer: Buffer.from(batch.credentialsXlsx),
+    buffer: batch.credentialsXlsx,
     filename: batch.credentialsFilename,
   };
 }
