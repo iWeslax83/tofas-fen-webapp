@@ -75,8 +75,13 @@ const UserSchema = new Schema<IUser>(
     },
     sifre: {
       type: String,
-      // Deprecated - artık TCKN kullanılacak, geriye dönük uyumluluk için bırakıldı
-      // Şifre validasyonu kaldırıldı
+      // N-H4: defense in depth. Casual finds (homework, calendar, etc.) used
+      // to receive the bcrypt hash whether they wanted it or not. With
+      // `select: false`, the field is omitted unless the caller opts in via
+      // `.select('+sifre')`. Auth, password-change, and admin reset paths
+      // do that explicitly; everything else now silently stops carrying the
+      // hash, which is the desired behaviour.
+      select: false,
     },
     rol: {
       type: String,
