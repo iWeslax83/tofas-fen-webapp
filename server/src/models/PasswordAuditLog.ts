@@ -57,6 +57,11 @@ PasswordAuditLogSchema.index({ userId: 1, createdAt: -1 });
 PasswordAuditLogSchema.index({ adminId: 1, createdAt: -1 });
 PasswordAuditLogSchema.index({ action: 1, createdAt: -1 });
 
+// N-L4: KVKK retention. Audit log auto-purges after 365 days. The TTL
+// monitor runs at most once a minute, so deletes lag the boundary
+// slightly — acceptable for a 1-year window.
+PasswordAuditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 365 * 24 * 3600 });
+
 export const PasswordAuditLog =
   mongoose.models.PasswordAuditLog ||
   mongoose.model<IPasswordAuditLog>('PasswordAuditLog', PasswordAuditLogSchema);
