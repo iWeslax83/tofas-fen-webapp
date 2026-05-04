@@ -5,11 +5,13 @@
 # binaries — can load. The production stage is still nginx:alpine (it only
 # serves pre-built static files, no native deps needed).
 #
-# I-C7: both base images are pinned to a specific minor version instead of
-# the floating `node:18-slim` / `nginx:alpine` tags. Dependabot's docker
-# updater will open PRs for new patch releases. Promote to a digest pin
-# (`@sha256:...`) on first prod cut.
-FROM node:18.20-slim AS base
+# I-C7: both base images are pinned by digest in addition to the minor
+# version tag. The `tag@sha256:...` form makes Docker verify that the
+# digest matches what we audited; an upstream re-tag of `node:18.20-slim`
+# can no longer silently change our base layer. Dependabot's docker
+# updater understands this format and will open PRs to bump both the tag
+# and the digest atomically.
+FROM node:18.20-slim@sha256:f9ab18e354e6855ae56ef2b290dd225c1e51a564f87584b9bd21dd651838830e AS base
 
 # Install dependencies only when needed.
 # We copy only package.json (NOT package-lock.json) and run `npm install`
@@ -43,8 +45,8 @@ RUN npm run build
 # workers to the 'nginx' user. We instead run the entire process as the
 # unprivileged 'nginx' user on :8080; any platform-level Service/Ingress
 # maps the public port to 8080.
-# I-C7: pinned to a specific mainline + alpine version.
-FROM nginx:1.29-alpine AS production
+# I-C7: pinned by digest as well as the mainline + alpine version tag.
+FROM nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de AS production
 
 # Copy custom nginx config (listens on 8080 via the override below)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
