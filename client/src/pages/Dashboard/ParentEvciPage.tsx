@@ -19,6 +19,7 @@ import { Card } from '../../components/ui/Card';
 import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { EvciService } from '../../utils/apiService';
 import { cn } from '../../utils/cn';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 interface EvciTalep {
   _id: string;
@@ -103,7 +104,7 @@ export default function ParentEvciPage() {
       setChildren(response.children || []);
       setRequests(response.requests || []);
     } catch (err) {
-      console.error('Error fetching data:', err);
+      safeConsoleError('Error fetching data:', err);
       setError('Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.');
     } finally {
       setIsLoading(false);
@@ -157,7 +158,7 @@ export default function ParentEvciPage() {
       );
       toast.success('Evci talebi onaylandı');
     } catch (err) {
-      console.error('Error approving request:', err);
+      safeConsoleError('Error approving request:', err);
       toast.error('Onaylama sırasında bir hata oluştu');
     }
   };
@@ -195,7 +196,7 @@ export default function ParentEvciPage() {
       setRejectingId(null);
       setRejectReason('');
     } catch (err) {
-      console.error('Error rejecting request:', err);
+      safeConsoleError('Error rejecting request:', err);
       toast.error('Reddetme sırasında bir hata oluştu');
     }
   };

@@ -26,6 +26,7 @@ import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { Input } from '../../components/ui/Input';
 import { EvciService, UserService } from '../../utils/apiService';
 import { cn } from '../../utils/cn';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 interface EvciTalep {
   _id: string;
@@ -153,7 +154,7 @@ export default function AdminEvciListPage() {
         setStudents(Array.isArray(studentsData) ? (studentsData as Student[]) : []);
       }
     } catch (err) {
-      if (import.meta.env.DEV) console.error('Error fetching data:', err);
+      if (import.meta.env.DEV) safeConsoleError('Error fetching data:', err);
       toast.error('Veriler yüklenirken hata oluştu');
     } finally {
       setIsLoading(false);
@@ -196,7 +197,7 @@ export default function AdminEvciListPage() {
         setNewReq({ willGo: true });
       }
     } catch (err) {
-      if (import.meta.env.DEV) console.error('Error creating evci request:', err);
+      if (import.meta.env.DEV) safeConsoleError('Error creating evci request:', err);
       toast.error('Evci talebi oluşturulurken hata oluştu');
     } finally {
       setIsSubmitting(false);
@@ -219,7 +220,7 @@ export default function AdminEvciListPage() {
         toast.success('Evci talebi başarıyla silindi');
       }
     } catch (err) {
-      if (import.meta.env.DEV) console.error('Error deleting evci request:', err);
+      if (import.meta.env.DEV) safeConsoleError('Error deleting evci request:', err);
       toast.error('Evci talebi silinirken hata oluştu');
     }
   }, []);
@@ -250,7 +251,7 @@ export default function AdminEvciListPage() {
         await fetchData(page);
       }
     } catch (err) {
-      if (import.meta.env.DEV) console.error('Error bulk updating:', err);
+      if (import.meta.env.DEV) safeConsoleError('Error bulk updating:', err);
       toast.error('Toplu güncelleme sırasında hata oluştu');
     }
   };
@@ -273,7 +274,7 @@ export default function AdminEvciListPage() {
       window.URL.revokeObjectURL(url);
       toast.success(`${format.toUpperCase()} dosyası indirildi`);
     } catch (err) {
-      if (import.meta.env.DEV) console.error('Error exporting:', err);
+      if (import.meta.env.DEV) safeConsoleError('Error exporting:', err);
       toast.error('Dışa aktarma sırasında hata oluştu');
     }
   };
@@ -291,7 +292,7 @@ export default function AdminEvciListPage() {
           await fetchData(page);
         }
       } catch (err) {
-        if (import.meta.env.DEV) console.error('Error admin action:', err);
+        if (import.meta.env.DEV) safeConsoleError('Error admin action:', err);
         toast.error('İşlem sırasında hata oluştu');
       }
     },
@@ -317,7 +318,7 @@ export default function AdminEvciListPage() {
         setOverrideReason('');
       }
     } catch (err) {
-      if (import.meta.env.DEV) console.error('Error setting override:', err);
+      if (import.meta.env.DEV) safeConsoleError('Error setting override:', err);
       toast.error('Override ayarlanırken hata oluştu');
     }
   };

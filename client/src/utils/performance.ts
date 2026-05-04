@@ -3,6 +3,7 @@
  */
 
 import { useEffect } from 'react';
+import { safeConsoleWarn, safeConsoleLog } from '../utils/safeLogger';
 
 interface PerformanceMetric {
   name: string;
@@ -78,7 +79,7 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
       });
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
     } catch (e) {
-      console.warn('LCP tracking not supported', e);
+      safeConsoleWarn('LCP tracking not supported', e);
     }
 
     // FID - First Input Delay
@@ -99,7 +100,7 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
       });
       fidObserver.observe({ entryTypes: ['first-input'] });
     } catch (e) {
-      console.warn('FID tracking not supported', e);
+      safeConsoleWarn('FID tracking not supported', e);
     }
 
     // CLS - Cumulative Layout Shift
@@ -122,7 +123,7 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
       });
       clsObserver.observe({ entryTypes: ['layout-shift'] });
     } catch (e) {
-      console.warn('CLS tracking not supported', e);
+      safeConsoleWarn('CLS tracking not supported', e);
     }
 
     // FCP - First Contentful Paint
@@ -144,7 +145,7 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
       });
       fcpObserver.observe({ entryTypes: ['paint'] });
     } catch (e) {
-      console.warn('FCP tracking not supported', e);
+      safeConsoleWarn('FCP tracking not supported', e);
     }
   }
 }
@@ -210,7 +211,7 @@ export function logPerformanceMetrics() {
     const metrics = getPerformanceMetrics();
     console.group('🚀 Performance Metrics');
     Object.entries(metrics).forEach(([key, value]) => {
-      console.log(`${key}: ${value.toFixed(2)}ms`);
+      safeConsoleLog(`${key}: ${value.toFixed(2)}ms`);
     });
     console.groupEnd();
   }
@@ -228,7 +229,7 @@ export function usePerformanceMonitor(componentName: string) {
     return () => {
       const renderTime = performance.now() - startTime;
       if (import.meta.env.DEV && renderTime > 16) {
-        console.log(`[Performance] ${componentName} rendered in ${renderTime.toFixed(2)}ms`);
+        safeConsoleLog(`[Performance] ${componentName} rendered in ${renderTime.toFixed(2)}ms`);
       }
     };
   });

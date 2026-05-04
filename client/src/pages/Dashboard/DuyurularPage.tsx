@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 
 import './DuyurularPage.css';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 interface Announcement {
   _id?: string;
@@ -40,12 +41,12 @@ export default function DuyurularPage() {
         }
 
         if (error) {
-          console.error('Error fetching announcements:', error);
+          safeConsoleError('Error fetching announcements:', error);
         }
 
         setAnnouncements(data);
       } catch (error) {
-        console.error('Error fetching announcements:', error);
+        safeConsoleError('Error fetching announcements:', error);
         setAnnouncements([]);
         toast.error('Duyurular yüklenirken hata oluştu');
       } finally {
@@ -70,13 +71,13 @@ export default function DuyurularPage() {
         // Refresh announcements
         const { data, error: fetchError } = await AnnouncementService.getAnnouncements();
         if (fetchError) {
-          console.error('Error fetching announcements:', fetchError);
+          safeConsoleError('Error fetching announcements:', fetchError);
         } else {
           setAnnouncements(Array.isArray(data) ? (data as Announcement[]) : []);
         }
       }
     } catch (error: unknown) {
-      console.error('Duyuru silme hatası:', error);
+      safeConsoleError('Duyuru silme hatası:', error);
       toast.error((error as any)?.response?.data?.error || 'Duyuru silinirken hata oluştu');
     }
   };
@@ -198,7 +199,7 @@ export default function DuyurularPage() {
                       const { data: fetchData, error: fetchError } =
                         await AnnouncementService.getAnnouncements();
                       if (fetchError) {
-                        console.error('Error fetching announcements:', fetchError);
+                        safeConsoleError('Error fetching announcements:', fetchError);
                       } else {
                         setAnnouncements(
                           Array.isArray(fetchData) ? (fetchData as Announcement[]) : [],
@@ -209,7 +210,7 @@ export default function DuyurularPage() {
                       toast.success('Duyuru başarıyla eklendi');
                     }
                   } catch (error) {
-                    console.error('Error creating announcement:', error);
+                    safeConsoleError('Error creating announcement:', error);
                     toast.error('Duyuru eklenirken hata oluştu');
                   }
                 }}

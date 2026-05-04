@@ -7,6 +7,7 @@ import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { Input } from '../../components/ui/Input';
 import { ScheduleService } from '../../utils/apiService';
 import { cn } from '../../utils/cn';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 interface ScheduleItem {
   id: string;
@@ -90,7 +91,7 @@ export default function SchedulePage() {
         setSchedule(Array.isArray(data) ? (data as ScheduleItem[]) : []);
       }
     } catch (err) {
-      console.error('Error fetching schedule:', err);
+      safeConsoleError('Error fetching schedule:', err);
       setError('Ders programı yüklenirken hata oluştu');
     } finally {
       setLoading(false);

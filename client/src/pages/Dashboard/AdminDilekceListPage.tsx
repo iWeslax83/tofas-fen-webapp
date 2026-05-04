@@ -12,6 +12,7 @@ import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { Input } from '../../components/ui/Input';
 import { apiClient } from '../../utils/api';
 import { cn } from '../../utils/cn';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 interface Dilekce {
   _id: string;
@@ -175,7 +176,7 @@ const AdminDilekceListPage: React.FC = () => {
         setDilekceler(response.data.dilekceler || []);
       }
     } catch (error) {
-      console.error('Error loading dilekce:', error);
+      safeConsoleError('Error loading dilekce:', error);
       toast.error('Dilekçeler yüklenemedi');
     } finally {
       setLoading(false);
@@ -196,7 +197,7 @@ const AdminDilekceListPage: React.FC = () => {
           setSelected(null);
         }
       } catch (error: unknown) {
-        console.error('Error updating status:', error);
+        safeConsoleError('Error updating status:', error);
         const msg =
           (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
           'İşlem başarısız';

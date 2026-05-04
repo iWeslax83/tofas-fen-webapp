@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { SecureAPI } from '../utils/api';
 import { useAuthContext } from '../contexts/AuthContext';
+import { safeConsoleError, safeConsoleWarn } from '../utils/safeLogger';
 
 interface User {
   id: string;
@@ -43,7 +44,7 @@ export function useAuthGuard(allowedRoles: string[] = []) {
 
         // If specific roles are required, check them
         if (allowedRoles.length > 0 && user.rol && !allowedRoles.includes(user.rol)) {
-          console.warn(
+          safeConsoleWarn(
             `User role ${user.rol || 'undefined'} not in allowed roles: ${allowedRoles.join(', ')}`,
           );
           navigate(`/${user.rol || 'login'}`, { replace: true });
@@ -66,7 +67,7 @@ export function useAuthGuard(allowedRoles: string[] = []) {
     try {
       await SecureAPI.logout();
     } catch (error) {
-      console.error('\u00c7\u0131k\u0131\u015f i\u015flemi ba\u015far\u0131s\u0131z:', error);
+      safeConsoleError('\u00c7\u0131k\u0131\u015f i\u015flemi ba\u015far\u0131s\u0131z:', error);
     } finally {
       // Use context logout to clear user data and redirect to login
       contextLogout();

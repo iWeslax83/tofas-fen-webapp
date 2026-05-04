@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { DormitoryService } from '../../utils/apiService';
 import { cn } from '../../utils/cn';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 interface MealList {
   _id: string;
@@ -150,7 +151,7 @@ export default function MealListPage() {
         await fetchMealLists();
       }
     } catch (err) {
-      console.error('Error uploading file:', err);
+      safeConsoleError('Error uploading file:', err);
       toast.error('Dosya yüklenirken hata oluştu');
     } finally {
       setUploading(false);
@@ -176,7 +177,7 @@ export default function MealListPage() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Error downloading file:', err);
+      safeConsoleError('Error downloading file:', err);
       toast.error('Dosya indirilirken hata oluştu');
     }
   };
