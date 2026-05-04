@@ -14,6 +14,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({ className, ...p
       'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
       'text-[var(--ink)] placeholder:text-[var(--ink-dim)]',
       'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+      'focus-visible:outline-2 focus-visible:outline-[var(--state)] focus-visible:outline-offset-2',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       'transition-colors',
       className,
