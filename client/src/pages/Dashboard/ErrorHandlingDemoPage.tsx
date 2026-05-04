@@ -3,6 +3,7 @@ import { Bug, Wifi, Shield, Server, AlertTriangle, RefreshCw, Zap } from 'lucide
 import { useErrorHandler, ErrorType, ErrorSeverity, AppError } from '../../utils/errorHandling';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import './ErrorHandlingDemoPage.css';
+import { safeConsoleLog } from '../../utils/safeLogger';
 
 const ErrorHandlingDemoPage: React.FC = () => {
   const [activeSection, setActiveSection] = useState('network');
@@ -16,7 +17,7 @@ const ErrorHandlingDemoPage: React.FC = () => {
     { id: 'client', name: 'İstemci Hataları', icon: '💻', color: '#8b5cf6' },
     { id: 'validation', name: 'Doğrulama Hataları', icon: '⚠️', color: '#f59e0b' },
     { id: 'retry', name: 'Retry Mekanizması', icon: '🔄', color: '#10b981' },
-    { id: 'custom', name: 'Özel Hatalar', icon: '🎯', color: '#ec4899' }
+    { id: 'custom', name: 'Özel Hatalar', icon: '🎯', color: '#ec4899' },
   ];
 
   const simulateNetworkError = () => {
@@ -61,10 +62,10 @@ const ErrorHandlingDemoPage: React.FC = () => {
           return 'Success!';
         },
         { component: 'ErrorDemo', action: 'retryTest' },
-        3
+        3,
       );
     } catch {
-      console.log('Retry operation failed after all attempts');
+      safeConsoleLog('Retry operation failed after all attempts');
     } finally {
       setIsLoading(false);
     }
@@ -75,7 +76,7 @@ const ErrorHandlingDemoPage: React.FC = () => {
       'Bu özel bir hata mesajıdır',
       ErrorType.UNKNOWN,
       ErrorSeverity.MEDIUM,
-      { component: 'ErrorDemo', action: 'customTest' }
+      { component: 'ErrorDemo', action: 'customTest' },
     );
     handleError(customError, { component: 'ErrorDemo', action: 'customTest' });
   };
@@ -86,7 +87,10 @@ const ErrorHandlingDemoPage: React.FC = () => {
         return (
           <div className="demo-section">
             <h3>Ağ Hataları</h3>
-            <p>İnternet bağlantısı sorunlarını simüle eder. Bu hatalar genellikle otomatik olarak tekrar denenir.</p>
+            <p>
+              İnternet bağlantısı sorunlarını simüle eder. Bu hatalar genellikle otomatik olarak
+              tekrar denenir.
+            </p>
             <div className="demo-controls">
               <button onClick={simulateNetworkError} className="demo-button">
                 <Wifi className="icon-small" />
@@ -100,7 +104,9 @@ const ErrorHandlingDemoPage: React.FC = () => {
         return (
           <div className="demo-section">
             <h3>Kimlik Doğrulama Hataları</h3>
-            <p>Oturum süresi dolması veya yetki sorunlarını simüle eder. Bu hatalar retry edilmez.</p>
+            <p>
+              Oturum süresi dolması veya yetki sorunlarını simüle eder. Bu hatalar retry edilmez.
+            </p>
             <div className="demo-controls">
               <button onClick={simulateAuthError} className="demo-button">
                 <Shield className="icon-small" />
@@ -114,7 +120,10 @@ const ErrorHandlingDemoPage: React.FC = () => {
         return (
           <div className="demo-section">
             <h3>Sunucu Hataları</h3>
-            <p>Sunucu tarafında oluşan hataları simüle eder. Bu hatalar sınırlı sayıda tekrar denenir.</p>
+            <p>
+              Sunucu tarafında oluşan hataları simüle eder. Bu hatalar sınırlı sayıda tekrar
+              denenir.
+            </p>
             <div className="demo-controls">
               <button onClick={simulateServerError} className="demo-button">
                 <Server className="icon-small" />
@@ -158,11 +167,7 @@ const ErrorHandlingDemoPage: React.FC = () => {
             <h3>Retry Mekanizması</h3>
             <p>Başarısız işlemleri otomatik olarak tekrar deneme mekanizmasını test eder.</p>
             <div className="demo-controls">
-              <button
-                onClick={simulateRetryOperation}
-                className="demo-button"
-                disabled={isLoading}
-              >
+              <button onClick={simulateRetryOperation} className="demo-button" disabled={isLoading}>
                 {isLoading ? (
                   <RefreshCw className="icon-small animate-spin" />
                 ) : (
@@ -192,16 +197,10 @@ const ErrorHandlingDemoPage: React.FC = () => {
     }
   };
 
-  const breadcrumb = [
-    { label: 'Ana Sayfa', path: '/admin' },
-    { label: 'Error Handling Demo' }
-  ];
+  const breadcrumb = [{ label: 'Ana Sayfa', path: '/admin' }, { label: 'Error Handling Demo' }];
 
   return (
-    <ModernDashboardLayout
-      pageTitle="Error Handling Demo"
-      breadcrumb={breadcrumb}
-    >
+    <ModernDashboardLayout pageTitle="Error Handling Demo" breadcrumb={breadcrumb}>
       <div className="error-handling-demo-page">
         {/* Navigation */}
         <nav className="demo-nav">
@@ -219,9 +218,7 @@ const ErrorHandlingDemoPage: React.FC = () => {
         </nav>
 
         {/* Content */}
-        <div className="demo-content-wrapper">
-          {renderSection()}
-        </div>
+        <div className="demo-content-wrapper">{renderSection()}</div>
 
         {/* Error Statistics */}
         <div className="error-stats">

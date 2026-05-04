@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useUIStore } from '../stores/uiStore';
 import { safeConsoleError } from '../utils/safeLogger';
+import { safeConsoleWarn } from '../utils/safeLogger';
 
 /**
  * Performance monitoring and optimization hooks
@@ -20,8 +21,11 @@ export const useRenderPerformance = (componentName: string) => {
     return () => {
       const renderTime = performance.now() - renderStart.current;
 
-      if (import.meta.env.DEV && renderTime > 16) { // More than one frame (60fps)
-        console.warn(`[Performance] ${componentName} render took ${renderTime.toFixed(2)}ms (render #${renderCount.current})`);
+      if (import.meta.env.DEV && renderTime > 16) {
+        // More than one frame (60fps)
+        safeConsoleWarn(
+          `[Performance] ${componentName} render took ${renderTime.toFixed(2)}ms (render #${renderCount.current})`,
+        );
       }
     };
   });
@@ -32,7 +36,7 @@ export const useRenderPerformance = (componentName: string) => {
  */
 export const useDebounce = <T extends (...args: unknown[]) => unknown>(
   callback: T,
-  delay: number
+  delay: number,
 ): T => {
   const timeoutRef = useRef<number | undefined>(undefined);
 
@@ -47,7 +51,7 @@ export const useDebounce = <T extends (...args: unknown[]) => unknown>(
         (callback as any)(...args);
       }, delay);
     },
-    [callback, delay]
+    [callback, delay],
   ) as unknown as T;
 };
 
@@ -56,7 +60,7 @@ export const useDebounce = <T extends (...args: unknown[]) => unknown>(
  */
 export const useThrottle = <T extends (...args: unknown[]) => unknown>(
   callback: T,
-  delay: number
+  delay: number,
 ): T => {
   const lastCallRef = useRef<number>(0);
 
@@ -70,7 +74,7 @@ export const useThrottle = <T extends (...args: unknown[]) => unknown>(
         (callback as any)(...args);
       }
     },
-    [callback, delay]
+    [callback, delay],
   ) as unknown as T;
 };
 
@@ -79,7 +83,7 @@ export const useThrottle = <T extends (...args: unknown[]) => unknown>(
  */
 export const useMemoizedCallback = <T extends (...args: any[]) => any>(
   callback: T,
-  deps: React.DependencyList
+  deps: React.DependencyList,
 ): T => {
   // Use useCallback with provided deps to produce a stable memoized function
   // This avoids reading/updating refs during render and preserves behavior
@@ -97,45 +101,47 @@ export const useMemoizedCallback = <T extends (...args: any[]) => any>(
 export const usePerformanceMetrics = () => {
   const { setGlobalLoading } = useUIStore();
 
-  const measureAsync = useCallback(async <T>(
-    name: string,
-    asyncFn: () => Promise<T>,
-    showLoading: boolean = false
-  ): Promise<T> => {
-    const startTime = performance.now();
+  const measureAsync = useCallback(
+    async <T>(
+      name: string,
+      asyncFn: () => Promise<T>,
+      showLoading: boolean = false,
+    ): Promise<T> => {
+      const startTime = performance.now();
 
-    if (showLoading) {
-      setGlobalLoading(true, `Loading ${name}...`);
-    }
-
-    try {
-      const result = await asyncFn();
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-
-      // Log slow operations in development
-      if (import.meta.env.DEV && duration > 1000) {
-        console.warn(`[Performance] Slow operation detected: ${name} took ${duration.toFixed(2)}ms`);
-      }
-
-      return result;
-    } catch (error) {
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-
-      safeConsoleError(`[Performance] ${name} failed after ${duration.toFixed(2)}ms:`, error);
-      throw error;
-    } finally {
       if (showLoading) {
-        setGlobalLoading(false);
+        setGlobalLoading(true, `Loading ${name}...`);
       }
-    }
-  }, [setGlobalLoading]);
 
-  const measureSync = useCallback(<T>(
-    name: string,
-    syncFn: () => T
-  ): T => {
+      try {
+        const result = await asyncFn();
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+
+        // Log slow operations in development
+        if (import.meta.env.DEV && duration > 1000) {
+          safeConsoleWarn(
+            `[Performance] Slow operation detected: ${name} took ${duration.toFixed(2)}ms`,
+          );
+        }
+
+        return result;
+      } catch (error) {
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+
+        safeConsoleError(`[Performance] ${name} failed after ${duration.toFixed(2)}ms:`, error);
+        throw error;
+      } finally {
+        if (showLoading) {
+          setGlobalLoading(false);
+        }
+      }
+    },
+    [setGlobalLoading],
+  );
+
+  const measureSync = useCallback(<T>(name: string, syncFn: () => T): T => {
     const startTime = performance.now();
 
     try {
@@ -143,8 +149,9 @@ export const usePerformanceMetrics = () => {
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      if (import.meta.env.DEV && duration > 16) { // More than one frame
-        console.warn(`[Performance] Slow sync operation: ${name} took ${duration.toFixed(2)}ms`);
+      if (import.meta.env.DEV && duration > 16) {
+        // More than one frame
+        safeConsoleWarn(`[Performance] Slow sync operation: ${name} took ${duration.toFixed(2)}ms`);
       }
 
       return result;
@@ -159,7 +166,7 @@ export const usePerformanceMetrics = () => {
 
   return {
     measureAsync,
-    measureSync
+    measureSync,
   };
 };
 
@@ -169,19 +176,19 @@ export const usePerformanceMetrics = () => {
 export const useVirtualization = (
   itemCount: number,
   itemHeight: number,
-  containerHeight: number
+  containerHeight: number,
 ) => {
   const [scrollTop, setScrollTop] = useState(0);
 
   const visibleStart = Math.floor(scrollTop / itemHeight);
   const visibleEnd = Math.min(
     visibleStart + Math.ceil(containerHeight / itemHeight) + 1,
-    itemCount
+    itemCount,
   );
 
   const visibleItems = Array.from(
     { length: visibleEnd - visibleStart },
-    (_, index) => visibleStart + index
+    (_, index) => visibleStart + index,
   );
 
   const totalHeight = itemCount * itemHeight;
@@ -191,7 +198,7 @@ export const useVirtualization = (
     visibleItems,
     totalHeight,
     offsetY,
-    setScrollTop
+    setScrollTop,
   };
 };
 
@@ -238,7 +245,7 @@ export const useImageOptimization = () => {
         return;
       }
 
-      setLoadingImages(prev => {
+      setLoadingImages((prev) => {
         const next = new Set(prev);
         next.add(src);
         return next;
@@ -246,12 +253,12 @@ export const useImageOptimization = () => {
 
       const img = new Image();
       img.onload = () => {
-        setLoadedImages(prev => {
+        setLoadedImages((prev) => {
           const next = new Set(prev);
           next.add(src);
           return next;
         });
-        setLoadingImages(prev => {
+        setLoadingImages((prev) => {
           const newSet = new Set(prev);
           newSet.delete(src);
           return newSet;
@@ -259,7 +266,7 @@ export const useImageOptimization = () => {
         resolve();
       };
       img.onerror = () => {
-        setLoadingImages(prev => {
+        setLoadingImages((prev) => {
           const newSet = new Set(prev);
           newSet.delete(src);
           return newSet;
@@ -281,7 +288,7 @@ export const useImageOptimization = () => {
   return {
     loadImage,
     isImageLoaded,
-    isImageLoading
+    isImageLoading,
   };
 };
 
@@ -302,7 +309,7 @@ export const useMemoryMonitor = () => {
         setMemoryInfo({
           usedJSHeapSize: memory.usedJSHeapSize,
           totalJSHeapSize: memory.totalJSHeapSize,
-          jsHeapSizeLimit: memory.jsHeapSizeLimit
+          jsHeapSizeLimit: memory.jsHeapSizeLimit,
         });
       }
     };
@@ -325,6 +332,6 @@ export const useMemoryMonitor = () => {
   return {
     memoryInfo,
     getMemoryUsagePercentage,
-    isMemoryHigh
+    isMemoryHigh,
   };
 };

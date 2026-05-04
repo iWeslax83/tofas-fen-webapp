@@ -6,6 +6,7 @@ import { Upload, Plus } from 'lucide-react'; // ArrowLeft removed
 import { useAuthContext } from '../../contexts/AuthContext';
 import { UserRole } from '../../@types';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 // User type is now available from AuthContext
 
@@ -116,7 +117,7 @@ const NotEkleme: React.FC = () => {
         }
       }
     } catch (error: unknown) {
-      console.error('Upload hatası:', error);
+      safeConsoleError('Upload hatası:', error);
       const errorMessage =
         (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
         'Dosya yükleme hatası';
@@ -151,7 +152,7 @@ const NotEkleme: React.FC = () => {
 
       toast.success('Şablon başarıyla indirildi!');
     } catch (error) {
-      console.error('Şablon indirme hatası:', error);
+      safeConsoleError('Şablon indirme hatası:', error);
       toast.error('Şablon indirilemedi');
     }
   };
@@ -224,7 +225,7 @@ const NotEkleme: React.FC = () => {
         });
       }
     } catch (error: unknown) {
-      console.error('Not ekleme hatası:', error);
+      safeConsoleError('Not ekleme hatası:', error);
       toast.error('Not eklenemedi');
     } finally {
       setIsAddingNote(false);

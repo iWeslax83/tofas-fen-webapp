@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { DormitoryService } from '../../utils/apiService';
 import { cn } from '../../utils/cn';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 interface SupervisorList {
   _id: string;
@@ -85,7 +86,7 @@ export default function SupervisorListPage() {
         setSupervisorLists((data as SupervisorList[]) || []);
       }
     } catch (err) {
-      console.error('Error fetching supervisor lists:', err);
+      safeConsoleError('Error fetching supervisor lists:', err);
       toast.error('Belletmen listeleri yüklenirken hata oluştu');
     } finally {
       setLoading(false);
@@ -129,7 +130,7 @@ export default function SupervisorListPage() {
         await fetchSupervisorLists();
       }
     } catch (err) {
-      console.error('Error uploading file:', err);
+      safeConsoleError('Error uploading file:', err);
       toast.error('Dosya yüklenirken hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setUploading(false);
@@ -149,7 +150,7 @@ export default function SupervisorListPage() {
       link.remove();
       toast.success('Dosya indiriliyor…');
     } catch (err) {
-      console.error('Error downloading file:', err);
+      safeConsoleError('Error downloading file:', err);
       toast.error('Dosya indirilirken hata oluştu. Lütfen tekrar deneyin.');
     }
   };
@@ -165,7 +166,7 @@ export default function SupervisorListPage() {
         setSupervisorLists((lists) => lists.filter((l) => l._id !== id));
       }
     } catch (err) {
-      console.error('Error deleting supervisor list:', err);
+      safeConsoleError('Error deleting supervisor list:', err);
       toast.error('Liste silinirken hata oluştu');
     }
   }, []);

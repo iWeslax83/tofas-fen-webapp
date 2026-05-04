@@ -5,6 +5,7 @@ import { ChevronRight } from 'lucide-react';
 import ModernDashboardLayout from './ModernDashboardLayout';
 import { useAuthContext } from '../contexts/AuthContext';
 import { dashboardButtons } from '../pages/Dashboard/dashboardButtonConfig';
+import { safeConsoleError, safeConsoleWarn } from '../utils/safeLogger';
 
 interface PageButton {
   id: string;
@@ -43,7 +44,7 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
     if (!authLoading && user && shouldValidateRole && user.rol !== role) {
       // Navigation would be handled by parent component
       if (import.meta.env.DEV)
-        console.warn(`[DashboardPanel] User role ${user.rol} not allowed for ${role} panel`);
+        safeConsoleWarn(`[DashboardPanel] User role ${user.rol} not allowed for ${role} panel`);
     }
   }, [authLoading, user, shouldValidateRole, role]);
 
@@ -82,7 +83,7 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({
           setIsLoading(false);
         } catch (error) {
           if (import.meta.env.DEV)
-            console.error(`[DashboardPanel] Error loading ${role} panel data:`, error);
+            safeConsoleError(`[DashboardPanel] Error loading ${role} panel data:`, error);
           setIsLoading(false);
         }
       }

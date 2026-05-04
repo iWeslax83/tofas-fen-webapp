@@ -28,6 +28,7 @@ import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { EvciService } from '../../utils/apiService';
 import { toast } from 'sonner';
 import './EvciStatsPage.css';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 interface EvciStats {
   summary: { total: number; going: number; notGoing: number };
@@ -59,7 +60,7 @@ export default function EvciStatsPage() {
         setStats(data as EvciStats);
       }
     } catch (err) {
-      console.error('Error fetching stats:', err);
+      safeConsoleError('Error fetching stats:', err);
       toast.error('İstatistikler yüklenirken hata oluştu');
     } finally {
       setIsLoading(false);

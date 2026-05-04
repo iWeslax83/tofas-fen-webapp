@@ -13,6 +13,7 @@ import { Input } from '../../components/ui/Input';
 import { apiClient } from '../../utils/api';
 import { extractError } from '../../utils/apiResponseHandler';
 import { cn } from '../../utils/cn';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 interface Dilekce {
   _id: string;
@@ -140,7 +141,7 @@ const DilekcePage: React.FC = () => {
         setDilekceler(response.data.dilekceler || []);
       }
     } catch (error) {
-      console.error('Error loading dilekce:', error);
+      safeConsoleError('Error loading dilekce:', error);
       toast.error('Dilekçeler yüklenemedi');
     } finally {
       setLoading(false);
@@ -156,7 +157,7 @@ const DilekcePage: React.FC = () => {
         loadDilekceler();
       }
     } catch (error) {
-      console.error('Error deleting dilekce:', error);
+      safeConsoleError('Error deleting dilekce:', error);
       const message = extractError(error) || 'Dilekçe silinemedi';
       toast.error(message);
     }
@@ -352,7 +353,7 @@ function NewDilekceModal({ onClose, onCreated }: NewDilekceModalProps) {
         onCreated();
       }
     } catch (error) {
-      console.error('Error submitting dilekce:', error);
+      safeConsoleError('Error submitting dilekce:', error);
       const message = extractError(error) || 'Dilekçe oluşturulamadı';
       toast.error(message);
     } finally {

@@ -4,6 +4,7 @@ import { AppError, ErrorType, ErrorSeverity, ErrorContext } from '../utils/AppEr
 import { User } from '../types/user';
 import { TokenManager } from '../utils/security';
 import { AxiosResponse } from 'axios';
+import { safeConsoleError } from '../utils/safeLogger';
 
 // F-H7: module-level in-flight lock for the 2FA resend flow. Prevents a
 // double-click from racing two requests where the second one could clobber
@@ -221,7 +222,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
       });
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error('Logout API call failed:', error);
+        safeConsoleError('Logout API call failed:', error);
       }
     }
   },

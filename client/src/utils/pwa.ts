@@ -13,7 +13,7 @@ export const registerServiceWorker = async (): Promise<void> => {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js');
       // Service Worker registered successfully
-      
+
       // Handle updates
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
@@ -26,10 +26,10 @@ export const registerServiceWorker = async (): Promise<void> => {
           });
         }
       });
-      
+
       return;
     } catch (error) {
-      console.error('Service Worker registration failed:', error);
+      safeConsoleError('Service Worker registration failed:', error);
     }
   }
 };
@@ -39,7 +39,7 @@ export const handleInstallPrompt = () => {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e as PWAInstallPromptEvent;
-    
+
     // Show install button or notification
     showInstallPrompt();
   });
@@ -54,7 +54,7 @@ export const showInstallPrompt = () => {
       installButton.style.display = 'block';
       installButton.addEventListener('click', async () => {
         deferredPrompt?.prompt();
-        const { outcome } = await deferredPrompt?.userChoice || { outcome: 'dismissed' };
+        const { outcome } = (await deferredPrompt?.userChoice) || { outcome: 'dismissed' };
         // Install prompt handled
         deferredPrompt = null;
         installButton.style.display = 'none';
@@ -66,7 +66,8 @@ export const showInstallPrompt = () => {
 // Show update notification
 export const showUpdateNotification = () => {
   const updateNotification = document.createElement('div');
-  updateNotification.className = 'fixed top-4 right-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg z-50';
+  updateNotification.className =
+    'fixed top-4 right-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg z-50';
   updateNotification.innerHTML = `
     <div class="flex items-center space-x-2">
       <span>Yeni güncelleme mevcut!</span>
@@ -78,13 +79,13 @@ export const showUpdateNotification = () => {
       </button>
     </div>
   `;
-  
+
   document.body.appendChild(updateNotification);
-  
+
   document.getElementById('update-button')?.addEventListener('click', () => {
     window.location.reload();
   });
-  
+
   document.getElementById('close-update')?.addEventListener('click', () => {
     updateNotification.remove();
   });
@@ -92,14 +93,18 @@ export const showUpdateNotification = () => {
 
 // Check if app is installed
 export const isAppInstalled = (): boolean => {
-  return window.matchMedia('(display-mode: standalone)').matches ||
-         (window.navigator as any).standalone === true;
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true
+  );
 };
-
 
 // Background sync
 export const registerBackgroundSync = async (tag: string) => {
-  if ('serviceWorker' in navigator && 'sync' in (window.ServiceWorkerRegistration.prototype as any)) {
+  if (
+    'serviceWorker' in navigator &&
+    'sync' in (window.ServiceWorkerRegistration.prototype as any)
+  ) {
     const registration = await navigator.serviceWorker.ready;
     await (registration as any).sync.register(tag);
   }
@@ -118,7 +123,7 @@ export const storeOfflineAction = async (action: {
     offlineActions.push(action);
     localStorage.setItem('offlineActions', JSON.stringify(offlineActions));
   } catch (error) {
-    console.error('Failed to store offline action:', error);
+    safeConsoleError('Failed to store offline action:', error);
   }
 };
 
@@ -126,7 +131,7 @@ export const getOfflineActions = (): any[] => {
   try {
     return JSON.parse(localStorage.getItem('offlineActions') || '[]');
   } catch (error) {
-    console.error('Failed to get offline actions:', error);
+    safeConsoleError('Failed to get offline actions:', error);
     return [];
   }
 };
@@ -134,10 +139,10 @@ export const getOfflineActions = (): any[] => {
 export const removeOfflineAction = (id: string) => {
   try {
     const offlineActions = getOfflineActions();
-    const filteredActions = offlineActions.filter(action => action.id !== id);
+    const filteredActions = offlineActions.filter((action) => action.id !== id);
     localStorage.setItem('offlineActions', JSON.stringify(filteredActions));
   } catch (error) {
-    console.error('Failed to remove offline action:', error);
+    safeConsoleError('Failed to remove offline action:', error);
   }
 };
 
@@ -203,3 +208,4 @@ export const usePWAInstall = () => {
 
 // Import React hooks
 import { useState, useEffect } from 'react';
+import { safeConsoleError } from '../utils/safeLogger';

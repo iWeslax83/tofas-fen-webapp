@@ -9,6 +9,7 @@ import AddUserModal from './AddUserModal';
 import EditUserModal from './EditUserModal';
 
 import './SenkronizasyonPage.css';
+import { safeConsoleError, safeConsoleWarn } from '../../utils/safeLogger';
 
 interface UserType {
   id: string;
@@ -77,7 +78,7 @@ export default function SenkronizasyonPage() {
   // Only allow admins
   useEffect(() => {
     if (!authLoading && user && user.rol !== 'admin') {
-      console.warn(`User role ${user.rol || 'undefined'} not allowed for senkronizasyon page`);
+      safeConsoleWarn(`User role ${user.rol || 'undefined'} not allowed for senkronizasyon page`);
       navigate(`/${user.rol || 'login'}`, { replace: true });
       return;
     }
@@ -106,7 +107,7 @@ export default function SenkronizasyonPage() {
       }
     } catch (error) {
       if (!isMountedRef.current) return;
-      console.error('Error fetching users:', error);
+      safeConsoleError('Error fetching users:', error);
       setError('Kullanıcılar yüklenirken bir hata oluştu');
     } finally {
       if (isMountedRef.current) setLoading(false);
@@ -157,7 +158,7 @@ export default function SenkronizasyonPage() {
     try {
       const { error } = await UserService.deleteUser(userId);
       if (error) {
-        console.error('Kullanıcı silinirken hata oluştu:', error);
+        safeConsoleError('Kullanıcı silinirken hata oluştu:', error);
         alert('Kullanıcı silinirken hata oluştu: ' + error);
       } else {
         setUsers((users) => users.filter((u) => u.id !== userId));
@@ -171,7 +172,7 @@ export default function SenkronizasyonPage() {
         alert('Kullanıcı başarıyla silindi.');
       }
     } catch (error) {
-      console.error('Kullanıcı silinirken hata oluştu:', error);
+      safeConsoleError('Kullanıcı silinirken hata oluştu:', error);
       alert('Kullanıcı silinirken hata oluştu.');
     }
   };

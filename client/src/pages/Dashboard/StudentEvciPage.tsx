@@ -22,6 +22,7 @@ import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { Input } from '../../components/ui/Input';
 import { EvciService } from '../../utils/apiService';
 import { cn } from '../../utils/cn';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 interface EvciTalep {
   _id?: string;
@@ -133,7 +134,7 @@ const StudentEvciPage = () => {
         }
       }
     } catch (err) {
-      console.error('Error fetching submission window:', err);
+      safeConsoleError('Error fetching submission window:', err);
     }
   }, []);
 
@@ -145,13 +146,13 @@ const StudentEvciPage = () => {
         const { data, error: apiError } = await EvciService.getEvciRequestsByStudent(authUser.id);
         if (apiError) {
           setError('Evci talepleri yüklenirken hata oluştu.');
-          console.error('Error fetching evci requests:', apiError);
+          safeConsoleError('Error fetching evci requests:', apiError);
         } else {
           setRequests((data as EvciTalep[]) || []);
         }
       } catch (err) {
         setError('Evci talepleri yüklenirken bir hata oluştu.');
-        console.error('Error fetching evci requests:', err);
+        safeConsoleError('Error fetching evci requests:', err);
       } finally {
         setLoading(false);
       }
@@ -293,7 +294,7 @@ const StudentEvciPage = () => {
         toast.success('Talep iptal edildi.');
       }
     } catch (err) {
-      console.error('Error deleting evci request:', err);
+      safeConsoleError('Error deleting evci request:', err);
       toast.error('Talep silinirken hata oluştu.');
     }
   };
@@ -367,7 +368,7 @@ const StudentEvciPage = () => {
         }
       }
     } catch (err) {
-      console.error('Error submitting evci request:', err);
+      safeConsoleError('Error submitting evci request:', err);
       toast.error('Talep işlenirken hata oluştu.');
     }
   };

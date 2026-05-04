@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  FileText, 
-  Upload, 
-  Download, 
-  Search, 
+import {
+  FileText,
+  Upload,
+  Download,
+  Search,
   Edit,
   Trash2,
   Plus,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react';
 import { NotesService } from '../../utils/apiService';
 // import { SecureAPI } from '../../utils/api'; // Not used
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 interface Note {
   _id: string;
@@ -60,14 +61,14 @@ export default function AdvancedNotesPage() {
     semester: '',
     academicYear: '',
     lesson: '',
-    grade: ''
+    grade: '',
   });
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
   const [showBulkEdit, setShowBulkEdit] = useState(false);
   const [bulkEditData, setBulkEditData] = useState({
     semester: '',
     academicYear: '',
-    lesson: ''
+    lesson: '',
   });
   const [processing, setProcessing] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -90,7 +91,7 @@ export default function AdvancedNotesPage() {
       setStats(statsData as NotesStats);
       setImportFormats(formatsData as ImportFormat[]);
     } catch (err) {
-      console.error('Error fetching data:', err);
+      safeConsoleError('Error fetching data:', err);
       setError('Veriler yüklenirken hata oluştu');
     } finally {
       setLoading(false);
@@ -123,15 +124,14 @@ export default function AdvancedNotesPage() {
       setSelectedNotes([]);
       setShowBulkEdit(false);
       setBulkEditData({ semester: '', academicYear: '', lesson: '' });
-      
+
       // Refresh data
       setTimeout(() => {
         fetchData();
         setSuccessMessage(null);
       }, 2000);
-
     } catch (err) {
-      console.error('Error bulk updating notes:', err);
+      safeConsoleError('Error bulk updating notes:', err);
       setError('Notlar güncellenirken hata oluştu');
     } finally {
       setProcessing(false);
@@ -154,15 +154,14 @@ export default function AdvancedNotesPage() {
       }
 
       setSuccessMessage('Not başarıyla silindi');
-      
+
       // Refresh data
       setTimeout(() => {
         fetchData();
         setSuccessMessage(null);
       }, 2000);
-
     } catch (err) {
-      console.error('Error deleting note:', err);
+      safeConsoleError('Error deleting note:', err);
       setError('Not silinirken hata oluştu');
     } finally {
       setProcessing(false);
@@ -173,7 +172,9 @@ export default function AdvancedNotesPage() {
     try {
       const response = await NotesService.getTemplates();
       // Handle file download
-      const blob = new Blob([(response as { data: string }).data], { type: 'application/octet-stream' });
+      const blob = new Blob([(response as { data: string }).data], {
+        type: 'application/octet-stream',
+      });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -181,16 +182,17 @@ export default function AdvancedNotesPage() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Error downloading template:', err);
+      safeConsoleError('Error downloading template:', err);
       setError('Şablon indirilirken hata oluştu');
     }
   };
 
-  const filteredNotes = notes.filter(note => {
-    const matchesSearch = note.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         note.lesson.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         note.studentId.toLowerCase().includes(searchTerm.toLowerCase());
-    
+  const filteredNotes = notes.filter((note) => {
+    const matchesSearch =
+      note.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.lesson.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.studentId.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesSemester = !filters.semester || note.semester === filters.semester;
     const matchesYear = !filters.academicYear || note.academicYear === filters.academicYear;
     const matchesLesson = !filters.lesson || note.lesson === filters.lesson;
@@ -201,12 +203,18 @@ export default function AdvancedNotesPage() {
 
   const getGradeColor = (grade: string) => {
     switch (grade) {
-      case 'A': return 'advanced-notes-grade-badge-a';
-      case 'B': return 'advanced-notes-grade-badge-b';
-      case 'C': return 'advanced-notes-grade-badge-c';
-      case 'D': return 'advanced-notes-grade-badge-d';
-      case 'F': return 'advanced-notes-grade-badge-f';
-      default: return 'advanced-notes-grade-badge-default';
+      case 'A':
+        return 'advanced-notes-grade-badge-a';
+      case 'B':
+        return 'advanced-notes-grade-badge-b';
+      case 'C':
+        return 'advanced-notes-grade-badge-c';
+      case 'D':
+        return 'advanced-notes-grade-badge-d';
+      case 'F':
+        return 'advanced-notes-grade-badge-f';
+      default:
+        return 'advanced-notes-grade-badge-default';
     }
   };
 
@@ -229,361 +237,375 @@ export default function AdvancedNotesPage() {
 
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${user?.rol || 'student'}` },
-    { label: 'Gelişmiş Not Yönetimi' }
+    { label: 'Gelişmiş Not Yönetimi' },
   ];
 
   return (
-    <ModernDashboardLayout
-      pageTitle="Gelişmiş Not Yönetimi"
-      breadcrumb={breadcrumb}
-    >
+    <ModernDashboardLayout pageTitle="Gelişmiş Not Yönetimi" breadcrumb={breadcrumb}>
       <div className="advanced-notes-container">
         <div className="advanced-notes-content">
           {/* Header */}
           <div className="advanced-notes-header">
             <div>
               <h1 className="advanced-notes-title">Gelişmiş Not Yönetimi</h1>
-              <p className="advanced-notes-subtitle">Notları toplu olarak yönetin, istatistikleri görüntüleyin ve içe aktarın</p>
+              <p className="advanced-notes-subtitle">
+                Notları toplu olarak yönetin, istatistikleri görüntüleyin ve içe aktarın
+              </p>
             </div>
-          <div className="advanced-notes-actions">
-            <button
-              onClick={() => setShowBulkEdit(true)}
-              disabled={selectedNotes.length === 0}
-              className="advanced-notes-button advanced-notes-button-yellow"
+            <div className="advanced-notes-actions">
+              <button
+                onClick={() => setShowBulkEdit(true)}
+                disabled={selectedNotes.length === 0}
+                className="advanced-notes-button advanced-notes-button-yellow"
+              >
+                <Edit className="h-4 w-4" />
+                Toplu Düzenle ({selectedNotes.length})
+              </button>
+              <button className="advanced-notes-button advanced-notes-button-blue">
+                <Plus className="h-4 w-4" />
+                Yeni Not
+              </button>
+            </div>
+          </div>
+
+          {/* Success/Error Messages */}
+          {successMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="advanced-notes-message advanced-notes-message-success"
             >
-              <Edit className="h-4 w-4" />
-              Toplu Düzenle ({selectedNotes.length})
-            </button>
-            <button className="advanced-notes-button advanced-notes-button-blue">
-              <Plus className="h-4 w-4" />
-              Yeni Not
-            </button>
-          </div>
-        </div>
+              <CheckCircle className="h-5 w-5 icon" />
+              <span className="text">{successMessage}</span>
+            </motion.div>
+          )}
 
-        {/* Success/Error Messages */}
-        {successMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="advanced-notes-message advanced-notes-message-success"
-          >
-            <CheckCircle className="h-5 w-5 icon" />
-            <span className="text">{successMessage}</span>
-          </motion.div>
-        )}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="advanced-notes-message advanced-notes-message-error"
+            >
+              <AlertTriangle className="h-5 w-5 icon" />
+              <span className="text">{error}</span>
+            </motion.div>
+          )}
 
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="advanced-notes-message advanced-notes-message-error"
-          >
-            <AlertTriangle className="h-5 w-5 icon" />
-            <span className="text">{error}</span>
-          </motion.div>
-        )}
+          {/* Search and Filters */}
+          <div className="advanced-notes-filters">
+            <div className="advanced-notes-filters-header">
+              <h2 className="advanced-notes-filters-title">
+                <Search className="h-5 w-5" />
+                Filtreler
+              </h2>
+            </div>
 
+            <div className="advanced-notes-filters-content">
+              <div className="advanced-notes-filters-grid">
+                {/* Search */}
+                <div className="advanced-notes-filters-search">
+                  <div className="relative">
+                    <Search className="advanced-notes-filters-search-icon" />
+                    <input
+                      type="text"
+                      placeholder="Öğrenci, ders veya ID ara..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="advanced-notes-filters-input"
+                    />
+                  </div>
+                </div>
 
-        {/* Search and Filters */}
-        <div className="advanced-notes-filters">
-          <div className="advanced-notes-filters-header">
-            <h2 className="advanced-notes-filters-title">
-              <Search className="h-5 w-5" />
-              Filtreler
-            </h2>
-          </div>
-          
-          <div className="advanced-notes-filters-content">
-            <div className="advanced-notes-filters-grid">
-              {/* Search */}
-              <div className="advanced-notes-filters-search">
-                <div className="relative">
-                  <Search className="advanced-notes-filters-search-icon" />
-                  <input
-                    type="text"
-                    placeholder="Öğrenci, ders veya ID ara..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="advanced-notes-filters-input"
-                  />
+                {/* Semester Filter */}
+                <div>
+                  <select
+                    value={filters.semester}
+                    onChange={(e) => setFilters({ ...filters, semester: e.target.value })}
+                    className="advanced-notes-filters-select"
+                  >
+                    <option value="">Tüm Dönemler</option>
+                    {Array.from(new Set(notes.map((note) => note.semester))).map((semester) => (
+                      <option key={semester} value={semester}>
+                        {semester}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Academic Year Filter */}
+                <div>
+                  <select
+                    value={filters.academicYear}
+                    onChange={(e) => setFilters({ ...filters, academicYear: e.target.value })}
+                    className="advanced-notes-filters-select"
+                  >
+                    <option value="">Tüm Yıllar</option>
+                    {Array.from(new Set(notes.map((note) => note.academicYear))).map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Grade Filter */}
+                <div>
+                  <select
+                    value={filters.grade}
+                    onChange={(e) => setFilters({ ...filters, grade: e.target.value })}
+                    className="advanced-notes-filters-select"
+                  >
+                    <option value="">Tüm Notlar</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="F">F</option>
+                  </select>
                 </div>
               </div>
-
-              {/* Semester Filter */}
-              <div>
-                <select
-                  value={filters.semester}
-                  onChange={(e) => setFilters({ ...filters, semester: e.target.value })}
-                  className="advanced-notes-filters-select"
-                >
-                  <option value="">Tüm Dönemler</option>
-                  {Array.from(new Set(notes.map(note => note.semester))).map(semester => (
-                    <option key={semester} value={semester}>{semester}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Academic Year Filter */}
-              <div>
-                <select
-                  value={filters.academicYear}
-                  onChange={(e) => setFilters({ ...filters, academicYear: e.target.value })}
-                  className="advanced-notes-filters-select"
-                >
-                  <option value="">Tüm Yıllar</option>
-                  {Array.from(new Set(notes.map(note => note.academicYear))).map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Grade Filter */}
-              <div>
-                <select
-                  value={filters.grade}
-                  onChange={(e) => setFilters({ ...filters, grade: e.target.value })}
-                  className="advanced-notes-filters-select"
-                >
-                  <option value="">Tüm Notlar</option>
-                  <option value="A">A</option>
-                  <option value="B">B</option>
-                  <option value="C">C</option>
-                  <option value="D">D</option>
-                  <option value="F">F</option>
-                </select>
-              </div>
             </div>
           </div>
-        </div>
 
-        {/* Import Formats */}
-        <div className="advanced-notes-import">
-          <div className="advanced-notes-import-header">
-            <h2 className="advanced-notes-import-title">
-              <Upload className="h-5 w-5" />
-              İçe Aktarma Formatları
-            </h2>
-          </div>
-          
-          <div className="advanced-notes-import-content">
-            <div className="advanced-notes-import-grid">
-              {importFormats.map((format, index) => (
-                <motion.div
-                  key={format.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="advanced-notes-import-card"
-                >
-                  <div className="advanced-notes-import-card-header">
-                    <span className="advanced-notes-import-card-name">{format.name}</span>
-                    <span className="advanced-notes-import-card-extension">{format.extension}</span>
-                  </div>
-                  
-                  <p className="advanced-notes-import-card-description">{format.description}</p>
-                  
-                  <button
-                    onClick={() => handleDownloadTemplate(format)}
-                    className="advanced-notes-import-card-button"
-                  >
-                    <Download className="h-4 w-4" />
-                    Şablon İndir
-                  </button>
-                </motion.div>
-              ))}
+          {/* Import Formats */}
+          <div className="advanced-notes-import">
+            <div className="advanced-notes-import-header">
+              <h2 className="advanced-notes-import-title">
+                <Upload className="h-5 w-5" />
+                İçe Aktarma Formatları
+              </h2>
             </div>
-          </div>
-        </div>
 
-        {/* Notes Table */}
-        <div className="advanced-notes-table-container">
-          <div className="advanced-notes-table-header">
-            <h2 className="advanced-notes-table-title">
-              <FileText className="h-5 w-5" />
-              Notlar ({filteredNotes.length})
-            </h2>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="advanced-notes-table">
-              <thead>
-                <tr>
-                  <th>
-                    <input
-                      type="checkbox"
-                      checked={selectedNotes.length === filteredNotes.length}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedNotes(filteredNotes.map(note => note._id));
-                        } else {
-                          setSelectedNotes([]);
-                        }
-                      }}
-                      className="advanced-notes-table-checkbox"
-                    />
-                  </th>
-                  <th>Öğrenci</th>
-                  <th>Ders</th>
-                  <th>Dönem</th>
-                  <th>Vize</th>
-                  <th>Final</th>
-                  <th>Ortalama</th>
-                  <th>Harf Notu</th>
-                  <th>İşlemler</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredNotes.map((note, index) => (
-                  <motion.tr
-                    key={note._id}
+            <div className="advanced-notes-import-content">
+              <div className="advanced-notes-import-grid">
+                {importFormats.map((format, index) => (
+                  <motion.div
+                    key={format.name}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="advanced-notes-import-card"
                   >
-                    <td>
+                    <div className="advanced-notes-import-card-header">
+                      <span className="advanced-notes-import-card-name">{format.name}</span>
+                      <span className="advanced-notes-import-card-extension">
+                        {format.extension}
+                      </span>
+                    </div>
+
+                    <p className="advanced-notes-import-card-description">{format.description}</p>
+
+                    <button
+                      onClick={() => handleDownloadTemplate(format)}
+                      className="advanced-notes-import-card-button"
+                    >
+                      <Download className="h-4 w-4" />
+                      Şablon İndir
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Notes Table */}
+          <div className="advanced-notes-table-container">
+            <div className="advanced-notes-table-header">
+              <h2 className="advanced-notes-table-title">
+                <FileText className="h-5 w-5" />
+                Notlar ({filteredNotes.length})
+              </h2>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="advanced-notes-table">
+                <thead>
+                  <tr>
+                    <th>
                       <input
                         type="checkbox"
-                        checked={selectedNotes.includes(note._id)}
+                        checked={selectedNotes.length === filteredNotes.length}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setSelectedNotes([...selectedNotes, note._id]);
+                            setSelectedNotes(filteredNotes.map((note) => note._id));
                           } else {
-                            setSelectedNotes(selectedNotes.filter(id => id !== note._id));
+                            setSelectedNotes([]);
                           }
                         }}
                         className="advanced-notes-table-checkbox"
                       />
-                    </td>
-                    <td>
-                      <div className="advanced-notes-table-student">
-                        <div className="advanced-notes-table-student-name">{note.studentName}</div>
-                        <div className="advanced-notes-table-student-id">{note.studentId}</div>
-                      </div>
-                    </td>
-                    <td>{note.lesson}</td>
-                    <td>{note.semester} - {note.academicYear}</td>
-                    <td>{note.midterm}</td>
-                    <td>{note.final}</td>
-                    <td>{note.average?.toFixed(2)}</td>
-                    <td>
-                      <span className={`advanced-notes-grade-badge ${getGradeColor(note.grade)}`}>
-                        {note.grade}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="advanced-notes-table-actions">
-                        <button
-                          onClick={() => {/* Handle edit */}}
-                          className="advanced-notes-table-action-button"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteNote(note._id)}
-                          disabled={processing}
-                          className="advanced-notes-table-action-button advanced-notes-table-action-button-delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Bulk Edit Modal */}
-        {showBulkEdit && (
-          <div className="advanced-notes-modal-overlay">
-            <div className="advanced-notes-modal">
-              <h2 className="advanced-notes-modal-title">
-                Toplu Düzenle ({selectedNotes.length} not)
-              </h2>
-              
-              <div className="advanced-notes-modal-form">
-                <div>
-                  <label className="advanced-notes-modal-label">
-                    Dönem
-                  </label>
-                  <select
-                    value={bulkEditData.semester}
-                    onChange={(e) => setBulkEditData({ ...bulkEditData, semester: e.target.value })}
-                    className="advanced-notes-modal-select"
-                  >
-                    <option value="">Değiştirme</option>
-                    {Array.from(new Set(notes.map(note => note.semester))).map(semester => (
-                      <option key={semester} value={semester}>{semester}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="advanced-notes-modal-label">
-                    Akademik Yıl
-                  </label>
-                  <select
-                    value={bulkEditData.academicYear}
-                    onChange={(e) => setBulkEditData({ ...bulkEditData, academicYear: e.target.value })}
-                    className="advanced-notes-modal-select"
-                  >
-                    <option value="">Değiştirme</option>
-                    {Array.from(new Set(notes.map(note => note.academicYear))).map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="advanced-notes-modal-label">
-                    Ders
-                  </label>
-                  <select
-                    value={bulkEditData.lesson}
-                    onChange={(e) => setBulkEditData({ ...bulkEditData, lesson: e.target.value })}
-                    className="advanced-notes-modal-select"
-                  >
-                    <option value="">Değiştirme</option>
-                    {Array.from(new Set(notes.map(note => note.lesson))).map(lesson => (
-                      <option key={lesson} value={lesson}>{lesson}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="advanced-notes-modal-actions">
-                <button
-                  onClick={() => {
-                    setShowBulkEdit(false);
-                    setBulkEditData({ semester: '', academicYear: '', lesson: '' });
-                  }}
-                  className="advanced-notes-modal-button advanced-notes-modal-button-cancel"
-                >
-                  İptal
-                </button>
-                <button
-                  onClick={handleBulkUpdate}
-                  disabled={processing}
-                  className="advanced-notes-modal-button advanced-notes-modal-button-update"
-                >
-                  {processing ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Güncelleniyor...
-                    </>
-                  ) : (
-                    <>
-                      <Edit className="h-4 w-4" />
-                      Güncelle
-                    </>
-                  )}
-                </button>
-              </div>
+                    </th>
+                    <th>Öğrenci</th>
+                    <th>Ders</th>
+                    <th>Dönem</th>
+                    <th>Vize</th>
+                    <th>Final</th>
+                    <th>Ortalama</th>
+                    <th>Harf Notu</th>
+                    <th>İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredNotes.map((note, index) => (
+                    <motion.tr
+                      key={note._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedNotes.includes(note._id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedNotes([...selectedNotes, note._id]);
+                            } else {
+                              setSelectedNotes(selectedNotes.filter((id) => id !== note._id));
+                            }
+                          }}
+                          className="advanced-notes-table-checkbox"
+                        />
+                      </td>
+                      <td>
+                        <div className="advanced-notes-table-student">
+                          <div className="advanced-notes-table-student-name">
+                            {note.studentName}
+                          </div>
+                          <div className="advanced-notes-table-student-id">{note.studentId}</div>
+                        </div>
+                      </td>
+                      <td>{note.lesson}</td>
+                      <td>
+                        {note.semester} - {note.academicYear}
+                      </td>
+                      <td>{note.midterm}</td>
+                      <td>{note.final}</td>
+                      <td>{note.average?.toFixed(2)}</td>
+                      <td>
+                        <span className={`advanced-notes-grade-badge ${getGradeColor(note.grade)}`}>
+                          {note.grade}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="advanced-notes-table-actions">
+                          <button
+                            onClick={() => {
+                              /* Handle edit */
+                            }}
+                            className="advanced-notes-table-action-button"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteNote(note._id)}
+                            disabled={processing}
+                            className="advanced-notes-table-action-button advanced-notes-table-action-button-delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        )}
+
+          {/* Bulk Edit Modal */}
+          {showBulkEdit && (
+            <div className="advanced-notes-modal-overlay">
+              <div className="advanced-notes-modal">
+                <h2 className="advanced-notes-modal-title">
+                  Toplu Düzenle ({selectedNotes.length} not)
+                </h2>
+
+                <div className="advanced-notes-modal-form">
+                  <div>
+                    <label className="advanced-notes-modal-label">Dönem</label>
+                    <select
+                      value={bulkEditData.semester}
+                      onChange={(e) =>
+                        setBulkEditData({ ...bulkEditData, semester: e.target.value })
+                      }
+                      className="advanced-notes-modal-select"
+                    >
+                      <option value="">Değiştirme</option>
+                      {Array.from(new Set(notes.map((note) => note.semester))).map((semester) => (
+                        <option key={semester} value={semester}>
+                          {semester}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="advanced-notes-modal-label">Akademik Yıl</label>
+                    <select
+                      value={bulkEditData.academicYear}
+                      onChange={(e) =>
+                        setBulkEditData({ ...bulkEditData, academicYear: e.target.value })
+                      }
+                      className="advanced-notes-modal-select"
+                    >
+                      <option value="">Değiştirme</option>
+                      {Array.from(new Set(notes.map((note) => note.academicYear))).map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="advanced-notes-modal-label">Ders</label>
+                    <select
+                      value={bulkEditData.lesson}
+                      onChange={(e) => setBulkEditData({ ...bulkEditData, lesson: e.target.value })}
+                      className="advanced-notes-modal-select"
+                    >
+                      <option value="">Değiştirme</option>
+                      {Array.from(new Set(notes.map((note) => note.lesson))).map((lesson) => (
+                        <option key={lesson} value={lesson}>
+                          {lesson}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="advanced-notes-modal-actions">
+                  <button
+                    onClick={() => {
+                      setShowBulkEdit(false);
+                      setBulkEditData({ semester: '', academicYear: '', lesson: '' });
+                    }}
+                    className="advanced-notes-modal-button advanced-notes-modal-button-cancel"
+                  >
+                    İptal
+                  </button>
+                  <button
+                    onClick={handleBulkUpdate}
+                    disabled={processing}
+                    className="advanced-notes-modal-button advanced-notes-modal-button-update"
+                  >
+                    {processing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Güncelleniyor...
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="h-4 w-4" />
+                        Güncelle
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </ModernDashboardLayout>

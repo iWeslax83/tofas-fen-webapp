@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardPanel from '../../components/DashboardPanel';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { safeConsoleWarn } from '../../utils/safeLogger';
 
 const AdminPanel: React.FC = () => {
   const { user } = useAuthContext();
@@ -10,7 +11,7 @@ const AdminPanel: React.FC = () => {
   React.useEffect(() => {
     if (user && user.rol !== 'admin') {
       if (import.meta.env.DEV)
-        console.warn(
+        safeConsoleWarn(
           `[AdminPanel] User role ${user.rol || 'undefined'} not allowed for admin panel`,
         );
       navigate(`/${user.rol || 'login'}`);
