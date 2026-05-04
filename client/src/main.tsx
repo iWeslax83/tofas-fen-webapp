@@ -10,6 +10,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { toast, Toaster } from 'sonner';
 import { initializeMonitoring } from './utils/monitoring';
 import * as Sentry from '@sentry/react';
+import { safeConsoleError, safeConsoleLog } from 'utils/safeLogger';
 
 // Fix for "process is not defined" error
 if (typeof window !== 'undefined' && !(window as any).process) {
@@ -81,7 +82,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
         });
       })
       .catch((error) => {
-        console.error('[SW] Service Worker kaydı başarısız:', error);
+        safeConsoleError('[SW] Service Worker kaydı başarısız:', error);
       });
   });
 }
@@ -102,7 +103,9 @@ if (import.meta.env.PROD) {
 
       // Log to console in development
       if (import.meta.env.DEV) {
-        console.log(`[Performance] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`);
+        safeConsoleLog(
+          `[Performance] ${metric.name}: ${metric.value.toFixed(2)} (${metric.rating})`,
+        );
       }
     });
   });

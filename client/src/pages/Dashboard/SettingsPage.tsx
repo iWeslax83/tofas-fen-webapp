@@ -23,6 +23,7 @@ import { SecureAPI } from '../../utils/api';
 import { API_ENDPOINTS } from '../../utils/apiEndpoints';
 import { toast } from 'sonner';
 import './SettingsPage.css';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 interface ApiErrorData {
   message?: string;
@@ -199,7 +200,7 @@ export default function SettingsPage() {
         toast.success('Push bildirimleri kapatıldı');
       }
     } catch (error) {
-      console.error('Push toggle error:', error);
+      safeConsoleError('Push toggle error:', error);
       toast.error('Push bildirim ayarı değiştirilirken hata oluştu');
     } finally {
       setPushLoading(false);

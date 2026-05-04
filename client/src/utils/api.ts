@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { TokenManager, CSRFProtection, RateLimiter, InputSanitizer } from './security';
+import { safeConsoleWarn } from '../utils/safeLogger';
 
 // API Response Types
 export interface ApiResponse<T = unknown> {
@@ -230,7 +231,7 @@ const createSecureApiClient = (): AxiosInstance => {
         if (retryCount < maxRetries) {
           originalRequest._retryCount = retryCount + 1;
           const retryAfter = Math.min(serverRetryAfter || Math.pow(2, retryCount), 10);
-          console.warn(
+          safeConsoleWarn(
             `Çok fazla istek. ${retryCount + 1}/${maxRetries} yeniden deneme ${retryAfter} saniye sonra...`,
           );
 

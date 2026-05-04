@@ -1,4 +1,5 @@
 import { AxiosResponse } from 'axios';
+import { safeConsoleWarn } from '../utils/safeLogger';
 
 // Standard API response structure
 export interface ApiResponse<T = unknown> {
@@ -66,7 +67,7 @@ export class ApiResponseHandler {
 
       return fallback;
     } catch (error) {
-      console.warn('Failed to extract data from response:', error);
+      safeConsoleWarn('Failed to extract data from response:', error);
       return fallback;
     }
   }

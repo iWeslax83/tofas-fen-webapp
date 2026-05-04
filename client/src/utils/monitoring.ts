@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/react';
+import { safeConsoleLog } from '../utils/safeLogger';
 
 // Performance monitoring interface
 interface PerformanceMetrics {
@@ -132,7 +133,7 @@ export class PerformanceMonitor {
 
         // Log to console in development
         if (process.env.NODE_ENV === 'development') {
-          console.log('Page Load Time:', pageLoadTime, 'ms');
+          safeConsoleLog('Page Load Time:', pageLoadTime, 'ms');
         }
 
         // Send to monitoring service in production
@@ -252,7 +253,7 @@ export class Analytics {
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('Analytics Event:', userEvent);
+      safeConsoleLog('Analytics Event:', userEvent);
     }
 
     // Send to analytics service in production

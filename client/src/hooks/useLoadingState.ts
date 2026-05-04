@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { LoadingState } from '../@types';
+import { safeConsoleError } from '../utils/safeLogger';
 
 interface UseLoadingStateReturn {
   loading: LoadingState;
@@ -12,10 +13,7 @@ interface UseLoadingStateReturn {
   setSuccess: () => void;
   setError: () => void;
   reset: () => void;
-  withLoading: <T>(
-    asyncFn: () => Promise<T>,
-    errorMessage?: string
-  ) => Promise<T | null>;
+  withLoading: <T>(asyncFn: () => Promise<T>, errorMessage?: string) => Promise<T | null>;
 }
 
 export const useLoadingState = (): UseLoadingStateReturn => {
@@ -41,20 +39,21 @@ export const useLoadingState = (): UseLoadingStateReturn => {
     setLoadingState('idle');
   }, []);
 
-  const withLoading = useCallback(async <T>(
-    asyncFn: () => Promise<T>,
-  ): Promise<T | null> => {
-    try {
-      startLoading();
-      const result = await asyncFn();
-      setSuccess();
-      return result;
-    } catch (error: unknown) {
-      setError();
-      console.error('Error in withLoading:', error);
-      return null;
-    }
-  }, [startLoading, setSuccess, setError]);
+  const withLoading = useCallback(
+    async <T>(asyncFn: () => Promise<T>): Promise<T | null> => {
+      try {
+        startLoading();
+        const result = await asyncFn();
+        setSuccess();
+        return result;
+      } catch (error: unknown) {
+        setError();
+        safeConsoleError('Error in withLoading:', error);
+        return null;
+      }
+    },
+    [startLoading, setSuccess, setError],
+  );
 
   return {
     loading,
@@ -67,6 +66,6 @@ export const useLoadingState = (): UseLoadingStateReturn => {
     setSuccess,
     setError,
     reset,
-    withLoading
+    withLoading,
   };
 };

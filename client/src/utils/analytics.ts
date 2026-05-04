@@ -5,6 +5,7 @@
  */
 
 import { apiClient } from './api';
+import { safeConsoleError } from '../utils/safeLogger';
 
 interface FeedbackData {
   type: 'bug' | 'feature' | 'improvement' | 'other';
@@ -68,12 +69,14 @@ class Analytics {
   /**
    * Submit feedback
    */
-  async submitFeedback(feedback: FeedbackData): Promise<{ success: boolean; data?: any; error?: string }> {
+  async submitFeedback(
+    feedback: FeedbackData,
+  ): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
       const response = await apiClient.post('/api/analytics/feedback', feedback);
       return response.data;
     } catch (error) {
-      console.error('Error submitting feedback:', error);
+      safeConsoleError('Error submitting feedback:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -93,11 +96,10 @@ class Analytics {
       const response = await apiClient.get(`/api/analytics/metrics?${params.toString()}`);
       return response.data?.success ? response.data.data : null;
     } catch (error) {
-      console.error('Error fetching metrics:', error);
+      safeConsoleError('Error fetching metrics:', error);
       return null;
     }
   }
-
 }
 
 // Singleton instance

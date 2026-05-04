@@ -17,6 +17,7 @@ import {
   CalendarSettingsModal,
 } from './calendar';
 import type { CalendarEvent, Calendar, ViewType } from './calendar';
+import { safeConsoleError } from '../../utils/safeLogger';
 
 const VIEWS: { key: ViewType; label: string }[] = [
   { key: 'month', label: 'Ay' },
@@ -81,7 +82,7 @@ export default function CalendarPage() {
       const eventsData = (eventsResponse as { data: CalendarEvent[] }).data;
       setEvents(eventsData);
     } catch (err) {
-      console.error('Error fetching calendar data:', err);
+      safeConsoleError('Error fetching calendar data:', err);
       setError('Takvim verileri yüklenirken hata oluştu');
     } finally {
       setLoading(false);
