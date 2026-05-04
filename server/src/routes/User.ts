@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { Request, Response } from 'express';
 import { User } from '../models';
 import bcrypt from 'bcryptjs';
+import { BCRYPT_COST } from '../modules/auth/services/authService';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import multer from 'multer';
 import { verifyUploadedFiles } from '../config/upload';
@@ -627,7 +628,7 @@ router.post('/', authenticateJWT, authorizeRoles(['admin']), async (req, res) =>
   if (existingUser) {
     return res.status(400).json({ error: 'User already exists (duplicate)' });
   }
-  const hashedPassword = await bcrypt.hash(sifre, 10);
+  const hashedPassword = await bcrypt.hash(sifre, BCRYPT_COST);
   const user = new User({
     id,
     adSoyad,
@@ -716,7 +717,7 @@ router.post('/create', authenticateJWT, authorizeRoles(['admin']), async (req, r
   }
 
   // Hash password with bcrypt
-  const hashedPassword = await bcrypt.hash(sifre, 10);
+  const hashedPassword = await bcrypt.hash(sifre, BCRYPT_COST);
 
   const user = new User({
     id,
