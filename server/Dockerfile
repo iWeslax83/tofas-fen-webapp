@@ -2,12 +2,12 @@
 # docker-compose sets context: ./server, so the build context IS the server
 # workspace — don't nest under /app/server, just build in /app directly.
 #
-# I-C7: pin to a specific minor + alpine patch version instead of the
-# floating `node:20-alpine` tag, so an upstream re-tag can't silently
-# change our base layer. Dependabot (.github/dependabot.yml) tracks the
-# `docker` ecosystem and will open PRs when a newer pinned version is
-# available. Promote to a digest pin (`@sha256:...`) on first prod cut.
-FROM node:20.19-alpine3.20 AS base
+# I-C7: pinned both by tag (node:20.19-alpine3.20) and by digest. The
+# `tag@sha256:...` form makes Docker verify that the digest matches what
+# we audited; an upstream re-tag can no longer silently change our base
+# layer. Dependabot (.github/dependabot.yml) understands this format and
+# will open PRs to bump tag + digest atomically.
+FROM node:20.19-alpine3.20@sha256:3bc9a4c4cc25cfde1e8f946341c85f333c36517aafda829b4bb7e785e9b5995c AS base
 WORKDIR /app
 COPY package*.json ./
 
