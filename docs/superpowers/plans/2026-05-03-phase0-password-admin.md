@@ -905,31 +905,21 @@ Expected: all tests pass. If a test fails because a fixture asserted `user.sifre
 
 - [ ] **Step 5: Add an explicit test for the schema default**
 
-Append to `server/src/test/models/User.test.ts` (or create if it doesn't exist):
+The project's vitest setup at `server/src/test/setup.ts` already opens a real Mongo connection (via `process.env.MONGODB_URI`) and clears all collections between tests. Use that pattern — do NOT introduce `mongodb-memory-server` (it's not a project dep and the existing test DB workflow is sufficient).
+
+Append to `server/src/test/models/User.test.ts` (or create the file if it doesn't exist):
 
 ```ts
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import mongoose from 'mongoose';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { User } from '../../models/User';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import bcrypt from 'bcryptjs';
 
 describe('User schema sifre `select: false` (N-H4)', () => {
-  let mongo: MongoMemoryServer;
-
-  beforeAll(async () => {
-    mongo = await MongoMemoryServer.create();
-    await mongoose.connect(mongo.getUri());
-  });
-
-  afterAll(async () => {
-    await mongoose.disconnect();
-    await mongo.stop();
-  });
-
-  it('omits sifre by default on find', async () => {
+  // The project's setup.ts beforeEach clears all collections, so seed
+  // inside a beforeAll-scoped helper that re-creates per test.
+  const seed = async () => {
     await User.create({
-      id: 't1',
+      id: 't-sifre-1',
       adSoyad: 'Test',
       rol: 'student',
       sifre: await bcrypt.hash('pw', 4),
@@ -945,19 +935,24 @@ describe('User schema sifre `select: false` (N-H4)', () => {
       isLocked: false,
       loginCount: 0,
     });
-    const u = await User.findOne({ id: 't1' });
+  };
+
+  it('omits sifre by default on find', async () => {
+    await seed();
+    const u = await User.findOne({ id: 't-sifre-1' });
     expect(u).toBeTruthy();
     expect((u as any).sifre).toBeUndefined();
   });
 
   it('returns sifre when explicitly selected', async () => {
-    const u = await User.findOne({ id: 't1' }).select('+sifre');
+    await seed();
+    const u = await User.findOne({ id: 't-sifre-1' }).select('+sifre');
     expect((u as any).sifre).toMatch(/^\$2[abxy]?\$/);
   });
 });
 ```
 
-(If `mongodb-memory-server` is not already a dev dep, install it: `cd server && npm install --save-dev mongodb-memory-server` — but check `server/package.json` first; if it's already used in other tests, no install needed.)
+If `server/src/test/models/User.test.ts` already exists, append the new `describe` block alongside the existing tests (don't replace the file).
 
 - [ ] **Step 6: Run the new model test**
 
@@ -1306,7 +1301,7 @@ describe('batch atomic transitions (N-H2)', () => {
 });
 ```
 
-(The existing `passwordAdminService.test.ts` should already have a Mongo-memory-server `beforeAll` setup; if not, copy the boilerplate from `User.test.ts` from PR #2 Task 2.7.)
+(The existing `passwordAdminService.test.ts` already shares the project's vitest setup (`server/src/test/setup.ts`) — no `mongodb-memory-server` boilerplate needed. Just append your `describe` block.)
 
 - [ ] **Step 3: Run the test**
 
