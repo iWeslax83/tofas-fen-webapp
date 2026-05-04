@@ -19,9 +19,9 @@ const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 /**
  * bcrypt cost factor. Production uses 13 (roughly 2x the CPU cost of 12).
  * Tests/dev use 10 so that test suites don't spend seconds per hash.
- * See B-H3 in CODE_REVIEW_REPORT.md.
+ * Single source of truth for the codebase — see N-M1 in CODE_REVIEW_REPORT_2026-04-29.md.
  */
-const BCRYPT_COST =
+export const BCRYPT_COST =
   process.env.NODE_ENV === 'production' ? 13 : process.env.NODE_ENV === 'test' ? 4 : 10;
 
 /**

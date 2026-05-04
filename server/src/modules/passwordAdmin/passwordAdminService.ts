@@ -6,8 +6,7 @@ import { generatePassword } from './passwordGenerator';
 import { recordPasswordEvent } from './passwordAuditService';
 import { parseClassListFile, ParsedStudentRow } from './classListParser';
 import { buildCredentialsXlsx, CredentialsRow } from './credentialsExporter';
-
-const BCRYPT_ROUNDS = process.env.NODE_ENV === 'test' ? 1 : 10;
+import { BCRYPT_COST } from '../auth/services/authService';
 
 export interface AdminContext {
   id: string;
@@ -52,7 +51,7 @@ export async function resetUserPassword(input: ResetInput): Promise<PasswordOper
   });
 
   const password = generatePassword();
-  user.sifre = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  user.sifre = await bcrypt.hash(password, BCRYPT_COST);
   user.passwordLastSetAt = new Date();
   user.tokenVersion = (user.tokenVersion ?? 0) + 1;
   await user.save();
@@ -81,7 +80,7 @@ export async function generateUserPassword(input: ResetInput): Promise<PasswordO
   });
 
   const password = generatePassword();
-  user.sifre = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  user.sifre = await bcrypt.hash(password, BCRYPT_COST);
   user.passwordLastSetAt = new Date();
   user.tokenVersion = (user.tokenVersion ?? 0) + 1;
   await user.save();
@@ -137,7 +136,7 @@ async function writeUsersForBatch(
     toWrite.map(async (r) => {
       const pw = generatePassword();
       passwords.set(r.id, pw);
-      const hash = await bcrypt.hash(pw, BCRYPT_ROUNDS);
+      const hash = await bcrypt.hash(pw, BCRYPT_COST);
       return {
         id: r.id,
         adSoyad: r.adSoyad,
@@ -296,7 +295,7 @@ export async function regenerateImportBatchPasswords(input: {
   const entries = await Promise.all(
     users.map(async (user) => {
       const pw = generatePassword();
-      const hash = await bcrypt.hash(pw, BCRYPT_ROUNDS);
+      const hash = await bcrypt.hash(pw, BCRYPT_COST);
       return { user, pw, hash };
     }),
   );

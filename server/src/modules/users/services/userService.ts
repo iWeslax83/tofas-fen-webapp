@@ -2,6 +2,7 @@ import { User } from '../../../models/User';
 import { AppError } from '../../../utils/AppError';
 import bcrypt from 'bcryptjs';
 import { safeSearchRegex } from '../../../utils/regex';
+import { BCRYPT_COST } from '../../auth/services/authService';
 
 /**
  * User Service
@@ -88,7 +89,7 @@ export class UserService {
 
     // Hash password if provided
     if (userData.sifre) {
-      userData.sifre = await bcrypt.hash(userData.sifre, 12);
+      userData.sifre = await bcrypt.hash(userData.sifre, BCRYPT_COST);
     }
 
     const user = new User(userData);
@@ -118,7 +119,7 @@ export class UserService {
 
     // Hash password if being updated
     if (updateData.sifre) {
-      updateData.sifre = await bcrypt.hash(updateData.sifre, 12);
+      updateData.sifre = await bcrypt.hash(updateData.sifre, BCRYPT_COST);
       // Increment token version to invalidate existing tokens
       updateData.tokenVersion = (user.tokenVersion || 0) + 1;
     }

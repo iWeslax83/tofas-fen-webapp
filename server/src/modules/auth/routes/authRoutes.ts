@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { AuthController } from '../controllers/authController';
-import { AuthService } from '../services/authService';
+import { AuthService, BCRYPT_COST } from '../services/authService';
 import { authenticateJWT, authorizeRoles } from '../../../utils/jwt';
 import { authLimiter } from '../../../middleware/rateLimiter';
 import { captchaMiddleware } from '../../../middleware/captcha';
@@ -323,7 +323,6 @@ router.post(
 // allowlist in middleware/auth.ts.
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
-const RESET_BCRYPT_COST = process.env.NODE_ENV === 'production' ? 13 : 10;
 
 router.post('/forgot-password', authLimiter, async (req: Request, res: Response) => {
   try {
@@ -440,7 +439,7 @@ router.post('/reset-password', authLimiter, async (req: Request, res: Response) 
       return;
     }
 
-    user.sifre = await bcrypt.hash(newPassword, RESET_BCRYPT_COST);
+    user.sifre = await bcrypt.hash(newPassword, BCRYPT_COST);
     user.passwordResetTokenHash = undefined;
     user.passwordResetExpiry = undefined;
     // Invalidate any existing sessions for this user.
