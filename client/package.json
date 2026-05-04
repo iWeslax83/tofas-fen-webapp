@@ -54,7 +54,7 @@
     "@types/yup": "^0.29.14",
     "apollo-server-express": "^3.13.0",
     "autoprefixer": "^10.4.20",
-    "axios": "^1.11.0",
+    "axios": "^1.16.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
