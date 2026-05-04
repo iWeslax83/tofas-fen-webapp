@@ -48,7 +48,7 @@
     "@sentry/react": "^9.43.0",
     "@tailwindcss/oxide-linux-x64-gnu": "^4.2.2",
     "@tailwindcss/postcss": "^4.1.18",
-    "@tanstack/react-query": "^5.83.0",
+    "@tanstack/react-query": "^5.100.9",
     "@tanstack/react-table": "^8.21.3",
     "@types/dompurify": "^3.0.5",
     "@types/yup": "^0.29.14",
