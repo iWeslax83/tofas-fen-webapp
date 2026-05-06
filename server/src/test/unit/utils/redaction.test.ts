@@ -65,4 +65,30 @@ describe('redactSensitive', () => {
     for (let i = 0; i < 8; i++) cur = cur?.nested;
     expect(cur).toBe('[DEPTH_LIMIT]');
   });
+
+  it('does not redact substring false positives', () => {
+    // tokenVersion is a counter on User; cpwd / secretSanta are not credentials.
+    // The old unanchored regex matched all of these and broke debug logging.
+    const out = redactSensitive({
+      tokenVersion: 7,
+      tokenId: 'abc',
+      cpwd: 'not-a-password',
+    });
+    expect(out).toEqual({ tokenVersion: 7, tokenId: 'abc', cpwd: 'not-a-password' });
+  });
+
+  it('redacts camelCase token variants', () => {
+    const out = redactSensitive({
+      accessToken: 'a',
+      refreshToken: 'b',
+      passwordHash: 'c',
+      'api-key': 'd',
+    });
+    expect(out).toEqual({
+      accessToken: '[REDACTED]',
+      refreshToken: '[REDACTED]',
+      passwordHash: '[REDACTED]',
+      'api-key': '[REDACTED]',
+    });
+  });
 });

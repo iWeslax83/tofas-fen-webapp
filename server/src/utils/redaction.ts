@@ -1,5 +1,24 @@
+// Match sensitive segments only at underscore (or string) boundaries so that
+// keys like `tokenVersion` or `cpwd` aren't redacted by substring overlap.
+// Bare `token` is matched only as a suffix (e.g. `token`, `accessToken`,
+// `refreshToken`) — not as a prefix (`tokenVersion`). The redactor still
+// biases toward over-redacting: any key starting with `secret_`, `password_`,
+// etc. is redacted on the assumption that a logging false-positive (one
+// debug line shows `[REDACTED]`) is preferable to a leaked credential.
 const SENSITIVE_KEY_RE =
-  /(password|sifre|pw|plaintext|token|secret|api[_-]?key|authorization|cookie)/i;
+  /(?:^|_)(?:passwords?|passwd|sifre|plaintext|secrets?|cookies?|authorization|pw|pwd|jwt|api_key|api_token)(?:_|$)|(?:^|_)tokens?$/i;
+
+function isSensitiveKey(rawKey: string): boolean {
+  // Normalize camelCase, kebab-case, and dot-separated keys to snake_case so
+  // the underscore-bounded regex above matches consistently across naming
+  // styles (e.g. accessToken, api-key, auth.token).
+  const normalized = rawKey
+    .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+    .replace(/[-.]/g, '_')
+    .toLowerCase();
+  return SENSITIVE_KEY_RE.test(normalized);
+}
+
 const REDACTED = '[REDACTED]';
 const CIRCULAR = '[CIRCULAR]';
 const DEPTH_LIMIT = '[DEPTH_LIMIT]';
@@ -19,7 +38,7 @@ function clone(value: unknown, depth: number, seen: WeakSet<object>): unknown {
 
   const out: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
-    if (SENSITIVE_KEY_RE.test(key)) {
+    if (isSensitiveKey(key)) {
       out[key] = REDACTED;
     } else {
       out[key] = clone(val, depth + 1, seen);
