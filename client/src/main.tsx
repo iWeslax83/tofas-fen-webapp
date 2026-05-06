@@ -10,7 +10,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { toast, Toaster } from 'sonner';
 import { initializeMonitoring } from './utils/monitoring';
 import * as Sentry from '@sentry/react';
-import { safeConsoleError, safeConsoleLog } from 'utils/safeLogger';
+import { safeConsoleError, safeConsoleLog } from './utils/safeLogger';
 
 // Fix for "process is not defined" error
 if (typeof window !== 'undefined' && !(window as any).process) {
