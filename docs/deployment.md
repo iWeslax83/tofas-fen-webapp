@@ -17,6 +17,9 @@ K8s manifests in `k8s/` are aspirational; secrets management for K8s is tracked 
 ```bash
 ssh root@<vps-host>
 adduser tofas && usermod -aG docker tofas
+# `tofas` needs sudo for the certbot / cp / chown calls in §5. If your policy
+# forbids granting full sudo here, skip this line and run §5 as root instead.
+usermod -aG sudo tofas
 sudo -iu tofas
 git clone https://github.com/iWeslax83/tofas-fen-webapp.git /srv/tofas-fen
 cd /srv/tofas-fen
@@ -25,10 +28,17 @@ cd /srv/tofas-fen
 ## 3. Generate secrets
 
 ```bash
-cd server && npm run generate-secrets > /tmp/secrets.txt
+cd server && (umask 077 && npm run generate-secrets > ~/secrets.txt)
+chmod 600 ~/secrets.txt
 ```
 
 This emits values for `JWT_SECRET`, `JWT_REFRESH_SECRET`, `ENCRYPTION_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`. Record them in your password manager **before** moving them into `.env`.
+
+`/tmp` has mode `1777` on Linux — any local user can read files there. Write to a mode-600 file in the user's home directory, and shred it once the values are in `.env`:
+
+```bash
+shred -u ~/secrets.txt
+```
 
 ## 4. Create `.env`
 
@@ -85,8 +95,10 @@ Verify:
 ```bash
 docker compose ps
 docker compose logs -f backend | head -50
-curl -kI https://yourdomain.tld/health
+curl -I https://yourdomain.tld/health
 ```
+
+Don't pass `-k` / `--insecure` here — silencing cert errors masks the very TLS misconfiguration this smoke test exists to catch. If certbot succeeded in §5 the request will succeed without it.
 
 ## 7. Day-2 ops
 
@@ -105,8 +117,11 @@ docker image prune -f
 Mongo:
 
 ```bash
-docker compose exec mongodb mongodump --archive --gzip \
-  -u admin -p "$MONGO_PASSWORD" --authenticationDatabase admin \
+# Pass MONGO_PASSWORD via the connection-string URI rather than `-p ...` on
+# the CLI — `-p` shows up in `ps aux` for the duration of the dump and is
+# visible to any local user.
+docker compose exec -e MP="$MONGO_PASSWORD" mongodb sh -c \
+  'mongodump --archive --gzip --uri "mongodb://admin:$MP@localhost:27017/?authSource=admin"' \
   > /srv/backups/mongo-$(date +%Y%m%d-%H%M%S).archive.gz
 ```
 
@@ -117,9 +132,14 @@ Recommended: rotate via a cron entry — keep 7 daily, 4 weekly, 12 monthly.
 ```bash
 cd /srv/tofas-fen
 git log --oneline -5
-git checkout <previous-commit>
+# Rollback onto a NAMED branch — `git checkout <sha>` puts the working tree in
+# detached HEAD, after which the next routine `git pull` silently does nothing
+# and operators can run stale code without noticing.
+git switch -c rollback-$(date +%Y%m%d-%H%M%S) <previous-commit>
 docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml --profile production up -d --build
 ```
+
+Once the incident is resolved, fast-forward back to `main` (`git switch main && git pull`) and delete the rollback branch.
 
 ### Logs
 
