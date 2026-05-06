@@ -153,4 +153,5 @@ ai-notes/
 # Generated credentials exports — never commit (N-L3 in CODE_REVIEW_REPORT_2026-04-29.md)
 credentials-*.xlsx
 credentials-*.xls
+credentials-*.csv
 local-data/
