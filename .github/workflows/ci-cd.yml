@@ -268,7 +268,7 @@ jobs:
       # `…-client:ghcr.io/.../tofas-fen-webapp:main` — invalid reference.
       - name: Extract metadata — client
         id: meta-client
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-client
           tags: |
@@ -279,7 +279,7 @@ jobs:
 
       - name: Extract metadata — server
         id: meta-server
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-server
           tags: |
