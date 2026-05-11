@@ -45,10 +45,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          # Bumped 18 → 20: jsdom's html-encoding-sniffer pulls in @exodus/bytes
-          # as ESM-only and Node 18's require() can't load ESM, so client tests
-          # blew up with ERR_REQUIRE_ESM.
-          node-version: '20'
+          # Node 22 LTS (active LTS). Keep in sync with NODE_VERSION in
+          # ci-cd.yml and the Dockerfile FROM lines in server/ and client/.
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -83,10 +82,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          # Bumped 18 → 20: jsdom's html-encoding-sniffer pulls in @exodus/bytes
-          # as ESM-only and Node 18's require() can't load ESM, so client tests
-          # blew up with ERR_REQUIRE_ESM.
-          node-version: '20'
+          # Node 22 LTS (active LTS). Keep in sync with NODE_VERSION in
+          # ci-cd.yml and the Dockerfile FROM lines in server/ and client/.
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
