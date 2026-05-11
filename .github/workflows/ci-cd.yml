@@ -7,10 +7,9 @@ on:
     branches: [main]
 
 env:
-  # Bumped from 18 → 20 because jsdom's html-encoding-sniffer now pulls in
-  # @exodus/bytes as ESM-only, which triggers ERR_REQUIRE_ESM on Node 18.
-  # Node 20 supports the synthetic require-of-ESM path that jsdom relies on.
-  NODE_VERSION: '20'
+  # Node 22 LTS (active LTS). Track Docker base images in server/Dockerfile
+  # and client/Dockerfile — keep all three in sync on Node major.
+  NODE_VERSION: '22'
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 

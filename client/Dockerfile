@@ -1,17 +1,17 @@
 # Multi-stage build for production.
 #
-# Builder stage uses node:18-slim (Debian/glibc) instead of alpine (musl) so
-# Tailwind's @tailwindcss/oxide native binding — which ships only glibc
-# binaries — can load. The production stage is still nginx:alpine (it only
-# serves pre-built static files, no native deps needed).
+# Builder stage uses node:22-bookworm-slim (Debian/glibc) instead of alpine
+# (musl) so Tailwind's @tailwindcss/oxide native binding — which ships only
+# glibc binaries — can load. The production stage is still nginx:alpine (it
+# only serves pre-built static files, no native deps needed).
 #
 # I-C7: both base images are pinned by digest in addition to the minor
 # version tag. The `tag@sha256:...` form makes Docker verify that the
-# digest matches what we audited; an upstream re-tag of `node:18.20-slim`
+# digest matches what we audited; an upstream re-tag of `node:22.22-bookworm-slim`
 # can no longer silently change our base layer. Dependabot's docker
 # updater understands this format and will open PRs to bump both the tag
 # and the digest atomically.
-FROM node:18.20-slim@sha256:f9ab18e354e6855ae56ef2b290dd225c1e51a564f87584b9bd21dd651838830e AS base
+FROM node:22.22-bookworm-slim@sha256:868499d55378719bffa87b0ed1f099591823c029b543043c09c2483468e93201 AS base
 
 # Install dependencies only when needed.
 # We copy only package.json (NOT package-lock.json) and run `npm install`
