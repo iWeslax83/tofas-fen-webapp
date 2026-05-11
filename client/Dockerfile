@@ -55,10 +55,13 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Drop the top-level `user nginx;` directive (meaningless when we're already
-# running as nginx) and move the PID file to a writable location. Then chown
-# the runtime dirs so the nginx user can write caches, logs, and the PID file.
+# running as nginx) and move the PID file to a writable location. The PID
+# directive must be matched by its leading `pid` keyword (not by the path):
+# nginx 1.27 shipped `pid /var/run/nginx.pid;`, 1.29 ships `pid /run/nginx.pid;`,
+# so a path-specific sed silently no-ops on bumps and the unprivileged nginx
+# user then can't open the original location.
 RUN sed -i '/^user  *nginx;/d' /etc/nginx/nginx.conf \
-    && sed -i 's|/var/run/nginx.pid|/tmp/nginx.pid|g' /etc/nginx/nginx.conf \
+    && sed -i 's|^pid .*;|pid /tmp/nginx.pid;|' /etc/nginx/nginx.conf \
     && chown -R nginx:nginx /var/cache/nginx /usr/share/nginx/html /etc/nginx/conf.d /var/log/nginx \
     && touch /tmp/nginx.pid \
     && chown nginx:nginx /tmp/nginx.pid
