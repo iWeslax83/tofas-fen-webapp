@@ -4,6 +4,24 @@ import type { ConnectionPoolInfo } from './types';
 
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/tofas-fen';
 
+// `mongodb+srv://` URIs always require TLS — the driver derives this from the
+// scheme by default, but passing `tls: false` overrides that and forces a
+// plaintext socket, which Atlas accepts at the TCP layer and then closes,
+// surfacing a misleading "IP whitelist" error. Honor an explicit
+// MONGODB_TLS=true/false, otherwise default TLS to true for SRV and for
+// production. Local non-SRV mongo (docker-compose box) keeps the legacy
+// no-TLS default.
+export function shouldEnableTls(
+  uri: string,
+  envTls: string | undefined,
+  nodeEnv: string | undefined,
+): boolean {
+  if (envTls === 'true') return true;
+  if (envTls === 'false') return false;
+  if (uri.startsWith('mongodb+srv://')) return true;
+  return nodeEnv === 'production';
+}
+
 // Enhanced database connection configuration for production performance
 const dbConfig: mongoose.ConnectOptions = {
   maxPoolSize: process.env.NODE_ENV === 'production' ? 50 : 20, // Higher for production
@@ -21,13 +39,11 @@ const dbConfig: mongoose.ConnectOptions = {
   readPreference: 'primary',
   readConcern: { level: 'local' as const },
   monitorCommands: process.env.NODE_ENV === 'development',
-  // MongoDB TLS is controlled by MONGODB_TLS env var. It defaults to ON in
-  // production and OFF in dev/staging. Set MONGODB_TLS=false to explicitly
-  // disable (e.g. a single-box docker-compose deploy where the mongo
-  // container has no certs), or MONGODB_TLS=true to enable in non-prod.
-  tls:
-    process.env.MONGODB_TLS === 'true' ||
-    (process.env.MONGODB_TLS !== 'false' && process.env.NODE_ENV === 'production'),
+  // MongoDB TLS is controlled by MONGODB_TLS env var and the URI scheme.
+  // `mongodb+srv://` always negotiates TLS by default; explicit
+  // MONGODB_TLS=true/false overrides either way. See shouldEnableTls above
+  // for the full decision matrix.
+  tls: shouldEnableTls(MONGO_URI, process.env.MONGODB_TLS, process.env.NODE_ENV),
   tlsAllowInvalidCertificates: process.env.NODE_ENV !== 'production',
   ...(process.env.NODE_ENV === 'production' && {
     authSource: process.env.MONGODB_AUTH_SOURCE || 'admin',
