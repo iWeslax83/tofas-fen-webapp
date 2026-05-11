@@ -139,7 +139,7 @@ jobs:
           npm run build
 
       - name: Upload client coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           files: ./client/coverage/lcov.info
           flags: client
@@ -147,7 +147,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload server coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           files: ./server/coverage/lcov.info
           flags: server
