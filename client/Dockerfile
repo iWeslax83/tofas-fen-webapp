@@ -11,7 +11,7 @@
 # can no longer silently change our base layer. Dependabot's docker
 # updater understands this format and will open PRs to bump both the tag
 # and the digest atomically.
-FROM node:22.22-bookworm-slim@sha256:868499d55378719bffa87b0ed1f099591823c029b543043c09c2483468e93201 AS base
+FROM node:26.1-bookworm-slim@sha256:d2ec0a1766c01dad04a185c2d5558b0adace167a7f1758ce80f0017698431d06 AS base
 
 # Install dependencies only when needed.
 # We copy only package.json (NOT package-lock.json) and run `npm install`
