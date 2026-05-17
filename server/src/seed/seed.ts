@@ -1,6 +1,11 @@
+// Load environment variables first (mirrors src/index.ts bootstrap order).
+// Without this, ../db reads process.env.MONGODB_URI before dotenv runs and
+// falls back to localhost instead of the configured Atlas URI.
+import '../config/environment';
 import { connectDB } from '../db';
 import { createTestUsers } from './testUsers';
 import { createSampleReports } from './sampleReports';
+import { createSampleDashboardData } from './sampleDashboardData';
 
 async function seed() {
   try {
@@ -15,6 +20,9 @@ async function seed() {
 
     // Sample raporları oluştur
     await createSampleReports();
+
+    // Öğrenci panosu için örnek akademik veri
+    await createSampleDashboardData();
 
     console.log('🎉 Seed işlemi tamamlandı!');
     console.log('\n📋 Test Kullanıcı Bilgileri:');
