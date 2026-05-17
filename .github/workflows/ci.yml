@@ -166,6 +166,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Write server/.env
+        # Turborepo runs the server task in strict env mode, so step-level
+        # env vars are NOT passed through to `ts-node src/index.ts`. The
+        # server loads server/.env via dotenv inside its own process, so
+        # write the CI config there (mirrors local dev).
+        run: |
+          cat > server/.env <<EOF
+          NODE_ENV=$NODE_ENV
+          PORT=$PORT
+          MONGODB_URI=$MONGODB_URI
+          REDIS_URL=$REDIS_URL
+          REDIS_HOST=$REDIS_HOST
+          REDIS_PORT=$REDIS_PORT
+          FRONTEND_URL=$FRONTEND_URL
+          JWT_SECRET=$JWT_SECRET
+          JWT_REFRESH_SECRET=$JWT_REFRESH_SECRET
+          ENCRYPTION_KEY=$ENCRYPTION_KEY
+          EOF
+
       - name: Install Playwright browser
         run: cd client && npx playwright install --with-deps chromium
 
