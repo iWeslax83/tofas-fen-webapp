@@ -212,6 +212,7 @@ export default function LoginPage() {
                 <Field label="Kullanıcı ID" htmlFor="login-id">
                   <Input
                     id="login-id"
+                    name="id"
                     type="text"
                     value={id}
                     onChange={(e) => {
@@ -230,6 +231,7 @@ export default function LoginPage() {
                   <div className="relative">
                     <Input
                       id="login-sifre"
+                      name="sifre"
                       type={showPassword ? 'text' : 'password'}
                       value={sifre}
                       onChange={(e) => {

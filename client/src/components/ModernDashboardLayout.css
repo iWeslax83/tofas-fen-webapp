@@ -8,7 +8,12 @@
   min-height: 100vh;
   background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Column so the T.C. StateBar sits as a full-width band on top; the
+     sidebar (fixed) + main-content (margin-left) form the row below it.
+     Previously this was flex-row, which made StateBar a row sibling that
+     ate the width and crushed .main-content to ~200px. */
   display: flex;
+  flex-direction: column;
   position: relative;
 }
 
@@ -47,9 +52,10 @@
   display: flex;
   flex-direction: column;
   position: fixed;
-  top: 0;
+  /* Sits below the 30px T.C. StateBar. */
+  top: 30px;
   left: 0;
-  height: 100vh;
+  height: calc(100vh - 30px);
   z-index: 1002;
   transition: transform 0.3s ease;
   box-shadow: var(--shadow-lg);
@@ -193,7 +199,8 @@
   align-items: center;
   justify-content: space-between;
   position: fixed;
-  top: 0;
+  /* Sits below the 30px T.C. StateBar. */
+  top: 30px;
   left: 280px;
   right: 0;
   z-index: 1000;
