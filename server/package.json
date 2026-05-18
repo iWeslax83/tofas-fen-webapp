@@ -8,7 +8,6 @@
     "dev": "ts-node --transpile-only src/index.ts",
     "dev:compiled": "node dist/index.js",
     "dev:ts": "ts-node src/index.ts",
-    "dev:simple": "ts-node --transpile-only src/simple-server.ts",
     "start": "node dist/index.js",
     "lint": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint src/**/*.ts",
     "lint:fix": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint src/**/*.ts --fix",

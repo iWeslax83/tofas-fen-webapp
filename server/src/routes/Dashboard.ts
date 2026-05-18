@@ -51,10 +51,9 @@ router.get(
 );
 
 /**
- * GET /api/v1/dashboard/overview
- * Aggregate hero payload for the authenticated user. Today returns the
- * full StudentOverview for students; teacher/admin/parent shapes will
- * be filled in PR-10.
+ * GET /api/dashboard/overview
+ * Aggregate hero payload for the authenticated user. Returns a role-specific
+ * overview for student / teacher / admin / parent.
  */
 router.get('/overview', requireAuth, asyncHandler(overview));
 

@@ -86,8 +86,19 @@ const createSecureApiClient = (): AxiosInstance => {
         config.headers['X-CSRF-Token'] = csrfToken;
       }
 
-      // Sanitize request data
-      if (config.data && typeof config.data === 'object') {
+      // Sanitize request data — but only plain JSON-style objects. Binary /
+      // streaming bodies (FormData, Blob, File, ArrayBuffer, URLSearchParams)
+      // must pass through untouched: running them through sanitizeObject
+      // strips their contents (e.g. FormData has no enumerable own keys, so
+      // file uploads end up with an empty multipart body → server 400).
+      if (
+        config.data &&
+        typeof config.data === 'object' &&
+        !(config.data instanceof FormData) &&
+        !(typeof Blob !== 'undefined' && config.data instanceof Blob) &&
+        !(typeof ArrayBuffer !== 'undefined' && config.data instanceof ArrayBuffer) &&
+        !(typeof URLSearchParams !== 'undefined' && config.data instanceof URLSearchParams)
+      ) {
         config.data = InputSanitizer.sanitizeObject(config.data);
       }
 

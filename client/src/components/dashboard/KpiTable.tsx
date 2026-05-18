@@ -5,6 +5,43 @@ export interface KpiItem {
   value: string;
   /** Optional outline chip rendered next to the value (delta, status). */
   badge?: string;
+  /** Optional series — renders a hairline sparkline under the value. */
+  trend?: number[];
+}
+
+/** Minimal dependency-free sparkline in the Devlet hairline style. */
+function Sparkline({ data }: { data: number[] }) {
+  if (data.length < 2) return null;
+  const w = 96;
+  const h = 24;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const span = max - min || 1;
+  const pts = data
+    .map((v, i) => {
+      const x = (i / (data.length - 1)) * w;
+      const y = h - ((v - min) / span) * h;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
+  return (
+    <svg
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      className="mt-2 block overflow-visible"
+      aria-hidden="true"
+    >
+      <polyline
+        points={pts}
+        fill="none"
+        stroke="var(--state)"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
 }
 
 export interface KpiTableProps {
@@ -38,6 +75,7 @@ export function KpiTable({ items }: KpiTableProps) {
               </span>
               {item.badge && <Chip tone="outline">{item.badge}</Chip>}
             </div>
+            {item.trend && item.trend.length >= 2 && <Sparkline data={item.trend} />}
           </div>
         ))}
       </div>

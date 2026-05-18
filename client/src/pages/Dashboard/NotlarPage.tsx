@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, lazy, Suspense } from 'react';
 import { AlertCircle } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useNotes } from '../../hooks/queries/noteQueries';
-import GradeTrendChart from '../../components/charts/GradeTrendChart';
+// Lazy so the heavy Recharts bundle (chart-vendor) only downloads once the
+// grades table has rendered, instead of blocking the page on it.
+const GradeTrendChart = lazy(() => import('../../components/charts/GradeTrendChart'));
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { DataTable } from '../../components/ui/DataTable';
 import { Chip } from '../../components/ui/Chip';
@@ -143,7 +145,15 @@ export default function NotlarPage() {
               <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] mb-2">
                 Tablo II — Dönem Grafiği
               </div>
-              <GradeTrendChart notes={notes} />
+              <Suspense
+                fallback={
+                  <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                    Grafik yükleniyor…
+                  </div>
+                }
+              >
+                <GradeTrendChart notes={notes} />
+              </Suspense>
             </aside>
           )}
         </div>
