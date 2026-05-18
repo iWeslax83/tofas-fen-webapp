@@ -165,7 +165,7 @@ export default function LoginPage() {
       <div className="h-1.5 bg-[var(--state)]" aria-hidden="true" />
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[5fr_7fr]">
-        <aside className="bg-[var(--ink)] text-[var(--paper)] p-8 lg:p-12 flex flex-col justify-between min-h-[40vh] lg:min-h-screen">
+        <aside className="bg-[#0d0d0d] text-white p-8 lg:p-12 flex flex-col justify-between min-h-[40vh] lg:min-h-screen">
           <div className="space-y-6">
             <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/60">
               Türkiye Cumhuriyeti · Resmî Belge
