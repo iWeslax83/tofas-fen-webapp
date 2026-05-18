@@ -111,3 +111,106 @@ jobs:
             exit 1
           fi
         continue-on-error: false
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    needs: build
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Disposable CI database — fully isolated from any real cluster, so the
+      # bulk-import spec's 444 upserts are local and fast.
+      MONGODB_URI: mongodb://localhost:27017/tofas-fen-e2e
+      REDIS_URL: redis://localhost:6379
+      REDIS_HOST: localhost
+      REDIS_PORT: '6379'
+      NODE_ENV: development
+      PORT: '3001'
+      FRONTEND_URL: http://localhost:5173
+      # Test-only secrets (>=32 chars to satisfy config/environment.ts).
+      JWT_SECRET: ci-e2e-jwt-secret-not-for-production-0123456789
+      JWT_REFRESH_SECRET: ci-e2e-jwt-refresh-secret-not-for-production-0123456789
+      ENCRYPTION_KEY: ci-e2e-encryption-key-not-for-production-32b
+      E2E_BASE_URL: http://localhost:5173
+      E2E_API_BASE: http://localhost:3001
+      E2E_ADMIN_ID: admin1
+      E2E_ADMIN_PW: '123456'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Write server/.env
+        # Turborepo runs the server task in strict env mode, so step-level
+        # env vars are NOT passed through to `ts-node src/index.ts`. The
+        # server loads server/.env via dotenv inside its own process, so
+        # write the CI config there (mirrors local dev).
+        run: |
+          cat > server/.env <<EOF
+          NODE_ENV=$NODE_ENV
+          PORT=$PORT
+          MONGODB_URI=$MONGODB_URI
+          REDIS_URL=$REDIS_URL
+          REDIS_HOST=$REDIS_HOST
+          REDIS_PORT=$REDIS_PORT
+          FRONTEND_URL=$FRONTEND_URL
+          JWT_SECRET=$JWT_SECRET
+          JWT_REFRESH_SECRET=$JWT_REFRESH_SECRET
+          ENCRYPTION_KEY=$ENCRYPTION_KEY
+          EOF
+
+      - name: Install Playwright browser
+        run: cd client && npx playwright install --with-deps chromium
+
+      - name: Seed database
+        run: npm run seed
+
+      - name: Start dev servers
+        run: |
+          nohup npm run dev > /tmp/dev.log 2>&1 &
+          echo "Waiting for server (3001) and client (5173)…"
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3001/health >/dev/null 2>&1 \
+               && curl -sf http://localhost:5173 >/dev/null 2>&1; then
+              echo "Both up after ${i}x3s"; break
+            fi
+            sleep 3
+          done
+          curl -sf http://localhost:3001/health || (echo "--- dev.log ---"; cat /tmp/dev.log; exit 1)
+
+      - name: Run Playwright E2E
+        run: cd client && npx playwright test --reporter=list
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: client/playwright-report
+          retention-days: 7

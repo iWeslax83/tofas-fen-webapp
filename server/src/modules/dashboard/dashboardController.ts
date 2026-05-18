@@ -1,5 +1,10 @@
 import type { Request, Response } from 'express';
-import { getStudentOverview } from './dashboardService';
+import {
+  getStudentOverview,
+  getAdminOverview,
+  getTeacherOverview,
+  getParentOverview,
+} from './dashboardService';
 import logger from '../../utils/logger';
 
 interface AuthUser {
@@ -15,19 +20,30 @@ export async function overview(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // Only students get the full hero payload today; teacher/admin/parent
-  // dashboards shape comes in PR-10. Return the same envelope so the
-  // client can branch on `role`.
-  if (auth.role !== 'student') {
-    res.json({ role: auth.role, overview: null });
-    return;
-  }
-
+  // Each role gets its own hero payload; the client branches on `role`.
+  // `hizmetli` (support staff) has no dashboard data — return a null
+  // envelope so the client renders the static notice only.
   try {
-    const overviewData = await getStudentOverview(auth.userId, auth.sinif);
+    let overviewData;
+    switch (auth.role) {
+      case 'student':
+        overviewData = await getStudentOverview(auth.userId, auth.sinif);
+        break;
+      case 'admin':
+        overviewData = await getAdminOverview(auth.userId);
+        break;
+      case 'teacher':
+        overviewData = await getTeacherOverview(auth.userId);
+        break;
+      case 'parent':
+        overviewData = await getParentOverview(auth.userId);
+        break;
+      default:
+        overviewData = null;
+    }
     res.json({ role: auth.role, overview: overviewData });
   } catch (err) {
-    logger.error('dashboard.overview failed', { userId: auth.userId, err });
+    logger.error('dashboard.overview failed', { userId: auth.userId, role: auth.role, err });
     res.status(500).json({ error: 'Pano verileri alınamadı' });
   }
 }

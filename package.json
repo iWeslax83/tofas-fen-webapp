@@ -71,7 +71,8 @@
   },
   "overrides": {
     "@types/express": "^4.17.17",
-    "@types/express-serve-static-core": "^4.17.31"
+    "@types/express-serve-static-core": "^4.17.31",
+    "picomatch@>=4.0.0 <4.0.4": "4.0.4"
   },
   "dependencies": {
     "@types/cors": "^2.8.19",
