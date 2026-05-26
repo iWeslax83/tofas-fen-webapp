@@ -7,7 +7,7 @@
 # we audited; an upstream re-tag can no longer silently change our base
 # layer. Dependabot (.github/dependabot.yml) understands this format and
 # will open PRs to bump tag + digest atomically.
-FROM node:22.22-alpine3.22@sha256:22b1aea1349ef0713dc152a8ba41dcbaacbd3a6a43158ce65d1c1176ce809f48 AS base
+FROM node:26.2-alpine3.22@sha256:56392f8949e007103b800098434f993924ea714bf2b1f84056e68c61d720e26c AS base
 WORKDIR /app
 COPY package*.json ./
 
