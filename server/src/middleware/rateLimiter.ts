@@ -1,7 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import { Request, Response } from 'express';
 import logger from '../utils/logger';
-// import { tokenBlacklist } from '../utils/tokenBlacklist'; // Unused import removed
 
 /**
  * Enhanced Rate Limiter with user-specific limits

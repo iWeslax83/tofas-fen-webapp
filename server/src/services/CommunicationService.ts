@@ -1,10 +1,18 @@
-import { Message, Conversation, Email, ChatRoom, Contact, IMessage, IConversation, IEmail, IChatRoom, IContact } from '../models/Communication';
+import {
+  Message,
+  Conversation,
+  Email,
+  ChatRoom,
+  Contact,
+  IMessage,
+  IConversation,
+  IEmail,
+  IChatRoom,
+  IContact,
+} from '../models/Communication';
 import { User } from '../models/User';
 import { NotificationService } from './NotificationService';
 import { v4 as uuidv4 } from 'uuid';
-// import { createHash } from 'crypto';
-// import * as fs from 'fs';
-// import * as path from 'path';
 
 export interface MessageCreateData {
   conversationId: string;
@@ -155,7 +163,9 @@ export class CommunicationService {
     }
 
     // Check if user is participant
-    const isParticipant = conversation.participants.some(p => p.userId === data.senderId && p.isActive);
+    const isParticipant = conversation.participants.some(
+      (p) => p.userId === data.senderId && p.isActive,
+    );
     if (!isParticipant) {
       const { AppError } = await import('../utils/AppError');
       throw AppError.forbidden('User is not a participant in this conversation');
@@ -174,7 +184,7 @@ export class CommunicationService {
       priority: data.priority || 'normal',
       metadata: data.metadata,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     await message.save();
@@ -185,7 +195,7 @@ export class CommunicationService {
       content: message.content,
       senderId: message.senderId,
       senderName: message.senderName,
-      timestamp: message.createdAt
+      timestamp: message.createdAt,
     };
 
     // Update unread count for other participants
@@ -205,14 +215,19 @@ export class CommunicationService {
     return message;
   }
 
-  static async getMessages(conversationId: string, userId: string, page: number = 1, limit: number = 50): Promise<{ messages: IMessage[], total: number }> {
+  static async getMessages(
+    conversationId: string,
+    userId: string,
+    page: number = 1,
+    limit: number = 50,
+  ): Promise<{ messages: IMessage[]; total: number }> {
     const conversation = await Conversation.findOne({ id: conversationId });
     if (!conversation) {
       const { AppError } = await import('../utils/AppError');
       throw AppError.notFound('Conversation not found');
     }
 
-    const isParticipant = conversation.participants.some(p => p.userId === userId && p.isActive);
+    const isParticipant = conversation.participants.some((p) => p.userId === userId && p.isActive);
     if (!isParticipant) {
       const { AppError } = await import('../utils/AppError');
       throw AppError.forbidden('User is not a participant in this conversation');
@@ -221,7 +236,7 @@ export class CommunicationService {
     const skip = (page - 1) * limit;
     const messageDocs = await Message.find({
       conversationId,
-      deleted: false
+      deleted: false,
     })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -230,13 +245,13 @@ export class CommunicationService {
 
     const total = await Message.countDocuments({
       conversationId,
-      deleted: false
+      deleted: false,
     });
 
     // Mark messages as read
-    const unreadMessages = messageDocs.filter((msg: any) =>
-      msg.senderId !== userId &&
-      !msg.readBy.some((read: any) => read.userId === userId)
+    const unreadMessages = messageDocs.filter(
+      (msg: any) =>
+        msg.senderId !== userId && !msg.readBy.some((read: any) => read.userId === userId),
     );
 
     for (const message of unreadMessages as any[]) {
@@ -247,7 +262,11 @@ export class CommunicationService {
     return { messages, total };
   }
 
-  static async updateMessage(messageId: string, userId: string, updates: Partial<MessageCreateData>): Promise<IMessage> {
+  static async updateMessage(
+    messageId: string,
+    userId: string,
+    updates: Partial<MessageCreateData>,
+  ): Promise<IMessage> {
     const message = await Message.findOne({ id: messageId });
     if (!message) {
       throw new Error('Message not found');
@@ -265,7 +284,7 @@ export class CommunicationService {
       ...updates,
       edited: true,
       editedAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     await message.save();
@@ -314,12 +333,15 @@ export class CommunicationService {
       type: data.type,
       title: data.title,
       description: data.description,
-      participants: data.participants.map(userId => ({
+      participants: data.participants.map((userId) => ({
         userId,
-        role: data.admins?.includes(userId) ? 'admin' :
-          data.moderators?.includes(userId) ? 'moderator' : 'member',
+        role: data.admins?.includes(userId)
+          ? 'admin'
+          : data.moderators?.includes(userId)
+            ? 'moderator'
+            : 'member',
         joinedAt: new Date(),
-        isActive: true
+        isActive: true,
       })),
       admins: data.admins || [data.participants[0]],
       moderators: data.moderators || [],
@@ -333,12 +355,12 @@ export class CommunicationService {
         archiveAfterDays: data.settings?.archiveAfterDays ?? 30,
         requireApproval: data.settings?.requireApproval ?? false,
         readReceipts: data.settings?.readReceipts ?? true,
-        typingIndicators: data.settings?.typingIndicators ?? true
+        typingIndicators: data.settings?.typingIndicators ?? true,
       },
       unreadCount: new Map(),
       isActive: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     await conversation.save();
@@ -349,10 +371,13 @@ export class CommunicationService {
     return conversation;
   }
 
-  static async getConversations(userId: string, filters?: ConversationFilters): Promise<IConversation[]> {
+  static async getConversations(
+    userId: string,
+    filters?: ConversationFilters,
+  ): Promise<IConversation[]> {
     const query: any = {
       'participants.userId': userId,
-      'participants.isActive': true
+      'participants.isActive': true,
     };
 
     if (filters?.type) {
@@ -372,13 +397,19 @@ export class CommunicationService {
       .populate('participants.userId', 'name role avatar');
 
     if (filters?.hasUnread) {
-      return (conversations as any[]).filter((conv: any) => (conv.unreadCount?.get(userId) || 0) > 0);
+      return (conversations as any[]).filter(
+        (conv: any) => (conv.unreadCount?.get(userId) || 0) > 0,
+      );
     }
 
     return conversations as any;
   }
 
-  static async addParticipant(conversationId: string, userId: string, role: string = 'member'): Promise<IConversation> {
+  static async addParticipant(
+    conversationId: string,
+    userId: string,
+    role: string = 'member',
+  ): Promise<IConversation> {
     const conversation = await Conversation.findOne({ id: conversationId });
     if (!conversation) {
       throw new Error('Conversation not found');
@@ -403,9 +434,9 @@ export class CommunicationService {
     const email = new Email({
       id: uuidv4(),
       from: data.from,
-      to: data.to.map(recipient => ({
+      to: data.to.map((recipient) => ({
         ...recipient,
-        type: recipient.type || 'to'
+        type: recipient.type || 'to',
       })),
       subject: data.subject,
       content: data.content,
@@ -415,7 +446,7 @@ export class CommunicationService {
       priority: data.priority || 'normal',
       status: 'draft',
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     await email.save();
@@ -454,7 +485,12 @@ export class CommunicationService {
     return email;
   }
 
-  static async getEmails(userId: string, type: 'sent' | 'received' = 'received', page: number = 1, limit: number = 20): Promise<{ emails: IEmail[], total: number }> {
+  static async getEmails(
+    userId: string,
+    type: 'sent' | 'received' = 'received',
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ emails: IEmail[]; total: number }> {
     const skip = (page - 1) * limit;
     let query: any;
 
@@ -464,10 +500,7 @@ export class CommunicationService {
       query = { 'to.userId': userId };
     }
 
-    const emails = await Email.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    const emails = await Email.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
 
     const total = await Email.countDocuments(query);
 
@@ -501,18 +534,22 @@ export class CommunicationService {
         readReceipts: data.settings?.readReceipts ?? true,
         typingIndicators: data.settings?.typingIndicators ?? true,
         slowMode: data.settings?.slowMode ?? false,
-        slowModeInterval: data.settings?.slowModeInterval ?? 5
+        slowModeInterval: data.settings?.slowModeInterval ?? 5,
       },
       isActive: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     await chatRoom.save();
     return chatRoom;
   }
 
-  static async getChatRooms(filters?: { type?: string; category?: string; isActive?: boolean }): Promise<IChatRoom[]> {
+  static async getChatRooms(filters?: {
+    type?: string;
+    category?: string;
+    isActive?: boolean;
+  }): Promise<IChatRoom[]> {
     const query: any = {};
 
     if (filters?.type) {
@@ -546,7 +583,7 @@ export class CommunicationService {
       throw new Error('Chat room is full');
     }
 
-    const existingParticipant = chatRoom.participants.find(p => p.userId === userId);
+    const existingParticipant = chatRoom.participants.find((p) => p.userId === userId);
     if (existingParticipant && existingParticipant.isActive) {
       throw new Error('User is already a participant');
     }
@@ -558,11 +595,11 @@ export class CommunicationService {
         userId,
         role: 'member',
         joinedAt: new Date(),
-        isActive: true
+        isActive: true,
       });
     }
 
-    chatRoom.currentParticipants = chatRoom.participants.filter(p => p.isActive).length;
+    chatRoom.currentParticipants = chatRoom.participants.filter((p) => p.isActive).length;
     chatRoom.updatedAt = new Date();
     await chatRoom.save();
 
@@ -575,13 +612,13 @@ export class CommunicationService {
       throw new Error('Chat room not found');
     }
 
-    const participant = chatRoom.participants.find(p => p.userId === userId);
+    const participant = chatRoom.participants.find((p) => p.userId === userId);
     if (!participant || !participant.isActive) {
       throw new Error('User is not a participant');
     }
 
     participant.isActive = false;
-    chatRoom.currentParticipants = chatRoom.participants.filter(p => p.isActive).length;
+    chatRoom.currentParticipants = chatRoom.participants.filter((p) => p.isActive).length;
     chatRoom.updatedAt = new Date();
     await chatRoom.save();
 
@@ -592,7 +629,7 @@ export class CommunicationService {
   static async createContact(data: ContactCreateData): Promise<IContact> {
     const existingContact = await Contact.findOne({
       userId: data.userId,
-      contactId: data.contactId
+      contactId: data.contactId,
     });
 
     if (existingContact) {
@@ -615,14 +652,17 @@ export class CommunicationService {
       tags: data.tags || [],
       groups: data.groups || [],
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     await contact.save();
     return contact;
   }
 
-  static async getContacts(userId: string, filters?: { isFavorite?: boolean; isBlocked?: boolean; tags?: string[] }): Promise<IContact[]> {
+  static async getContacts(
+    userId: string,
+    filters?: { isFavorite?: boolean; isBlocked?: boolean; tags?: string[] },
+  ): Promise<IContact[]> {
     const query: any = { userId };
 
     if (filters?.isFavorite !== undefined) {
@@ -642,7 +682,10 @@ export class CommunicationService {
       .populate('contactId', 'name role avatar status lastSeen');
   }
 
-  static async updateContactStatus(contactId: string, status: 'online' | 'offline' | 'away' | 'busy' | 'invisible'): Promise<IContact> {
+  static async updateContactStatus(
+    contactId: string,
+    status: 'online' | 'offline' | 'away' | 'busy' | 'invisible',
+  ): Promise<IContact> {
     const contact = await Contact.findOne({ id: contactId });
     if (!contact) {
       throw new Error('Contact not found');
@@ -689,13 +732,17 @@ export class CommunicationService {
   }
 
   // Search and Analytics
-  static async searchMessages(_userId: string, query: string, filters?: MessageFilters): Promise<IMessage[]> {
+  static async searchMessages(
+    _userId: string,
+    query: string,
+    filters?: MessageFilters,
+  ): Promise<IMessage[]> {
     const searchQuery: any = {
       $or: [
         { content: { $regex: query, $options: 'i' } },
-        { senderName: { $regex: query, $options: 'i' } }
+        { senderName: { $regex: query, $options: 'i' } },
       ],
-      deleted: false
+      deleted: false,
     };
 
     if (filters?.conversationId) {
@@ -724,9 +771,7 @@ export class CommunicationService {
       searchQuery['attachments.0'] = { $exists: true };
     }
 
-    return await Message.find(searchQuery)
-      .sort({ createdAt: -1 })
-      .limit(100);
+    return await Message.find(searchQuery).sort({ createdAt: -1 }).limit(100);
   }
 
   static async getCommunicationStats(userId: string): Promise<any> {
@@ -740,36 +785,39 @@ export class CommunicationService {
           messagesByType: {
             $push: {
               contentType: '$contentType',
-              date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }
-            }
-          }
-        }
+              date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            },
+          },
+        },
       },
       {
         $project: {
           totalMessages: 1,
           totalConversations: { $size: '$totalConversations' },
-          messagesByType: 1
-        }
-      }
+          messagesByType: 1,
+        },
+      },
     ]);
 
     const unreadCount = await Message.countDocuments({
       'readBy.userId': { $ne: userId },
       senderId: { $ne: userId },
-      deleted: false
+      deleted: false,
     });
 
     return {
       ...stats[0],
-      unreadCount
+      unreadCount,
     };
   }
 
   // Notification helpers
-  private static async notifyMessageParticipants(message: IMessage, conversation: IConversation): Promise<void> {
-    const participants = conversation.participants.filter(p =>
-      p.userId !== message.senderId && p.isActive
+  private static async notifyMessageParticipants(
+    message: IMessage,
+    conversation: IConversation,
+  ): Promise<void> {
+    const participants = conversation.participants.filter(
+      (p) => p.userId !== message.senderId && p.isActive,
     );
 
     for (const participant of participants) {
@@ -780,25 +828,25 @@ export class CommunicationService {
         type: 'info',
         category: 'social',
         actionUrl: `/iletisim/konusma/${conversation.id}`,
-        priority: message.priority === 'urgent' ? 'high' : 'medium'
+        priority: message.priority === 'urgent' ? 'high' : 'medium',
       });
     }
   }
 
   private static async notifyConversationCreated(conversation: IConversation): Promise<void> {
-    const participants = conversation.participants.filter(p => p.isActive);
+    const participants = conversation.participants.filter((p) => p.isActive);
 
     for (const participant of participants) {
       await NotificationService.createNotification({
         userId: participant.userId,
         title: `Yeni Konuşma`,
-        message: conversation.title ?
-          `"${conversation.title}" konuşmasına eklendiniz` :
-          'Yeni bir konuşmaya eklendiniz',
+        message: conversation.title
+          ? `"${conversation.title}" konuşmasına eklendiniz`
+          : 'Yeni bir konuşmaya eklendiniz',
         type: 'announcement',
         category: 'social',
         actionUrl: `/iletisim/konusma/${conversation.id}`,
-        priority: 'medium'
+        priority: 'medium',
       });
     }
   }
