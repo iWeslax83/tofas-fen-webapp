@@ -167,9 +167,6 @@ export default function LoginPage() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[5fr_7fr]">
         <aside className="bg-[#0d0d0d] text-white p-8 lg:p-12 flex flex-col justify-between min-h-[40vh] lg:min-h-screen">
           <div className="space-y-6">
-            <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/60">
-              Türkiye Cumhuriyeti · Resmî Belge
-            </div>
             <div className="flex items-center gap-4">
               <img
                 src="/tofaslogo.png"
@@ -186,10 +183,6 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-3 border-t border-white/15 pt-6">
-            <p className="font-serif text-sm text-white/85 leading-relaxed">
-              Bu sistem yalnızca yetkili kullanıcılarca erişilebilir. Tüm oturumlar kaydedilir ve
-              denetlenir.
-            </p>
             <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/50">
               © {new Date().getFullYear()} Tofaş Fen Lisesi. Tüm hakları saklıdır.
             </p>
@@ -200,7 +193,7 @@ export default function LoginPage() {
           <div className="w-full max-w-md mx-auto">
             <header className="mb-8">
               <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-                {requires2FA ? 'Form 02 · Doğrulama' : 'Form 01 · Giriş'}
+                {requires2FA ? 'Doğrulama' : 'Giriş'}
               </div>
               <h2 className="font-serif text-2xl text-[var(--ink)] mt-1">
                 {requires2FA ? 'İki Adımlı Doğrulama' : 'Sisteme Giriş'}
@@ -227,7 +220,7 @@ export default function LoginPage() {
                   />
                 </Field>
 
-                <Field label="Şifre (TCKN)" htmlFor="login-sifre">
+                <Field label="Şifre" htmlFor="login-sifre">
                   <div className="relative">
                     <Input
                       id="login-sifre"
