@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { body, validationResult, param, query } from 'express-validator';
+import { body, validationResult } from 'express-validator';
 import DOMPurify from 'isomorphic-dompurify';
 import logger from '../utils/logger';
 
@@ -444,54 +444,6 @@ export const validateSupervisorList = [
   validateRequest,
 ];
 
-// Enhanced Maintenance Request validation rules
-export const validateMaintenanceRequest = [
-  body('title')
-    .trim()
-    .isLength({ min: 5, max: 200 })
-    .withMessage('Başlık 5-200 karakter arasında olmalıdır')
-    .matches(/^[a-zA-ZğüşıöçĞÜŞİÖÇ\s\d\-_.,!?()]+$/)
-    .withMessage('Başlık sadece harf, rakam ve temel noktalama işaretleri içerebilir'),
-
-  body('description')
-    .trim()
-    .isLength({ min: 10, max: 1000 })
-    .withMessage('Açıklama 10-1000 karakter arasında olmalıdır')
-    .customSanitizer((value) =>
-      DOMPurify.sanitize(value, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li'] }),
-    ),
-
-  body('category')
-    .isIn(['electrical', 'plumbing', 'heating', 'structural', 'cleaning', 'other'])
-    .withMessage('Geçersiz kategori'),
-
-  body('priority')
-    .isIn(['low', 'medium', 'high', 'urgent'])
-    .withMessage('Geçersiz öncelik seviyesi'),
-
-  body('location')
-    .trim()
-    .isLength({ min: 3, max: 100 })
-    .withMessage('Konum 3-100 karakter arasında olmalıdır')
-    .customSanitizer((value) => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
-
-  body('estimatedCost')
-    .optional()
-    .isFloat({ min: 0, max: 1000000 })
-    .withMessage('Tahmini maliyet 0-1,000,000 arasında olmalıdır'),
-
-  body('attachments').optional().isArray({ max: 10 }).withMessage('En fazla 10 dosya eklenebilir'),
-
-  body('attachments.*.filename')
-    .optional()
-    .isLength({ min: 1, max: 255 })
-    .withMessage('Dosya adı 1-255 karakter arasında olmalıdır')
-    .matches(/^[a-zA-ZğüşıöçĞÜŞİÖÇ\s\d\-_.]+$/)
-    .withMessage('Dosya adı sadece harf, rakam ve temel karakterler içerebilir'),
-
-  validateRequest,
-];
-
 // Enhanced Evci Request validation rules
 export const validateEvciRequest = [
   body('studentId')
@@ -580,45 +532,6 @@ export const validateRequestData = [
     .withMessage('Geçersiz öncelik seviyesi'),
 
   body('attachments').optional().isArray({ max: 5 }).withMessage('En fazla 5 dosya eklenebilir'),
-
-  validateRequest,
-];
-
-// Enhanced parameter validation
-export const validateId = [
-  param('id')
-    .trim()
-    .isLength({ min: 3, max: 50 })
-    .withMessage('ID 3-50 karakter arasında olmalıdır')
-    .matches(/^[a-zA-ZğüşıöçĞÜŞİÖÇ\d\-_]+$/)
-    .withMessage('ID sadece harf, rakam, tire ve alt çizgi içerebilir'),
-
-  validateRequest,
-];
-
-// Enhanced query validation
-export const validatePagination = [
-  query('page')
-    .optional()
-    .isInt({ min: 1, max: 1000 })
-    .withMessage('Sayfa numarası 1-1000 arasında olmalıdır'),
-
-  query('limit')
-    .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage('Sayfa boyutu 1-100 arasında olmalıdır'),
-
-  query('sort')
-    .optional()
-    .isIn(['asc', 'desc'])
-    .withMessage('Sıralama sadece asc veya desc olabilir'),
-
-  query('search')
-    .optional()
-    .trim()
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Arama terimi 1-100 karakter arasında olmalıdır')
-    .customSanitizer((value) => DOMPurify.sanitize(value, { ALLOWED_TAGS: [] })),
 
   validateRequest,
 ];
