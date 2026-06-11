@@ -2,8 +2,14 @@ import { v4 as uuidv4 } from 'uuid';
 import mongoose from 'mongoose';
 import { PerformanceMetric, OptimizationLog, PerformanceConfig } from '../models/Performance';
 import { NotificationService } from './NotificationService';
-import { createReadStream, createWriteStream, existsSync, mkdirSync, readdirSync, statSync } from 'fs';
-// import { join } from 'path';
+import {
+  createReadStream,
+  createWriteStream,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  statSync,
+} from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import logger from '../utils/logger';
@@ -74,7 +80,7 @@ export class PerformanceService {
         status,
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
 
       await metric.save();
@@ -87,12 +93,18 @@ export class PerformanceService {
       // Update cache
       this.updateMetricCache(data.type, data.category);
     } catch (error) {
-      logger.error('Error recording metric', { error: error instanceof Error ? error.message : error });
+      logger.error('Error recording metric', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
 
-  static async getMetrics(filters: PerformanceFilters = {}, page = 1, limit = 50): Promise<{
+  static async getMetrics(
+    filters: PerformanceFilters = {},
+    page = 1,
+    limit = 50,
+  ): Promise<{
     metrics: any[];
     total: number;
     page: number;
@@ -119,17 +131,19 @@ export class PerformanceService {
           .skip(skip)
           .limit(limit)
           .lean(),
-        PerformanceMetric.countDocuments(query)
+        PerformanceMetric.countDocuments(query),
       ]);
 
       return {
         metrics,
         total,
         page,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      logger.error('Error getting metrics', { error: error instanceof Error ? error.message : error });
+      logger.error('Error getting metrics', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
@@ -141,7 +155,9 @@ export class PerformanceService {
         .limit(limit)
         .lean();
     } catch (error) {
-      logger.error('Error getting metrics by type', { error: error instanceof Error ? error.message : error });
+      logger.error('Error getting metrics by type', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
@@ -152,7 +168,9 @@ export class PerformanceService {
         .sort({ 'context.timestamp': -1 })
         .lean();
     } catch (error) {
-      logger.error('Error getting critical metrics', { error: error instanceof Error ? error.message : error });
+      logger.error('Error getting critical metrics', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
@@ -168,12 +186,12 @@ export class PerformanceService {
           beforeMetrics: {},
           afterMetrics: {},
           improvement: 0,
-          duration: 0
+          duration: 0,
         },
         executedAt: new Date(),
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
 
       await optimization.save();
@@ -183,12 +201,18 @@ export class PerformanceService {
 
       return optimization;
     } catch (error) {
-      logger.error('Error creating optimization', { error: error instanceof Error ? error.message : error });
+      logger.error('Error creating optimization', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
 
-  static async getOptimizations(filters: OptimizationFilters = {}, page = 1, limit = 50): Promise<{
+  static async getOptimizations(
+    filters: OptimizationFilters = {},
+    page = 1,
+    limit = 50,
+  ): Promise<{
     optimizations: any[];
     total: number;
     page: number;
@@ -210,22 +234,20 @@ export class PerformanceService {
 
       const skip = (page - 1) * limit;
       const [optimizations, total] = await Promise.all([
-        OptimizationLog.find(query)
-          .sort({ executedAt: -1 })
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        OptimizationLog.countDocuments(query)
+        OptimizationLog.find(query).sort({ executedAt: -1 }).skip(skip).limit(limit).lean(),
+        OptimizationLog.countDocuments(query),
       ]);
 
       return {
         optimizations,
         total,
         page,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      logger.error('Error getting optimizations', { error: error instanceof Error ? error.message : error });
+      logger.error('Error getting optimizations', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
@@ -238,13 +260,15 @@ export class PerformanceService {
           $group: {
             _id: '$action',
             count: { $sum: 1 },
-            avgImprovement: { $avg: '$results.improvement' }
-          }
-        }
+            avgImprovement: { $avg: '$results.improvement' },
+          },
+        },
       ]);
       return stats;
     } catch (error) {
-      logger.error('Error getting optimization stats', { error: error instanceof Error ? error.message : error });
+      logger.error('Error getting optimization stats', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
@@ -268,13 +292,15 @@ export class PerformanceService {
         priority: data.priority ?? 1,
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
 
       await config.save();
       return config;
     } catch (error) {
-      logger.error('Error creating config', { error: error instanceof Error ? error.message : error });
+      logger.error('Error creating config', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
@@ -285,7 +311,9 @@ export class PerformanceService {
       if (category) query.category = category;
       return await PerformanceConfig.find(query).lean();
     } catch (error) {
-      logger.error('Error getting configs', { error: error instanceof Error ? error.message : error });
+      logger.error('Error getting configs', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
@@ -295,11 +323,13 @@ export class PerformanceService {
       const config = await PerformanceConfig.findOneAndUpdate(
         { id, isActive: true },
         { ...updates, updatedAt: new Date() },
-        { new: true }
+        { new: true },
       );
       return config;
     } catch (error) {
-      logger.error('Error updating config', { error: error instanceof Error ? error.message : error });
+      logger.error('Error updating config', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
@@ -315,20 +345,22 @@ export class PerformanceService {
       const [memoryUsage, cpuUsage, diskUsage] = await Promise.all([
         this.getMemoryUsage(),
         this.getCPUUsage(),
-        this.getDiskUsage()
+        this.getDiskUsage(),
       ]);
 
       const metrics = {
         memory: memoryUsage,
         cpu: cpuUsage,
         disk: diskUsage,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       this.setCache(cacheKey, metrics);
       return metrics;
     } catch (error) {
-      logger.error('Error getting system metrics', { error: error instanceof Error ? error.message : error });
+      logger.error('Error getting system metrics', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
@@ -349,13 +381,15 @@ export class PerformanceService {
         storageSize: stats.storageSize,
         indexes: stats.indexes,
         indexSize: stats.indexSize,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       this.setCache(cacheKey, metrics);
       return metrics;
     } catch (error) {
-      logger.error('Error getting database metrics', { error: error instanceof Error ? error.message : error });
+      logger.error('Error getting database metrics', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
@@ -373,28 +407,28 @@ export class PerformanceService {
       const [totalRequests, errorRequests, avgResponseTime] = await Promise.all([
         PerformanceMetric.countDocuments({
           type: 'api',
-          'context.timestamp': { $gte: oneHourAgo }
+          'context.timestamp': { $gte: oneHourAgo },
         }),
         PerformanceMetric.countDocuments({
           type: 'api',
           category: 'error_rate',
-          'context.timestamp': { $gte: oneHourAgo }
+          'context.timestamp': { $gte: oneHourAgo },
         }),
         PerformanceMetric.aggregate([
           {
             $match: {
               type: 'api',
               category: 'response_time',
-              'context.timestamp': { $gte: oneHourAgo }
-            }
+              'context.timestamp': { $gte: oneHourAgo },
+            },
           },
           {
             $group: {
               _id: null,
-              avgResponseTime: { $avg: '$value' }
-            }
-          }
-        ])
+              avgResponseTime: { $avg: '$value' },
+            },
+          },
+        ]),
       ]);
 
       const metrics = {
@@ -402,13 +436,15 @@ export class PerformanceService {
         errorRequests,
         errorRate: totalRequests > 0 ? (errorRequests / totalRequests) * 100 : 0,
         avgResponseTime: avgResponseTime[0]?.avgResponseTime || 0,
-        timestamp: now
+        timestamp: now,
       };
 
       this.setCache(cacheKey, metrics);
       return metrics;
     } catch (error) {
-      logger.error('Error getting API metrics', { error: error instanceof Error ? error.message : error });
+      logger.error('Error getting API metrics', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
@@ -424,7 +460,9 @@ export class PerformanceService {
         }
       }
     } catch (error) {
-      logger.error('Error running scheduled optimizations', { error: error instanceof Error ? error.message : error });
+      logger.error('Error running scheduled optimizations', {
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   }
@@ -478,7 +516,7 @@ export class PerformanceService {
         beforeMetrics,
         afterMetrics,
         improvement,
-        duration
+        duration,
       };
       optimization.status = 'completed';
       optimization.completedAt = new Date();
@@ -489,7 +527,9 @@ export class PerformanceService {
         await this.notifyOptimizationSuccess(optimization);
       }
     } catch (error) {
-      logger.error('Error executing optimization', { error: error instanceof Error ? error.message : error });
+      logger.error('Error executing optimization', {
+        error: error instanceof Error ? error.message : error,
+      });
 
       optimization.status = 'failed';
       optimization.error = (error as Error).message;
@@ -517,10 +557,12 @@ export class PerformanceService {
         priority: 'high',
         category: 'technical',
         recipients: ['admin'],
-        sender: { id: 'system', name: 'System', role: 'system' }
+        sender: { id: 'system', name: 'System', role: 'system' },
       } as any);
     } catch (error) {
-      logger.error('Error triggering critical alert', { error: error instanceof Error ? error.message : error });
+      logger.error('Error triggering critical alert', {
+        error: error instanceof Error ? error.message : error,
+      });
     }
   }
 
@@ -530,18 +572,18 @@ export class PerformanceService {
       rss: Math.round(usage.rss / 1024 / 1024), // MB
       heapTotal: Math.round(usage.heapTotal / 1024 / 1024), // MB
       heapUsed: Math.round(usage.heapUsed / 1024 / 1024), // MB
-      external: Math.round(usage.external / 1024 / 1024) // MB
+      external: Math.round(usage.external / 1024 / 1024), // MB
     };
   }
 
   private static async getCPUUsage(): Promise<any> {
     const startUsage = process.cpuUsage();
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     const endUsage = process.cpuUsage(startUsage);
 
     return {
       user: endUsage.user,
-      system: endUsage.system
+      system: endUsage.system,
     };
   }
 
@@ -556,7 +598,7 @@ export class PerformanceService {
         total: parts[1],
         used: parts[2],
         available: parts[3],
-        usagePercent: parts[4]
+        usagePercent: parts[4],
       };
     } catch (error) {
       return { error: 'Unable to get disk usage' };
@@ -589,7 +631,10 @@ export class PerformanceService {
     return metrics;
   }
 
-  private static calculateImprovement(before: Record<string, number>, after: Record<string, number>): number {
+  private static calculateImprovement(
+    before: Record<string, number>,
+    after: Record<string, number>,
+  ): number {
     if (Object.keys(before).length === 0 || Object.keys(after).length === 0) {
       return 0;
     }
@@ -644,7 +689,7 @@ export class PerformanceService {
         target: config.name,
         description: `Automatic optimization triggered for ${config.name}`,
         impact: 'medium',
-        executedBy: 'system'
+        executedBy: 'system',
       });
     }
   }
@@ -654,7 +699,11 @@ export class PerformanceService {
 
     for (const condition of conditions) {
       const currentValue = await this.getMetricValue(condition.metric);
-      const shouldExecute = this.evaluateCondition(currentValue, condition.operator, condition.threshold);
+      const shouldExecute = this.evaluateCondition(
+        currentValue,
+        condition.operator,
+        condition.threshold,
+      );
       if (!shouldExecute) return false;
     }
 
@@ -669,12 +718,18 @@ export class PerformanceService {
 
   private static evaluateCondition(value: number, operator: string, threshold: number): boolean {
     switch (operator) {
-      case 'gt': return value > threshold;
-      case 'lt': return value < threshold;
-      case 'eq': return value === threshold;
-      case 'gte': return value >= threshold;
-      case 'lte': return value <= threshold;
-      default: return false;
+      case 'gt':
+        return value > threshold;
+      case 'lt':
+        return value < threshold;
+      case 'eq':
+        return value === threshold;
+      case 'gte':
+        return value >= threshold;
+      case 'lte':
+        return value <= threshold;
+      default:
+        return false;
     }
   }
 
@@ -687,10 +742,12 @@ export class PerformanceService {
         priority: 'medium',
         category: 'technical',
         recipients: ['admin'],
-        sender: { id: 'system', name: 'System', role: 'system' }
+        sender: { id: 'system', name: 'System', role: 'system' },
       } as any);
     } catch (error) {
-      logger.error('Error sending optimization success notification', { error: error instanceof Error ? error.message : error });
+      logger.error('Error sending optimization success notification', {
+        error: error instanceof Error ? error.message : error,
+      });
     }
   }
 
@@ -703,10 +760,12 @@ export class PerformanceService {
         priority: 'high',
         category: 'technical',
         recipients: ['admin'],
-        sender: { id: 'system', name: 'System', role: 'system' }
+        sender: { id: 'system', name: 'System', role: 'system' },
       } as any);
     } catch (error) {
-      logger.error('Error sending optimization failure notification', { error: error instanceof Error ? error.message : error });
+      logger.error('Error sending optimization failure notification', {
+        error: error instanceof Error ? error.message : error,
+      });
     }
   }
 
