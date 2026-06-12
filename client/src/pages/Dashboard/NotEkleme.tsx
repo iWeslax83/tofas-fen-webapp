@@ -1,14 +1,24 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NotesService } from '../../utils/apiService';
 import { toast } from 'sonner';
-import { Upload, Plus } from 'lucide-react'; // ArrowLeft removed
+import {
+  Upload,
+  Plus,
+  Download,
+  FileSpreadsheet,
+  AlertTriangle,
+  CheckCircle,
+  Info,
+} from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { UserRole } from '../../@types';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { safeConsoleError } from '../../utils/safeLogger';
-
-// User type is now available from AuthContext
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { cn } from '../../utils/cn';
 
 interface ImportResult {
   success: boolean;
@@ -39,10 +49,32 @@ interface ManualNote {
   notes?: string | undefined;
 }
 
+// ─── small helpers ────────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1 mb-3">
+      {children}
+    </div>
+  );
+}
+
+function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
+  return (
+    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+      {children}
+      {required && <span className="text-[var(--state)] ml-0.5">*</span>}
+    </span>
+  );
+}
+
+// ─── component ────────────────────────────────────────────────────────────────
+
 const NotEkleme: React.FC = () => {
   const { user } = useAuthContext();
   const userRole = user?.rol as UserRole;
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -80,7 +112,6 @@ const NotEkleme: React.FC = () => {
       return;
     }
 
-    // Supported formats (server supports Excel import)
     setSupportedFormats(['.xlsx', '.xls', '.csv']);
     setLoading(false);
   }, [userRole, navigate]);
@@ -113,7 +144,7 @@ const NotEkleme: React.FC = () => {
         if ((data as ImportResult).savedCount > 0) {
           toast.success(`${(data as ImportResult).savedCount} not başarıyla import edildi!`);
         } else {
-          toast('Import tamamlandı ancak kaydedilen not bulunamadı', { icon: '⚠️' });
+          toast('Import tamamlandı ancak kaydedilen not bulunamadı');
         }
       }
     } catch (error: unknown) {
@@ -157,8 +188,8 @@ const NotEkleme: React.FC = () => {
     }
   };
 
-  const isValidFile = (file: File): boolean => {
-    const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+  const isValidFile = (f: File): boolean => {
+    const ext = f.name.toLowerCase().substring(f.name.lastIndexOf('.'));
     return supportedFormats.includes(ext);
   };
 
@@ -205,7 +236,6 @@ const NotEkleme: React.FC = () => {
       } else {
         toast.success('Not başarıyla eklendi!');
 
-        // Formu temizle
         setManualNote({
           studentId: '',
           studentName: '',
@@ -245,10 +275,17 @@ const NotEkleme: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Yükleniyor...</p>
-      </div>
+      <ModernDashboardLayout
+        pageTitle="Not Ekleme"
+        breadcrumb={[
+          { label: 'Ana Sayfa', path: `/${user?.rol || 'student'}` },
+          { label: 'Not Ekleme' },
+        ]}
+      >
+        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          Yükleniyor…
+        </div>
+      </ModernDashboardLayout>
     );
   }
 
@@ -259,394 +296,401 @@ const NotEkleme: React.FC = () => {
 
   return (
     <ModernDashboardLayout pageTitle="Not Ekleme" breadcrumb={breadcrumb}>
-      <div className="not-ekleme-page">
-        <div className="tabs-container">
-          <div className="tabs">
-            <button
-              className={`tab ${activeTab === 'import' ? 'active' : ''}`}
-              onClick={() => setActiveTab('import')}
-            >
-              <Upload size={18} className="tab-icon" />
-              Toplu İçe Aktar
-            </button>
-            <button
-              className={`tab ${activeTab === 'manual' ? 'active' : ''}`}
-              onClick={() => setActiveTab('manual')}
-            >
-              <Plus size={18} className="tab-icon" />
-              Manuel Ekle
-            </button>
+      <div className="p-6 space-y-6">
+        {/* ── Page header ── */}
+        <header>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Belge No. {new Date().getFullYear()}/NE
           </div>
-        </div>
-      </div>
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Toplu Not İçe Aktarma</h1>
+        </header>
 
-      <div className="tab-content">
-        {activeTab === 'import' ? (
-          <div className="import-tab">
-            <div className="import-instructions">
-              <h3>📋 Excel Dosyası İle Toplu Not Yükleme</h3>
-              <p>Hazırladığınız Excel dosyasını yükleyerek toplu not girişi yapabilirsiniz.</p>
-
-              <h4>📌 Kurallar:</h4>
-              <ul>
-                <li>Excel dosyasında ilk satır başlık satırı olmalıdır</li>
-                <li>Zorunlu sütunlar: Öğrenci ID, Öğrenci Adı, Ders</li>
-                <li>
-                  İsteğe bağlı sütunlar: Sınav 1, Sınav 2, Sınav 3, Sözlü, Proje, Dönem, Akademik
-                  Yıl
-                </li>
-                <li>Boş bırakılan notlar için "-" kullanın veya boş bırakın</li>
-              </ul>
-            </div>
-
-            <div className="template-download">
-              <h4>📋 Excel Şablonu</h4>
-              <p>Doğru format için örnek şablonu indirin ve kullanın.</p>
-              <button onClick={downloadTemplate} className="download-button">
-                📥 Şablonu İndir
+        {/* ── Tab strip ── */}
+        <div className="flex border-b border-[var(--rule)]">
+          {(
+            [
+              { key: 'import', label: 'Toplu İçe Aktar', icon: Upload },
+              { key: 'manual', label: 'Manuel Ekle', icon: Plus },
+            ] as const
+          ).map(({ key, label, icon: Icon }) => {
+            const active = activeTab === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setActiveTab(key)}
+                className={cn(
+                  'inline-flex items-center gap-2 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.2em] border-b-2 -mb-px transition-colors',
+                  active
+                    ? 'border-[var(--state)] text-[var(--ink)]'
+                    : 'border-transparent text-[var(--ink-dim)] hover:text-[var(--ink)]',
+                )}
+                aria-pressed={active}
+              >
+                <Icon size={14} />
+                {label}
               </button>
-            </div>
+            );
+          })}
+        </div>
 
-            {/* File Upload Section */}
-            <div className="file-upload-container">
-              <h3>📤 Dosya Yükle</h3>
+        {/* ── Tab: Toplu İçe Aktar ── */}
+        {activeTab === 'import' && (
+          <div className="space-y-5">
+            {/* Instructions */}
+            <Card accentBar contentClassName="p-5">
+              <SectionLabel>Kurallar</SectionLabel>
+              <ul className="space-y-1.5">
+                {[
+                  'Excel dosyasında ilk satır başlık satırı olmalıdır.',
+                  'Zorunlu sütunlar: Öğrenci ID, Öğrenci Adı, Ders.',
+                  'İsteğe bağlı: Sınav 1, Sınav 2, Sınav 3, Sözlü, Proje, Dönem, Akademik Yıl.',
+                  'Boş bırakılan notlar için "-" kullanın veya hücreyi boş bırakın.',
+                ].map((rule, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 font-serif text-sm text-[var(--ink-2)]"
+                  >
+                    <span className="font-mono text-[10px] text-[var(--ink-dim)] mt-0.5 select-none">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    {rule}
+                  </li>
+                ))}
+              </ul>
+            </Card>
 
-              <div className={`file-upload-area ${file ? 'has-file' : ''}`}>
-                <input
-                  type="file"
-                  accept={supportedFormats.join(',')}
-                  onChange={handleFileChange}
-                  className="file-input"
-                  id="file-upload"
-                />
-                <label htmlFor="file-upload" className="file-upload-label">
-                  <div className="file-upload-icon">📁</div>
-                  <div className="file-upload-text">
-                    {file ? file.name : 'Dosya seçmek için tıklayın'}
-                  </div>
-                  <div className="file-upload-hint">
-                    Desteklenen formatlar: {supportedFormats.join(', ')}
-                  </div>
-                </label>
+            {/* Template download */}
+            <Card contentClassName="p-5">
+              <SectionLabel>Excel Şablonu</SectionLabel>
+              <p className="font-serif text-sm text-[var(--ink-2)] mb-4">
+                Doğru format için örnek şablonu indirin ve kullanın.
+              </p>
+              <Button variant="secondary" size="sm" onClick={downloadTemplate}>
+                <Download size={14} />
+                Şablonu İndir
+              </Button>
+            </Card>
+
+            {/* File upload */}
+            <Card contentClassName="p-5">
+              <SectionLabel>Dosya Yükle</SectionLabel>
+
+              {/* Hidden native input + styled trigger */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={supportedFormats.join(',')}
+                onChange={handleFileChange}
+                className="sr-only"
+                id="file-upload"
+                aria-label="Dosya seç"
+              />
+
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  type="button"
+                >
+                  <FileSpreadsheet size={14} />
+                  Dosya Seç
+                </Button>
+
+                {file ? (
+                  <span className="font-mono text-xs text-[var(--ink-2)]">{file.name}</span>
+                ) : (
+                  <span className="font-mono text-[10px] text-[var(--ink-dim)]">
+                    {supportedFormats.join(' · ')}
+                  </span>
+                )}
               </div>
 
+              {/* Invalid format warning */}
               {file && !isValidFile(file) && (
-                <div className="file-upload-error">
-                  ⚠️ Desteklenmeyen dosya formatı. Lütfen {supportedFormats.join(', ')} formatında
-                  bir dosya seçin.
+                <div className="mt-3 flex items-start gap-2 p-3 border border-[var(--warn)] bg-transparent">
+                  <AlertTriangle size={14} className="text-[var(--warn)] mt-0.5 shrink-0" />
+                  <span className="font-serif text-sm text-[var(--ink-2)]">
+                    Desteklenmeyen dosya formatı. Lütfen{' '}
+                    <span className="font-mono">{supportedFormats.join(', ')}</span> formatında bir
+                    dosya seçin.
+                  </span>
                 </div>
               )}
 
-              <div className="import-actions">
-                <button
+              <div className="mt-4">
+                <Button
+                  variant="primary"
+                  size="md"
                   onClick={handleUpload}
                   disabled={!file || !isValidFile(file) || isUploading}
-                  className={`import-button ${file && isValidFile(file) ? 'primary' : 'secondary'}`}
+                  loading={isUploading}
                 >
-                  {isUploading ? '⏳ Yükleniyor...' : '🚀 Import Et'}
-                </button>
+                  <Upload size={14} />
+                  {isUploading ? 'Yükleniyor…' : 'Import Et'}
+                </Button>
               </div>
+            </Card>
 
-              {importResult?.saveErrors && importResult.saveErrors.length > 0 && (
-                <div className="import-save-errors">
-                  <h4 className="import-save-errors-title">💾 Kaydetme Hataları:</h4>
-                  <div className="import-save-errors-list">
-                    {importResult.saveErrors.map((error, index) => (
-                      <div key={index} className="import-save-error-item">
-                        • {error}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Results */}
+            {/* Import result */}
             {importResult && (
-              <div className={`import-result ${importResult.success ? 'success' : 'error'}`}>
-                <h3 className="import-result-title">📊 Import Sonuçları</h3>
+              <Card contentClassName="p-5">
+                <SectionLabel>Import Sonuçları</SectionLabel>
 
-                <div className="import-result-message">{importResult.message}</div>
+                <div
+                  className={cn(
+                    'flex items-start gap-2 mb-4',
+                    importResult.success ? 'text-[var(--ok)]' : 'text-[var(--state)]',
+                  )}
+                >
+                  {importResult.success ? (
+                    <CheckCircle size={16} className="mt-0.5 shrink-0" />
+                  ) : (
+                    <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                  )}
+                  <span className="font-serif text-sm">{importResult.message}</span>
+                </div>
 
-                {/* Hatalar */}
                 {importResult.errors && importResult.errors.length > 0 && (
-                  <div className="import-errors">
-                    <h4 className="import-errors-title">❌ Hatalar:</h4>
-                    <div className="import-errors-list">
-                      {importResult.errors.map((error, index) => (
-                        <div key={index} className="import-error-item">
-                          • {error}
-                        </div>
+                  <div className="mb-4">
+                    <SectionLabel>Hatalar</SectionLabel>
+                    <ul className="space-y-1">
+                      {importResult.errors.map((err, i) => (
+                        <li key={i} className="font-mono text-xs text-[var(--state)]">
+                          {err}
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
                 )}
 
-                {/* Uyarılar */}
                 {importResult.warnings && importResult.warnings.length > 0 && (
-                  <div className="import-warnings">
-                    <h4 className="import-warnings-title">⚠️ Uyarılar:</h4>
-                    <div className="import-warnings-list">
-                      {importResult.warnings.map((warning, index) => (
-                        <div key={index} className="import-warning-item">
-                          • {warning}
-                        </div>
+                  <div className="mb-4">
+                    <SectionLabel>Uyarılar</SectionLabel>
+                    <ul className="space-y-1">
+                      {importResult.warnings.map((w, i) => (
+                        <li key={i} className="font-mono text-xs text-[var(--warn)]">
+                          {w}
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
                 )}
 
-                {/* Kaydetme Hataları */}
                 {importResult.saveErrors && importResult.saveErrors.length > 0 && (
-                  <div className="import-save-errors">
-                    <h4 className="import-save-errors-title">💾 Kaydetme Hataları:</h4>
-                    <div className="import-save-errors-list">
-                      {importResult.saveErrors.map((error, index) => (
-                        <div key={index} className="import-save-error-item">
-                          • {error}
-                        </div>
+                  <div>
+                    <SectionLabel>Kaydetme Hataları</SectionLabel>
+                    <ul className="space-y-1">
+                      {importResult.saveErrors.map((err, i) => (
+                        <li key={i} className="font-mono text-xs text-[var(--state)]">
+                          {err}
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
                 )}
-              </div>
+              </Card>
             )}
           </div>
-        ) : (
-          <div className="manual-tab">
-            {/* Manuel Not Ekleme Formu */}
-            <div className="manual-note-form">
-              <h3 className="manual-note-title">✏️ Manuel Not Ekle</h3>
+        )}
 
-              <div className="not-ekleme-form-grid">
-                {/* Öğrenci Bilgileri */}
-                <div className="form-group">
-                  <label className="form-label">Öğrenci ID *</label>
-                  <input
-                    type="text"
+        {/* ── Tab: Manuel Ekle ── */}
+        {activeTab === 'manual' && (
+          <div className="space-y-5">
+            {/* Student info */}
+            <Card contentClassName="p-5">
+              <SectionLabel>Öğrenci Bilgileri</SectionLabel>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                <label className="flex flex-col gap-1">
+                  <FieldLabel required>Öğrenci ID</FieldLabel>
+                  <Input
                     value={manualNote.studentId}
                     onChange={(e) => handleManualNoteChange('studentId', e.target.value)}
-                    className="form-input"
                     placeholder="Öğrenci ID"
                   />
-                </div>
+                </label>
 
-                <div className="form-group">
-                  <label className="form-label">Ad Soyad *</label>
-                  <input
-                    type="text"
+                <label className="flex flex-col gap-1">
+                  <FieldLabel required>Ad Soyad</FieldLabel>
+                  <Input
                     value={manualNote.studentName}
                     onChange={(e) => handleManualNoteChange('studentName', e.target.value)}
-                    className="form-input"
                     placeholder="Ad Soyad"
                   />
-                </div>
+                </label>
 
-                <div className="form-group">
-                  <label className="form-label">Ders *</label>
-                  <input
-                    type="text"
+                <label className="flex flex-col gap-1">
+                  <FieldLabel required>Ders</FieldLabel>
+                  <Input
                     value={manualNote.lesson}
                     onChange={(e) => handleManualNoteChange('lesson', e.target.value)}
-                    className="form-input"
                     placeholder="Ders Adı"
                   />
-                </div>
+                </label>
 
-                <div className="form-group">
-                  <label className="form-label">Öğretmen</label>
-                  <input
-                    type="text"
-                    value={manualNote.teacherName}
+                <label className="flex flex-col gap-1">
+                  <FieldLabel>Öğretmen</FieldLabel>
+                  <Input
+                    value={manualNote.teacherName ?? ''}
                     onChange={(e) => handleManualNoteChange('teacherName', e.target.value)}
-                    className="form-input"
                     placeholder="Öğretmen Adı"
                   />
-                </div>
+                </label>
+              </div>
+            </Card>
+
+            {/* Grades */}
+            <Card contentClassName="p-5">
+              <SectionLabel>Not Bilgileri</SectionLabel>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-6 gap-y-4">
+                {(
+                  [
+                    { field: 'exam1', label: '1. Sınav' },
+                    { field: 'exam2', label: '2. Sınav' },
+                    { field: 'exam3', label: '3. Sınav' },
+                    { field: 'oral', label: 'Sözlü' },
+                    { field: 'project', label: 'Proje' },
+                  ] as const
+                ).map(({ field, label }) => (
+                  <label key={field} className="flex flex-col gap-1">
+                    <FieldLabel>{label}</FieldLabel>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={manualNote[field]?.toString() ?? ''}
+                      onChange={(e) =>
+                        handleManualNoteChange(
+                          field,
+                          e.target.value ? Number(e.target.value) : undefined,
+                        )
+                      }
+                      placeholder="0–100"
+                    />
+                  </label>
+                ))}
               </div>
 
-              {/* Not Bilgileri */}
-              <div className="grades-section">
-                <h4 className="section-title">📊 Not Bilgileri</h4>
-                <div className="not-ekleme-grades-grid">
-                  <div className="grade-input">
-                    <label className="grade-label">1. Sınav</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={manualNote.exam1?.toString() ?? ''}
-                      onChange={(e) =>
-                        handleManualNoteChange(
-                          'exam1',
-                          e.target.value ? Number(e.target.value) : undefined,
-                        )
-                      }
-                      className="grade-input-field"
-                      placeholder="0-100"
-                    />
-                  </div>
-
-                  <div className="grade-input">
-                    <label className="grade-label">2. Sınav</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={manualNote.exam2?.toString() ?? ''}
-                      onChange={(e) =>
-                        handleManualNoteChange(
-                          'exam2',
-                          e.target.value ? Number(e.target.value) : undefined,
-                        )
-                      }
-                      className="grade-input-field"
-                      placeholder="0-100"
-                    />
-                  </div>
-
-                  <div className="grade-input">
-                    <label className="grade-label">3. Sınav</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={manualNote.exam3?.toString() ?? ''}
-                      onChange={(e) =>
-                        handleManualNoteChange(
-                          'exam3',
-                          e.target.value ? Number(e.target.value) : undefined,
-                        )
-                      }
-                      className="grade-input-field"
-                      placeholder="0-100"
-                    />
-                  </div>
-
-                  <div className="grade-input">
-                    <label className="grade-label">Sözlü</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={manualNote.oral?.toString() ?? ''}
-                      onChange={(e) =>
-                        handleManualNoteChange(
-                          'oral',
-                          e.target.value ? Number(e.target.value) : undefined,
-                        )
-                      }
-                      className="grade-input-field"
-                      placeholder="0-100"
-                    />
-                  </div>
-
-                  <div className="grade-input">
-                    <label className="grade-label">Proje</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={manualNote.project?.toString() ?? ''}
-                      onChange={(e) =>
-                        handleManualNoteChange(
-                          'project',
-                          e.target.value ? Number(e.target.value) : undefined,
-                        )
-                      }
-                      className="grade-input-field"
-                      placeholder="0-100"
-                    />
-                  </div>
-                </div>
+              {/* Average display */}
+              <div className="mt-4 pt-3 border-t border-[var(--rule)] flex items-baseline gap-3">
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                  Ortalama
+                </span>
+                <span className="font-serif text-2xl text-[var(--ink)]">{manualNote.average}</span>
               </div>
+            </Card>
 
-              {/* Ortalama */}
-              <div className="average-display">
-                <span className="average-text">📊 Ortalama: {manualNote.average}</span>
-              </div>
-
-              {/* Diğer Bilgiler */}
-              <div className="not-ekleme-additional-info-grid">
-                <div className="info-group">
-                  <label className="info-label">Dönem</label>
+            {/* Additional info */}
+            <Card contentClassName="p-5">
+              <SectionLabel>Ek Bilgiler</SectionLabel>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-4">
+                <label className="flex flex-col gap-1">
+                  <FieldLabel>Dönem</FieldLabel>
                   <select
                     value={manualNote.semester}
                     onChange={(e) => handleManualNoteChange('semester', e.target.value)}
-                    className="info-select"
+                    className={cn(
+                      'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+                      'text-[var(--ink)]',
+                      'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+                      'transition-colors',
+                    )}
                   >
                     <option value="1">1. Dönem</option>
                     <option value="2">2. Dönem</option>
                   </select>
-                </div>
+                </label>
 
-                <div className="info-group">
-                  <label className="info-label">Öğretim Yılı</label>
-                  <input
-                    type="text"
+                <label className="flex flex-col gap-1">
+                  <FieldLabel>Öğretim Yılı</FieldLabel>
+                  <Input
                     value={manualNote.academicYear}
                     onChange={(e) => handleManualNoteChange('academicYear', e.target.value)}
-                    className="info-input"
                     placeholder="2024-2025"
                   />
-                </div>
+                </label>
 
-                <div className="info-group">
-                  <label className="info-label">Sınıf</label>
-                  <input
-                    type="text"
-                    value={manualNote.gradeLevel}
+                <label className="flex flex-col gap-1">
+                  <FieldLabel>Sınıf</FieldLabel>
+                  <Input
+                    value={manualNote.gradeLevel ?? ''}
                     onChange={(e) => handleManualNoteChange('gradeLevel', e.target.value)}
-                    className="info-input"
                     placeholder="9, 10, 11, 12"
                   />
-                </div>
+                </label>
 
-                <div className="info-group">
-                  <label className="info-label">Şube</label>
-                  <input
-                    type="text"
-                    value={manualNote.classSection}
+                <label className="flex flex-col gap-1">
+                  <FieldLabel>Şube</FieldLabel>
+                  <Input
+                    value={manualNote.classSection ?? ''}
                     onChange={(e) => handleManualNoteChange('classSection', e.target.value)}
-                    className="info-input"
                     placeholder="A, B, C"
                   />
-                </div>
+                </label>
               </div>
+            </Card>
 
-              {/* Notlar */}
-              <div className="notes-section">
-                <label className="notes-label">Notlar</label>
+            {/* Notes textarea */}
+            <Card contentClassName="p-5">
+              <SectionLabel>Notlar</SectionLabel>
+              <label className="flex flex-col gap-1">
+                <FieldLabel>Ek Notlar</FieldLabel>
                 <textarea
-                  value={manualNote.notes}
+                  value={manualNote.notes ?? ''}
                   onChange={(e) => handleManualNoteChange('notes', e.target.value)}
-                  className="notes-textarea"
-                  placeholder="Ek notlar..."
+                  rows={3}
+                  placeholder="Ek notlar…"
+                  className={cn(
+                    'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+                    'text-[var(--ink)] placeholder:text-[var(--ink-dim)]',
+                    'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+                    'transition-colors resize-y min-h-[4rem]',
+                  )}
                 />
-              </div>
+              </label>
 
-              <button
-                onClick={handleAddManualNote}
-                disabled={isAddingNote}
-                className={`add-note-button ${isAddingNote ? 'disabled' : ''}`}
-              >
-                {isAddingNote ? '⏳ Ekleniyor...' : '✅ Not Ekle'}
-              </button>
-            </div>
+              <div className="mt-4">
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={handleAddManualNote}
+                  disabled={isAddingNote}
+                  loading={isAddingNote}
+                >
+                  <Plus size={14} />
+                  {isAddingNote ? 'Ekleniyor…' : 'Not Ekle'}
+                </Button>
+              </div>
+            </Card>
           </div>
         )}
 
-        <div className="important-notes">
-          <h4>💡 Önemli Notlar</h4>
-          <ul>
-            <li>Dosya boyutu maksimum 10MB olmalıdır</li>
-            <li>İlk satır başlık satırı olmalıdır</li>
-            <li>Zorunlu alanlar: Öğrenci ID, Öğrenci Adı, Ders</li>
-            <li>Not değerleri 0-100 arasında olmalıdır</li>
-            <li>Boş notlar için "-" veya boş bırakın</li>
-            <li>Ortalama otomatik hesaplanır</li>
-          </ul>
-        </div>
+        {/* ── Footer notice ── */}
+        <Card tone="tinted" contentClassName="p-4">
+          <div className="flex items-start gap-2">
+            <Info size={14} className="text-[var(--ink-dim)] mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                Önemli Bilgiler
+              </div>
+              <ul className="space-y-0.5">
+                {[
+                  'Dosya boyutu maksimum 10 MB olmalıdır.',
+                  'İlk satır başlık satırı olmalıdır.',
+                  'Zorunlu alanlar: Öğrenci ID, Öğrenci Adı, Ders.',
+                  'Not değerleri 0–100 arasında olmalıdır.',
+                  'Boş notlar için "-" veya boş bırakın.',
+                  'Ortalama otomatik hesaplanır.',
+                ].map((note, i) => (
+                  <li key={i} className="font-serif text-sm text-[var(--ink-2)]">
+                    {note}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Card>
       </div>
     </ModernDashboardLayout>
   );

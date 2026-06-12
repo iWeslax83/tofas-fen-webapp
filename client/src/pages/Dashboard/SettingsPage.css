@@ -1,4 +1,7 @@
-/* SettingsPage Styles */
+/* SettingsPage Styles — Devlet (ministerial flat) aesthetic.
+   Single source of truth for tokens is styles/tokens.css. Was a teal (#0f766e),
+   rounded-card, shadowed SaaS look; migrated to flat ruled panels + red state
+   accent + IBM Plex serif/mono to match the rest of the system. */
 
 @import url('../../styles/theme.css');
 
@@ -6,16 +9,16 @@
   min-height: 100vh;
   background: transparent;
   padding: var(--space-6);
-  max-width: 800px;
+  max-width: 880px;
 }
 
 .settings-page .page-header {
-  background: var(--white);
-  border-radius: var(--radius-2xl);
+  background: var(--paper);
+  border-radius: 0;
   padding: var(--space-6);
   margin-bottom: var(--space-6);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--gray-200);
+  box-shadow: none;
+  border: 1px solid var(--rule);
   position: relative;
   overflow: hidden;
 }
@@ -25,9 +28,10 @@
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  height: 4px;
-  background: #0f766e;
+  bottom: 0;
+  width: 4px;
+  height: auto;
+  background: var(--state);
 }
 
 .settings-page .page-header-content {
@@ -37,39 +41,44 @@
 }
 
 .settings-page .page-icon {
-  width: 48px;
-  height: 48px;
-  color: var(--gray-700);
-  background: var(--gray-100);
+  width: 44px;
+  height: 44px;
+  color: var(--ink-2);
+  background: var(--surface);
   padding: var(--space-3);
-  border-radius: var(--radius-xl);
+  border-radius: 0;
+  border: 1px solid var(--rule);
 }
 
 .settings-page .page-title-main {
-  font-size: 2rem;
-  font-weight: 700;
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 600;
   font-style: normal;
-  color: var(--gray-900);
+  color: var(--ink);
   margin: 0;
 }
 
 /* Settings Sections */
 .settings-section {
-  background: var(--white);
-  border-radius: var(--radius-xl);
+  background: var(--paper);
+  border-radius: 0;
   padding: var(--space-6);
   margin-bottom: var(--space-5);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--gray-200);
+  box-shadow: none;
+  border: 1px solid var(--rule);
 }
 
 .settings-section-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--gray-900);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--ink-dim);
   margin: 0 0 var(--space-4) 0;
   padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--gray-100);
+  border-bottom: 1px solid var(--rule);
 }
 
 /* Profile Info Grid */
@@ -86,21 +95,22 @@
 }
 
 .profile-info-label {
-  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
   font-weight: 500;
-  color: var(--gray-500);
+  color: var(--ink-dim);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.15em;
 }
 
 .profile-info-value {
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 500;
-  color: var(--gray-800);
+  color: var(--ink);
   padding: var(--space-3) var(--space-4);
-  background: var(--gray-50);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--gray-200);
+  background: var(--surface);
+  border-radius: 0;
+  border: 1px solid var(--rule);
 }
 
 /* Email Edit */
@@ -124,26 +134,26 @@
   left: var(--space-3);
   top: 50%;
   transform: translateY(-50%);
-  color: var(--gray-400);
+  color: var(--ink-dim);
   pointer-events: none;
 }
 
 .email-edit-input {
   width: 100%;
   padding: var(--space-3) var(--space-4) var(--space-3) calc(var(--space-3) + 24px);
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-md);
-  font-size: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  font-size: 0.9375rem;
   font-weight: 500;
-  color: var(--gray-800);
+  color: var(--ink);
   transition: border-color 0.2s ease;
 }
 
 .email-edit-input:focus {
   outline: none;
-  border-color: #0f766e;
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+  border-color: var(--state);
+  box-shadow: 0 0 0 2px rgba(147, 26, 26, 0.12);
 }
 
 .email-edit-input:disabled {
@@ -151,27 +161,44 @@
   cursor: not-allowed;
 }
 
-.email-save-btn {
+/* Buttons — Devlet ink/state */
+.email-save-btn,
+.btn-send-verification,
+.btn-verify-code {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-3) var(--space-4);
-  background: #0f766e;
-  color: #ffffff;
-  border: none;
-  border-radius: var(--radius-md);
-  font-weight: 600;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  font-weight: 500;
   font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
   white-space: nowrap;
 }
 
-.email-save-btn:hover:not(:disabled) {
-  background: #0d6b63;
+.btn-send-verification,
+.btn-verify-code {
+  padding: 6px 12px;
+  font-size: 0.8125rem;
 }
 
-.email-save-btn:disabled {
+.email-save-btn:hover:not(:disabled),
+.btn-send-verification:hover:not(:disabled),
+.btn-verify-code:hover:not(:disabled) {
+  background: var(--state);
+  border-color: var(--state);
+}
+
+.email-save-btn:disabled,
+.btn-send-verification:disabled,
+.btn-verify-code:disabled,
+.btn-resend-code:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -192,45 +219,24 @@
 }
 
 .verification-icon.unverified {
-  color: #f59e0b;
+  color: var(--warn);
 }
 
 .verification-icon.verified {
-  color: #16a34a;
+  color: var(--ok);
 }
 
 .verification-text {
-  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
   font-weight: 500;
-  color: #f59e0b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--warn);
 }
 
 .verification-text.verified {
-  color: #16a34a;
-}
-
-.btn-send-verification {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: 6px 12px;
-  background: #0f766e;
-  color: #ffffff;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.btn-send-verification:hover:not(:disabled) {
-  background: #0d6b63;
-}
-
-.btn-send-verification:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  color: var(--ok);
 }
 
 .verification-code-row {
@@ -240,65 +246,42 @@
 }
 
 .verification-code-input {
-  width: 100px;
+  width: 110px;
   padding: 6px 10px;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  font-family: var(--font-mono);
   font-size: 1rem;
   font-weight: 600;
-  letter-spacing: 3px;
+  letter-spacing: 4px;
   text-align: center;
-  color: var(--gray-800);
-  background: var(--gray-50);
+  color: var(--ink);
+  background: var(--surface);
 }
 
 .verification-code-input:focus {
   outline: none;
-  border-color: #0f766e;
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
-}
-
-.btn-verify-code {
-  padding: 6px 12px;
-  background: #0f766e;
-  color: #ffffff;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.btn-verify-code:hover:not(:disabled) {
-  background: #0d6b63;
-}
-
-.btn-verify-code:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  border-color: var(--state);
+  box-shadow: 0 0 0 2px rgba(147, 26, 26, 0.12);
 }
 
 .btn-resend-code {
   padding: 6px 10px;
   background: none;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--rule);
+  border-radius: 0;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--gray-600);
+  color: var(--ink-2);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .btn-resend-code:hover:not(:disabled) {
-  border-color: var(--gray-400);
-  color: var(--gray-800);
-}
-
-.btn-resend-code:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  border-color: var(--ink);
+  color: var(--ink);
 }
 
 /* Theme Selector */
@@ -314,25 +297,25 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-4) var(--space-3);
-  background: var(--gray-50);
-  border: 2px solid var(--gray-200);
-  border-radius: var(--radius-xl);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 0;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: var(--gray-600);
+  color: var(--ink-dim);
   font-size: 0.875rem;
   font-weight: 500;
 }
 
 .theme-option:hover {
-  border-color: var(--gray-400);
-  background: var(--gray-100);
+  border-color: var(--ink);
+  color: var(--ink-2);
 }
 
 .theme-option.active {
-  border-color: #0f766e;
-  background: rgba(15, 118, 110, 0.08);
-  color: #0f766e;
+  border-color: var(--state);
+  background: rgba(147, 26, 26, 0.06);
+  color: var(--state);
 }
 
 /* Settings Row */
@@ -344,7 +327,7 @@
 }
 
 .settings-row + .settings-row {
-  border-top: 1px solid var(--gray-100);
+  border-top: 1px solid var(--rule);
 }
 
 .settings-row-info {
@@ -360,23 +343,23 @@
 }
 
 .settings-row-icon {
-  color: var(--gray-400);
+  color: var(--ink-dim);
   flex-shrink: 0;
 }
 
 .settings-row-icon.active {
-  color: #0f766e;
+  color: var(--state);
 }
 
 .settings-row-label {
   font-size: 0.9375rem;
   font-weight: 500;
-  color: var(--gray-800);
+  color: var(--ink);
 }
 
 .settings-row-desc {
   font-size: 0.8125rem;
-  color: var(--gray-500);
+  color: var(--ink-dim);
 }
 
 /* Toggle Switch */
@@ -400,7 +383,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--gray-300);
+  background-color: var(--rule-2);
   border-radius: 24px;
   transition: background-color 0.2s ease;
 }
@@ -412,13 +395,13 @@
   width: 18px;
   left: 3px;
   bottom: 3px;
-  background-color: var(--white);
+  background-color: var(--paper);
   border-radius: 50%;
   transition: transform 0.2s ease;
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background-color: #0f766e;
+  background-color: var(--state);
 }
 
 .toggle-switch input:checked + .toggle-slider::before {
@@ -426,37 +409,42 @@
 }
 
 .toggle-slider.disabled {
-  background-color: var(--gray-200);
+  background-color: var(--rule);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-/* Logout Button */
+/* Logout Button — Devlet danger */
 .settings-logout-btn {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-6);
-  background: #fee2e2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
-  border-radius: var(--radius-lg);
-  font-weight: 600;
+  background: transparent;
+  color: var(--state);
+  border: 1px solid var(--state);
+  border-radius: 0;
+  font-weight: 500;
   font-size: 0.9375rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .settings-logout-btn:hover {
-  background: #fecaca;
-  border-color: #fca5a5;
+  background: var(--state);
+  color: #ffffff;
 }
 
 /* App Version */
 .app-version {
   margin-top: var(--space-4);
-  font-size: 0.8125rem;
-  color: var(--gray-400);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--ink-dim);
 }
 
 /* Responsive */
@@ -497,10 +485,6 @@
   .settings-section {
     padding: var(--space-4);
     margin-bottom: var(--space-3);
-  }
-
-  .settings-section-title {
-    font-size: 1rem;
   }
 
   .settings-row {

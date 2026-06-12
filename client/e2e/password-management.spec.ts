@@ -78,7 +78,10 @@ test.describe('Password Management — bulk import', () => {
     await cleanupPendingBatches(page);
 
     await page.goto('/admin/sifre-yonetimi');
-    await expect(page.getByText('Şifre Yönetimi')).toBeVisible();
+    // The page now uses the shared dashboard shell, so "Şifre Yönetimi" appears
+    // both in the breadcrumb and the page heading. Target the heading to stay
+    // unambiguous under strict mode.
+    await expect(page.getByRole('heading', { name: 'Şifre Yönetimi' })).toBeVisible();
 
     const fileChooserPromise = page.waitForEvent('filechooser');
     await page.getByText('XLS Seç').click();

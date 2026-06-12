@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button } from '../../../components/ui/Button';
 import { useAuditLog } from './hooks/useAuditLog';
 
 export default function AuditLogTab() {
@@ -12,27 +13,29 @@ export default function AuditLogTab() {
     reason: reason || undefined,
   });
 
-  if (isLoading) return <p className="text-[var(--ink-dim)]">Yükleniyor...</p>;
+  const selectCls =
+    'h-8 px-3 text-xs font-mono border border-[var(--rule)] bg-[var(--paper)] text-[var(--ink)] focus:outline-none focus:border-[var(--state)]';
+
+  if (isLoading)
+    return (
+      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+        Yükleniyor...
+      </p>
+    );
   if (!data) return null;
 
+  const totalPages = Math.max(1, Math.ceil(data.total / data.limit));
+
   return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
-        <select
-          value={action}
-          onChange={(e) => setAction(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--rule)] rounded bg-[var(--paper)] text-[var(--ink)]"
-        >
+    <div className="space-y-4">
+      <div className="flex gap-2 flex-wrap">
+        <select value={action} onChange={(e) => setAction(e.target.value)} className={selectCls}>
           <option value="">Tüm aksiyonlar</option>
           <option value="bulk_import">Toplu İçe Aktar</option>
           <option value="admin_generated">Admin Üretimi</option>
           <option value="admin_reset">Admin Reset</option>
         </select>
-        <select
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--rule)] rounded bg-[var(--paper)] text-[var(--ink)]"
-        >
+        <select value={reason} onChange={(e) => setReason(e.target.value)} className={selectCls}>
           <option value="">Tüm sebepler</option>
           <option value="forgot">Unuttu</option>
           <option value="security">Güvenlik</option>
@@ -41,65 +44,59 @@ export default function AuditLogTab() {
           <option value="other">Diğer</option>
         </select>
       </div>
+
       <table className="w-full text-sm border-collapse">
         <thead className="bg-[var(--surface)]">
           <tr>
-            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
-              Zaman
-            </th>
-            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
-              Kullanıcı
-            </th>
-            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
-              Admin
-            </th>
-            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
-              Aksiyon
-            </th>
-            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
-              Sebep
-            </th>
-            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
-              Not
-            </th>
+            {['Zaman', 'Kullanıcı', 'Admin', 'Aksiyon', 'Sebep', 'Not'].map((h) => (
+              <th
+                key={h}
+                className="text-left px-3 py-2 border-b border-[var(--rule)] font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]"
+              >
+                {h}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
           {data.items.map((it) => (
             <tr key={it._id} className="border-b border-[var(--rule)] hover:bg-[var(--surface)]">
-              <td className="px-3 py-2 text-[var(--ink)]">
+              <td className="px-3 py-2 font-mono text-xs text-[var(--ink-dim)]">
                 {new Date(it.createdAt).toLocaleString('tr-TR')}
               </td>
               <td className="px-3 py-2 text-[var(--ink)]">
-                {it.userSnapshot.adSoyad}{' '}
-                <span className="text-xs text-[var(--ink-dim)]">({it.userId})</span>
+                <span className="font-serif">{it.userSnapshot.adSoyad}</span>{' '}
+                <span className="font-mono text-xs text-[var(--ink-dim)]">({it.userId})</span>
               </td>
-              <td className="px-3 py-2 text-[var(--ink)]">{it.adminSnapshot.adSoyad}</td>
-              <td className="px-3 py-2 text-[var(--ink)]">{it.action}</td>
-              <td className="px-3 py-2 text-[var(--ink)]">{it.reason}</td>
-              <td className="px-3 py-2 text-[var(--ink)]">{it.reasonNote ?? '-'}</td>
+              <td className="px-3 py-2 font-serif text-[var(--ink)]">{it.adminSnapshot.adSoyad}</td>
+              <td className="px-3 py-2 font-mono text-xs text-[var(--ink-dim)]">{it.action}</td>
+              <td className="px-3 py-2 font-mono text-xs text-[var(--ink-dim)]">{it.reason}</td>
+              <td className="px-3 py-2 font-serif text-[var(--ink-dim)]">{it.reasonNote ?? '—'}</td>
             </tr>
           ))}
         </tbody>
       </table>
+
       <div className="flex gap-2 items-center">
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={page === 1}
-          className="px-3 py-1 border border-[var(--rule)] rounded text-[var(--ink)] hover:bg-[var(--surface)] disabled:opacity-50"
         >
           Önceki
-        </button>
-        <span className="text-sm text-[var(--ink-dim)]">
-          Sayfa {page} / {Math.max(1, Math.ceil(data.total / data.limit))}
+        </Button>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+          Sayfa {page} / {totalPages}
         </span>
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => setPage((p) => p + 1)}
           disabled={page * data.limit >= data.total}
-          className="px-3 py-1 border border-[var(--rule)] rounded text-[var(--ink)] hover:bg-[var(--surface)] disabled:opacity-50"
         >
           Sonraki
-        </button>
+        </Button>
       </div>
     </div>
   );

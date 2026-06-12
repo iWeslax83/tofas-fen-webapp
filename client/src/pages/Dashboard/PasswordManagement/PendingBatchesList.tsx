@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/Button';
 import {
   usePendingBatches,
   useActivateBatch,
@@ -15,34 +16,44 @@ export default function PendingBatchesList({
   const regen = useRegenerateBatch();
   const cancel = useCancelBatch();
 
-  if (isLoading) return <p>Yükleniyor...</p>;
-  if (batches.length === 0) return <p className="text-[var(--ink-dim)]">Bekleyen batch yok.</p>;
+  if (isLoading)
+    return (
+      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+        Yükleniyor...
+      </p>
+    );
+  if (batches.length === 0)
+    return <p className="font-mono text-xs text-[var(--ink-dim)]">Bekleyen batch yok.</p>;
 
   return (
     <div className="space-y-3">
       {batches.map((b) => (
-        <div
-          key={b.batchId}
-          className="border border-[var(--rule)] bg-[var(--surface)] rounded p-3"
-        >
-          <div className="flex justify-between items-center mb-2">
+        <div key={b.batchId} className="border border-[var(--rule)] bg-[var(--surface)] p-3">
+          <div className="flex justify-between items-center mb-3">
             <div>
-              <p className="font-mono text-xs text-[var(--ink-dim)]">{b.batchId}</p>
-              <p className="text-sm text-[var(--ink)]">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                {b.batchId}
+              </p>
+              <p className="font-serif text-sm text-[var(--ink)] mt-0.5">
                 <span className="font-medium">{b.totalCount}</span> kullanıcı,{' '}
-                {new Date(b.createdAt).toLocaleString('tr-TR')}
+                <span className="font-mono text-xs text-[var(--ink-dim)]">
+                  {new Date(b.createdAt).toLocaleString('tr-TR')}
+                </span>
               </p>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => activate.mutate(b.batchId)}
-              disabled={activate.isPending}
-              className="px-3 py-1.5 bg-[var(--ok)] text-white rounded text-sm hover:opacity-90 disabled:opacity-50"
+              loading={activate.isPending}
             >
               Aktif Et
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() =>
                 regen.mutate(b.batchId, {
                   onSuccess: (res) => {
@@ -54,22 +65,22 @@ export default function PendingBatchesList({
                   },
                 })
               }
-              disabled={regen.isPending}
-              className="px-3 py-1.5 bg-[var(--state)] text-white rounded text-sm hover:bg-[var(--state-deep)] disabled:opacity-50"
+              loading={regen.isPending}
             >
               Şifreleri Yeniden Üret
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
               onClick={() => {
                 if (confirm('Bu batch ve içindeki tüm kullanıcılar silinecek. Emin misiniz?')) {
                   cancel.mutate(b.batchId);
                 }
               }}
-              disabled={cancel.isPending}
-              className="px-3 py-1.5 bg-[var(--state)] text-white rounded text-sm hover:bg-[var(--state-deep)] disabled:opacity-50"
+              loading={cancel.isPending}
             >
               İptal Et
-            </button>
+            </Button>
           </div>
         </div>
       ))}

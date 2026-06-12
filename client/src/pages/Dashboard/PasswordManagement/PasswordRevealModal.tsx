@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Copy, Check, X } from 'lucide-react';
+import { Button } from '../../../components/ui/Button';
 
 const CLIPBOARD_CLEAR_MS = 60_000;
 
@@ -46,56 +47,71 @@ export default function PasswordRevealModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-[var(--paper)] border border-[var(--rule)] rounded-lg shadow-xl max-w-md w-full p-6">
-        <div className="flex items-start gap-3 mb-4">
-          <AlertTriangle className="text-[var(--warn)] flex-shrink-0 mt-0.5" size={24} />
-          <div>
-            <h2 className="text-lg font-semibold text-[var(--ink)]">Şifre üretildi</h2>
+      <div className="bg-[var(--paper)] border border-[var(--rule)] max-w-md w-full">
+        {/* Modal header bar */}
+        <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+          <span className="font-mono text-[10px] uppercase tracking-[0.25em]">Şifre Üretildi</span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-white hover:opacity-80"
+            aria-label="Kapat"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="text-[var(--warn)] flex-shrink-0 mt-0.5" size={20} />
             <p className="text-sm text-[var(--ink-dim)]">
               <span className="font-medium text-[var(--ink)]">{userLabel}</span> için aşağıdaki
               şifre sadece bir kez gösterilir. Şimdi kopyalayın ve güvenli bir yerde saklayın.
             </p>
           </div>
+
+          {/* Password display — flat, no rounded corners */}
+          <div className="bg-[var(--surface)] border border-[var(--rule)] p-4 font-mono text-xl tracking-wider text-center select-all text-[var(--ink)]">
+            {password}
+          </div>
+
+          <Button variant="danger" size="md" fullWidth onClick={handleCopy} type="button">
+            {copied ? <Check size={16} /> : <Copy size={16} />}
+            {copied ? 'Kopyalandı' : 'Panoya kopyala'}
+          </Button>
+
+          {clearedAt && (
+            <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--warn)] text-center">
+              Pano 60 saniye sonra temizlendi.
+            </p>
+          )}
+          {!clearedAt && copied && (
+            <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)] text-center">
+              Pano 60 saniye içinde otomatik temizlenecek.
+            </p>
+          )}
+
+          <label className="flex items-center gap-2 text-sm text-[var(--ink)]">
+            <input
+              type="checkbox"
+              checked={acknowledged}
+              onChange={(e) => setAcknowledged(e.target.checked)}
+            />
+            Şifreyi kaydettim, bu pencere kapatılabilir.
+          </label>
+
+          <Button
+            variant="primary"
+            size="md"
+            fullWidth
+            onClick={onClose}
+            disabled={!acknowledged}
+            type="button"
+          >
+            <X size={16} />
+            Kapat
+          </Button>
         </div>
-        <div className="bg-[var(--surface)] border border-[var(--rule)] rounded p-4 mb-4 font-mono text-xl tracking-wider text-center select-all text-[var(--ink)]">
-          {password}
-        </div>
-        <button
-          onClick={handleCopy}
-          className="w-full mb-1 flex items-center justify-center gap-2 px-4 py-2 bg-[var(--state)] text-white rounded hover:bg-[var(--state-deep)] transition"
-          type="button"
-        >
-          {copied ? <Check size={18} /> : <Copy size={18} />}
-          {copied ? 'Kopyalandı' : 'Panoya kopyala'}
-        </button>
-        {clearedAt && (
-          <p className="text-xs text-[var(--warn)] mb-2 text-center">
-            Pano 60 saniye sonra temizlendi.
-          </p>
-        )}
-        {!clearedAt && copied && (
-          <p className="text-xs text-[var(--ink-dim)] mb-2 text-center">
-            Pano 60 saniye içinde otomatik temizlenecek.
-          </p>
-        )}
-        {!copied && !clearedAt && <div className="mb-3" />}
-        <label className="flex items-center gap-2 text-sm text-[var(--ink)] mb-3">
-          <input
-            type="checkbox"
-            checked={acknowledged}
-            onChange={(e) => setAcknowledged(e.target.checked)}
-          />
-          Şifreyi kaydettim, bu pencere kapatılabilir.
-        </label>
-        <button
-          onClick={onClose}
-          disabled={!acknowledged}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[var(--ink)] text-[var(--paper)] rounded hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          type="button"
-        >
-          <X size={18} />
-          Kapat
-        </button>
       </div>
     </div>
   );
