@@ -34,7 +34,7 @@
     "@opentelemetry/exporter-prometheus": "^0.208.0",
     "@opentelemetry/instrumentation": "^0.208.0",
     "@opentelemetry/instrumentation-express": "^0.57.0",
-    "@opentelemetry/instrumentation-http": "^0.208.0",
+    "@opentelemetry/instrumentation-http": "^0.219.0",
     "@opentelemetry/instrumentation-mongoose": "^0.55.0",
     "@opentelemetry/resources": "^2.2.0",
     "@opentelemetry/sdk-node": "^0.208.0",
