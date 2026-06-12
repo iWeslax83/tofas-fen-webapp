@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { X } from 'lucide-react';
+import { Button } from '../../../components/ui/Button';
+import { cn } from '../../../utils/cn';
 
 export const RESET_REASONS: Array<{ value: string; label: string }> = [
   { value: 'forgot', label: 'Kullanıcı şifresini unuttu' },
@@ -13,6 +16,13 @@ export interface ResetReasonModalProps {
   onCancel: () => void;
 }
 
+const inputCls = cn(
+  'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+  'text-[var(--ink)] placeholder:text-[var(--ink-dim)]',
+  'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+  'transition-colors',
+);
+
 export default function ResetReasonModal({
   userLabel,
   onConfirm,
@@ -23,50 +33,68 @@ export default function ResetReasonModal({
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-[var(--paper)] border border-[var(--rule)] rounded-lg shadow-xl max-w-md w-full p-6">
-        <h2 className="text-lg font-semibold mb-2 text-[var(--ink)]">Şifre sıfırlama sebebi</h2>
-        <p className="text-sm text-[var(--ink-dim)] mb-4">{userLabel}</p>
-        <label className="block text-sm font-medium mb-1 text-[var(--ink)]">Sebep</label>
-        <select
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          className="w-full border border-[var(--rule)] rounded px-3 py-2 mb-3 bg-[var(--paper)] text-[var(--ink)]"
-        >
-          {RESET_REASONS.map((r) => (
-            <option key={r.value} value={r.value}>
-              {r.label}
-            </option>
-          ))}
-        </select>
-        {reason === 'other' && (
-          <>
-            <label className="block text-sm font-medium mb-1 text-[var(--ink)]">Açıklama</label>
-            <textarea
-              value={note}
-              maxLength={280}
-              rows={3}
-              onChange={(e) => setNote(e.target.value)}
-              className="w-full border border-[var(--rule)] rounded px-3 py-2 mb-3 bg-[var(--paper)] text-[var(--ink)]"
-              placeholder="En fazla 280 karakter"
-            />
-          </>
-        )}
-        <div className="flex gap-2">
+      <div className="bg-[var(--paper)] border border-[var(--rule)] max-w-md w-full">
+        {/* Modal header bar */}
+        <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+          <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+            Şifre Sıfırlama Sebebi
+          </span>
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 px-4 py-2 border border-[var(--rule)] rounded text-[var(--ink)] hover:bg-[var(--surface)]"
+            className="text-white hover:opacity-80"
+            aria-label="Kapat"
           >
-            İptal
+            <X size={16} />
           </button>
-          <button
-            type="button"
-            onClick={() => onConfirm(reason, reason === 'other' ? note : undefined)}
-            disabled={reason === 'other' && !note.trim()}
-            className="flex-1 px-4 py-2 bg-[var(--state)] text-white rounded hover:bg-[var(--state-deep)] disabled:opacity-50"
-          >
-            Sıfırla
-          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <p className="font-mono text-xs text-[var(--ink-dim)]">{userLabel}</p>
+
+          <label className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+              Sebep
+            </span>
+            <select value={reason} onChange={(e) => setReason(e.target.value)} className={inputCls}>
+              {RESET_REASONS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {reason === 'other' && (
+            <label className="flex flex-col gap-1">
+              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                Açıklama
+              </span>
+              <textarea
+                value={note}
+                maxLength={280}
+                rows={3}
+                onChange={(e) => setNote(e.target.value)}
+                className={cn(inputCls, 'resize-y min-h-[4rem]')}
+                placeholder="En fazla 280 karakter"
+              />
+            </label>
+          )}
+
+          <div className="flex gap-2 pt-2">
+            <Button variant="ghost" size="md" onClick={onCancel} className="flex-1">
+              İptal
+            </Button>
+            <Button
+              variant="danger"
+              size="md"
+              onClick={() => onConfirm(reason, reason === 'other' ? note : undefined)}
+              disabled={reason === 'other' && !note.trim()}
+              className="flex-1"
+            >
+              Sıfırla
+            </Button>
+          </div>
         </div>
       </div>
     </div>

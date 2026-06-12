@@ -3,6 +3,8 @@ import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBulkImportPreview, useBulkImportCommit } from './hooks/useBulkImport';
 import PendingBatchesList from './PendingBatchesList';
+import { Button } from '../../../components/ui/Button';
+import { Card } from '../../../components/ui/Card';
 import type { BulkImportPreviewResponse } from '../../../utils/passwordAdminService';
 
 export default function BulkImportTab() {
@@ -40,11 +42,13 @@ export default function BulkImportTab() {
 
   return (
     <div className="space-y-6">
-      <section className="bg-[var(--paper)] border border-[var(--rule)] rounded p-4">
-        <h3 className="text-lg font-semibold mb-3 text-[var(--ink)]">Tofaş Sınıf Listesi Yükle</h3>
+      <Card accentBar contentClassName="p-4">
+        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] mb-3">
+          Tofaş Sınıf Listesi Yükle
+        </div>
         <div className="flex items-center gap-3 mb-3">
-          <label className="flex items-center gap-2 px-4 py-2 border border-[var(--rule)] rounded cursor-pointer hover:bg-[var(--surface)]">
-            <Upload size={18} />
+          <label className="inline-flex items-center gap-2 h-8 px-3 text-sm font-medium border border-[var(--rule)] bg-transparent text-[var(--ink)] cursor-pointer hover:border-[var(--ink)] transition-colors">
+            <Upload size={16} />
             <span>XLS Seç</span>
             <input
               type="file"
@@ -56,47 +60,47 @@ export default function BulkImportTab() {
               }}
             />
           </label>
-          {file && <span className="text-sm text-[var(--ink-dim)]">{file.name}</span>}
+          {file && <span className="font-mono text-xs text-[var(--ink-dim)]">{file.name}</span>}
         </div>
         <div className="flex gap-2">
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={handlePreview}
-            disabled={!file || previewMut.isPending}
-            className="px-4 py-2 bg-[var(--ink)] text-[var(--paper)] rounded hover:opacity-90 disabled:opacity-50"
+            disabled={!file}
+            loading={previewMut.isPending}
           >
-            {previewMut.isPending ? 'Yükleniyor...' : 'Önizle'}
-          </button>
+            Önizle
+          </Button>
           {preview && (
-            <button
-              onClick={handleCommit}
-              disabled={commitMut.isPending}
-              className="px-4 py-2 bg-[var(--state)] text-white rounded hover:bg-[var(--state-deep)] disabled:opacity-50"
-            >
-              {commitMut.isPending ? 'İçe aktarılıyor...' : 'İçe Aktar ve Şifre Üret'}
-            </button>
+            <Button variant="danger" size="sm" onClick={handleCommit} loading={commitMut.isPending}>
+              İçe Aktar ve Şifre Üret
+            </Button>
           )}
         </div>
-      </section>
+      </Card>
 
       {preview && (
-        <section className="bg-[var(--paper)] border border-[var(--rule)] rounded p-4">
-          <h3 className="text-lg font-semibold mb-2 text-[var(--ink)]">Önizleme</h3>
+        <Card contentClassName="p-4">
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] mb-2">
+            Önizleme
+          </div>
           <p className="text-sm text-[var(--ink-dim)]">
-            Toplam: <span className="font-semibold">{preview.total}</span>, Mevcut ID:{' '}
-            <span className="font-semibold">{preview.existingIds.length}</span>, Uyarı:{' '}
-            <span className="font-semibold">{preview.warnings.length}</span>
+            Toplam: <span className="font-medium text-[var(--ink)]">{preview.total}</span>, Mevcut
+            ID: <span className="font-medium text-[var(--ink)]">{preview.existingIds.length}</span>,
+            Uyarı: <span className="font-medium text-[var(--ink)]">{preview.warnings.length}</span>
           </p>
-          <div className="mt-2 grid grid-cols-4 gap-2 text-sm">
+          <div className="mt-3 grid grid-cols-4 gap-px bg-[var(--rule)] border border-[var(--rule)]">
             {Object.entries(preview.classDistribution).map(([k, v]) => (
-              <div key={k} className="bg-[var(--surface)] rounded p-2 text-center">
-                <div className="font-semibold text-[var(--ink)]">{k}</div>
-                <div className="text-xs text-[var(--ink-dim)]">{v} öğrenci</div>
+              <div key={k} className="bg-[var(--surface)] p-2 text-center">
+                <div className="font-serif text-sm font-medium text-[var(--ink)]">{k}</div>
+                <div className="font-mono text-xs text-[var(--ink-dim)]">{v} öğrenci</div>
               </div>
             ))}
           </div>
           {preview.warnings.length > 0 && (
             <details className="mt-3">
-              <summary className="text-sm text-[var(--warn)] cursor-pointer">
+              <summary className="font-mono text-xs uppercase tracking-wider text-[var(--warn)] cursor-pointer">
                 Uyarıları göster
               </summary>
               <ul className="text-xs mt-2 list-disc list-inside text-[var(--ink-dim)]">
@@ -106,13 +110,15 @@ export default function BulkImportTab() {
               </ul>
             </details>
           )}
-        </section>
+        </Card>
       )}
 
-      <section className="bg-[var(--paper)] border border-[var(--rule)] rounded p-4">
-        <h3 className="text-lg font-semibold mb-3 text-[var(--ink)]">Bekleyen Batch'ler</h3>
+      <Card contentClassName="p-4">
+        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] mb-3">
+          Bekleyen Batch&apos;ler
+        </div>
         <PendingBatchesList />
-      </section>
+      </Card>
     </div>
   );
 }
