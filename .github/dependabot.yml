@@ -35,7 +35,16 @@ updates:
         patterns: ['*']
         update-types: [minor, patch]
 
-  # Root npm workspace
+  # npm — single entry for the whole workspace.
+  #
+  # This is an npm-workspaces monorepo with ONE root package-lock.json, so a
+  # single `directory: /` config covers root + client + server. The previous
+  # setup had three separate npm entries (/, /server, /client); the root one
+  # also saw the workspace deps, so the same package (e.g. ws, axios) was
+  # proposed twice — and because every runtime bump opened its own PR against
+  # the single shared lockfile, those PRs conflicted with each other in a
+  # cascade. Grouping production + development updates collapses each weekly
+  # run into at most two lockfile-coherent PRs that merge cleanly.
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -50,60 +59,15 @@ updates:
       - dependencies
       - npm
     groups:
-      # Dev tooling rarely needs a blocking review.
-      dev-deps:
+      # All runtime deps in one PR (one coherent lockfile change).
+      production-dependencies:
+        dependency-type: production
+        update-types: [minor, patch]
+      # All dev tooling in one PR.
+      development-dependencies:
         dependency-type: development
         update-types: [minor, patch]
-      # Security + typing: treat individually so advisories stay visible.
-      types:
-        patterns: ['@types/*']
     # Ignore major bumps for runtime deps — opt into those manually.
-    ignore:
-      - dependency-name: '*'
-        update-types: [version-update:semver-major]
-
-  # Server workspace
-  - package-ecosystem: npm
-    directory: /server
-    schedule:
-      interval: weekly
-      day: monday
-      time: '06:00'
-      timezone: Europe/Istanbul
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: 'chore(server-deps)'
-    labels:
-      - dependencies
-      - npm
-      - server
-    groups:
-      dev-deps:
-        dependency-type: development
-        update-types: [minor, patch]
-    ignore:
-      - dependency-name: '*'
-        update-types: [version-update:semver-major]
-
-  # Client workspace
-  - package-ecosystem: npm
-    directory: /client
-    schedule:
-      interval: weekly
-      day: monday
-      time: '06:00'
-      timezone: Europe/Istanbul
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: 'chore(client-deps)'
-    labels:
-      - dependencies
-      - npm
-      - client
-    groups:
-      dev-deps:
-        dependency-type: development
-        update-types: [minor, patch]
     ignore:
       - dependency-name: '*'
         update-types: [version-update:semver-major]
