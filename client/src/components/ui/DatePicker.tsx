@@ -2,7 +2,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isToday, Locale } from 'date-fns';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  addMonths,
+  subMonths,
+  startOfWeek,
+  endOfWeek,
+  isToday,
+  Locale,
+} from 'date-fns';
 import { tr } from 'date-fns/locale';
 import './DatePicker.css';
 
@@ -25,8 +38,18 @@ export interface DatePickerProps {
 
 const weekDays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 const months = [
-  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+  'Ocak',
+  'Şubat',
+  'Mart',
+  'Nisan',
+  'Mayıs',
+  'Haziran',
+  'Temmuz',
+  'Ağustos',
+  'Eylül',
+  'Ekim',
+  'Kasım',
+  'Aralık',
 ];
 
 export const DatePicker: React.FC<DatePickerProps> = ({
@@ -157,17 +180,19 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         <span className={`date-picker-value ${!value ? 'date-picker-placeholder' : ''}`}>
           {displayValue || placeholder}
         </span>
-        {clearable && value && !disabled && (
-          <button
-            type="button"
-            className="date-picker-clear"
-            onClick={handleClear}
-            aria-label="Temizle"
-          >
-            <X size={16} />
-          </button>
-        )}
       </button>
+      {/* Clear must be a SIBLING of the trigger, not a child — a <button> nested
+          inside a <button> is invalid HTML and triggers a React hydration error. */}
+      {clearable && value && !disabled && (
+        <button
+          type="button"
+          className="date-picker-clear"
+          onClick={handleClear}
+          aria-label="Temizle"
+        >
+          <X size={16} />
+        </button>
+      )}
 
       {typeof window !== 'undefined' &&
         createPortal(
@@ -254,11 +279,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               </div>
             )}
           </AnimatePresence>,
-          document.body
+          document.body,
         )}
     </div>
   );
 };
 
 export default DatePicker;
-

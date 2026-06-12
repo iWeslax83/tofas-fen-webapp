@@ -11,6 +11,9 @@ import {
   Plus,
 } from 'lucide-react';
 import { SecureAPI } from '../../utils/api';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { MessagesTab, EmailsTab, ChatRoomsTab, ContactsTab } from './communication';
 import type {
   Message,
@@ -21,7 +24,10 @@ import type {
   ActiveTab,
   Filters,
 } from './communication';
-import './CommunicationPage.css';
+import { cn } from '../../utils/cn';
+
+const VALID_CONVERSATION_TYPES = ['direct', 'group', 'broadcast', 'announcement'] as const;
+type ConversationType = (typeof VALID_CONVERSATION_TYPES)[number];
 
 const CommunicationPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('messages');
@@ -62,17 +68,39 @@ const CommunicationPage: React.FC = () => {
       switch (activeTab) {
         case 'messages':
         case 'conversations': {
+          // JOB A FIX: Only send params the /conversations route accepts.
+          // The route validates query('type').optional().isIn([...]) — an empty
+          // string passes the field as present and fails the isIn check, causing
+          // the 400. Strip it when unset. Also omit client-only filter keys
+          // (category, status, priority, hasAttachments, unreadOnly, sortBy,
+          // sortOrder) that are not accepted by the server route.
+          const conversationParams: Record<string, string | number> = { page };
+          if (
+            filters.type &&
+            (VALID_CONVERSATION_TYPES as readonly string[]).includes(filters.type)
+          ) {
+            conversationParams['type'] = filters.type;
+          }
           const conversationsData = await SecureAPI.get('/api/communication/conversations', {
-            params: { ...filters, sortBy, sortOrder, page },
+            params: conversationParams,
           });
-          setConversations((conversationsData as { data: Conversation[] }).data);
-          setTotalPages(Math.ceil((conversationsData as { total: number }).total / 20));
+          // Server returns the array directly via res.json(conversations).
+          // SecureAPI returns the full axios response, so .data is the body.
+          const body = (conversationsData as { data: unknown }).data;
+          if (Array.isArray(body)) {
+            setConversations(body as Conversation[]);
+            setTotalPages(Math.ceil((body as Conversation[]).length / 20));
+          } else {
+            const typed = body as { data: Conversation[]; total: number };
+            setConversations(typed.data ?? []);
+            setTotalPages(Math.ceil((typed.total ?? 0) / 20));
+          }
           break;
         }
 
         case 'emails': {
           const emailsData = await SecureAPI.get('/api/communication/emails', {
-            params: { page, ...filters, type: 'received' },
+            params: { page, type: 'received' },
           });
           setEmails((emailsData as { data: Email[] }).data);
           setTotalPages(Math.ceil((emailsData as { total: number }).total / 20));
@@ -81,7 +109,7 @@ const CommunicationPage: React.FC = () => {
 
         case 'chatrooms': {
           const chatRoomsData = await SecureAPI.get('/api/communication/chatrooms', {
-            params: { ...filters, page },
+            params: { page },
           });
           setChatRooms((chatRoomsData as { data: ChatRoom[] }).data);
           setTotalPages(Math.ceil((chatRoomsData as { total: number }).total / 20));
@@ -90,7 +118,7 @@ const CommunicationPage: React.FC = () => {
 
         case 'contacts': {
           const contactsData = await SecureAPI.get('/api/communication/contacts', {
-            params: { ...filters, page },
+            params: { page },
           });
           setContacts((contactsData as { data: Contact[] }).data);
           setTotalPages(Math.ceil((contactsData as { total: number }).total / 20));
@@ -187,7 +215,7 @@ const CommunicationPage: React.FC = () => {
 
     try {
       const response = await SecureAPI.get('/api/communication/search', {
-        params: { q: searchQuery, ...filters },
+        params: { q: searchQuery },
       });
 
       if (activeTab === 'messages') {
@@ -199,7 +227,7 @@ const CommunicationPage: React.FC = () => {
           'Arama yapılırken hata oluştu',
       );
     }
-  }, [searchQuery, filters, activeTab, fetchData]);
+  }, [searchQuery, activeTab, fetchData]);
 
   // Handle conversation selection
   const handleConversationSelect = (conversation: Conversation) => {
@@ -242,7 +270,7 @@ const CommunicationPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const tabs = [
+  const tabs: { id: ActiveTab; label: string; icon: React.ElementType }[] = [
     { id: 'messages', label: 'Mesajlar', icon: MessageSquare },
     { id: 'conversations', label: 'Konuşmalar', icon: Users },
     { id: 'emails', label: 'E-posta', icon: Mail },
@@ -250,166 +278,204 @@ const CommunicationPage: React.FC = () => {
     { id: 'contacts', label: 'Kişiler', icon: UserPlus },
   ];
 
+  const newItemLabel =
+    activeTab === 'messages'
+      ? 'Mesaj'
+      : activeTab === 'emails'
+        ? 'E-posta'
+        : activeTab === 'chatrooms'
+          ? 'Sohbet Odası'
+          : 'Kişi';
+
+  const breadcrumb = [{ label: 'Ana Sayfa', path: '/admin' }, { label: 'İletişim' }];
+
   return (
-    <div className="communication-page">
-      {/* Header */}
-      <div className="communication-header">
-        <div className="header-left">
-          <h1>İletişim Modülü</h1>
-          <p>Mesajlaşma, e-posta ve sohbet odaları</p>
-        </div>
-        <div className="header-right">
-          <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
-            <Plus size={16} />
-            Yeni{' '}
-            {activeTab === 'messages'
-              ? 'Mesaj'
-              : activeTab === 'emails'
-                ? 'E-posta'
-                : activeTab === 'chatrooms'
-                  ? 'Sohbet Odası'
-                  : 'Kişi'}
-          </button>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="communication-tabs">
-        {tabs.map((tab) => (
-          <motion.button
-            key={tab.id}
-            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id as ActiveTab)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <tab.icon size={20} />
-            {tab.label}
-          </motion.button>
-        ))}
-      </div>
-
-      {/* Search and Filters */}
-      <div className="communication-controls">
-        <div className="search-container">
-          <Search size={20} />
-          <input
-            type="text"
-            placeholder="Ara..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-        </div>
-        <button className="btn btn-secondary" onClick={() => setShowFilters(!showFilters)}>
-          <Filter size={16} />
-          Filtreler
-        </button>
-      </div>
-
-      {/* Filters Panel */}
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div
-            className="filters-panel"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-          >
-            <div className="filter-group">
-              <label>Tür:</label>
-              <select
-                value={filters.type}
-                onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value }))}
-              >
-                <option value="">Tümü</option>
-                <option value="direct">Direkt</option>
-                <option value="group">Grup</option>
-                <option value="broadcast">Yayın</option>
-                <option value="announcement">Duyuru</option>
-              </select>
+    <ModernDashboardLayout pageTitle="İletişim" breadcrumb={breadcrumb}>
+      <div className="flex flex-col h-full">
+        {/* Document header */}
+        <div className="px-6 pt-6 pb-4 border-b border-[var(--rule)] bg-[var(--paper)]">
+          <header>
+            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+              Belge No. {new Date().getFullYear()}/İL
             </div>
-            <div className="filter-group">
-              <label>Öncelik:</label>
-              <select
-                value={filters.priority}
-                onChange={(e) => setFilters((prev) => ({ ...prev, priority: e.target.value }))}
-              >
-                <option value="">Tümü</option>
-                <option value="low">Düşük</option>
-                <option value="normal">Normal</option>
-                <option value="high">Yüksek</option>
-                <option value="urgent">Acil</option>
-              </select>
+            <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">İletişim</h1>
+          </header>
+
+          {/* Actions row */}
+          <div className="flex items-center justify-between mt-4">
+            {/* Tabs */}
+            <div className="flex overflow-x-auto">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      'inline-flex items-center gap-2 px-4 py-2 font-mono text-xs uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap',
+                      active
+                        ? 'border-[var(--state)] text-[var(--ink)] bg-[var(--surface)]'
+                        : 'border-transparent text-[var(--ink-dim)] hover:text-[var(--ink)] hover:border-[var(--rule-2)]',
+                    )}
+                    aria-pressed={active}
+                  >
+                    <Icon size={14} />
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
-            <div className="filter-group">
-              <label>
+
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowCreateModal(true)}
+              className="ml-4 shrink-0"
+            >
+              <Plus size={14} />
+              Yeni {newItemLabel}
+            </Button>
+          </div>
+        </div>
+
+        {/* Search and Filters bar */}
+        <div className="flex items-center gap-3 px-6 py-3 border-b border-[var(--rule)] bg-[var(--paper)]">
+          <div className="flex items-center gap-2 flex-1 max-w-sm">
+            <Search size={14} className="text-[var(--ink-dim)] shrink-0" />
+            <Input
+              type="text"
+              placeholder="Ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="text-sm"
+            />
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
+            <Filter size={14} />
+            Filtreler
+          </Button>
+        </div>
+
+        {/* Filters Panel */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              className="flex flex-wrap gap-4 px-6 py-3 border-b border-[var(--rule)] bg-[var(--surface)]"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+            >
+              <div className="flex items-center gap-2">
+                <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                  Tür:
+                </label>
+                <select
+                  value={filters.type}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value }))}
+                  className="bg-transparent border-0 border-b border-[var(--rule)] px-1 py-1 text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--state)]"
+                >
+                  <option value="">Tümü</option>
+                  <option value="direct">Direkt</option>
+                  <option value="group">Grup</option>
+                  <option value="broadcast">Yayın</option>
+                  <option value="announcement">Duyuru</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                  Öncelik:
+                </label>
+                <select
+                  value={filters.priority}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, priority: e.target.value }))}
+                  className="bg-transparent border-0 border-b border-[var(--rule)] px-1 py-1 text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--state)]"
+                >
+                  <option value="">Tümü</option>
+                  <option value="low">Düşük</option>
+                  <option value="normal">Normal</option>
+                  <option value="high">Yüksek</option>
+                  <option value="urgent">Acil</option>
+                </select>
+              </div>
+              <label className="flex items-center gap-2 text-sm text-[var(--ink)] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={filters.hasAttachments}
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, hasAttachments: e.target.checked }))
                   }
+                  className="accent-[var(--state)]"
                 />
-                Dosya Eki Olanlar
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                  Dosya Eki Olanlar
+                </span>
               </label>
-            </div>
-            <div className="filter-group">
-              <label>
+              <label className="flex items-center gap-2 text-sm text-[var(--ink)] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={filters.unreadOnly}
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, unreadOnly: e.target.checked }))
                   }
+                  className="accent-[var(--state)]"
                 />
-                Sadece Okunmamış
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                  Sadece Okunmamış
+                </span>
               </label>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Main Content */}
-      <div className="communication-content">
-        {activeTab === 'messages' || activeTab === 'conversations' ? (
-          <MessagesTab
-            conversations={conversations}
-            selectedConversation={selectedConversation}
-            messages={messages}
-            loading={loading}
-            newMessage={newMessage}
-            selectedFiles={selectedFiles}
-            messagesEndRef={messagesEndRef}
-            onConversationSelect={handleConversationSelect}
-            onNewMessage={setNewMessage}
-            onSendMessage={sendMessage}
-            onFileSelect={handleFileSelect}
-            onRemoveFile={removeFile}
-            onCreateClick={() => setShowCreateModal(true)}
-            formatDate={formatDate}
-          />
-        ) : (
-          <div className="content-area">
-            {activeTab === 'emails' && (
-              <EmailsTab emails={emails} loading={loading} error={error} formatDate={formatDate} />
-            )}
-            {activeTab === 'chatrooms' && (
-              <ChatRoomsTab chatRooms={chatRooms} loading={loading} error={error} />
-            )}
-            {activeTab === 'contacts' && (
-              <ContactsTab contacts={contacts} loading={loading} error={error} />
-            )}
+        {/* Error banner */}
+        {error && (
+          <div className="mx-6 mt-3 px-4 py-2 border border-[var(--state)] bg-[var(--surface)] font-mono text-xs text-[var(--state)]">
+            {error}
           </div>
         )}
-      </div>
 
-      {/* Modals would go here */}
-      {/* Create Conversation Modal */}
-      {/* Create Email Modal */}
-      {/* Create Chat Room Modal */}
-      {/* Add Contact Modal */}
-    </div>
+        {/* Main Content */}
+        <div className="flex-1 overflow-hidden">
+          {activeTab === 'messages' || activeTab === 'conversations' ? (
+            <MessagesTab
+              conversations={conversations}
+              selectedConversation={selectedConversation}
+              messages={messages}
+              loading={loading}
+              newMessage={newMessage}
+              selectedFiles={selectedFiles}
+              messagesEndRef={messagesEndRef}
+              onConversationSelect={handleConversationSelect}
+              onNewMessage={setNewMessage}
+              onSendMessage={sendMessage}
+              onFileSelect={handleFileSelect}
+              onRemoveFile={removeFile}
+              onCreateClick={() => setShowCreateModal(true)}
+              formatDate={formatDate}
+            />
+          ) : (
+            <div className="h-full overflow-y-auto px-6 py-4">
+              {activeTab === 'emails' && (
+                <EmailsTab
+                  emails={emails}
+                  loading={loading}
+                  error={error}
+                  formatDate={formatDate}
+                />
+              )}
+              {activeTab === 'chatrooms' && (
+                <ChatRoomsTab chatRooms={chatRooms} loading={loading} error={error} />
+              )}
+              {activeTab === 'contacts' && (
+                <ContactsTab contacts={contacts} loading={loading} error={error} />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </ModernDashboardLayout>
   );
 };
 

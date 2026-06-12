@@ -87,8 +87,14 @@
   color: var(--gray-500);
 }
 
-/* Date Picker Clear */
+/* Date Picker Clear — sibling of the trigger, overlaid on its right edge
+   (it can't be a child: <button> inside <button> is invalid HTML). */
 .date-picker-clear {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  transform: translateY(-50%);
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -102,6 +108,12 @@
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
+}
+
+/* Reserve room so the date value never sits under the clear button.
+   Scoped with `.date-picker` to outrank the `.date-picker-{sm,md,lg}` padding. */
+.date-picker .date-picker-trigger {
+  padding-right: calc(var(--space-4) + 24px);
 }
 
 .date-picker-clear:hover {

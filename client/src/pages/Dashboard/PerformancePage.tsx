@@ -163,10 +163,10 @@ const PerformancePage: React.FC = () => {
 
   const fetchDashboard = useCallback(async () => {
     const [, systemData] = await Promise.all([
-      SecureAPI.get('/performance/dashboard'),
-      SecureAPI.get('/performance/system'),
+      SecureAPI.get('/api/performance/dashboard'),
+      SecureAPI.get('/api/performance/system'),
     ]);
-    setSystemMetrics((systemData as { data: SystemMetrics }).data);
+    setSystemMetrics((systemData as { data: { data: SystemMetrics } }).data.data);
   }, []);
 
   const fetchMetrics = useCallback(async () => {
@@ -177,10 +177,10 @@ const PerformancePage: React.FC = () => {
       sortOrder,
       ...filters,
     });
-    const response = await SecureAPI.get(`/performance/metrics?${params}`);
-    const r = response as { data: { metrics: Metric[]; totalPages: number } };
-    setMetrics(r.data.metrics);
-    setTotalPages(r.data.totalPages);
+    const response = await SecureAPI.get(`/api/performance/metrics?${params}`);
+    const r = response as { data: { data: { metrics: Metric[]; totalPages: number } } };
+    setMetrics(r.data.data.metrics);
+    setTotalPages(r.data.data.totalPages);
   }, [filters, page]);
 
   const fetchOptimizations = useCallback(async () => {
@@ -191,15 +191,15 @@ const PerformancePage: React.FC = () => {
       sortOrder,
       ...filters,
     });
-    const response = await SecureAPI.get(`/performance/optimizations?${params}`);
-    const r = response as { data: { optimizations: Optimization[]; totalPages: number } };
-    setOptimizations(r.data.optimizations);
-    setTotalPages(r.data.totalPages);
+    const response = await SecureAPI.get(`/api/performance/optimizations?${params}`);
+    const r = response as { data: { data: { optimizations: Optimization[]; totalPages: number } } };
+    setOptimizations(r.data.data.optimizations);
+    setTotalPages(r.data.data.totalPages);
   }, [filters, page]);
 
   const fetchConfigs = useCallback(async () => {
-    const response = await SecureAPI.get('/performance/configs');
-    setConfigs((response as { data: Config[] }).data);
+    const response = await SecureAPI.get('/api/performance/configs');
+    setConfigs((response as { data: { data: Config[] } }).data.data);
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -221,7 +221,7 @@ const PerformancePage: React.FC = () => {
   const triggerOptimization = async (action: string) => {
     try {
       setLoading(true);
-      await SecureAPI.post(`/performance/optimize/${action}`);
+      await SecureAPI.post(`/api/performance/optimize/${action}`);
       await fetchOptimizations();
       setError(null);
     } catch (err) {

@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { UserService } from '../../../utils/apiService';
+import { Button } from '../../../components/ui/Button';
+import { Chip } from '../../../components/ui/Chip';
 import PasswordRevealModal from './PasswordRevealModal';
 import ResetReasonModal from './ResetReasonModal';
 import { useResetPassword, useGeneratePassword } from './hooks/useUserPasswordActions';
@@ -74,6 +76,9 @@ export default function UsersTab() {
     );
   };
 
+  const inputCls =
+    'h-8 px-3 text-xs font-mono border border-[var(--rule)] bg-[var(--paper)] text-[var(--ink)] focus:outline-none focus:border-[var(--state)]';
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 items-end">
@@ -81,12 +86,12 @@ export default function UsersTab() {
           placeholder="İsim veya ID ara"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--rule)] rounded bg-[var(--paper)] text-[var(--ink)]"
+          className={inputCls}
         />
         <select
           value={rolFilter}
           onChange={(e) => setRolFilter(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--rule)] rounded bg-[var(--paper)] text-[var(--ink)]"
+          className={inputCls}
         >
           <option value="">Tüm roller</option>
           <option value="student">Öğrenci</option>
@@ -97,77 +102,73 @@ export default function UsersTab() {
         <select
           value={hasPassword}
           onChange={(e) => setHasPassword(e.target.value as typeof hasPassword)}
-          className="px-3 py-1.5 border border-[var(--rule)] rounded bg-[var(--paper)] text-[var(--ink)]"
+          className={inputCls}
         >
           <option value="all">Şifre durumu: hepsi</option>
           <option value="yes">Şifresi var</option>
           <option value="no">Şifresi yok</option>
         </select>
-        <span className="text-sm text-[var(--ink-dim)]">{filtered.length} kayıt</span>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+          {filtered.length} kayıt
+        </span>
       </div>
 
       <table className="w-full border-collapse text-sm">
         <thead className="bg-[var(--surface)]">
           <tr>
-            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
-              ID
-            </th>
-            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
-              Ad Soyad
-            </th>
-            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
-              Rol
-            </th>
-            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
-              Sınıf
-            </th>
-            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
-              Şifre Durumu
-            </th>
-            <th className="text-left px-3 py-2 border-b border-[var(--rule)] text-[var(--ink)]">
-              İşlem
-            </th>
+            {['ID', 'Ad Soyad', 'Rol', 'Sınıf', 'Şifre Durumu', 'İşlem'].map((h) => (
+              <th
+                key={h}
+                className="text-left px-3 py-2 border-b border-[var(--rule)] font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]"
+              >
+                {h}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
           {filtered.slice(0, 500).map((u) => (
             <tr key={u.id} className="border-b border-[var(--rule)] hover:bg-[var(--surface)]">
-              <td className="px-3 py-2 font-mono text-xs text-[var(--ink)]">{u.id}</td>
-              <td className="px-3 py-2 text-[var(--ink)]">{u.adSoyad}</td>
-              <td className="px-3 py-2 text-[var(--ink)]">{u.rol}</td>
-              <td className="px-3 py-2 text-[var(--ink)]">
-                {u.sinif ? `${u.sinif}${u.sube ?? ''}` : '-'}
+              <td className="px-3 py-2 font-mono text-xs text-[var(--ink-dim)]">{u.id}</td>
+              <td className="px-3 py-2 font-serif text-[var(--ink)]">{u.adSoyad}</td>
+              <td className="px-3 py-2">
+                <Chip tone="default">{u.rol}</Chip>
+              </td>
+              <td className="px-3 py-2 font-mono text-xs text-[var(--ink-dim)]">
+                {u.sinif ? `${u.sinif}${u.sube ?? ''}` : '—'}
               </td>
               <td className="px-3 py-2">
                 {u.passwordLastSetAt ? (
-                  <span className="text-[var(--ok)]">
+                  <Chip tone="black">
                     ✓ {new Date(u.passwordLastSetAt).toLocaleDateString('tr-TR')}
-                  </span>
+                  </Chip>
                 ) : (
-                  <span className="text-[var(--warn)]">Yok</span>
+                  <Chip tone="state">Yok</Chip>
                 )}
               </td>
               <td className="px-3 py-2">
                 {u.passwordLastSetAt ? (
-                  <button
+                  <Button
+                    variant="danger"
+                    size="sm"
                     onClick={() => {
                       setPendingUser(u);
                       setPendingMode('reset');
                     }}
-                    className="px-2 py-1 bg-[var(--state)] text-white rounded text-xs hover:bg-[var(--state-deep)]"
                   >
                     Şifre Sıfırla
-                  </button>
+                  </Button>
                 ) : (
-                  <button
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={() => {
                       setPendingUser(u);
                       setPendingMode('generate');
                     }}
-                    className="px-2 py-1 bg-[var(--state)] text-white rounded text-xs hover:bg-[var(--state-deep)]"
                   >
                     Yeni Şifre Üret
-                  </button>
+                  </Button>
                 )}
               </td>
             </tr>
@@ -175,7 +176,7 @@ export default function UsersTab() {
         </tbody>
       </table>
       {filtered.length > 500 && (
-        <p className="text-xs text-[var(--ink-dim)]">
+        <p className="font-mono text-xs text-[var(--ink-dim)]">
           İlk 500 kayıt gösteriliyor — filtreleri daraltın.
         </p>
       )}

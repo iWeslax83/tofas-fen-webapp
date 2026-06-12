@@ -7,8 +7,10 @@ import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import BulkLinkSection from './BulkLinkSection';
 import AddUserModal from './AddUserModal';
 import EditUserModal from './EditUserModal';
-
-import './SenkronizasyonPage.css';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Chip } from '../../components/ui/Chip';
+import { cn } from '../../utils/cn';
 import { safeConsoleError, safeConsoleWarn } from '../../utils/safeLogger';
 
 interface UserType {
@@ -44,6 +46,20 @@ const ROLES = [
   { value: 'teacher', label: 'Öğretmenler' },
   { value: 'admin', label: 'Yöneticiler' },
 ];
+
+const ROL_LABEL: Record<string, string> = {
+  admin: 'Yönetici',
+  teacher: 'Öğretmen',
+  parent: 'Veli',
+  ziyaretci: 'Ziyaretçi',
+};
+
+function getRolLabel(u: UserType): string {
+  if (u.rol === 'student') {
+    return `Öğrenci ${u.pansiyon ? '(Yatılı)' : '(Gündüzlü)'}`;
+  }
+  return ROL_LABEL[u.rol] ?? u.rol;
+}
 
 export default function SenkronizasyonPage() {
   const { user, isLoading: authLoading } = useAuthContext();
@@ -229,324 +245,387 @@ export default function SenkronizasyonPage() {
     { label: 'Senkronizasyon Yönetimi' },
   ];
 
+  const inputBase = cn(
+    'bg-transparent border border-[var(--rule)] px-3 py-2 text-sm text-[var(--ink)]',
+    'placeholder:text-[var(--ink-dim)]',
+    'focus:outline-none focus:border-[var(--state)] focus:border-2',
+    'transition-colors',
+  );
+
   return (
     <ModernDashboardLayout pageTitle="Senkronizasyon Yönetimi" breadcrumb={breadcrumb}>
-      <div className="senkronizasyon-page">
-        <div className="content-section">
-          <div className="filter-bar">
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="form-control filter-select"
-            >
-              {ROLES.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              placeholder="İsim ile ara..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="form-control search-input"
-            />
-            <button onClick={() => setShowAddModal(true)} className="btn btn-primary">
-              <Plus size={16} className="btn-icon" />
-              Yeni Kullanıcı Ekle
-            </button>
+      <div className="p-6 space-y-6">
+        {/* Page header */}
+        <header>
+          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Belge No. {new Date().getFullYear()}/SK
           </div>
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Senkronizasyon Yönetimi</h1>
+        </header>
 
-          {/* Bulk Actions Bar */}
-          <div className="bulk-actions-bar">
-            <button
-              className={`btn ${showBulkLink ? 'btn-secondary' : 'btn-warning'}`}
-              onClick={() => {
-                setShowBulkLink(!showBulkLink);
-              }}
-            >
-              <Link2 size={16} />
-              Toplu Veli-Öğrenci Eşleştir
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={() => navigate('/admin/veli-eslestirme')}
-              style={{ background: '#7c3aed', borderColor: '#7c3aed' }}
-            >
-              <Users size={16} />
-              Veli-Öğrenci Eşleştirme Sayfası
-            </button>
+        {/* Filter + action bar */}
+        <div className="flex flex-wrap items-center gap-3 border border-[var(--rule)] bg-[var(--surface)] p-4">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className={cn(inputBase, 'min-w-[180px]')}
+          >
+            {ROLES.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            placeholder="İsim ile ara..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={cn(inputBase, 'flex-1 min-w-[180px]')}
+          />
+          <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
+            <Plus size={14} />
+            Yeni Kullanıcı Ekle
+          </Button>
+        </div>
+
+        {/* Bulk actions bar */}
+        <div className="flex flex-wrap items-center gap-3 border border-[var(--rule)] bg-[var(--surface)] px-4 py-3">
+          <Button
+            variant={showBulkLink ? 'secondary' : 'outline'}
+            size="sm"
+            onClick={() => setShowBulkLink(!showBulkLink)}
+          >
+            <Link2 size={14} />
+            Toplu Veli-Öğrenci Eşleştir
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => navigate('/admin/veli-eslestirme')}>
+            <Users size={14} />
+            Veli-Öğrenci Eşleştirme Sayfası
+          </Button>
+        </div>
+
+        {/* Bulk Parent-Child Link Panel */}
+        {showBulkLink && (
+          <BulkLinkSection
+            linkFile={linkFile}
+            setLinkFile={setLinkFile}
+            linkPreview={linkPreview}
+            setLinkPreview={setLinkPreview}
+            linkLoading={linkLoading}
+            setLinkLoading={setLinkLoading}
+            linkResult={linkResult}
+            setLinkResult={setLinkResult}
+            linkError={linkError}
+            setLinkError={setLinkError}
+            onLinkComplete={fetchUsers}
+            onClose={() => setShowBulkLink(false)}
+          />
+        )}
+
+        {/* User grid */}
+        {loading ? (
+          <div className="p-16 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Yükleniyor…
           </div>
+        ) : (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-px bg-[var(--rule)]">
+            {filteredUsers.map((u) => (
+              <UserCard
+                key={u.id}
+                u={u}
+                selected={selectedParent?.id === u.id}
+                onEdit={() => setEditUser(u)}
+                onSelectParent={() => handleSelectParent(u)}
+                onDelete={() => handleDeleteUser(u.id)}
+              />
+            ))}
+            {filteredUsers.length === 0 && (
+              <div className="col-span-full bg-[var(--paper)] p-12 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                Arama kriterlerine uygun kullanıcı bulunamadı.
+              </div>
+            )}
+          </div>
+        )}
 
-          {/* Bulk Parent-Child Link Panel */}
-          {showBulkLink && (
-            <BulkLinkSection
-              linkFile={linkFile}
-              setLinkFile={setLinkFile}
-              linkPreview={linkPreview}
-              setLinkPreview={setLinkPreview}
-              linkLoading={linkLoading}
-              setLinkLoading={setLinkLoading}
-              linkResult={linkResult}
-              setLinkResult={setLinkResult}
-              linkError={linkError}
-              setLinkError={setLinkError}
-              onLinkComplete={fetchUsers}
-              onClose={() => setShowBulkLink(false)}
-            />
-          )}
-
-          {loading ? (
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <div className="loading-text">Yükleniyor…</div>
+        {/* Parent-child matching panel */}
+        {selectedParent && (
+          <Card accentBar contentClassName="p-6 space-y-6">
+            {/* Panel header */}
+            <div className="border-b border-[var(--rule)] pb-4">
+              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                Eşleştirme Paneli
+              </div>
+              <h2 className="font-serif text-xl text-[var(--ink)] mt-1 flex items-center gap-2">
+                <Users size={18} />
+                Veli: {selectedParent.adSoyad}
+              </h2>
+              <p className="mt-1 text-sm text-[var(--ink-dim)]">
+                Aşağıdan bu veliye ait çocuk(ları) seçin. Kaydet butonuna basınca veritabanına
+                işlenecek.
+              </p>
             </div>
-          ) : (
-            <div className="user-grid">
-              {filteredUsers.map((u) => (
-                <div
-                  key={u.id}
-                  className={`user-card ${selectedParent?.id === u.id ? 'selected' : ''}`}
-                >
-                  <div className="user-card-header">
-                    <div className="user-info">
-                      <div className="user-avatar">{u.adSoyad.charAt(0).toUpperCase()}</div>
-                      <div className="user-details">
-                        <h3>{u.adSoyad}</h3>
-                        <p>ID: {u.id}</p>
-                        <span className={`user-role role-${u.rol}`}>
-                          {u.rol === 'admin'
-                            ? 'Yönetici'
-                            : u.rol === 'teacher'
-                              ? 'Öğretmen'
-                              : u.rol === 'student'
-                                ? `Öğrenci ${u.pansiyon ? '(Yatılı)' : '(Gündüzlü)'}`
-                                : u.rol === 'parent'
-                                  ? 'Veli'
-                                  : u.rol === 'ziyaretci'
-                                    ? 'Ziyaretçi'
-                                    : u.rol}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="user-card-body">
-                    <div className="user-stats">
-                      <div className="stat-item">
-                        <div className="stat-value">{u.sinif || '-'}</div>
-                        <div className="stat-label">Sınıf</div>
-                      </div>
-                      <div className="stat-item">
-                        <div className="stat-value">{u.sube || '-'}</div>
-                        <div className="stat-label">Şube</div>
-                      </div>
-                      {u.rol === 'student' && u.pansiyon && (
-                        <div className="stat-item">
-                          <div className="stat-value">{u.oda || '-'}</div>
-                          <div className="stat-label">Oda</div>
-                        </div>
-                      )}
-                      {u.rol === 'parent' && u.childId && u.childId.length > 0 && (
-                        <div className="stat-item" style={{ gridColumn: '1 / -1' }}>
-                          <div className="stat-value">{u.childId.length}</div>
-                          <div className="stat-label">Çocuk Sayısı</div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="user-actions">
-                      <button className="btn btn-secondary btn-sm" onClick={() => setEditUser(u)}>
-                        Düzenle
-                      </button>
-                      {u.rol === 'parent' && (
-                        <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() => handleSelectParent(u)}
-                        >
-                          Çocuk Eşleştir
-                        </button>
-                      )}
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDeleteUser(u.id)}
-                      >
-                        Sil
-                      </button>
-                    </div>
-                  </div>
+
+            {/* Manual assign by ID */}
+            <div className="border border-[var(--rule)] bg-[var(--surface)] p-4 space-y-3">
+              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                ID ile Manuel Eşleştir
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  className={cn(inputBase, 'flex-1 min-w-[150px]')}
+                  placeholder="Öğrenci ID girin"
+                  value={manualAssignId}
+                  onChange={(e) => setManualAssignId(e.target.value)}
+                />
+                <Button variant="primary" size="sm" onClick={handleManualAssign}>
+                  <Plus size={14} />
+                  Ekle
+                </Button>
+              </div>
+              {manualAssignError && (
+                <p className="text-sm text-[var(--state)]">{manualAssignError}</p>
+              )}
+            </div>
+
+            {/* Student selection */}
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                  Mevcut Öğrenciler
                 </div>
-              ))}
-            </div>
-          )}
-
-          {selectedParent && (
-            <div className="parent-child-matching-panel">
-              <div className="matching-header">
-                <h3 className="matching-title">
-                  <Users size={20} />
-                  Veli: {selectedParent.adSoyad}
-                </h3>
-                <p className="matching-description">
-                  Aşağıdan bu veliye ait çocuk(ları) seçin. Kaydet butonuna basınca veritabanına
-                  işlenecek.
-                </p>
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    type="text"
+                    className={cn(inputBase, 'min-w-[180px]')}
+                    placeholder="Öğrenci adı ile ara..."
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                  />
+                  <select
+                    className={cn(inputBase, 'min-w-[130px]')}
+                    value={studentClassFilter}
+                    onChange={(e) => setStudentClassFilter(e.target.value)}
+                  >
+                    <option value="">Tüm Sınıflar</option>
+                    <option value="9">9. Sınıf</option>
+                    <option value="10">10. Sınıf</option>
+                    <option value="11">11. Sınıf</option>
+                    <option value="12">12. Sınıf</option>
+                  </select>
+                </div>
               </div>
 
-              {/* Manual assign by ID */}
-              <div className="manual-assign-section">
-                <div className="manual-assign-header">
-                  <span className="manual-assign-label">
-                    Hangi çocuğa (ID) eşleştirmek istersiniz?
-                  </span>
-                  <div className="manual-assign-input-group">
-                    <input
-                      type="text"
-                      className="form-input manual-assign-input"
-                      placeholder="Öğrenci ID girin"
-                      value={manualAssignId}
-                      onChange={(e) => setManualAssignId(e.target.value)}
-                    />
-                    <button className="btn btn-primary" onClick={handleManualAssign}>
-                      <Plus size={16} />
-                      Ekle
-                    </button>
-                  </div>
-                </div>
-                {manualAssignError && <div className="error-message">{manualAssignError}</div>}
-              </div>
-
-              {/* Student selection */}
-              <div className="student-selection-section">
-                <div className="student-selection-header">
-                  <h4 className="section-subtitle">Mevcut Öğrenciler</h4>
-                  <div className="student-search-filter">
-                    <input
-                      type="text"
-                      className="form-input student-search"
-                      placeholder="Öğrenci adı ile ara..."
-                      value={studentSearch}
-                      onChange={(e) => setStudentSearch(e.target.value)}
-                    />
-                    <select
-                      className="form-select student-filter"
-                      value={studentClassFilter}
-                      onChange={(e) => setStudentClassFilter(e.target.value)}
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-px bg-[var(--rule)] max-h-[400px] overflow-y-auto border border-[var(--rule)]">
+                {filteredStudents.map((student) => {
+                  const checked = selectedChildren.includes(student.id);
+                  return (
+                    <label
+                      key={student.id}
+                      className={cn(
+                        'flex items-center gap-3 p-3 cursor-pointer bg-[var(--paper)]',
+                        'hover:bg-[var(--surface)] transition-colors',
+                        checked && 'bg-[var(--surface-2)]',
+                      )}
                     >
-                      <option value="">Tüm Sınıflar</option>
-                      <option value="9">9. Sınıf</option>
-                      <option value="10">10. Sınıf</option>
-                      <option value="11">11. Sınıf</option>
-                      <option value="12">12. Sınıf</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="senkronizasyon-student-grid">
-                  {filteredStudents.map((student) => (
-                    <label key={student.id} className="student-checkbox-item">
                       <input
                         type="checkbox"
-                        checked={selectedChildren.includes(student.id)}
+                        checked={checked}
                         onChange={() => handleToggleChild(student.id)}
-                        className="student-checkbox"
+                        className="w-4 h-4 accent-[var(--state)] flex-shrink-0 cursor-pointer"
                       />
-                      <div className="student-info">
-                        <span className="student-name">{student.adSoyad}</span>
-                        <span className="student-class">
-                          {student.sinif || '-'}/{student.sube || '-'}
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className="font-serif text-sm text-[var(--ink)] truncate">
+                          {student.adSoyad}
                         </span>
-                        {student.pansiyon && <span className="student-dormitory">Yatılı</span>}
+                        <span className="font-mono text-[10px] text-[var(--ink-dim)]">
+                          {student.sinif || '—'}/{student.sube || '—'}
+                        </span>
+                        {student.pansiyon && (
+                          <Chip tone="black" className="w-fit">
+                            Yatılı
+                          </Chip>
+                        )}
                       </div>
                     </label>
-                  ))}
-                  {filteredStudents.length === 0 && (
-                    <div className="no-students-found">
-                      <p>Arama kriterlerine uygun öğrenci bulunamadı.</p>
-                    </div>
-                  )}
+                  );
+                })}
+                {filteredStudents.length === 0 && (
+                  <div className="col-span-full bg-[var(--paper)] p-8 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                    Arama kriterlerine uygun öğrenci bulunamadı.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Selected children summary */}
+            {selectedChildren.length > 0 && (
+              <div className="border border-[var(--rule)] bg-[var(--surface)] p-4 space-y-3">
+                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                  Seçilen Çocuklar ({selectedChildren.length})
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedChildren.map((childId) => {
+                    const child = users.find((u) => u.id === childId);
+                    return child ? (
+                      <div
+                        key={childId}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 border border-[var(--rule)] bg-[var(--paper)]"
+                      >
+                        <span className="font-serif text-sm text-[var(--ink)]">
+                          {child.adSoyad}
+                        </span>
+                        <span className="font-mono text-[10px] text-[var(--ink-dim)]">
+                          {child.sinif || '—'}/{child.sube || '—'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleChild(childId)}
+                          className="text-[var(--ink-dim)] hover:text-[var(--state)] transition-colors"
+                          aria-label="Kaldır"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ) : null;
+                  })}
                 </div>
               </div>
+            )}
 
-              {/* Selected children summary */}
-              {selectedChildren.length > 0 && (
-                <div className="selected-children-summary">
-                  <h4 className="section-subtitle">Seçilen Çocuklar ({selectedChildren.length})</h4>
-                  <div className="selected-children-list">
-                    {selectedChildren.map((childId) => {
-                      const child = users.find((u) => u.id === childId);
-                      return child ? (
-                        <div key={childId} className="selected-child-item">
-                          <span className="child-name">{child.adSoyad}</span>
-                          <span className="child-class">
-                            {child.sinif || '-'}/{child.sube || '-'}
-                          </span>
-                          <button
-                            className="remove-child-btn"
-                            onClick={() => handleToggleChild(childId)}
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ) : null;
-                    })}
-                  </div>
-                </div>
-              )}
+            {/* Error */}
+            {error && (
+              <p className="text-sm text-[var(--state)] border border-[var(--state)] bg-[var(--surface)] px-3 py-2">
+                {error}
+              </p>
+            )}
 
-              {/* Error and success messages */}
-              {error && <div className="error-message">{error}</div>}
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-2 pt-4 border-t border-[var(--rule)]">
+              <Button variant="primary" size="sm" onClick={handleSave} loading={saving}>
+                <Save size={14} />
+                Kaydet
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setSelectedParent(null);
+                  setSelectedChildren([]);
+                  setError('');
+                }}
+              >
+                <X size={14} />
+                İptal
+              </Button>
+            </div>
+          </Card>
+        )}
+      </div>
 
-              {/* Action buttons */}
-              <div className="matching-actions">
-                <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-                  {saving ? (
-                    <>
-                      <div className="loading-spinner"></div>
-                      Kaydediliyor...
-                    </>
-                  ) : (
-                    <>
-                      <Save size={16} />
-                      Kaydet
-                    </>
-                  )}
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setSelectedParent(null);
-                    setSelectedChildren([]);
-                    setError('');
-                  }}
-                >
-                  <X size={16} />
-                  İptal
-                </button>
+      {showAddModal && (
+        <AddUserModal
+          onUserAdded={(newUser) => {
+            setUsers((users) => [newUser, ...users]);
+          }}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
+
+      {editUser && (
+        <EditUserModal
+          user={editUser}
+          onUserUpdated={(userId, updatedFields) => {
+            setUsers((users) =>
+              users.map((u) => (u.id === userId ? { ...u, ...updatedFields } : u)),
+            );
+          }}
+          onClose={() => setEditUser(null)}
+        />
+      )}
+    </ModernDashboardLayout>
+  );
+}
+
+// ── User card sub-component ──────────────────────────────────────────────────
+
+interface UserCardProps {
+  u: UserType;
+  selected: boolean;
+  onEdit: () => void;
+  onSelectParent: () => void;
+  onDelete: () => void;
+}
+
+function UserCard({ u, selected, onEdit, onSelectParent, onDelete }: UserCardProps) {
+  const initials = u.adSoyad.charAt(0).toUpperCase();
+
+  return (
+    <div
+      className={cn(
+        'bg-[var(--paper)] flex flex-col',
+        selected && 'border-l-4 border-l-[var(--state)]',
+      )}
+    >
+      {/* Card header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--rule)] bg-[var(--surface)]">
+        {/* Flat initial avatar */}
+        <div className="w-9 h-9 flex-shrink-0 bg-[var(--surface-2)] border border-[var(--rule)] flex items-center justify-center font-mono text-xs font-medium text-[var(--ink)]">
+          {initials}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-serif text-sm text-[var(--ink)] truncate">{u.adSoyad}</div>
+          <div className="font-mono text-[10px] text-[var(--ink-dim)] truncate">ID: {u.id}</div>
+          <Chip tone="default" className="mt-1">
+            {getRolLabel(u)}
+          </Chip>
+        </div>
+      </div>
+
+      {/* Card body */}
+      <div className="px-4 py-3 flex-1 space-y-3">
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+          <StatCell label="Sınıf" value={u.sinif || '—'} />
+          <StatCell label="Şube" value={u.sube || '—'} />
+          {u.rol === 'student' && u.pansiyon && <StatCell label="Oda" value={u.oda || '—'} />}
+          {u.rol === 'parent' && u.childId && u.childId.length > 0 && (
+            <div className="col-span-2 bg-[var(--paper)] p-2 text-center">
+              <div className="font-serif text-lg text-[var(--ink)]">{u.childId.length}</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                Çocuk Sayısı
               </div>
             </div>
           )}
         </div>
 
-        {showAddModal && (
-          <AddUserModal
-            onUserAdded={(newUser) => {
-              setUsers((users) => [newUser, ...users]);
-            }}
-            onClose={() => setShowAddModal(false)}
-          />
-        )}
-
-        {editUser && (
-          <EditUserModal
-            user={editUser}
-            onUserUpdated={(userId, updatedFields) => {
-              setUsers((users) =>
-                users.map((u) => (u.id === userId ? { ...u, ...updatedFields } : u)),
-              );
-            }}
-            onClose={() => setEditUser(null)}
-          />
-        )}
+        {/* Actions */}
+        <div className="flex flex-wrap gap-1.5">
+          <Button variant="ghost" size="sm" onClick={onEdit}>
+            Düzenle
+          </Button>
+          {u.rol === 'parent' && (
+            <Button variant="secondary" size="sm" onClick={onSelectParent}>
+              Çocuk Eşleştir
+            </Button>
+          )}
+          <Button variant="danger" size="sm" onClick={onDelete}>
+            Sil
+          </Button>
+        </div>
       </div>
-    </ModernDashboardLayout>
+    </div>
+  );
+}
+
+function StatCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-[var(--paper)] p-2 text-center">
+      <div className="font-serif text-base text-[var(--ink)]">{value}</div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+        {label}
+      </div>
+    </div>
   );
 }
