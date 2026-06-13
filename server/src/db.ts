@@ -221,8 +221,54 @@ process.on('SIGTERM', async () => {
   }
 });
 
+/**
+ * Transient network/database errors (a dropped TLS socket to Atlas, a momentary
+ * DNS hiccup, a server-selection timeout) are OPERATIONAL, not programmer bugs:
+ * the mongoose driver retries and auto-reconnects on its own. Tearing down the
+ * connection and exiting the process on every such blip is what made the server
+ * fragile (it died repeatedly on `read ECONNRESET`). For these we log and carry
+ * on; only genuinely unexpected errors close the connection and exit so a
+ * process manager can restart a possibly-corrupted process.
+ */
+const TRANSIENT_ERROR_CODES = new Set([
+  'ECONNRESET',
+  'ETIMEDOUT',
+  'EPIPE',
+  'ECONNREFUSED',
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'ENETUNREACH',
+  'EHOSTUNREACH',
+]);
+const TRANSIENT_ERROR_NAMES = new Set([
+  'MongoNetworkError',
+  'MongoNetworkTimeoutError',
+  'MongoServerSelectionError',
+  'MongooseServerSelectionError',
+  'PoolClearedError',
+  'MongoTopologyClosedError',
+]);
+
+function isTransientNetworkError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { code?: unknown; name?: unknown; message?: unknown };
+  if (typeof e.code === 'string' && TRANSIENT_ERROR_CODES.has(e.code)) return true;
+  if (typeof e.name === 'string' && TRANSIENT_ERROR_NAMES.has(e.name)) return true;
+  if (typeof e.message === 'string') {
+    return [...TRANSIENT_ERROR_CODES].some((c) => (e.message as string).includes(c));
+  }
+  return false;
+}
+
 // Enhanced error handling for uncaught exceptions
 process.on('uncaughtException', async (error) => {
+  if (isTransientNetworkError(error)) {
+    logger.warn('Transient network error reached uncaughtException — staying up', {
+      error: error instanceof Error ? error.message : error,
+    });
+    return; // don't close the pool; don't exit — let mongoose recover
+  }
+
   logger.error('Uncaught Exception', {
     error: error instanceof Error ? error.message : error,
     stack: error instanceof Error ? error.stack : undefined,
@@ -244,6 +290,13 @@ process.on('uncaughtException', async (error) => {
 });
 
 process.on('unhandledRejection', async (reason, promise) => {
+  if (isTransientNetworkError(reason)) {
+    logger.warn('Transient network error reached unhandledRejection — staying up', {
+      error: reason instanceof Error ? reason.message : reason,
+    });
+    return;
+  }
+
   logger.error('Unhandled Rejection', { reason, promise });
 
   try {
