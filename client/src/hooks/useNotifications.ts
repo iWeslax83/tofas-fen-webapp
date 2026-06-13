@@ -23,7 +23,13 @@ export interface AppNotification {
   actionUrl?: string;
 }
 
-export function useNotifications(userId: string | undefined) {
+/**
+ * @param userId  the authenticated user's id
+ * @param enabled gate fetching/polling until auth has been confirmed. Firing
+ *   before the session is validated produced a 401 on the very first poll;
+ *   pass `initialized && !!user` from the caller.
+ */
+export function useNotifications(userId: string | undefined, enabled = true) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -36,10 +42,12 @@ export function useNotifications(userId: string | undefined) {
     localStorage.getItem(NOTIF_PREF_KEY) === 'true';
 
   const fetchNotifications = useCallback(async () => {
-    if (!userId) return;
+    if (!enabled || !userId) return;
     try {
       const res = await SecureAPI.get(`/api/notifications/user/${userId}?limit=10`);
-      const data = (res as any).data;
+      const data = (
+        res as { data: { success?: boolean; data?: AppNotification[]; unreadCount?: number } }
+      ).data;
       if (data.success) {
         setNotifications(data.data || []);
         const newUnread = data.unreadCount ?? 0;
@@ -61,7 +69,7 @@ export function useNotifications(userId: string | undefined) {
     } catch {
       // API bağlantı hatası - sessizce geç
     }
-  }, [userId, browserEnabled]);
+  }, [enabled, userId, browserEnabled]);
 
   const markAsRead = useCallback(async (id: string) => {
     try {
@@ -90,12 +98,14 @@ export function useNotifications(userId: string | undefined) {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  // Initial fetch on mount - fetchNotifications is async and sets state after API call
-   
+  // Initial fetch — runs once auth is confirmed (enabled), not before, so the
+  // first poll never races the session validation and 401s. fetchNotifications
+  // is async and only setStates after the awaited request resolves, so this is
+  // not the synchronous cascading-render pattern the rule guards against.
   useEffect(() => {
-    void fetchNotifications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (enabled) void fetchNotifications();
+  }, [enabled, fetchNotifications]);
 
   return {
     notifications,
