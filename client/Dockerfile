@@ -46,7 +46,7 @@ RUN npm run build
 # unprivileged 'nginx' user on :8080; any platform-level Service/Ingress
 # maps the public port to 8080.
 # I-C7: pinned by digest as well as the mainline + alpine version tag.
-FROM nginx:1.31-alpine@sha256:dc48b7a872a79fb541ba5081d320b11b549231bc63ba465a7495afaa7d2ebcb8 AS production
+FROM nginx:1.31-alpine@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a AS production
 
 # Copy custom nginx config (listens on 8080 via the override below)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
