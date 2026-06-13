@@ -334,11 +334,17 @@ export default function AppRoutes() {
             <Route path="/student/iletisim" element={<CommunicationPage />} />
             <Route path="/parent/iletisim" element={<CommunicationPage />} />
 
-            {/* Performance Routes */}
-            <Route path="/admin/performans" element={<PerformancePage />} />
-            <Route path="/teacher/performans" element={<PerformancePage />} />
-            <Route path="/student/performans" element={<PerformancePage />} />
-            <Route path="/parent/performans" element={<PerformancePage />} />
+            {/* Performance Routes — system monitoring, admin only. The
+                /performance API enforces requireRole(['admin']); exposing the
+                route to other roles only ever rendered 403 errors. */}
+            <Route
+              path="/admin/performans"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <PerformancePage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Settings Routes */}
             <Route path="/admin/ayarlar" element={<SettingsPage />} />

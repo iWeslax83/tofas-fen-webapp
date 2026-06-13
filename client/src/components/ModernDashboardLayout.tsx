@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Home, Settings, Menu, X, Bell, CheckCheck, Search } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
+import { useInitialized } from '../stores/authStore';
 import { dashboardButtons, type UserRole } from '../pages/Dashboard/dashboardButtonConfig';
 import { useNotifications } from '../hooks/useNotifications';
 import { ThemeToggle } from './ThemeToggle';
@@ -25,10 +26,11 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
   customHeaderActions,
 }) => {
   const { user } = useAuthContext();
+  const initialized = useInitialized();
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 1024);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const { notifications, unreadCount, isOpen, setIsOpen, markAsRead, markAllAsRead } =
-    useNotifications(user?.id);
+    useNotifications(user?.id, initialized && !!user);
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
