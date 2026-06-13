@@ -1,4 +1,5 @@
 import { Command } from 'cmdk';
+import * as RadixDialog from '@radix-ui/react-dialog';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -58,6 +59,12 @@ export function CommandPalette({ open, onOpenChange, role, pansiyon }: CommandPa
         'bg-black/40 backdrop-blur-sm',
       )}
     >
+      {/* Radix Dialog (under cmdk) requires a Title/Description for screen
+          readers; render them visually hidden to satisfy a11y without UI. */}
+      <RadixDialog.Title className="sr-only">Komut Paleti</RadixDialog.Title>
+      <RadixDialog.Description className="sr-only">
+        Bir komut veya sayfa arayın ve gidin.
+      </RadixDialog.Description>
       <div
         className={cn(
           'relative w-full max-w-xl mx-4',
