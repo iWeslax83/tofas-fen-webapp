@@ -56,7 +56,7 @@ export function CommandPalette({ open, onOpenChange, role, pansiyon }: CommandPa
       label="Komut paleti"
       className={cn(
         'fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]',
-        'bg-black/40 backdrop-blur-sm',
+        'bg-black/40',
       )}
     >
       {/* Radix Dialog (under cmdk) requires a Title/Description for screen

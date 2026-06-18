@@ -56,7 +56,7 @@
 
 /* Demo Header */
 .demo-header {
-  background: linear-gradient(135deg, var(--demo-primary) 0%, var(--demo-secondary) 100%);
+  background: var(--primary-red);
   color: white;
   padding: var(--demo-spacing-xl) var(--demo-spacing-lg);
   box-shadow: var(--demo-shadow-lg);
@@ -235,7 +235,7 @@
   justify-content: center;
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, var(--demo-primary) 0%, var(--demo-secondary) 100%);
+  background: var(--primary-red);
   border-radius: 50%;
   margin: 0 auto var(--demo-spacing-md) auto;
   color: white;

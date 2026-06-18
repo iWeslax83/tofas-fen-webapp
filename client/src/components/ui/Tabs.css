@@ -231,13 +231,13 @@
 
 .tabs-list-scrollable::before {
   left: 0;
-  background: linear-gradient(to right, var(--white), transparent);
+  background: var(--white);
   opacity: 0;
 }
 
 .tabs-list-scrollable::after {
   right: 0;
-  background: linear-gradient(to left, var(--white), transparent);
+  background: var(--white);
   opacity: 0;
 }
 
@@ -303,7 +303,7 @@
 
   .tabs-list-scrollable::before,
   .tabs-list-scrollable::after {
-    background: linear-gradient(to right, var(--gray-100), transparent);
+    background: var(--gray-100);
   }
 }
 

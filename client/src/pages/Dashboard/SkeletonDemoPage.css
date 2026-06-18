@@ -18,7 +18,6 @@
   margin-bottom: 32px;
   padding: 20px;
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
   border: 2px solid rgba(55, 65, 81, 0.1);
@@ -46,7 +45,7 @@
 }
 
 .demo-nav-button.active {
-  background: linear-gradient(135deg, var(--gray-600) 0%, var(--gray-700) 100%);
+  background: var(--gray-700);
   border-color: var(--gray-600);
   color: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -59,7 +58,6 @@
 /* Demo Content */
 .demo-content-wrapper {
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   padding: 32px;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
@@ -99,7 +97,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  background: linear-gradient(135deg, var(--gray-600) 0%, var(--gray-700) 100%);
+  background: var(--gray-700);
   color: white;
   border: none;
   border-radius: 8px;
@@ -116,7 +114,7 @@
 }
 
 .demo-button-error {
-  background: linear-gradient(135deg, var(--gray-700) 0%, var(--gray-800) 100%);
+  background: var(--gray-800);
 }
 
 .demo-button-error:hover {

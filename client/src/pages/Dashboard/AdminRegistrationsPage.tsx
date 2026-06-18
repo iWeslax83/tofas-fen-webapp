@@ -311,7 +311,7 @@ function RegistrationDetailModal({
   const canDecide = reg.status === 'pending' || reg.status === 'interview';
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
       onClick={onClose}
       role="presentation"
     >

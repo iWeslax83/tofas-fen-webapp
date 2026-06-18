@@ -6,7 +6,7 @@
 /* Modern Dashboard Layout */
 .modern-dashboard {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+  background: var(--gray-50);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   /* Column so the T.C. StateBar sits as a full-width band on top; the
      sidebar (fixed) + main-content (margin-left) form the row below it.
@@ -638,7 +638,7 @@
 
 /* Color Variations for Action Cards */
 .action-card[data-color="blue"] .action-icon {
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  background: var(--color-info-dark);
   color: var(--white);
 }
 
@@ -651,7 +651,7 @@
 }
 
 .action-card[data-color="green"] .action-icon {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  background: var(--color-success-dark);
   color: var(--white);
 }
 
@@ -664,7 +664,7 @@
 }
 
 .action-card[data-color="purple"] .action-icon {
-  background: linear-gradient(135deg, #8B5CF6 0%, #115e59 100%);
+  background: var(--primary-red);
   color: var(--white);
 }
 
@@ -677,7 +677,7 @@
 }
 
 .action-card[data-color="orange"] .action-icon {
-  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+  background: var(--color-warning-dark);
   color: var(--white);
 }
 
@@ -690,7 +690,7 @@
 }
 
 .action-card[data-color="indigo"] .action-icon {
-  background: linear-gradient(135deg, #6366F1 0%, #0f766e 100%);
+  background: var(--primary-red);
   color: var(--white);
 }
 
@@ -703,7 +703,7 @@
 }
 
 .action-card[data-color="teal"] .action-icon {
-  background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+  background: var(--primary-red);
   color: var(--white);
 }
 
@@ -716,7 +716,7 @@
 }
 
 .action-card[data-color="yellow"] .action-icon {
-  background: linear-gradient(135deg, #EAB308 0%, #D97706 100%);
+  background: var(--color-warning-dark);
   color: var(--white);
 }
 
@@ -730,7 +730,7 @@
 
 /* Tofaş Theme Color */
 .action-card[data-color="tofas-700"] .action-icon {
-  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+  background: var(--primary-red);
   color: var(--white);
 }
 
@@ -747,7 +747,7 @@
 }
 
 .action-card[data-color="rose"] .action-icon {
-  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  background: var(--color-error-dark);
   color: var(--white);
 }
 

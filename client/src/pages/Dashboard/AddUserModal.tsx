@@ -82,7 +82,6 @@ export default function AddUserModal({ onUserAdded, onClose }: AddUserModalProps
         position: 'fixed',
         inset: 0,
         background: 'var(--opacity-40)',
-        backdropFilter: 'blur(4px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

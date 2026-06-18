@@ -89,7 +89,6 @@
   position: relative;
   z-index: 9999;
   background: var(--gradient-primary);
-  /* backdrop-filter: blur(10px); */
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   padding: 0.75rem 2rem;
   display: flex;
@@ -165,7 +164,6 @@
 
 .user-info {
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(10px); */
   border-radius: 12px;
   padding: 1.5rem;
   display: inline-flex;
@@ -324,7 +322,6 @@
   position: relative;
   z-index: 10;
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(10px); */
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   padding: 1rem 2rem;
   display: flex;
@@ -356,7 +353,7 @@
 .logo-icon {
   width: 2.5rem;
   height: 2.5rem;
-  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  background: var(--gray-800);
   border-radius: 0.75rem;
   display: flex;
   align-items: center;
@@ -1107,7 +1104,6 @@
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  /* backdrop-filter: blur(10px); */
   font-size: 0.875rem;
   position: relative;
   z-index: 10001;
@@ -1129,7 +1125,7 @@
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: var(--color-info-dark);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1211,7 +1207,7 @@
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: var(--color-info-dark);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1410,7 +1406,6 @@
   flex: 1;
   padding: 2rem 0;
   background: transparent;
-  /* backdrop-filter: blur(10px); */
   min-height: calc(100vh - var(--header-height, 90px));
 }
 
@@ -1437,7 +1432,6 @@
 
 .children-info-card {
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(10px); */
   border: 1px solid var(--primary-red-10);
   border-radius: 12px;
   padding: 1.5rem;
@@ -1461,7 +1455,7 @@
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6 0%, #115e59 100%);
+  background: var(--primary-red);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1536,7 +1530,7 @@
 .login-logs-page {
   padding: 1.5rem;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f9fafb 0%, #dbeafe 100%);
+  background: var(--gray-50);
 }
 
 .login-logs-container {
@@ -1658,7 +1652,6 @@
 /* Student Card Styles */
 .student-card {
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(10px); */
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -1763,7 +1756,6 @@
 /* Header */
 .admin-panel .panel-header {
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(20px); */
   box-shadow: 0 4px 20px rgba(55, 65, 81, 0.1);
   border-bottom: 1px solid rgba(55, 65, 81, 0.08);
   position: sticky;
@@ -1812,12 +1804,8 @@
 .admin-panel .panel-logo-text {
   font-size: 20px;
   font-weight: 800;
-  color: #1a202c;
   margin: 0;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary-red);
 }
 
 .admin-panel .header-right {
@@ -1850,7 +1838,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.1) 0%, rgba(75, 85, 99, 0.1) 100%);
+  background: var(--gray-100);
   border: 1px solid rgba(55, 65, 81, 0.2);
   border-radius: 20px;
   color: var(--primary-red-dark);
@@ -1858,11 +1846,10 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  /* backdrop-filter: blur(10px); */
 }
 
 .admin-panel .header-right .user-menu-trigger:hover {
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.15) 0%, rgba(75, 85, 99, 0.15) 100%);
+  background: var(--gray-200);
   border-color: rgba(55, 65, 81, 0.3);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(55, 65, 81, 0.15);
@@ -1958,7 +1945,6 @@
 /* Welcome Section */
 .admin-panel .welcome-section {
   background: var(--white);
-  /* backdrop-filter: blur(20px); */
   border-radius: 24px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
   border: 2px solid var(--gray-200);
@@ -1983,12 +1969,8 @@
 .admin-panel .welcome-section h2 {
   font-size: 32px;
   font-weight: 800;
-  color: #1a202c;
   margin: 0 0 16px 0;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary-red);
 }
 
 .admin-panel .welcome-section .last-login {
@@ -2239,12 +2221,8 @@
 .teacher-panel .panel-logo-text {
   font-size: 20px;
   font-weight: 800;
-  color: #1a202c;
   margin: 0;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary-red);
 }
 
 .teacher-panel .header-right {
@@ -2264,7 +2242,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.1) 0%, rgba(75, 85, 99, 0.1) 100%);
+  background: var(--gray-100);
   border: 1px solid rgba(55, 65, 81, 0.2);
   border-radius: 20px;
   color: var(--primary-red-dark);
@@ -2272,11 +2250,10 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  /* backdrop-filter: blur(10px); */
 }
 
 .teacher-panel .header-right .user-menu-trigger:hover {
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.15) 0%, rgba(75, 85, 99, 0.15) 100%);
+  background: var(--gray-200);
   border-color: rgba(55, 65, 81, 0.3);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(55, 65, 81, 0.15);
@@ -2330,7 +2307,6 @@
 /* Welcome Section */
 .teacher-panel .welcome-section {
   background: var(--white);
-  /* backdrop-filter: blur(20px); */
   border-radius: 24px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
   border: 2px solid var(--gray-200);
@@ -2343,12 +2319,8 @@
 .teacher-panel .welcome-section h2 {
   font-size: 32px;
   font-weight: 800;
-  color: #1a202c;
   margin: 0 0 16px 0;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary-red);
 }
 
 .teacher-panel .welcome-section .last-login {
@@ -2532,12 +2504,8 @@
 .parent-panel .panel-logo-text {
   font-size: 20px;
   font-weight: 800;
-  color: #1a202c;
   margin: 0;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary-red);
 }
 
 .parent-panel .header-right {
@@ -2557,7 +2525,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.1) 0%, rgba(75, 85, 99, 0.1) 100%);
+  background: var(--gray-100);
   border: 1px solid rgba(55, 65, 81, 0.2);
   border-radius: 20px;
   color: var(--primary-red-dark);
@@ -2565,11 +2533,10 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  /* backdrop-filter: blur(10px); */
 }
 
 .parent-panel .header-right .user-menu-trigger:hover {
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.15) 0%, rgba(75, 85, 99, 0.15) 100%);
+  background: var(--gray-200);
   border-color: rgba(55, 65, 81, 0.3);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(55, 65, 81, 0.15);
@@ -2623,7 +2590,6 @@
 /* Welcome Section */
 .parent-panel .welcome-section {
   background: var(--white);
-  /* backdrop-filter: blur(20px); */
   border-radius: 24px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
   border: 2px solid var(--gray-200);
@@ -2636,12 +2602,8 @@
 .parent-panel .welcome-section h2 {
   font-size: 32px;
   font-weight: 800;
-  color: #1a202c;
   margin: 0 0 16px 0;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary-red);
 }
 
 .parent-panel .welcome-section .last-login {
@@ -2654,7 +2616,6 @@
 /* Children Info Section */
 .parent-panel .children-info-section {
   background: var(--white);
-  /* backdrop-filter: blur(20px); */
   border-radius: 24px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
   border: 2px solid var(--gray-200);
@@ -2666,13 +2627,9 @@
 .parent-panel .children-info-section h3 {
   font-size: 24px;
   font-weight: 700;
-  color: #1a202c;
   margin: 0 0 24px 0;
   text-align: center;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary-red);
 }
 
 .parent-panel .children-grid {
@@ -2683,7 +2640,6 @@
 
 .parent-panel .child-card {
   background: var(--primary-red-20);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   padding: 24px;
   border: 2px solid rgba(55, 65, 81, 0.08);
@@ -2836,7 +2792,7 @@
   width: 56px;
   height: 56px;
   border-radius: 16px;
-  background: linear-gradient(135deg, var(--gray-600) 0%, var(--primary-red-dark) 100%);
+  background: var(--primary-red);
   color: #ffffff;
   transition: all 0.3s ease;
   flex-shrink: 0;
@@ -2862,15 +2818,15 @@
 
 /* Color Variants for Different Categories */
 .parent-panel .card-icon.green {
-  background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.1) 100%);
+  background: var(--color-success-dark);
 }
 
 .parent-panel .card-icon.blue {
-  background: linear-gradient(135deg, rgba(66, 153, 225, 0.1) 0%, rgba(49, 130, 206, 0.1) 100%);
+  background: var(--color-info-dark);
 }
 
 .parent-panel .card-icon.purple {
-  background: linear-gradient(135deg, rgba(128, 90, 213, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%);
+  background: var(--primary-red);
 }
 
 /* Panel Card Variants handled by centralized patterns in theme.css */
@@ -3201,7 +3157,7 @@
 .bg-blob-1 {
   width: 300px;
   height: 300px;
-  background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+  background: var(--primary-red);
   top: -150px;
   right: -150px;
 }
@@ -3209,7 +3165,7 @@
 .bg-blob-2 {
   width: 200px;
   height: 200px;
-  background: linear-gradient(45deg, #10b981, #3b82f6);
+  background: var(--color-info-dark);
   bottom: -100px;
   left: -100px;
 }
@@ -4988,7 +4944,6 @@
 .club-detail-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(40px);
   opacity: 0.3;
   z-index: -1;
 }
@@ -4996,7 +4951,7 @@
 .club-detail-blob-1 {
   width: 300px;
   height: 300px;
-  background: linear-gradient(45deg, var(--gray-400), var(--gray-500));
+  background: var(--gray-400);
   top: -150px;
   right: -150px;
 }
@@ -5004,7 +4959,7 @@
 .club-detail-blob-2 {
   width: 200px;
   height: 200px;
-  background: linear-gradient(45deg, #a8edea, #fed6e3);
+  background: var(--gray-100);
   bottom: -100px;
   left: -100px;
 }
@@ -5064,7 +5019,7 @@
 }
 
 .club-detail-social-media-link-indigo {
-  background-color: #6366f1;
+  background-color: #0f766e;
   color: white;
 }
 

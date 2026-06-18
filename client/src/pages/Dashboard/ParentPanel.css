@@ -36,7 +36,7 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+  background: #0f766e;
   color: var(--white);
   display: flex;
   align-items: center;
