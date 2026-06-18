@@ -7,6 +7,7 @@ The Navigation Components system provides a comprehensive, responsive, and acces
 ## Features
 
 ### 🎯 Core Features
+
 - **Enhanced Sidebar Navigation**: Categorized, collapsible navigation with favorites system
 - **Smart Breadcrumbs**: Automatic breadcrumb generation with icons and responsive design
 - **Enhanced Top Navigation**: Global search, view modes, filters, and user actions
@@ -17,6 +18,7 @@ The Navigation Components system provides a comprehensive, responsive, and acces
 - **Accessibility**: WCAG 2.1 AA compliant with keyboard navigation and screen reader support
 
 ### 🎨 Design Features
+
 - **TOFAS Theme Integration**: Consistent with brand colors and design language
 - **Smooth Animations**: Framer Motion powered transitions and micro-interactions
 - **Glassmorphism Effects**: Modern glass-like visual effects
@@ -34,18 +36,16 @@ The main context provider that manages navigation state across the application.
 import { NavigationProvider } from './components/NavigationComponents';
 
 function App() {
-  return (
-    <NavigationProvider>
-      {/* Your app content */}
-    </NavigationProvider>
-  );
+  return <NavigationProvider>{/* Your app content */}</NavigationProvider>;
 }
 ```
 
 **Props:**
+
 - `children`: React.ReactNode - The app content to wrap
 
 **Context Values:**
+
 - `sidebarOpen`: boolean - Sidebar open/close state
 - `setSidebarOpen`: function - Toggle sidebar state
 - `mobileMenuOpen`: boolean - Mobile menu open/close state
@@ -73,6 +73,7 @@ function Layout() {
 ```
 
 **Features:**
+
 - **Categorized Navigation**: Items grouped by function (Academic, Activities, Dormitory, etc.)
 - **Favorites System**: Users can mark frequently used items as favorites
 - **Collapsible Sections**: Each category can be expanded/collapsed
@@ -82,6 +83,7 @@ function Layout() {
 - **Keyboard Navigation**: Full keyboard accessibility support
 
 **Navigation Categories:**
+
 - **Ana Menü**: Main navigation items
 - **Akademik**: Academic-related features (assignments, grades, schedules)
 - **Aktiviteler**: Activity-related features (clubs, announcements)
@@ -107,6 +109,7 @@ function Page() {
 ```
 
 **Features:**
+
 - **Automatic Generation**: Creates breadcrumbs from current URL path
 - **Icon Integration**: Each breadcrumb item includes relevant icons
 - **Responsive Design**: Adapts to screen size with proper truncation
@@ -115,6 +118,7 @@ function Page() {
 - **Current Page Highlighting**: Visual distinction for current page
 
 **Breadcrumb Structure:**
+
 ```
 Ana Sayfa / Yönetici Paneli / Kulüpler / Matematik Kulübü
 ```
@@ -137,6 +141,7 @@ function Layout() {
 ```
 
 **Features:**
+
 - **Global Search**: Expandable search input with suggestions
 - **View Mode Toggle**: Switch between grid and list views
 - **Filter Controls**: Quick access to content filters
@@ -163,6 +168,7 @@ function Layout() {
 ```
 
 **Features:**
+
 - **Bottom Navigation**: Quick access to main sections
 - **Slide-Out Menu**: Full navigation menu accessible from mobile
 - **Touch Optimization**: Optimized touch targets for mobile devices
@@ -171,6 +177,7 @@ function Layout() {
 - **Responsive**: Automatically shows/hides based on screen size
 
 **Mobile Navigation Tabs:**
+
 - Ana Sayfa (Home)
 - Akademik (Academic)
 - Aktiviteler (Activities)
@@ -195,6 +202,7 @@ function App() {
 ```
 
 **Features:**
+
 - **Page View Tracking**: Records page visits and navigation paths
 - **Time Tracking**: Measures time spent on each page
 - **User Journey Analysis**: Tracks user navigation patterns
@@ -208,13 +216,13 @@ function App() {
 
 ```tsx
 import React from 'react';
-import { 
-  NavigationProvider, 
-  EnhancedSidebar, 
-  EnhancedTopNavigation, 
-  EnhancedBreadcrumbs, 
-  MobileNavigation, 
-  NavigationAnalytics 
+import {
+  NavigationProvider,
+  EnhancedSidebar,
+  EnhancedTopNavigation,
+  EnhancedBreadcrumbs,
+  MobileNavigation,
+  NavigationAnalytics,
 } from './components/NavigationComponents';
 
 function App() {
@@ -225,7 +233,7 @@ function App() {
         <EnhancedSidebar />
         <MobileNavigation />
         <NavigationAnalytics />
-        
+
         <main className="main-content">
           <EnhancedBreadcrumbs />
           {/* Your page content */}
@@ -243,12 +251,8 @@ import { useNavigation } from './components/NavigationComponents';
 
 function CustomNavigation() {
   const { setSidebarOpen } = useNavigation();
-  
-  return (
-    <button onClick={() => setSidebarOpen(true)}>
-      Open Navigation
-    </button>
-  );
+
+  return <button onClick={() => setSidebarOpen(true)}>Open Navigation</button>;
 }
 ```
 
@@ -264,9 +268,7 @@ function Layout({ children }) {
       <EnhancedTopNavigation />
       <div className="layout-content">
         <EnhancedSidebar />
-        <main className="main-content">
-          {children}
-        </main>
+        <main className="main-content">{children}</main>
       </div>
     </div>
   );
@@ -282,44 +284,48 @@ The navigation components use CSS variables for consistent theming:
 ```css
 :root {
   /* Primary Colors - Tofaş Red */
-  --primary-red: #DC143C;
-  --primary-red-dark: #8B0000;
-  --primary-red-light: #FF6B6B;
-  --primary-red-lighter: #FFE5E5;
-  
+  --primary-red: #dc143c;
+  --primary-red-dark: #8b0000;
+  --primary-red-light: #ff6b6b;
+  --primary-red-lighter: #ffe5e5;
+
   /* Secondary Colors */
-  --secondary-blue: #1E40AF;
+  --secondary-blue: #1e40af;
   --secondary-green: #059669;
-  --secondary-purple: #7C3AED;
-  --secondary-orange: #EA580C;
-  --secondary-yellow: #D97706;
-  --secondary-indigo: #4338CA;
-  --secondary-teal: #0D9488;
-  
+  --secondary-purple: #115e59;
+  --secondary-orange: #ea580c;
+  --secondary-yellow: #d97706;
+  --secondary-indigo: #1e40af;
+  --secondary-teal: #0d9488;
+
   /* Neutral Colors */
-  --white: #FFFFFF;
-  --gray-50: #F9FAFB;
-  --gray-100: #F3F4F6;
-  --gray-200: #E5E7EB;
-  --gray-300: #D1D5DB;
-  --gray-400: #9CA3AF;
-  --gray-500: #6B7280;
-  --gray-600: #4B5563;
+  --white: #ffffff;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
   --gray-700: #374151;
-  --gray-800: #1F2937;
+  --gray-800: #1f2937;
   --gray-900: #111827;
-  
+
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, var(--primary-red-dark) 0%, var(--primary-red) 100%);
-  --gradient-secondary: linear-gradient(135deg, var(--secondary-blue) 0%, var(--secondary-purple) 100%);
-  
+  --gradient-secondary: linear-gradient(
+    135deg,
+    var(--secondary-blue) 0%,
+    var(--secondary-purple) 100%
+  );
+
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  
+
   /* Border Radius */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
@@ -327,7 +333,7 @@ The navigation components use CSS variables for consistent theming:
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
   --radius-3xl: 2rem;
-  
+
   /* Spacing */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -341,16 +347,16 @@ The navigation components use CSS variables for consistent theming:
   --space-16: 4rem;
   --space-20: 5rem;
   --space-24: 6rem;
-  
+
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  
+
   /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.3s ease;
   --transition-slow: 0.5s ease;
-  
+
   /* Z-Index */
   --z-dropdown: 1000;
   --z-sticky: 1020;
@@ -407,7 +413,9 @@ The navigation components are designed to meet WCAG 2.1 AA accessibility standar
 <nav className="enhanced-breadcrumbs" aria-label="Breadcrumb">
   <ol className="breadcrumb-list">
     <li className="breadcrumb-item">
-      <a href="/" aria-label="Navigate to home page">Ana Sayfa</a>
+      <a href="/" aria-label="Navigate to home page">
+        Ana Sayfa
+      </a>
     </li>
   </ol>
 </nav>
@@ -438,7 +446,7 @@ The navigation components are designed to meet WCAG 2.1 AA accessibility standar
 const analytics = {
   pageViews: 1247,
   navigationTime: 14520, // milliseconds
-  userPath: ['/admin', '/admin/kulupler', '/admin/kulupler/123']
+  userPath: ['/admin', '/admin/kulupler', '/admin/kulupler/123'],
 };
 ```
 
@@ -469,22 +477,24 @@ npm install core-js regenerator-runtime
 If you're migrating from the old navigation system:
 
 1. **Replace Navigation Components**:
+
    ```tsx
    // Old
    import Sidebar from './old/Sidebar';
-   
+
    // New
    import { EnhancedSidebar } from './components/NavigationComponents';
    ```
 
 2. **Update Layout Structure**:
+
    ```tsx
    // Old
    <div className="layout">
      <Sidebar />
      <main>{children}</main>
    </div>
-   
+
    // New
    <NavigationProvider>
      <EnhancedSidebar />
@@ -495,10 +505,13 @@ If you're migrating from the old navigation system:
    ```
 
 3. **Update Styling**:
+
    ```css
    /* Remove old navigation styles */
-   .old-sidebar { /* Remove */ }
-   
+   .old-sidebar {
+     /* Remove */
+   }
+
    /* New styles are automatically applied */
    ```
 
@@ -514,6 +527,7 @@ If you're migrating from the old navigation system:
 ### Common Issues
 
 **Sidebar not opening:**
+
 ```tsx
 // Ensure NavigationProvider wraps your app
 <NavigationProvider>
@@ -522,22 +536,25 @@ If you're migrating from the old navigation system:
 ```
 
 **Breadcrumbs not showing:**
+
 ```tsx
 // Check if current path is valid
 console.log(location.pathname); // Should match expected format
 ```
 
 **Mobile navigation not working:**
+
 ```tsx
 // Ensure MobileNavigation is included
 <MobileNavigation />
 ```
 
 **Styling issues:**
+
 ```css
 /* Check if CSS variables are loaded */
 :root {
-  --primary-red: #DC143C; /* Should be defined */
+  --primary-red: #dc143c; /* Should be defined */
 }
 ```
 
@@ -556,9 +573,11 @@ console.log('Navigation Debug:', { currentPath, breadcrumbs });
 ### NavigationProvider
 
 **Props:**
+
 - `children`: React.ReactNode
 
 **Context Value:**
+
 ```tsx
 interface NavigationContextType {
   sidebarOpen: boolean;
@@ -575,6 +594,7 @@ interface NavigationContextType {
 ### useNavigation Hook
 
 **Returns:**
+
 ```tsx
 const {
   sidebarOpen,
@@ -584,7 +604,7 @@ const {
   searchOpen,
   setSearchOpen,
   currentPath,
-  breadcrumbs
+  breadcrumbs,
 } = useNavigation();
 ```
 
@@ -638,9 +658,9 @@ test('renders sidebar with navigation items', () => {
   render(
     <NavigationProvider>
       <EnhancedSidebar />
-    </NavigationProvider>
+    </NavigationProvider>,
   );
-  
+
   expect(screen.getByText('Ana Sayfa')).toBeInTheDocument();
 });
 ```
@@ -661,6 +681,7 @@ For support and questions:
 ## Changelog
 
 ### v1.0.0 (2024-01-XX)
+
 - Initial release of Navigation Components
 - Enhanced sidebar with categorization
 - Smart breadcrumbs with automatic generation

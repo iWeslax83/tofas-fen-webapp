@@ -14,7 +14,7 @@ import type { NoteEntry } from '../../pages/Dashboard/NotlarPage';
 
 import './GradeTrendChart.css';
 
-const LINE_COLORS = ['#0f766e', '#2563eb', '#16a34a', '#7c3aed', '#ea580c', '#db2777', '#0891b2'];
+const LINE_COLORS = ['#0f766e', '#2563eb', '#16a34a', '#115e59', '#ea580c', '#db2777', '#0891b2'];
 
 interface GradeTrendChartProps {
   notes: NoteEntry[];
@@ -50,9 +50,8 @@ export default function GradeTrendChart({ notes }: GradeTrendChartProps) {
       for (const subject of subjects) {
         const averages = semesterMap.get(subject);
         if (averages && averages.length > 0) {
-          entry[subject] = Math.round(
-            (averages.reduce((a, b) => a + b, 0) / averages.length) * 10
-          ) / 10;
+          entry[subject] =
+            Math.round((averages.reduce((a, b) => a + b, 0) / averages.length) * 10) / 10;
         }
       }
 
