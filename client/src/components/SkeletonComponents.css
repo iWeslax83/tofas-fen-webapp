@@ -1,57 +1,12 @@
 /* Skeleton Components CSS - TOFAS Theme */
 
-/* Base Skeleton Animation */
-@keyframes skeleton-pulse {
-  0%, 100% {
-    opacity: 1;
-    background: linear-gradient(90deg, 
-      rgba(55, 65, 81, 0.1) 0%, 
-      rgba(75, 85, 99, 0.2) 50%, 
-      rgba(55, 65, 81, 0.1) 100%);
-  }
-  50% {
-    opacity: 0.7;
-    background: linear-gradient(90deg, 
-      rgba(55, 65, 81, 0.15) 0%, 
-      rgba(75, 85, 99, 0.25) 50%, 
-      rgba(55, 65, 81, 0.15) 100%);
-  }
-}
-
-@keyframes skeleton-shimmer {
-  0% {
-    background-position: -200px 0;
-  }
-  100% {
-    background-position: calc(200px + 100%) 0;
-  }
-}
-
 /* Base Skeleton */
 .skeleton {
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   border-radius: 8px;
   position: relative;
   overflow: hidden;
-}
-
-.skeleton::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    var(--primary-red-10) 50%, 
-    transparent 100%);
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }
 
 /* Text Skeletons */
@@ -64,12 +19,8 @@
 .skeleton-line {
   height: 16px;
   border-radius: 4px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .skeleton-line:last-child {
@@ -80,30 +31,21 @@
   height: 24px;
   width: 60%;
   border-radius: 6px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.15) 0%, 
-    rgba(75, 85, 99, 0.25) 50%, 
-    rgba(55, 65, 81, 0.15) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .skeleton-subtitle {
   height: 18px;
   width: 40%;
   border-radius: 4px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Card Skeletons */
 .skeleton-card {
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
@@ -142,22 +84,14 @@
   height: 36px;
   width: 80px;
   border-radius: 8px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .skeleton-button-primary {
   width: 100px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.15) 0%, 
-    rgba(75, 85, 99, 0.25) 50%, 
-    rgba(55, 65, 81, 0.15) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .skeleton-button-secondary {
@@ -167,7 +101,6 @@
 /* Club Card Skeleton */
 .skeleton-club-card {
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
@@ -182,12 +115,8 @@
 
 .skeleton-club-image {
   height: 160px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .skeleton-club-content {
@@ -207,18 +136,13 @@
   height: 20px;
   width: 60px;
   border-radius: 4px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Table Skeleton */
 .skeleton-table {
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
@@ -237,12 +161,8 @@
 .skeleton-table-header-cell {
   height: 20px;
   border-radius: 4px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.15) 0%, 
-    rgba(75, 85, 99, 0.25) 50%, 
-    rgba(55, 65, 81, 0.15) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .skeleton-table-body {
@@ -264,12 +184,8 @@
 .skeleton-table-cell {
   height: 16px;
   border-radius: 4px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Form Skeleton */
@@ -279,7 +195,6 @@
   gap: 20px;
   padding: 24px;
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
   border: 2px solid rgba(55, 65, 81, 0.1);
@@ -295,23 +210,15 @@
   height: 16px;
   width: 40%;
   border-radius: 4px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .skeleton-input {
   height: 44px;
   border-radius: 8px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.05) 0%, 
-    rgba(75, 85, 99, 0.1) 50%, 
-    rgba(55, 65, 81, 0.05) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   border: 2px solid rgba(55, 65, 81, 0.1);
 }
 
@@ -335,7 +242,6 @@
   gap: 16px;
   padding: 16px;
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(55, 65, 81, 0.1);
   border: 2px solid rgba(55, 65, 81, 0.1);
@@ -351,12 +257,8 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   flex-shrink: 0;
 }
 
@@ -377,12 +279,8 @@
   width: 24px;
   height: 24px;
   border-radius: 6px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Dashboard Skeleton */
@@ -399,7 +297,6 @@
   align-items: center;
   padding: 20px;
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
   border: 2px solid rgba(55, 65, 81, 0.1);
@@ -418,7 +315,6 @@
 
 .skeleton-dashboard-content {
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
@@ -439,7 +335,6 @@
   gap: 20px;
   padding: 24px;
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
   border: 2px solid rgba(55, 65, 81, 0.1);
@@ -449,12 +344,8 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   flex-shrink: 0;
 }
 
@@ -467,7 +358,6 @@
 
 .skeleton-profile-content {
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
   border: 2px solid rgba(55, 65, 81, 0.1);
@@ -480,7 +370,6 @@
   gap: 16px;
   padding: 16px;
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(55, 65, 81, 0.1);
   border: 2px solid rgba(55, 65, 81, 0.1);
@@ -496,12 +385,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   flex-shrink: 0;
 }
 
@@ -516,19 +401,14 @@
   height: 12px;
   width: 60px;
   border-radius: 4px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   flex-shrink: 0;
 }
 
 /* Calendar Skeleton */
 .skeleton-calendar {
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
@@ -546,12 +426,8 @@
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .skeleton-calendar-grid {
@@ -563,18 +439,13 @@
 .skeleton-calendar-day {
   height: 40px;
   border-radius: 8px;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.05) 0%, 
-    rgba(75, 85, 99, 0.1) 50%, 
-    rgba(55, 65, 81, 0.05) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Chart Skeleton */
 .skeleton-chart {
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
@@ -604,12 +475,8 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .skeleton-chart-content {
@@ -630,12 +497,8 @@
 
 .skeleton-chart-bar {
   flex: 1;
-  background: linear-gradient(90deg, 
-    rgba(55, 65, 81, 0.1) 0%, 
-    rgba(75, 85, 99, 0.2) 50%, 
-    rgba(55, 65, 81, 0.1) 100%);
-  background-size: 200px 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   border-radius: 4px 4px 0 0;
   min-height: 40px;
 }
@@ -657,7 +520,6 @@
   padding: 48px 24px;
   text-align: center;
   background: var(--primary-red-lighter);
-  /* backdrop-filter: blur(15px); */
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
   border: 2px solid rgba(55, 65, 81, 0.1);
@@ -684,7 +546,7 @@
 
 .retry-button {
   padding: 12px 24px;
-  background: linear-gradient(135deg, var(--gray-600) 0%, var(--gray-700) 100%);
+  background: var(--gray-700);
   color: white;
   border: none;
   border-radius: 8px;

@@ -157,7 +157,7 @@
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, var(--primary-red-lighter), rgba(55, 65, 81, 0.1));
+  background: var(--primary-red-lighter);
   color: var(--primary-red);
   font-weight: 600;
   border-left: 3px solid var(--primary-red);
@@ -398,7 +398,7 @@
 
 .breadcrumb-current {
   color: var(--primary-red);
-  background: linear-gradient(135deg, var(--primary-red-lighter), rgba(55, 65, 81, 0.1));
+  background: var(--primary-red-lighter);
   font-weight: 600;
   border: 1px solid var(--primary-red);
   box-shadow: 0 2px 4px rgba(55, 65, 81, 0.2);
@@ -627,7 +627,7 @@
 
 .mobile-nav-item.active {
   color: var(--primary-red);
-  background: linear-gradient(135deg, var(--primary-red-lighter), rgba(55, 65, 81, 0.1));
+  background: var(--primary-red-lighter);
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(55, 65, 81, 0.15);
   border-top: 2px solid var(--primary-red);

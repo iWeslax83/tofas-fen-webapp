@@ -155,13 +155,13 @@
 }
 
 .accessible-button--primary {
-  background: linear-gradient(135deg, #502129 0%, #6b2737 100%);
+  background: var(--primary-red);
   color: white;
   box-shadow: var(--accessibility-shadow);
 }
 
 .accessible-button--primary:hover {
-  background: linear-gradient(135deg, #6b2737 0%, #502129 100%);
+  background: var(--primary-red);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(80, 33, 41, 0.3);
 }

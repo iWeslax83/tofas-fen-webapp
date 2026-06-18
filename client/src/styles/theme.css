@@ -112,15 +112,15 @@
   --info-20: rgba(59, 130, 246, 0.2);
   --info-50: rgba(59, 130, 246, 0.5);
 
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #115e59 0%, #0f766e 100%);
-  --gradient-primary-animated: linear-gradient(135deg, #115e59 0%, #0f766e 50%, #14b8a6 100%);
+  /* Solid accents (formerly gradients — flattened to single colors) */
+  --gradient-primary: var(--primary-red);
+  --gradient-primary-animated: var(--primary-red);
   --gradient-secondary: var(--secondary-blue);
-  --gradient-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-success: linear-gradient(135deg, var(--color-success-dark) 0%, var(--color-success) 100%);
-  --gradient-warning: linear-gradient(135deg, var(--color-warning-dark) 0%, var(--color-warning) 100%);
-  --gradient-error: linear-gradient(135deg, var(--color-error-dark) 0%, var(--color-error) 100%);
-  --gradient-info: linear-gradient(135deg, var(--color-info-dark) 0%, var(--color-info) 100%);
+  --gradient-purple: var(--primary-red);
+  --gradient-success: var(--color-success-dark);
+  --gradient-warning: var(--color-warning-dark);
+  --gradient-error: var(--color-error-dark);
+  --gradient-info: var(--color-info-dark);
 
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -236,7 +236,7 @@
 
 /* Global footer */
 .site-footer {
-  background: linear-gradient(180deg, rgba(17, 24, 39, 0.02), rgba(17, 24, 39, 0.02));
+  background: var(--gray-50);
   border-top: 1px solid var(--gray-200);
   padding: var(--space-6);
   display: flex;
@@ -293,7 +293,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, var(--primary-red-20), transparent);
+  background: transparent;
   transition: left 0.3s;
 }
 
@@ -700,8 +700,6 @@
 /* Modern Glassmorphism Card */
 .card-glass {
   background: var(--primary-red-lighter);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--primary-red-20);
   border-radius: var(--radius-2xl);
   box-shadow:
@@ -889,7 +887,7 @@
   }
 
   .card-glass {
-    background: rgba(31, 41, 55, 0.8);
+    background: var(--gray-100);
     border-color: var(--primary-red-10);
   }
 
@@ -1172,7 +1170,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
+  background: var(--gray-50);
 }
 
 .loading-container p {
@@ -1224,22 +1222,14 @@
 }
 
 .skeleton {
-  background: linear-gradient(90deg,
-      var(--gray-200) 0%,
-      var(--gray-100) 50%,
-      var(--gray-200) 100%);
-  background-size: 1000px 100%;
-  animation: shimmer 2s infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   border-radius: var(--radius-md);
 }
 
 .skeleton-shimmer {
-  background: linear-gradient(90deg,
-      var(--gray-200) 0%,
-      var(--primary-red-50) 50%,
-      var(--gray-200) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  background: var(--gray-200);
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Skeleton Variants */
@@ -1490,28 +1480,16 @@
 
 /* Dark Mode Skeleton */
 [data-theme="dark"] .skeleton {
-  background: linear-gradient(90deg,
-      var(--gray-700) 0%,
-      var(--gray-600) 50%,
-      var(--gray-700) 100%);
-  background-size: 1000px 100%;
+  background: var(--gray-700);
 }
 
 @media (prefers-color-scheme: dark) {
   .skeleton {
-    background: linear-gradient(90deg,
-        var(--gray-700) 0%,
-        var(--gray-600) 50%,
-        var(--gray-700) 100%);
-    background-size: 1000px 100%;
+    background: var(--gray-700);
   }
 
   .skeleton-shimmer {
-    background: linear-gradient(90deg,
-        var(--gray-700) 0%,
-        var(--primary-red-10) 50%,
-        var(--gray-700) 100%);
-    background-size: 200% 100%;
+    background: var(--gray-700);
   }
 
   .skeleton-card {

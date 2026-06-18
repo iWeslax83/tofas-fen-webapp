@@ -23,11 +23,11 @@
 .category-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  border-color: #667eea;
+  border-color: #0f766e;
 }
 
 .category-card.active {
-  border-color: #667eea;
+  border-color: #0f766e;
   background: #f8fafc;
 }
 
@@ -35,7 +35,7 @@
   width: 48px;
   height: 48px;
   margin: 0 auto 16px;
-  color: #667eea;
+  color: #0f766e;
 }
 
 .category-title {
@@ -77,7 +77,7 @@
 .section-icon {
   width: 24px;
   height: 24px;
-  color: #667eea;
+  color: #0f766e;
 }
 
 .help-text {
@@ -132,7 +132,7 @@
 }
 
 .contact-link {
-  color: #667eea;
+  color: #0f766e;
   text-decoration: none;
   font-weight: 500;
 }
@@ -147,7 +147,7 @@
   gap: 8px;
   background: none;
   border: none;
-  color: #667eea;
+  color: #0f766e;
   font-weight: 500;
   cursor: pointer;
   transition: color 0.3s ease;
