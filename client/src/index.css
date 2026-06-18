@@ -1461,7 +1461,7 @@
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #115e59 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1647,7 +1647,7 @@
 
 .role-parent {
   background-color: #faf5ff;
-  color: #9333ea;
+  color: #0f766e;
 }
 
 .role-default {
@@ -3298,11 +3298,11 @@
 }
 
 .text-indigo-600 {
-  color: #4f46e5;
+  color: #0f766e;
 }
 
 .text-indigo-600:hover {
-  color: #3730a3;
+  color: #115e59;
 }
 
 .btn-green-600 {
@@ -3700,7 +3700,7 @@
 
 .btn-purple-600 {
   padding: 0.5rem 1rem;
-  background-color: #9333ea;
+  background-color: #0f766e;
   color: white;
   border-radius: 0.25rem;
   border: none;
@@ -3709,7 +3709,7 @@
 }
 
 .btn-purple-600:hover {
-  background-color: #7c3aed;
+  background-color: #115e59;
 }
 
 /* AdvancedNotesPage Styles */
@@ -3908,7 +3908,7 @@
 }
 
 .advanced-notes-stat-icon-purple svg {
-  color: #9333ea;
+  color: #0f766e;
 }
 
 .advanced-notes-stat-icon-yellow {
@@ -5069,7 +5069,7 @@
 }
 
 .club-detail-social-media-link-indigo:hover {
-  background-color: #4f46e5;
+  background-color: #0f766e;
 }
 
 .club-detail-chat {
@@ -5850,7 +5850,7 @@
 }
 
 .monitoring-progress-bar-purple {
-  background-color: #9333ea;
+  background-color: #0f766e;
   height: 0.5rem;
   border-radius: 9999px;
   transition: all 0.3s;
@@ -6014,7 +6014,7 @@
 }
 
 .club-detail-stat-value-purple {
-  color: #9333ea;
+  color: #0f766e;
 }
 
 .club-detail-stat-value-orange {
@@ -6081,7 +6081,7 @@
 
 .club-detail-button-indigo {
   padding: 0.5rem 1rem;
-  background-color: #4f46e5;
+  background-color: #0f766e;
   color: white;
   border-radius: 0.25rem;
   border: none;
@@ -6090,7 +6090,7 @@
 }
 
 .club-detail-button-indigo:hover {
-  background-color: #4338ca;
+  background-color: #1E40AF;
 }
 
 .club-detail-member-bg {
@@ -6169,7 +6169,7 @@
 }
 
 .monitoring-text-purple {
-  color: #9333ea;
+  color: #0f766e;
 }
 
 .monitoring-text-orange {
@@ -6177,7 +6177,7 @@
 }
 
 .monitoring-text-indigo {
-  color: #4f46e5;
+  color: #0f766e;
 }
 
 .monitoring-text-yellow {

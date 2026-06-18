@@ -664,7 +664,7 @@
 }
 
 .action-card[data-color="purple"] .action-icon {
-  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  background: linear-gradient(135deg, #8B5CF6 0%, #115e59 100%);
   color: var(--white);
 }
 
@@ -690,7 +690,7 @@
 }
 
 .action-card[data-color="indigo"] .action-icon {
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, #6366F1 0%, #0f766e 100%);
   color: var(--white);
 }
 

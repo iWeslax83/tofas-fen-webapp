@@ -15,10 +15,10 @@
   /* Secondary Colors */
   --secondary-blue: #1E40AF;
   --secondary-green: #059669;
-  --secondary-purple: #7C3AED;
+  --secondary-purple: #0f766e;
   --secondary-orange: #EA580C;
   --secondary-yellow: #D97706;
-  --secondary-indigo: #4338CA;
+  --secondary-indigo: #1E40AF;
   --secondary-teal: #0D9488;
 
   /* Semantic Colors - Success */
@@ -115,7 +115,7 @@
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, #115e59 0%, #0f766e 100%);
   --gradient-primary-animated: linear-gradient(135deg, #115e59 0%, #0f766e 50%, #14b8a6 100%);
-  --gradient-secondary: linear-gradient(135deg, var(--secondary-blue) 0%, var(--secondary-purple) 100%);
+  --gradient-secondary: var(--secondary-blue);
   --gradient-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --gradient-success: linear-gradient(135deg, var(--color-success-dark) 0%, var(--color-success) 100%);
   --gradient-warning: linear-gradient(135deg, var(--color-warning-dark) 0%, var(--color-warning) 100%);
