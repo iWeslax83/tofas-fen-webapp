@@ -81,15 +81,6 @@ const AdminAppointmentsPage = lazy(() => import('../pages/Dashboard/AdminAppoint
 const VisitorChatPage = lazy(() => import('../pages/Dashboard/VisitorChatPage'));
 const VisitorAppointmentPage = lazy(() => import('../pages/Dashboard/VisitorAppointmentPage'));
 
-// Demo Pages (only in development)
-const SkeletonDemoPage = lazy(() => import('../pages/Dashboard/SkeletonDemoPage'));
-const ErrorHandlingDemoPage = lazy(() => import('../pages/Dashboard/ErrorHandlingDemoPage'));
-const FormUXDemoPage = lazy(() => import('../pages/Dashboard/FormUXDemoPage'));
-const NavigationDemoPage = lazy(() => import('../pages/Dashboard/NavigationDemoPage'));
-const AccessibilityDemoPage = lazy(() => import('../pages/Dashboard/AccessibilityDemoPage'));
-
-const isDev = import.meta.env.DEV;
-
 // Root redirect component
 function RootRedirect() {
   // F-C1: wait on `initialized` before deciding where to send the user.
@@ -351,36 +342,6 @@ export default function AppRoutes() {
             <Route path="/teacher/ayarlar" element={<SettingsPage />} />
             <Route path="/student/ayarlar" element={<SettingsPage />} />
             <Route path="/parent/ayarlar" element={<SettingsPage />} />
-
-            {/* Demo Routes - only available in development */}
-            {isDev && (
-              <>
-                <Route path="/admin/skeleton-demo" element={<SkeletonDemoPage />} />
-                <Route path="/teacher/skeleton-demo" element={<SkeletonDemoPage />} />
-                <Route path="/student/skeleton-demo" element={<SkeletonDemoPage />} />
-                <Route path="/parent/skeleton-demo" element={<SkeletonDemoPage />} />
-
-                <Route path="/admin/error-demo" element={<ErrorHandlingDemoPage />} />
-                <Route path="/teacher/error-demo" element={<ErrorHandlingDemoPage />} />
-                <Route path="/student/error-demo" element={<ErrorHandlingDemoPage />} />
-                <Route path="/parent/error-demo" element={<ErrorHandlingDemoPage />} />
-
-                <Route path="/admin/form-demo" element={<FormUXDemoPage />} />
-                <Route path="/teacher/form-demo" element={<FormUXDemoPage />} />
-                <Route path="/student/form-demo" element={<FormUXDemoPage />} />
-                <Route path="/parent/form-demo" element={<FormUXDemoPage />} />
-
-                <Route path="/admin/navigation-demo" element={<NavigationDemoPage />} />
-                <Route path="/teacher/navigation-demo" element={<NavigationDemoPage />} />
-                <Route path="/student/navigation-demo" element={<NavigationDemoPage />} />
-                <Route path="/parent/navigation-demo" element={<NavigationDemoPage />} />
-
-                <Route path="/admin/accessibility-demo" element={<AccessibilityDemoPage />} />
-                <Route path="/teacher/accessibility-demo" element={<AccessibilityDemoPage />} />
-                <Route path="/student/accessibility-demo" element={<AccessibilityDemoPage />} />
-                <Route path="/parent/accessibility-demo" element={<AccessibilityDemoPage />} />
-              </>
-            )}
 
             {/* 404 Route */}
             <Route path="*" element={<NotFoundPage />} />
