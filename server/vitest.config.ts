@@ -7,13 +7,18 @@ import { config as dotenvConfig } from 'dotenv'
 // dev database without auth, which would clobber the test URI we build below.
 dotenvConfig({ path: path.resolve(__dirname, '../.env') })
 
-// Always build a dedicated test URI with auth credentials from docker-compose.
-// Ignore any MONGODB_URI already in the environment (it came from server/.env
-// or the shell and points to dev/production, not the test database).
+// Build a dedicated test URI. Precedence:
+//   1. TEST_MONGODB_URI — explicit opt-in override for CI or local mongods that
+//      run on a different port / auth scheme (does NOT clobber server/.env's
+//      MONGODB_URI, which is intentionally ignored for tests).
+//   2. docker-compose admin auth built from MONGO_PASSWORD.
+//   3. auth-less local mongod fallback.
 const mongoPassword = process.env.MONGO_PASSWORD || ''
-const testMongoUri = mongoPassword
-  ? `mongodb://admin:${mongoPassword}@127.0.0.1:27017/tofas-fen-test?authSource=admin`
-  : 'mongodb://127.0.0.1:27017/tofas-fen-test'
+const testMongoUri =
+  process.env.TEST_MONGODB_URI ||
+  (mongoPassword
+    ? `mongodb://admin:${mongoPassword}@127.0.0.1:27017/tofas-fen-test?authSource=admin`
+    : 'mongodb://127.0.0.1:27017/tofas-fen-test')
 
 export default defineConfig({
   test: {
