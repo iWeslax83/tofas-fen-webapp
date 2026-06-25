@@ -216,7 +216,9 @@ export async function createUser(params: CreateUserParams): Promise<CreateUserRe
     isActive: true,
   });
   await user.save();
-  return { user: user as unknown as IUser };
+  // Never expose the password hash or TCKN in API responses.
+  const { sifre: _sifre, tckn: _tckn, ...safeUser } = user.toObject();
+  return { user: safeUser as unknown as IUser };
 }
 
 /** POST /api/users/create — legacy create endpoint */
