@@ -9,17 +9,17 @@ import logger from '../utils/logger';
 export const auditLogMiddleware = (
   action: string,
   resourceType: string,
-  getResourceId?: (req: Request) => string | undefined
+  getResourceId?: (req: Request) => string | undefined,
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     // Store original json method
     const originalJson = res.json.bind(res);
 
     // Override json method to log after response
-    res.json = function (body: any) {
+    res.json = function (body: unknown) {
       // Log the action
       const resourceId = getResourceId ? getResourceId(req) : undefined;
-      
+
       // Determine status based on response
       let status: 'success' | 'failure' | 'error' = 'success';
       if (res.statusCode >= 400 && res.statusCode < 500) {
@@ -28,15 +28,17 @@ export const auditLogMiddleware = (
         status = 'error';
       }
 
-      AuditLogService.log(req, action as any, resourceType as any, {
+      AuditLogService.log(req, action, resourceType, {
         resourceId,
         status,
         details: {
           statusCode: res.statusCode,
-          response: body
-        }
-      }).catch(err => {
-        logger.error('Audit log middleware error', { error: err instanceof Error ? err.message : err });
+          response: body,
+        },
+      }).catch((err) => {
+        logger.error('Audit log middleware error', {
+          error: err instanceof Error ? err.message : err,
+        });
       });
 
       // Call original json method
@@ -46,4 +48,3 @@ export const auditLogMiddleware = (
     next();
   };
 };
-

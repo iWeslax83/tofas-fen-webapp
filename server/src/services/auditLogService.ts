@@ -28,14 +28,16 @@ export class AuditLogService {
     resourceType: IAuditLog['resourceType'],
     options: {
       resourceId?: string;
-      details?: any;
+      details?: Record<string, unknown>;
       status?: 'success' | 'failure' | 'error';
       errorMessage?: string;
-    } = {}
+    } = {},
   ): Promise<void> {
     try {
-      const user = (req as any).user;
-      
+      const user = (
+        req as Request & { user?: { id?: string; userId?: string; rol?: string; adSoyad?: string } }
+      ).user;
+
       // If no user in request, try to get from body or params
       const userId = user?.id || user?.userId || options.details?.userId || 'system';
       const userRole = user?.rol || options.details?.userRole || 'system';
@@ -52,7 +54,7 @@ export class AuditLogService {
         ipAddress: this.getClientIp(req),
         userAgent: req.headers['user-agent'],
         status: options.status || 'success',
-        errorMessage: options.errorMessage
+        errorMessage: options.errorMessage,
       });
 
       await auditLog.save();
@@ -70,7 +72,7 @@ export class AuditLogService {
     action: IAuditLog['action'],
     resourceType: IAuditLog['resourceType'],
     resourceId?: string,
-    details?: any
+    details?: Record<string, unknown>,
   ): Promise<void> {
     await this.log(req, action, resourceType, { resourceId, details });
   }
@@ -84,13 +86,13 @@ export class AuditLogService {
     resourceType: IAuditLog['resourceType'],
     errorMessage: string,
     resourceId?: string,
-    details?: any
+    details?: Record<string, unknown>,
   ): Promise<void> {
     await this.log(req, action, resourceType, {
       resourceId,
       details,
       status: 'error',
-      errorMessage
+      errorMessage,
     });
   }
 
@@ -119,10 +121,10 @@ export class AuditLogService {
       startDate,
       endDate,
       page = 1,
-      limit = 50
+      limit = 50,
     } = filters;
 
-    const query: any = {};
+    const query: Record<string, unknown> = {};
 
     if (userId) query.userId = userId;
     if (userRole) query.userRole = userRole;
@@ -131,20 +133,17 @@ export class AuditLogService {
     if (resourceId) query.resourceId = resourceId;
     if (status) query.status = status;
     if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate) query.createdAt.$gte = startDate;
-      if (endDate) query.createdAt.$lte = endDate;
+      const dateFilter: { $gte?: Date; $lte?: Date } = {};
+      if (startDate) dateFilter.$gte = startDate;
+      if (endDate) dateFilter.$lte = endDate;
+      query.createdAt = dateFilter;
     }
 
     const skip = (page - 1) * limit;
 
     const [logs, total] = await Promise.all([
-      AuditLog.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      AuditLog.countDocuments(query)
+      AuditLog.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      AuditLog.countDocuments(query),
     ]);
 
     return {
@@ -153,8 +152,8 @@ export class AuditLogService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -164,7 +163,7 @@ export class AuditLogService {
   static async getResourceLogs(resourceType: string, resourceId: string, limit = 50) {
     return AuditLog.find({
       resourceType,
-      resourceId
+      resourceId,
     })
       .sort({ createdAt: -1 })
       .limit(limit)
@@ -175,10 +174,6 @@ export class AuditLogService {
    * Get user activity logs
    */
   static async getUserActivityLogs(userId: string, limit = 50) {
-    return AuditLog.find({ userId })
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
+    return AuditLog.find({ userId }).sort({ createdAt: -1 }).limit(limit).lean();
   }
 }
-

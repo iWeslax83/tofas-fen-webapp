@@ -1,84 +1,83 @@
-import { Router } from "express";
-import { Schedule, ISchedule } from "../models/Schedule";
-import { authenticateJWT, authorizeRoles } from "../utils/jwt";
-import { validateRequest } from "../middleware/validation";
-import { body } from "express-validator";
-import { User } from "../models";
-import { getParentChildIds } from "../middleware/parentChildAccess";
-import logger from "../utils/logger";
+import { Router } from 'express';
+import { Schedule, ISchedule } from '../models/Schedule';
+import { FilterQuery } from 'mongoose';
+import { authenticateJWT, authorizeRoles } from '../utils/jwt';
+import { validateRequest } from '../middleware/validation';
+import { body } from 'express-validator';
+import { User } from '../models';
+import { getParentChildIds } from '../middleware/parentChildAccess';
+import logger from '../utils/logger';
 
 const router = Router();
 
 // Validation rules for schedule
 const validateSchedule = [
-  body('classLevel')
-    .trim()
-    .isIn(['9', '10', '11', '12'])
-    .withMessage('Geçersiz sınıf seviyesi'),
-  
-  body('classSection')
-    .trim()
-    .isIn(['A', 'B', 'C', 'D', 'E', 'F'])
-    .withMessage('Geçersiz şube'),
-  
+  body('classLevel').trim().isIn(['9', '10', '11', '12']).withMessage('Geçersiz sınıf seviyesi'),
+
+  body('classSection').trim().isIn(['A', 'B', 'C', 'D', 'E', 'F']).withMessage('Geçersiz şube'),
+
   body('academicYear')
     .trim()
     .matches(/^\d{4}-\d{4}$/)
     .withMessage('Geçersiz akademik yıl formatı (örn: 2024-2025)'),
-  
-  body('semester')
-    .trim()
-    .isIn(['1. Dönem', '2. Dönem'])
-    .withMessage('Geçersiz dönem'),
-  
-  body('schedule')
-    .isArray({ min: 1 })
-    .withMessage('En az bir gün olmalıdır'),
-  
+
+  body('semester').trim().isIn(['1. Dönem', '2. Dönem']).withMessage('Geçersiz dönem'),
+
+  body('schedule').isArray({ min: 1 }).withMessage('En az bir gün olmalıdır'),
+
   body('schedule.*.day')
     .isIn(['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'])
     .withMessage('Geçersiz gün'),
-  
-  body('schedule.*.periods')
-    .isArray({ min: 1, max: 8 })
-    .withMessage('Günde 1-8 ders olmalıdır'),
-  
+
+  body('schedule.*.periods').isArray({ min: 1, max: 8 }).withMessage('Günde 1-8 ders olmalıdır'),
+
   body('schedule.*.periods.*.period')
     .isInt({ min: 1, max: 8 })
     .withMessage('Ders saati 1-8 arasında olmalıdır'),
-  
+
   body('schedule.*.periods.*.subject')
     .isIn([
-      'Matematik', 'Fizik', 'Kimya', 'Biyoloji', 'İngilizce', 
-      'Türkçe', 'Tarih', 'Coğrafya', 'Din Kültürü', 'Beden Eğitimi',
-      'Müzik', 'Görsel Sanatlar', 'Teknoloji ve Tasarım', 'Bilişim Teknolojileri'
+      'Matematik',
+      'Fizik',
+      'Kimya',
+      'Biyoloji',
+      'İngilizce',
+      'Türkçe',
+      'Tarih',
+      'Coğrafya',
+      'Din Kültürü',
+      'Beden Eğitimi',
+      'Müzik',
+      'Görsel Sanatlar',
+      'Teknoloji ve Tasarım',
+      'Bilişim Teknolojileri',
     ])
     .withMessage('Geçersiz ders adı'),
-  
+
   body('schedule.*.periods.*.teacherId')
     .trim()
     .isLength({ min: 1 })
     .withMessage('Öğretmen ID gerekli'),
-  
+
   body('schedule.*.periods.*.teacherName')
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage('Öğretmen adı 2-100 karakter arasında olmalıdır'),
-  
+
   body('schedule.*.periods.*.startTime')
     .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
     .withMessage('Geçersiz başlangıç saati (HH:MM)'),
-  
+
   body('schedule.*.periods.*.endTime')
     .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
     .withMessage('Geçersiz bitiş saati (HH:MM)'),
-  
-  validateRequest
+
+  validateRequest,
 ];
 
 // Tüm ders programlarını getir (filtreleme ile)
 // Students see only their own class schedule, parents see children's class schedules
-router.get("/", authenticateJWT, async (req, res) => {
+router.get('/', authenticateJWT, async (req, res) => {
   try {
     const {
       classLevel,
@@ -87,16 +86,19 @@ router.get("/", authenticateJWT, async (req, res) => {
       semester,
       isActive,
       page = 1,
-      limit = 20
+      limit = 20,
     } = req.query;
 
-    const filter: any = {};
+    const filter: FilterQuery<ISchedule> = {};
     const role = req.user?.role;
     const userId = req.user?.userId;
 
     // Role-based class filtering
     if (role === 'student') {
-      const student = await User.findOne({ id: userId }).select('sinif sube').lean() as any;
+      const student = (await User.findOne({ id: userId }).select('sinif sube').lean()) as {
+        sinif?: string;
+        sube?: string;
+      } | null;
       if (student?.sinif) {
         filter.classLevel = student.sinif;
         if (student.sube) filter.classSection = student.sube;
@@ -104,11 +106,16 @@ router.get("/", authenticateJWT, async (req, res) => {
     } else if (role === 'parent') {
       const childIds = await getParentChildIds(userId!);
       if (childIds.length === 0) {
-        res.json({ schedules: [], pagination: { page: 1, limit: Number(limit), total: 0, pages: 0 } });
+        res.json({
+          schedules: [],
+          pagination: { page: 1, limit: Number(limit), total: 0, pages: 0 },
+        });
         return;
       }
-      const children = await User.find({ id: { $in: childIds } }).select('sinif sube').lean() as any[];
-      const levels = children.map((c: any) => c.sinif).filter(Boolean);
+      const children = (await User.find({ id: { $in: childIds } })
+        .select('sinif sube')
+        .lean()) as { sinif?: string; sube?: string }[];
+      const levels = children.map((c) => c.sinif).filter(Boolean);
       if (levels.length > 0) {
         filter.classLevel = { $in: [...new Set(levels)] };
       }
@@ -123,7 +130,7 @@ router.get("/", authenticateJWT, async (req, res) => {
     if (isActive !== undefined) filter.isActive = isActive === 'true';
 
     const skip = (Number(page) - 1) * Number(limit);
-    
+
     const schedules = await Schedule.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -138,8 +145,8 @@ router.get("/", authenticateJWT, async (req, res) => {
         page: Number(page),
         limit: Number(limit),
         total,
-        pages: Math.ceil(total / Number(limit))
-      }
+        pages: Math.ceil(total / Number(limit)),
+      },
     });
   } catch (error) {
     logger.error('Schedule fetch error', { error: error instanceof Error ? error.message : error });
@@ -148,7 +155,7 @@ router.get("/", authenticateJWT, async (req, res) => {
 });
 
 // Belirli bir ders programını getir
-router.get("/:id", authenticateJWT, async (req, res) => {
+router.get('/:id', authenticateJWT, async (req, res) => {
   try {
     const schedule = await Schedule.findOne({ id: req.params.id });
 
@@ -164,7 +171,7 @@ router.get("/:id", authenticateJWT, async (req, res) => {
 });
 
 // Sınıf ve şubeye göre ders programını getir - rol bazlı erişim kontrolü
-router.get("/class/:classLevel/:classSection", authenticateJWT, async (req, res) => {
+router.get('/class/:classLevel/:classSection', authenticateJWT, async (req, res) => {
   try {
     const { classLevel, classSection } = req.params;
     const { academicYear, semester } = req.query;
@@ -173,65 +180,74 @@ router.get("/class/:classLevel/:classSection", authenticateJWT, async (req, res)
 
     // Öğrenci: sadece kendi sınıfını görebilir
     if (role === 'student') {
-      const student = await User.findOne({ id: userId }).select('sinif sube').lean() as any;
+      const student = (await User.findOne({ id: userId }).select('sinif sube').lean()) as {
+        sinif?: string;
+        sube?: string;
+      } | null;
       if (!student || student.sinif !== classLevel || student.sube !== classSection) {
-        return res.status(403).json({ error: 'Sadece kendi sınıfınızın programını görebilirsiniz' });
+        return res
+          .status(403)
+          .json({ error: 'Sadece kendi sınıfınızın programını görebilirsiniz' });
       }
     }
 
     // Veli: sadece çocuklarının sınıfını görebilir
     if (role === 'parent') {
       const childIds = await getParentChildIds(userId!);
-      const children = await User.find({ id: { $in: childIds } }).select('sinif sube').lean() as any[];
-      const hasAccess = children.some((c: any) => c.sinif === classLevel && c.sube === classSection);
+      const children = (await User.find({ id: { $in: childIds } })
+        .select('sinif sube')
+        .lean()) as { sinif?: string; sube?: string }[];
+      const hasAccess = children.some((c) => c.sinif === classLevel && c.sube === classSection);
       if (!hasAccess) {
-        return res.status(403).json({ error: 'Sadece çocuğunuzun sınıfının programını görebilirsiniz' });
+        return res
+          .status(403)
+          .json({ error: 'Sadece çocuğunuzun sınıfının programını görebilirsiniz' });
       }
     }
 
-    const filter: any = {
+    const filter: FilterQuery<ISchedule> = {
       classLevel,
       classSection,
-      isActive: true
+      isActive: true,
     };
 
     if (academicYear) filter.academicYear = academicYear;
     if (semester) filter.semester = semester;
 
-    const schedule = await Schedule.findOne(filter)
-      .sort({ createdAt: -1 })
-      .lean();
+    const schedule = await Schedule.findOne(filter).sort({ createdAt: -1 }).lean();
 
     if (!schedule) {
       return res.status(404).json({
-        error: 'Bu sınıf için aktif ders programı bulunamadı'
+        error: 'Bu sınıf için aktif ders programı bulunamadı',
       });
     }
 
     res.json(schedule);
   } catch (error) {
-    logger.error('Class schedule fetch error', { error: error instanceof Error ? error.message : error });
+    logger.error('Class schedule fetch error', {
+      error: error instanceof Error ? error.message : error,
+    });
     res.status(500).json({ error: 'Sınıf ders programı getirilirken hata oluştu' });
   }
 });
 
 // Yeni ders programı oluştur (sadece admin)
-router.post("/", authenticateJWT, authorizeRoles(['admin']), validateSchedule, async (req, res) => {
+router.post('/', authenticateJWT, authorizeRoles(['admin']), validateSchedule, async (req, res) => {
   try {
     const { classLevel, classSection, academicYear, semester, schedule } = req.body;
-    
+
     // Aynı sınıf için aktif program var mı kontrol et
     const existingActive = await Schedule.findOne({
       classLevel,
       classSection,
       academicYear,
       semester,
-      isActive: true
+      isActive: true,
     });
 
     if (existingActive) {
-      return res.status(400).json({ 
-        error: 'Bu sınıf için zaten aktif bir ders programı bulunmaktadır' 
+      return res.status(400).json({
+        error: 'Bu sınıf için zaten aktif bir ders programı bulunmaktadır',
       });
     }
 
@@ -243,44 +259,54 @@ router.post("/", authenticateJWT, authorizeRoles(['admin']), validateSchedule, a
       semester,
       schedule,
       isActive: true,
-      createdBy: req.user.userId
+      createdBy: req.user.userId,
     });
 
     const savedSchedule = await newSchedule.save();
     res.status(201).json(savedSchedule);
   } catch (error) {
-    logger.error('Schedule creation error', { error: error instanceof Error ? error.message : error });
+    logger.error('Schedule creation error', {
+      error: error instanceof Error ? error.message : error,
+    });
     res.status(500).json({ error: 'Ders programı oluşturulurken hata oluştu' });
   }
 });
 
 // Ders programı güncelle (sadece admin)
-router.put("/:id", authenticateJWT, authorizeRoles(['admin']), validateSchedule, async (req, res) => {
-  try {
-    const schedule = await Schedule.findOne({ id: req.params.id });
-    
-    if (!schedule) {
-      return res.status(404).json({ error: 'Ders programı bulunamadı' });
+router.put(
+  '/:id',
+  authenticateJWT,
+  authorizeRoles(['admin']),
+  validateSchedule,
+  async (req, res) => {
+    try {
+      const schedule = await Schedule.findOne({ id: req.params.id });
+
+      if (!schedule) {
+        return res.status(404).json({ error: 'Ders programı bulunamadı' });
+      }
+
+      const updatedSchedule = await Schedule.findOneAndUpdate(
+        { id: req.params.id },
+        { ...req.body, updatedAt: new Date() },
+        { new: true },
+      );
+
+      res.json(updatedSchedule);
+    } catch (error) {
+      logger.error('Schedule update error', {
+        error: error instanceof Error ? error.message : error,
+      });
+      res.status(500).json({ error: 'Ders programı güncellenirken hata oluştu' });
     }
-
-    const updatedSchedule = await Schedule.findOneAndUpdate(
-      { id: req.params.id },
-      { ...req.body, updatedAt: new Date() },
-      { new: true }
-    );
-
-    res.json(updatedSchedule);
-  } catch (error) {
-    logger.error('Schedule update error', { error: error instanceof Error ? error.message : error });
-    res.status(500).json({ error: 'Ders programı güncellenirken hata oluştu' });
-  }
-});
+  },
+);
 
 // Ders programı durumunu güncelle (sadece admin)
-router.patch("/:id/status", authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
+router.patch('/:id/status', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     const { isActive } = req.body;
-    
+
     if (typeof isActive !== 'boolean') {
       return res.status(400).json({ error: 'Geçersiz durum değeri' });
     }
@@ -288,7 +314,7 @@ router.patch("/:id/status", authenticateJWT, authorizeRoles(['admin']), async (r
     const updatedSchedule = await Schedule.findOneAndUpdate(
       { id: req.params.id },
       { isActive, updatedAt: new Date() },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedSchedule) {
@@ -297,16 +323,18 @@ router.patch("/:id/status", authenticateJWT, authorizeRoles(['admin']), async (r
 
     res.json(updatedSchedule);
   } catch (error) {
-    logger.error('Schedule status update error', { error: error instanceof Error ? error.message : error });
+    logger.error('Schedule status update error', {
+      error: error instanceof Error ? error.message : error,
+    });
     res.status(500).json({ error: 'Ders programı durumu güncellenirken hata oluştu' });
   }
 });
 
 // Ders programı sil (sadece admin)
-router.delete("/:id", authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
+router.delete('/:id', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   try {
     const schedule = await Schedule.findOne({ id: req.params.id });
-    
+
     if (!schedule) {
       return res.status(404).json({ error: 'Ders programı bulunamadı' });
     }
@@ -314,7 +342,9 @@ router.delete("/:id", authenticateJWT, authorizeRoles(['admin']), async (req, re
     await Schedule.findOneAndDelete({ id: req.params.id });
     res.status(204).end();
   } catch (error) {
-    logger.error('Schedule deletion error', { error: error instanceof Error ? error.message : error });
+    logger.error('Schedule deletion error', {
+      error: error instanceof Error ? error.message : error,
+    });
     res.status(500).json({ error: 'Ders programı silinirken hata oluştu' });
   }
 });

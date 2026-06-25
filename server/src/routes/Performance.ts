@@ -85,21 +85,21 @@ router.post(
   authorizeRoles(['admin']),
   validateMetricCreate,
   handleValidationErrors,
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: express.Request, res: express.Response) => {
     try {
       await PerformanceService.recordMetric(req.body);
       return res.status(201).json({
         success: true,
         message: 'Metric recorded successfully',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error recording metric', {
         error: error instanceof Error ? error.message : error,
       });
       return res.status(500).json({
         success: false,
         message: 'Error recording metric',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }),

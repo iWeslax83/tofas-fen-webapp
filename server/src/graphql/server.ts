@@ -28,7 +28,7 @@ async function verifyToken(token: string): Promise<unknown> {
     }
 
     // Verify and decode token
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId?: string };
     if (!decoded || !decoded.userId) {
       return null;
     }
@@ -72,9 +72,11 @@ export function createApolloServer() {
       {
         async requestDidStart() {
           return {
-            async didResolveOperation(requestContext: any) {
+            async didResolveOperation(requestContext) {
               const { request } = requestContext;
-              const complexity = (requestContext as any).operationComplexity;
+              // graphql-query-complexity attaches operationComplexity at runtime
+              const ctx = requestContext as unknown as { operationComplexity?: number };
+              const complexity = ctx.operationComplexity;
               logger.debug(
                 `GraphQL Operation: ${request.operationName}, Complexity: ${complexity}`,
               );

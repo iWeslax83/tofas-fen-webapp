@@ -6,14 +6,33 @@
 import logger from './logger';
 
 // Try to load prom-client dynamically so missing dependency doesn't crash local dev
-let Counter: any;
-let Histogram: any;
-let Gauge: any;
-let RegistryClass: any;
-let register: any;
+// prom-client is optional; no-op constructors are cast to the same newable type.
+type MetricConstructor = new (config: Record<string, unknown>) => {
+  inc(labels?: Record<string, string | number>): void;
+  observe(labels?: Record<string, string | number> | number, value?: number): void;
+  set(labels?: Record<string, string | number> | number, value?: number): void;
+  labels(labels: Record<string, string | number>): {
+    inc(): void;
+    set(v: number): void;
+    observe(v: number): void;
+  };
+  startTimer(labels?: Record<string, string | number>): () => void;
+};
+type RegistryConstructor = new () => {
+  registerMetric(m: unknown): void;
+  getMetricsAsJSON(): Promise<unknown[]>;
+  metrics(): Promise<string>;
+  contentType: string;
+};
+
+let Counter: MetricConstructor;
+let Histogram: MetricConstructor;
+let Gauge: MetricConstructor;
+let RegistryClass: RegistryConstructor;
+let register: InstanceType<RegistryConstructor>;
 
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const prom = require('prom-client');
   Counter = prom.Counter;
   Histogram = prom.Histogram;
@@ -25,22 +44,32 @@ try {
 
   // No-op implementations
   register = {
-    registerMetric: () => { },
+    registerMetric: () => {},
     getMetricsAsJSON: async () => [],
-  };
+    metrics: async () => '',
+    contentType: 'text/plain; version=0.0.4; charset=utf-8',
+  } as InstanceType<RegistryConstructor>;
 
   const noopMetric = () => ({
-    inc: () => { },
-    observe: () => { },
-    set: () => { },
-    labels: () => ({ inc: () => { }, set: () => { }, observe: () => { } }),
-    startTimer: () => () => { },
+    inc: () => {},
+    observe: () => {},
+    set: () => {},
+    labels: () => ({ inc: () => {}, set: () => {}, observe: () => {} }),
+    startTimer: () => () => {},
   });
 
-  Counter = function () { return noopMetric(); };
-  Histogram = function () { return noopMetric(); };
-  Gauge = function () { return noopMetric(); };
-  RegistryClass = function () { return register; };
+  Counter = function () {
+    return noopMetric();
+  } as unknown as MetricConstructor;
+  Histogram = function () {
+    return noopMetric();
+  } as unknown as MetricConstructor;
+  Gauge = function () {
+    return noopMetric();
+  } as unknown as MetricConstructor;
+  RegistryClass = function () {
+    return register;
+  } as unknown as RegistryConstructor;
 }
 
 // HTTP Metrics
@@ -234,4 +263,3 @@ logger.info('Prometheus metrics initialized');
 
 // Export register for metrics endpoint
 export { register };
-

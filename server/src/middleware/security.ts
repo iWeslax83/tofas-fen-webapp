@@ -18,7 +18,7 @@ export const createRateLimiters = () => {
     max: 100, // Limit each IP to 100 requests per windowMs
     message: {
       error: 'Too many requests from this IP, please try again later.',
-      retryAfter: '15 minutes'
+      retryAfter: '15 minutes',
     },
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
@@ -28,9 +28,9 @@ export const createRateLimiters = () => {
         message: 'Too many requests from this IP, please try again later.',
         retryAfter: Math.ceil(15 * 60), // seconds
         limit: 100,
-        windowMs: 15 * 60 * 1000
+        windowMs: 15 * 60 * 1000,
       });
-    }
+    },
   });
 
   // Stricter limits for authentication endpoints
@@ -39,7 +39,7 @@ export const createRateLimiters = () => {
     max: 5, // Limit each IP to 5 requests per windowMs
     message: {
       error: 'Too many authentication attempts, please try again later.',
-      retryAfter: '15 minutes'
+      retryAfter: '15 minutes',
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -50,9 +50,9 @@ export const createRateLimiters = () => {
         message: 'Too many authentication attempts, please try again later.',
         retryAfter: Math.ceil(15 * 60),
         limit: 5,
-        windowMs: 15 * 60 * 1000
+        windowMs: 15 * 60 * 1000,
       });
-    }
+    },
   });
 
   // File upload rate limiting
@@ -61,7 +61,7 @@ export const createRateLimiters = () => {
     max: 10, // Limit each IP to 10 uploads per hour
     message: {
       error: 'Too many file uploads, please try again later.',
-      retryAfter: '1 hour'
+      retryAfter: '1 hour',
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -71,9 +71,9 @@ export const createRateLimiters = () => {
         message: 'Too many file uploads, please try again later.',
         retryAfter: Math.ceil(60 * 60),
         limit: 10,
-        windowMs: 60 * 60 * 1000
+        windowMs: 60 * 60 * 1000,
       });
-    }
+    },
   });
 
   // Admin endpoint rate limiting
@@ -82,7 +82,7 @@ export const createRateLimiters = () => {
     max: 50, // Limit each IP to 50 requests per windowMs
     message: {
       error: 'Too many admin requests, please try again later.',
-      retryAfter: '15 minutes'
+      retryAfter: '15 minutes',
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -92,16 +92,16 @@ export const createRateLimiters = () => {
         message: 'Too many admin requests, please try again later.',
         retryAfter: Math.ceil(15 * 60),
         limit: 50,
-        windowMs: 15 * 60 * 1000
+        windowMs: 15 * 60 * 1000,
       });
-    }
+    },
   });
 
   return {
     general: generalLimiter,
     auth: authLimiter,
     upload: uploadLimiter,
-    admin: adminLimiter
+    admin: adminLimiter,
   };
 };
 
@@ -113,54 +113,53 @@ export const enhancedHelmet = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "ws:", "wss:"],
+      imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
+      connectSrc: ["'self'", 'ws:', 'wss:'],
       frameSrc: ["'none'"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
       baseUri: ["'self'"],
       formAction: ["'self'"],
       frameAncestors: ["'none'"],
-      workerSrc: ["'self'", "blob:"],
+      workerSrc: ["'self'", 'blob:'],
       manifestSrc: ["'self'"],
-      mediaSrc: ["'self'", "https:"],
+      mediaSrc: ["'self'", 'https:'],
       prefetchSrc: ["'self'"],
-      requireTrustedTypesFor: ["'script'"]
+      requireTrustedTypesFor: ["'script'"],
     },
-    reportOnly: false
+    reportOnly: false,
   },
   crossOriginEmbedderPolicy: true,
-  crossOriginOpenerPolicy: { policy: "same-origin" },
-  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: 'same-origin' },
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
   dnsPrefetchControl: { allow: false },
-  frameguard: { action: "deny" },
+  frameguard: { action: 'deny' },
   hidePoweredBy: true,
   hsts: {
     maxAge: 31536000,
     includeSubDomains: true,
-    preload: true
+    preload: true,
   },
   ieNoOpen: true,
   noSniff: true,
-  permittedCrossDomainPolicies: { permittedPolicies: "none" },
-  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
-  xssFilter: true
+  permittedCrossDomainPolicies: { permittedPolicies: 'none' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  xssFilter: true,
 });
-
 
 /**
  * Recursively sanitize objects and arrays
  */
-const sanitizeObject = (obj: any): any => {
+const sanitizeObject = (obj: unknown): unknown => {
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeObject(item));
+    return obj.map((item) => sanitizeObject(item));
   }
 
   if (obj !== null && typeof obj === 'object') {
-    const sanitized: any = {};
+    const sanitized: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
       // Strip keys starting with $ to prevent NoSQL injection
       if (!key.startsWith('$')) {
@@ -191,12 +190,12 @@ export const preventSQLInjection = (req: Request, res: Response, next: NextFunct
     /(--\s*$)/,
     /(\/\*.*\*\/)/,
     /(\bxp_cmdshell\b)/i,
-    /(\bsp_executesql\b)/i
+    /(\bsp_executesql\b)/i,
   ];
 
-  const checkValue = (value: any): boolean => {
+  const checkValue = (value: unknown): boolean => {
     if (typeof value === 'string') {
-      return sqlPatterns.some(pattern => pattern.test(value));
+      return sqlPatterns.some((pattern) => pattern.test(value));
     }
     if (Array.isArray(value)) {
       return value.some(checkValue);
@@ -210,7 +209,7 @@ export const preventSQLInjection = (req: Request, res: Response, next: NextFunct
   if (checkValue(req.body) || checkValue(req.query) || checkValue(req.params)) {
     return res.status(400).json({
       error: 'Potential security threat detected',
-      message: 'Input contains potentially dangerous patterns'
+      message: 'Input contains potentially dangerous patterns',
     });
   }
 
@@ -242,12 +241,12 @@ export const preventXSS = (req: Request, res: Response, next: NextFunction) => {
     /<button[^>]*>/gi,
     /<link[^>]*>/gi,
     /<meta[^>]*>/gi,
-    /<style[^>]*>/gi
+    /<style[^>]*>/gi,
   ];
 
-  const checkValue = (value: any): boolean => {
+  const checkValue = (value: unknown): boolean => {
     if (typeof value === 'string') {
-      return xssPatterns.some(pattern => pattern.test(value));
+      return xssPatterns.some((pattern) => pattern.test(value));
     }
     if (Array.isArray(value)) {
       return value.some(checkValue);
@@ -261,7 +260,7 @@ export const preventXSS = (req: Request, res: Response, next: NextFunction) => {
   if (checkValue(req.body) || checkValue(req.query) || checkValue(req.params)) {
     return res.status(400).json({
       error: 'Potential XSS attack detected',
-      message: 'Input contains potentially dangerous HTML/JavaScript'
+      message: 'Input contains potentially dangerous HTML/JavaScript',
     });
   }
 
@@ -281,13 +280,13 @@ export const enhancedValidation = (_req: Request, res: Response, next: NextFunct
       ip: _req.ip,
       userAgent: _req.get('User-Agent'),
       path: _req.path,
-      errors: errors.array()
+      errors: errors.array(),
     });
 
     return res.status(400).json({
       error: 'Validation failed',
       details: errors.array(),
-      message: 'Please check your input and try again'
+      message: 'Please check your input and try again',
     });
   }
 
@@ -312,13 +311,15 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   // Permissions policy
-  res.setHeader('Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=()'
+  res.setHeader(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=()',
   );
 
   // Content security policy report only (for monitoring)
-  res.setHeader('Content-Security-Policy-Report-Only',
-    "default-src 'self'; report-uri /api/security/csp-report"
+  res.setHeader(
+    'Content-Security-Policy-Report-Only',
+    "default-src 'self'; report-uri /api/security/csp-report",
   );
 
   return next();
@@ -338,20 +339,20 @@ export const auditLog = (req: Request, res: Response, next: NextFunction) => {
     path: req.path,
     ip: req.ip,
     userAgent: req.get('User-Agent'),
-    userId: (req as any).user?.id || 'anonymous',
-    userRole: (req as any).user?.rol || 'anonymous'
+    userId: req.user?.userId || 'anonymous',
+    userRole: req.user?.role || 'anonymous',
   };
 
   logger.info('Security Audit', requestLog);
 
   // Override response.json to log response
   const originalJson = res.json;
-  res.json = function (data: any) {
+  res.json = function (data: unknown) {
     const responseLog = {
       ...requestLog,
       responseTime: Date.now() - startTime,
       statusCode: res.statusCode,
-      responseSize: JSON.stringify(data).length
+      responseSize: JSON.stringify(data).length,
     };
 
     // Log security-relevant responses
@@ -378,7 +379,7 @@ export const requestSizeLimit = (req: Request, res: Response, next: NextFunction
   if (contentLength > maxSize) {
     return res.status(413).json({
       error: 'Request too large',
-      message: 'Request body exceeds maximum allowed size of 10MB'
+      message: 'Request body exceeds maximum allowed size of 10MB',
     });
   }
 
@@ -398,7 +399,7 @@ export const ipRestriction = (allowedIPs?: string[], blockedIPs?: string[]) => {
       logger.warn('Blocked IP access attempt', { ip: clientIP });
       return res.status(403).json({
         error: 'Access denied',
-        message: 'Your IP address is not allowed to access this resource'
+        message: 'Your IP address is not allowed to access this resource',
       });
     }
 
@@ -407,7 +408,7 @@ export const ipRestriction = (allowedIPs?: string[], blockedIPs?: string[]) => {
       logger.warn('Unauthorized IP access attempt', { ip: clientIP });
       return res.status(403).json({
         error: 'Access denied',
-        message: 'Your IP address is not authorized to access this resource'
+        message: 'Your IP address is not authorized to access this resource',
       });
     }
 
@@ -421,10 +422,12 @@ export const ipRestriction = (allowedIPs?: string[], blockedIPs?: string[]) => {
  */
 export const sessionSecurity = (req: Request, _res: Response, next: NextFunction) => {
   // Regenerate session ID on successful authentication
-  if ((req as any).user && req.session && req.session.regenerate) {
-    req.session.regenerate((err: any) => {
+  if (req.user && req.session && req.session.regenerate) {
+    req.session.regenerate((err: unknown) => {
       if (err) {
-        logger.error('Session regeneration error', { error: err instanceof Error ? err.message : err });
+        logger.error('Session regeneration error', {
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     });
   }
@@ -452,12 +455,12 @@ export const sanitizeInput = (req: Request, _res: Response, next: NextFunction) 
 
   // Sanitize query parameters
   if (req.query && typeof req.query === 'object') {
-    req.query = sanitizeObject(req.query);
+    req.query = sanitizeObject(req.query) as typeof req.query;
   }
 
   // Sanitize URL parameters
   if (req.params && typeof req.params === 'object') {
-    req.params = sanitizeObject(req.params);
+    req.params = sanitizeObject(req.params) as typeof req.params;
   }
 
   return next();
@@ -475,5 +478,5 @@ export const securityMiddleware = {
   auditLog,
   requestSizeLimit,
   ipRestriction,
-  sessionSecurity
+  sessionSecurity,
 };
