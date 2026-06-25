@@ -729,7 +729,9 @@ export class PerformanceService {
     if (shouldExecute) {
       await this.createOptimization({
         type: 'automatic',
-        action: config.settings.action || 'cache_clear',
+        action: (typeof config.settings.action === 'string'
+          ? config.settings.action
+          : 'cache_clear') as IOptimizationLog['action'],
         target: config.name,
         description: `Automatic optimization triggered for ${config.name}`,
         impact: 'medium',

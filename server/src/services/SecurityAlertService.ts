@@ -13,7 +13,7 @@ interface SecurityEvent {
   type: string;
   userId?: string;
   ip?: string;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   timestamp: Date;
   severity: 'low' | 'medium' | 'high' | 'critical';
 }
@@ -459,7 +459,15 @@ export class SecurityAlertService {
   /**
    * Get current security status summary.
    */
-  static async getSecurityStatus(): Promise<Record<string, any>> {
+  static async getSecurityStatus(): Promise<{
+    recentLoginFailures: number;
+    uniqueFailedIPs: number;
+    uniqueFailedUsers: number;
+    recentRoleChanges: number;
+    activeDataExportUsers?: number;
+    activeAlertCooldowns?: number;
+    redisEnabled: boolean;
+  }> {
     const now = Date.now();
 
     if (redis) {

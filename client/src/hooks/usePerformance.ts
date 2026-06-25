@@ -47,8 +47,7 @@ export const useDebounce = <T extends (...args: unknown[]) => unknown>(
       }
 
       timeoutRef.current = window.setTimeout(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (callback as any)(...args);
+        (callback as T)(...args);
       }, delay);
     },
     [callback, delay],
@@ -70,8 +69,7 @@ export const useThrottle = <T extends (...args: unknown[]) => unknown>(
 
       if (now - lastCallRef.current >= delay) {
         lastCallRef.current = now;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (callback as any)(...args);
+        (callback as T)(...args);
       }
     },
     [callback, delay],
@@ -81,7 +79,7 @@ export const useThrottle = <T extends (...args: unknown[]) => unknown>(
 /**
  * Hook to memoize expensive calculations
  */
-export const useMemoizedCallback = <T extends (...args: any[]) => any>(
+export const useMemoizedCallback = <T extends (...args: Parameters<T>) => ReturnType<T>>(
   callback: T,
   deps: React.DependencyList,
 ): T => {
@@ -305,7 +303,11 @@ export const useMemoryMonitor = () => {
   useEffect(() => {
     const updateMemoryInfo = () => {
       if ('memory' in performance) {
-        const memory = (performance as any).memory;
+        const memory = (
+          performance as Performance & {
+            memory: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number };
+          }
+        ).memory;
         setMemoryInfo({
           usedJSHeapSize: memory.usedJSHeapSize,
           totalJSHeapSize: memory.totalJSHeapSize,

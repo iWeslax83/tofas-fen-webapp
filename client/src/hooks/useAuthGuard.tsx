@@ -33,7 +33,7 @@ export function useAuthGuard(allowedRoles: string[] = []) {
   const { user, isLoading, error, logout: contextLogout } = useAuthContext();
   const [localUser, setLocalUser] = useState<User | null>(null);
   const [localIsLoading, setLocalIsLoading] = useState(true);
-  const [localError, setLocalError] = useState<any>(null);
+  const [localError, setLocalError] = useState<unknown>(null);
 
   useEffect(() => {
     // Use AuthContext state instead of making separate API calls

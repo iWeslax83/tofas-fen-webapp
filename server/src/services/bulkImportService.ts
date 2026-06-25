@@ -18,7 +18,7 @@ export function parseParentChildFile(buffer: Buffer, filename: string): ParentCh
   const workbook = XLSX.read(buffer, { type: 'buffer' });
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
-  const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
+  const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
 
   return jsonData
     .map((row) => ({
