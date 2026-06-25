@@ -132,11 +132,6 @@ export default defineConfig({
               return 'monitoring-vendor';
             }
 
-            // GraphQL - separate chunk
-            if (id.includes('graphql')) {
-              return 'graphql-vendor';
-            }
-
             return 'vendor';
           }
 
