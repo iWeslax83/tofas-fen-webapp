@@ -23,7 +23,8 @@ src/
 │   ├── typeGuards.ts           # Runtime type checking functions
 │   └── apiUtils.ts             # Type-safe API utilities
 ├── hooks/
-│   └── useApi.ts               # Custom hooks for API calls
+│   ├── useReactQuery.ts        # TanStack Query wrappers (useApiQuery/useApiMutation)
+│   └── queries/                # Domain hooks built on useReactQuery
 ├── components/
 │   ├── ErrorBoundary.tsx       # Main error boundary component
 │   ├── ErrorBoundaries.tsx     # Specialized error boundaries
@@ -321,109 +322,14 @@ const response = await withRetry(
 const response = await withErrorHandling(() => apiGet<User>('/users/123'))();
 ```
 
-## 🪝 Custom React Hooks
+## 🪝 Data Fetching Hooks
 
-### useApi Hook
-
-```typescript
-import { useApi } from '../hooks/useApi';
-
-function UserProfile({ userId }: { userId: string }) {
-  const { data: user, loading, error, execute } = useApi(
-    () => userApi.getById(userId),
-    { autoExecute: true, retryCount: 3 }
-  );
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!user) return <div>No user found</div>;
-
-  return (
-    <div>
-      <h1>{user.name} {user.surname}</h1>
-      <p>Role: {user.rol}</p>
-      <p>Email: {user.email}</p>
-    </div>
-  );
-}
-```
-
-### useMutation Hook
-
-```typescript
-import { useMutation } from '../hooks/useApi';
-
-function CreateUserForm() {
-  const { mutate: createUser, loading, error, reset } = useMutation(
-    (userData: Partial<IUser>) => userApi.create(userData),
-    {
-      onSuccess: (newUser) => {
-        console.log('User created:', newUser);
-        // Navigate to user list
-      },
-      onError: (error) => {
-        console.error('Failed to create user:', error);
-      }
-    }
-  );
-
-  const handleSubmit = (formData: Partial<IUser>) => {
-    createUser(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      {/* form fields */}
-      <button type="submit" disabled={loading}>
-        {loading ? 'Creating...' : 'Create User'}
-      </button>
-      {error && <p className="error">{error}</p>}
-    </form>
-  );
-}
-```
-
-### usePaginatedApi Hook
-
-```typescript
-import { usePaginatedApi } from '../hooks/useApi';
-
-function UserList() {
-  const {
-    data: users,
-    loading,
-    error,
-    page,
-    pagination,
-    goToPage,
-    nextPage,
-    prevPage
-  } = usePaginatedApi(
-    (page, limit) => userApi.getAll(page, limit),
-    { initialPage: 1, initialLimit: 10, autoExecute: true }
-  );
-
-  return (
-    <div>
-      {users?.map(user => (
-        <div key={user._id}>
-          {user.name} {user.surname} - {user.rol}
-        </div>
-      ))}
-
-      <div className="pagination">
-        <button onClick={prevPage} disabled={!pagination.hasPrevPage}>
-          Previous
-        </button>
-        <span>Page {page} of {pagination.totalPages}</span>
-        <button onClick={nextPage} disabled={!pagination.hasNextPage}>
-          Next
-        </button>
-      </div>
-    </div>
-  );
-}
-```
+Data fetching is standardized on TanStack Query. Use the typed wrappers in
+`hooks/useReactQuery.ts` — `useApiQuery`, `useApiMutation`, `usePaginatedQuery`,
+and the `queryKeys` registry — and build domain hooks on top of them under
+`hooks/queries/` (see `noteQueries.ts` and `useDashboardOverview.ts` for the
+canonical pattern). These give caching, deduping, and consistent loading/error
+state out of the box.
 
 ## 📝 Form Validation with Type Safety
 
@@ -494,8 +400,12 @@ useEffect(() => {
     .then((data) => setUser(data));
 }, []);
 
-// ✅ Good - Using custom hook
-const { data: user, loading, error } = useApi(() => userApi.getById('123'), { autoExecute: true });
+// ✅ Good - Using the TanStack Query wrapper
+const {
+  data: user,
+  isLoading,
+  error,
+} = useApiQuery(queryKeys.user.detail('123'), () => userApi.getById('123'));
 ```
 
 ### 4. Validate API Responses
