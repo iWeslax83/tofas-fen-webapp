@@ -60,8 +60,16 @@ const dbConfig: mongoose.ConnectOptions = {
 };
 
 export async function connectDB() {
+  // Resolve the URI at call-time (not module-load) so the connection — and any
+  // reconnect triggered by the handlers below — always honors the current
+  // MONGODB_URI. Production calls this once at startup after env is loaded, so
+  // behavior is unchanged; tests can point it at an in-memory server.
+  const uri = process.env.MONGODB_URI || MONGO_URI;
   try {
-    await mongoose.connect(MONGO_URI, dbConfig);
+    await mongoose.connect(uri, {
+      ...dbConfig,
+      tls: shouldEnableTls(uri, process.env.MONGODB_TLS, process.env.NODE_ENV),
+    });
     logger.info('MongoDB connection established');
   } catch (error) {
     logger.error('MongoDB connection failed', {
