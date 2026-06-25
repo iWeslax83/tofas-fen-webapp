@@ -1,15 +1,18 @@
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { MealList, SupervisorList, User } from '../models';
+import type { IMealList } from '../models';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { verifyUploadedFiles } from '../config/upload';
 import logger from '../utils/logger';
 import { asyncHandler } from '../middleware/errorHandler';
 
+type AuthRequest = Omit<Request, 'user'> & { user?: { id: string } };
+
 // Simple in-memory cache for meals data
-const mealsCache = new Map<string, { data: any; timestamp: number }>();
+const mealsCache = new Map<string, { data: IMealList[]; timestamp: number }>();
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes cache TTL (increased from 5 minutes)
 
 const router = Router();
@@ -70,7 +73,7 @@ router.get(
   asyncHandler(async (req, res) => {
     try {
       const { month, year } = req.query;
-      const filter: any = {};
+      const filter: Record<string, unknown> = {};
 
       if (month) filter.month = month;
       if (year) filter.year = parseInt(year as string);
@@ -96,12 +99,14 @@ router.get(
       // Fetch from database with timeout
       const mealLists = await Promise.race([
         MealList.find(filter).sort({ createdAt: -1 }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 5000)),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Database timeout')), 5000),
+        ),
       ]);
 
       // Cache the result
       mealsCache.set(cacheKey, {
-        data: mealLists,
+        data: mealLists as IMealList[],
         timestamp: now,
       });
 
@@ -127,20 +132,20 @@ router.get(
 
       // Try to serve from cache even if expired
       const { month, year } = req.query;
-      const filter: any = {};
+      const filter: Record<string, unknown> = {};
       if (month) filter.month = month;
       if (year) filter.year = parseInt(year as string);
       const cacheKey = `meals_${JSON.stringify(filter)}`;
 
-      if (mealsCache.has(cacheKey)) {
-        const cached = mealsCache.get(cacheKey);
+      const expiredCached = mealsCache.get(cacheKey);
+      if (expiredCached) {
         logger.info('Serving expired cache due to database error');
         return res.json({
           success: true,
-          data: cached.data,
+          data: expiredCached.data,
           cached: true,
           expired: true,
-          timestamp: cached.timestamp,
+          timestamp: expiredCached.timestamp,
         });
       }
 
@@ -182,7 +187,7 @@ router.post(
         }
         // Update existing record
         existing.fileUrl = req.file.path;
-        existing.uploadedBy = (req as any).user ? (req as any).user.id : null;
+        existing.uploadedBy = (req as unknown as AuthRequest).user?.id ?? null;
         await existing.save();
 
         // Clear cache for this month/year
@@ -196,7 +201,7 @@ router.post(
           month,
           year: parseInt(year),
           fileUrl: req.file.path,
-          uploadedBy: (req as any).user ? (req as any).user.id : null,
+          uploadedBy: (req as unknown as AuthRequest).user?.id ?? null,
         });
         await mealList.save();
 
@@ -251,7 +256,7 @@ router.get(
   asyncHandler(async (req, res) => {
     try {
       const { month, year } = req.query;
-      const filter: any = {};
+      const filter: Record<string, unknown> = {};
 
       if (month) filter.month = month;
       if (year) filter.year = parseInt(year as string);
@@ -296,7 +301,7 @@ router.post(
         }
         // Update existing record
         existing.fileUrl = req.file.path;
-        existing.uploadedBy = (req as any).user ? (req as any).user.id : null;
+        existing.uploadedBy = (req as unknown as AuthRequest).user?.id ?? null;
         await existing.save();
         res.json(existing);
       } else {
@@ -305,7 +310,7 @@ router.post(
           month,
           year: parseInt(year),
           fileUrl: req.file.path,
-          uploadedBy: (req as any).user ? (req as any).user.id : null,
+          uploadedBy: (req as unknown as AuthRequest).user?.id ?? null,
         });
         await supervisorList.save();
         res.status(201).json(supervisorList);

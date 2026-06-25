@@ -1,7 +1,28 @@
+import mongoose from 'mongoose';
 import { Notification, INotification } from '../models/Notification';
 import { User } from '../models';
 import { sendMail } from '../mailService';
 import logger from '../utils/logger';
+
+/** INotification extended with schema instance methods */
+interface INotificationWithMethods extends INotification {
+  markAsRead(): Promise<INotificationWithMethods>;
+  archive(): Promise<INotificationWithMethods>;
+}
+
+/** Shape returned by getTemplates / createTemplate */
+interface NotificationTemplate {
+  id: string;
+  name: string;
+  title: string;
+  message: string;
+  type: string;
+  category: string;
+  priority: string;
+  icon?: string;
+  actionText?: string;
+  createdAt?: Date;
+}
 
 export interface CreateNotificationData {
   userId?: string;
@@ -23,7 +44,7 @@ export interface CreateNotificationData {
   actionText?: string;
   icon?: string;
   expiresAt?: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   relatedEntity?: {
     type: 'user' | 'note' | 'announcement' | 'request' | 'club' | 'event';
     id: string;
@@ -48,9 +69,9 @@ export class NotificationService {
         userId: data.userId,
         title: data.title,
         message: data.message,
-        type: (data.type as any) || 'info',
+        type: data.type || 'info',
         priority: data.priority || 'medium',
-        category: (data.category as any) || 'general',
+        category: data.category || 'general',
         actionUrl: data.actionUrl,
         actionText: data.actionText,
         icon: data.icon,
@@ -93,9 +114,9 @@ export class NotificationService {
         userId,
         title: data.title,
         message: data.message,
-        type: (data.type as any) || 'info',
+        type: data.type || 'info',
         priority: data.priority || 'medium',
-        category: (data.category as any) || 'general',
+        category: data.category || 'general',
         actionUrl: data.actionUrl,
         actionText: data.actionText,
         icon: data.icon,
@@ -119,7 +140,7 @@ export class NotificationService {
         priority: data.priority,
       });
 
-      return savedNotifications as any;
+      return savedNotifications as INotification[];
     } catch (error) {
       logger.error('Error creating bulk notifications', { error: (error as Error).message, data });
       throw error;
@@ -247,10 +268,10 @@ export class NotificationService {
         throw new Error('Notification not found');
       }
 
-      return await (notification as any).markAsRead();
+      return await (notification as INotificationWithMethods).markAsRead();
     } catch (error) {
       logger.error('Error marking notification as read', {
-        error: (error as any).message,
+        error: (error as Error).message,
         notificationId,
       });
       throw error;
@@ -290,10 +311,10 @@ export class NotificationService {
         throw new Error('Notification not found');
       }
 
-      return await (notification as any).archive();
+      return await (notification as INotificationWithMethods).archive();
     } catch (error) {
       logger.error('Error archiving notification', {
-        error: (error as any).message,
+        error: (error as Error).message,
         notificationId,
       });
       throw error;
@@ -326,7 +347,7 @@ export class NotificationService {
         includeArchived = false,
       } = options;
 
-      const query: any = { userId };
+      const query: mongoose.FilterQuery<INotification> = { userId };
       if (read !== undefined) query.read = read;
       if (type) query.type = type;
       if (category) query.category = category;
@@ -347,7 +368,7 @@ export class NotificationService {
 
       return { notifications, total, unreadCount };
     } catch (error) {
-      logger.error('Error getting user notifications', { error: (error as any).message, userId });
+      logger.error('Error getting user notifications', { error: (error as Error).message, userId });
       throw error;
     }
   }
@@ -359,7 +380,7 @@ export class NotificationService {
     try {
       return await Notification.countDocuments({ userId, read: false, archived: false });
     } catch (error) {
-      logger.error('Error getting unread count', { error: (error as any).message, userId });
+      logger.error('Error getting unread count', { error: (error as Error).message, userId });
       throw error;
     }
   }
@@ -398,7 +419,7 @@ export class NotificationService {
     try {
       const { page = 1, limit = 20, type, category, priority, read, search } = options;
 
-      const query: any = {};
+      const query: mongoose.FilterQuery<INotification> = {};
 
       if (type) query.type = type;
       if (category) query.category = category;
@@ -420,7 +441,10 @@ export class NotificationService {
 
       return { notifications, total };
     } catch (error) {
-      logger.error('Error getting admin notifications', { error: (error as any).message, options });
+      logger.error('Error getting admin notifications', {
+        error: (error as Error).message,
+        options,
+      });
       throw error;
     }
   }
@@ -461,7 +485,7 @@ export class NotificationService {
         byPriority: byPriority.reduce((acc, item) => ({ ...acc, [item._id]: item.count }), {}),
       };
     } catch (error) {
-      logger.error('Error getting notification stats', { error: (error as any).message });
+      logger.error('Error getting notification stats', { error: (error as Error).message });
       throw error;
     }
   }
@@ -469,7 +493,7 @@ export class NotificationService {
   /**
    * Get notification templates
    */
-  static async getTemplates(): Promise<any[]> {
+  static async getTemplates(): Promise<NotificationTemplate[]> {
     try {
       // For now, return some default templates
       // In a real implementation, you might have a separate Template model
@@ -509,7 +533,7 @@ export class NotificationService {
         },
       ];
     } catch (error) {
-      logger.error('Error getting notification templates', { error: (error as any).message });
+      logger.error('Error getting notification templates', { error: (error as Error).message });
       throw error;
     }
   }
@@ -517,7 +541,9 @@ export class NotificationService {
   /**
    * Create notification template
    */
-  static async createTemplate(templateData: any): Promise<any> {
+  static async createTemplate(
+    templateData: Omit<NotificationTemplate, 'id' | 'createdAt'>,
+  ): Promise<NotificationTemplate> {
     try {
       // For now, just return the template data with an ID
       // In a real implementation, you would save this to a Template model
@@ -528,7 +554,7 @@ export class NotificationService {
       };
     } catch (error) {
       logger.error('Error creating notification template', {
-        error: (error as any).message,
+        error: (error as Error).message,
         templateData,
       });
       throw error;
@@ -551,7 +577,7 @@ export class NotificationService {
       logger.info('Multiple notifications marked as unread', { count: notificationIds.length });
     } catch (error) {
       logger.error('Error marking multiple notifications as unread', {
-        error: (error as any).message,
+        error: (error as Error).message,
         notificationIds,
       });
       throw error;
@@ -573,7 +599,7 @@ export class NotificationService {
       logger.info('Multiple notifications archived', { count: notificationIds.length });
     } catch (error) {
       logger.error('Error archiving multiple notifications', {
-        error: (error as any).message,
+        error: (error as Error).message,
         notificationIds,
       });
       throw error;
@@ -590,7 +616,7 @@ export class NotificationService {
       logger.info('Multiple notifications deleted', { count: notificationIds.length });
     } catch (error) {
       logger.error('Error deleting multiple notifications', {
-        error: (error as any).message,
+        error: (error as Error).message,
         notificationIds,
       });
       throw error;
