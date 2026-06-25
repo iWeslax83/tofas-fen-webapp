@@ -1,21 +1,10 @@
 import { Router } from 'express';
-import Note, { INote } from '../models/Note';
-import { ExcelImportService } from '../services/excelImportService';
 import { Request, Response } from 'express';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
-import { User } from '../models';
-import { getParentChildIds, verifyParentChildAccess } from '../middleware/parentChildAccess';
-import { MongoFilter } from '../types';
+import { verifyParentChildAccess } from '../middleware/parentChildAccess';
 import logger from '../utils/logger';
 import { asyncHandler } from '../middleware/errorHandler';
-import { logSecurityEvent, SecurityEvent } from '../utils/securityLogger';
-import { safeSearchRegex } from '../utils/regex';
-
-/** Shape of a note update entry in bulk-update */
-interface NoteUpdateEntry {
-  id: string;
-  [key: string]: unknown;
-}
+import { NotesService } from '../services/NotesService';
 
 const router = Router();
 
@@ -113,46 +102,37 @@ router.get(
     try {
       const { studentId, lesson, semester, academicYear, source, gradeLevel, classSection } =
         req.query;
-
-      const filter: MongoFilter<INote> = { isActive: true };
-      const role = req.user?.role;
-      const userId = req.user?.userId;
-
-      // Role-based filtering - enforce server-side data access control
-      if (role === 'student') {
-        filter.studentId = userId;
-      } else if (role === 'parent') {
-        const childIds = await getParentChildIds(userId!);
-        if (childIds.length === 0) {
-          res.json([]);
-          return;
-        }
-        filter.studentId = { $in: childIds };
-      } else {
-        // Teacher/Admin - allow query param filtering
-        if (studentId) filter.studentId = studentId;
-      }
-
-      if (lesson) filter.lesson = lesson;
-      if (semester) filter.semester = semester;
-      if (academicYear) filter.academicYear = academicYear;
-      if (source) filter.source = source;
-      if (gradeLevel) filter.gradeLevel = gradeLevel;
-      if (classSection) filter.classSection = classSection;
-
       const page = Math.max(parseInt(req.query.page as string) || 1, 1);
       const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 100, 1), 500);
-      const skip = (page - 1) * limit;
 
-      const [notes, total] = await Promise.all([
-        Note.find(filter).sort({ lastUpdated: -1 }).skip(skip).limit(limit).lean(),
-        Note.countDocuments(filter),
-      ]);
+      const result = await NotesService.listNotes({
+        role: req.user?.role,
+        userId: req.user?.userId,
+        studentId: studentId as string | undefined,
+        lesson: lesson as string | undefined,
+        semester: semester as string | undefined,
+        academicYear: academicYear as string | undefined,
+        source: source as string | undefined,
+        gradeLevel: gradeLevel as string | undefined,
+        classSection: classSection as string | undefined,
+        page,
+        limit,
+      });
+
+      if (result.earlyEmpty) {
+        res.json([]);
+        return;
+      }
 
       res.json({
         success: true,
-        data: notes,
-        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        data: result.notes,
+        pagination: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: Math.ceil(result.total! / result.limit!),
+        },
       });
     } catch (error) {
       logger.error('Notlari getirme hatasi', {
@@ -214,15 +194,11 @@ router.get(
       const { studentId } = req.params;
       const { semester, academicYear } = req.query;
 
-      const filter: MongoFilter<INote> = {
+      const notes = await NotesService.getStudentNotes({
         studentId,
-        isActive: true,
-      };
-
-      if (semester) filter.semester = semester;
-      if (academicYear) filter.academicYear = academicYear;
-
-      const notes = await Note.find(filter).sort({ lesson: 1, lastUpdated: -1 }).lean();
+        semester: semester as string | undefined,
+        academicYear: academicYear as string | undefined,
+      });
 
       res.json(notes);
     } catch (error) {
@@ -282,12 +258,7 @@ router.post(
   authorizeRoles(['teacher', 'admin']),
   asyncHandler(async (req: Request, res: Response) => {
     try {
-      const noteData = req.body;
-      noteData.source = 'manual';
-
-      const note = new Note(noteData);
-      await note.save();
-
+      const note = await NotesService.createNote(req.body);
       res.status(201).json(note);
     } catch (error) {
       logger.error('Not ekleme hatasi', { error: error instanceof Error ? error.message : error });
@@ -346,30 +317,18 @@ router.put(
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const updateData = req.body;
-      const authUser = req.user;
+      const result = await NotesService.updateNote(id, req.body, req.user?.role, req.user?.userId);
 
-      // Önce notu getir ve sahiplik kontrolü yap
-      const existingNote = await Note.findById(id);
-      if (!existingNote) {
+      if (result.notFound) {
         res.status(404).json({ success: false, error: 'Not bulunamadı' });
         return;
       }
-
-      // Sadece notu oluşturan öğretmen veya admin güncelleyebilir
-      const existingNoteDoc = existingNote as typeof existingNote & { createdBy?: string };
-      if (
-        authUser?.role !== 'admin' &&
-        existingNoteDoc.createdBy &&
-        existingNoteDoc.createdBy !== authUser?.userId
-      ) {
+      if (result.forbidden) {
         res.status(403).json({ success: false, error: 'Bu notu güncelleme yetkiniz yok' });
         return;
       }
 
-      const note = await Note.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
-
-      res.json(note);
+      res.json(result.note);
     } catch (error) {
       logger.error('Not guncelleme hatasi', {
         error: error instanceof Error ? error.message : error,
@@ -421,10 +380,9 @@ router.delete(
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const result = await NotesService.softDeleteNote(id);
 
-      const note = await Note.findByIdAndUpdate(id, { isActive: false }, { new: true });
-
-      if (!note) {
+      if ('notFound' in result) {
         res.status(404).json({ success: false, error: 'Not bulunamadı' });
         return;
       }
@@ -518,123 +476,47 @@ router.post(
         return;
       }
 
-      // Excel dosyasını parse et
-      const notes = ExcelImportService.parseFileByExtension(req.file.buffer, req.file.originalname);
-
-      // Not verilerini doğrula
-      const validation = ExcelImportService.validateNoteData(notes);
-
-      if (validation.errors.length > 0) {
-        res.status(400).json({
-          error: 'Dosyada hatalar var',
-          errors: validation.errors,
-        });
-        return;
-      }
-
-      // Öğrenci ID'lerini doğrula
-      const studentIds = validation.valid.map((note) => note.studentId);
-      const studentValidation = await ExcelImportService.validateStudentIds(studentIds);
-
-      if (studentValidation.invalid.length > 0) {
-        res.status(400).json({
-          error: "Geçersiz öğrenci ID'leri var",
-          invalidIds: studentValidation.invalid,
-        });
-        return;
-      }
-
-      // F-C3: defense in depth — teachers can only import grades for students
-      // in their own assigned `sinif`. Admins are unrestricted. The data model
-      // currently stores a single `sinif` per teacher; if a teacher teaches
-      // multiple grades they must use the admin import path. Without this
-      // check, a teacher could replay a forged request and grade students
-      // they have no business grading.
-      if (authUser?.role === 'teacher') {
-        const teacher = (await User.findOne({ id: authUser.userId, rol: 'teacher' })
-          .select('sinif sube')
-          .lean()) as { sinif?: string; sube?: string } | null;
-        if (!teacher?.sinif) {
-          logSecurityEvent({
-            event: SecurityEvent.NOTES_BULK_IMPORT_REJECTED,
-            userId: authUser.userId,
-            ip: req.ip,
-            userAgent: req.get('user-agent') || undefined,
-            details: { reason: 'teacher_has_no_assigned_class', count: studentIds.length },
-          });
-          res.status(403).json({
-            error: 'Sınıfı atanmamış öğretmenler toplu not yükleyemez. Yöneticinize başvurun.',
-          });
-          return;
-        }
-        const ownedStudents = await User.find({
-          id: { $in: studentIds },
-          rol: 'student',
-          sinif: teacher.sinif,
-        })
-          .select('id')
-          .lean();
-        const ownedIds = new Set(ownedStudents.map((s) => s.id));
-        const unauthorized = studentIds.filter((id) => !ownedIds.has(id));
-        if (unauthorized.length > 0) {
-          logSecurityEvent({
-            event: SecurityEvent.NOTES_BULK_IMPORT_REJECTED,
-            userId: authUser.userId,
-            ip: req.ip,
-            userAgent: req.get('user-agent') || undefined,
-            details: {
-              reason: 'student_outside_teacher_class',
-              teacherSinif: teacher.sinif,
-              unauthorizedCount: unauthorized.length,
-              // Don't log every studentId; cap the sample to avoid log bloat.
-              sample: unauthorized.slice(0, 10),
-            },
-          });
-          res.status(403).json({
-            error: 'Bazı öğrenciler sınıfınıza ait değil. Yükleme reddedildi.',
-            unauthorizedCount: unauthorized.length,
-          });
-          return;
-        }
-      }
-
-      // Notları veritabanına toplu kaydet (insertMany ile performans optimizasyonu)
-      const noteDocs = validation.valid.map((noteData) => ({
-        studentId: noteData.studentId,
-        lesson: noteData.subject,
-        grade: noteData.note,
-        date: new Date(noteData.date),
-        description: noteData.description,
+      const result = await NotesService.importExcelNotes({
+        fileBuffer: req.file.buffer,
+        originalname: req.file.originalname,
         semester,
         academicYear,
-        source: source || 'excel',
-        isActive: true,
-      }));
-      const savedNotes = await Note.insertMany(noteDocs, { ordered: false });
-
-      // F-C3: audit-log every successful bulk import. Includes the importer's
-      // role so a query like `event=NOTES_BULK_IMPORT AND role=teacher` is
-      // possible from the security log.
-      logSecurityEvent({
-        event: SecurityEvent.NOTES_BULK_IMPORT,
+        source,
+        role: authUser?.role,
         userId: authUser?.userId,
         ip: req.ip,
         userAgent: req.get('user-agent') || undefined,
-        details: {
-          role: authUser?.role,
-          imported: savedNotes.length,
-          semester,
-          academicYear,
-          source: source || 'excel',
-          uniqueStudents: new Set(studentIds).size,
-        },
       });
+
+      if (result.fileErrors) {
+        res.status(400).json({ error: 'Dosyada hatalar var', errors: result.fileErrors });
+        return;
+      }
+      if (result.invalidIds) {
+        res
+          .status(400)
+          .json({ error: "Geçersiz öğrenci ID'leri var", invalidIds: result.invalidIds });
+        return;
+      }
+      if (result.teacherRejection) {
+        if (result.teacherRejection.reason === 'no_class') {
+          res.status(403).json({
+            error: 'Sınıfı atanmamış öğretmenler toplu not yükleyemez. Yöneticinize başvurun.',
+          });
+        } else {
+          res.status(403).json({
+            error: 'Bazı öğrenciler sınıfınıza ait değil. Yükleme reddedildi.',
+            unauthorizedCount: result.teacherRejection.unauthorizedCount,
+          });
+        }
+        return;
+      }
 
       res.json({
         success: true,
-        imported: savedNotes.length,
-        errors: validation.errors,
-        message: `${savedNotes.length} not başarıyla içe aktarıldı`,
+        imported: result.imported,
+        errors: result.errors,
+        message: `${result.imported} not başarıyla içe aktarıldı`,
       });
     } catch (error) {
       logger.error('Excel import hatasi', {
@@ -717,47 +599,22 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const { semester, academicYear, gradeLevel, classSection } = req.query;
-      const role = req.user?.role;
-      const userId = req.user?.userId;
 
-      const filter: MongoFilter<INote> = { isActive: true };
+      const result = await NotesService.getStats({
+        role: req.user?.role,
+        userId: req.user?.userId,
+        semester: semester as string | undefined,
+        academicYear: academicYear as string | undefined,
+        gradeLevel: gradeLevel as string | undefined,
+        classSection: classSection as string | undefined,
+      });
 
-      // Role-based filtering
-      if (role === 'student') {
-        filter.studentId = userId;
-      } else if (role === 'parent') {
-        const childIds = await getParentChildIds(userId!);
-        if (childIds.length === 0) {
-          res.json([]);
-          return;
-        }
-        filter.studentId = { $in: childIds };
+      if (result.earlyEmpty) {
+        res.json([]);
+        return;
       }
 
-      if (semester) filter.semester = semester;
-      if (academicYear) filter.academicYear = academicYear;
-      if (gradeLevel) filter.gradeLevel = gradeLevel;
-      if (classSection) filter.classSection = classSection;
-
-      const stats = await Note.aggregate([
-        { $match: filter },
-        {
-          $group: {
-            _id: {
-              lesson: '$lesson',
-              semester: '$semester',
-              academicYear: '$academicYear',
-            },
-            count: { $sum: 1 },
-            avgGrade: { $avg: '$grade' },
-            minGrade: { $min: '$grade' },
-            maxGrade: { $max: '$grade' },
-          },
-        },
-        { $sort: { '_id.lesson': 1 } },
-      ]);
-
-      res.json(stats);
+      res.json(result.stats);
     } catch (error) {
       logger.error('Istatistik hatasi', { error: error instanceof Error ? error.message : error });
       res.status(500).json({ success: false, error: 'İstatistikler hesaplanamadı' });
@@ -831,39 +688,22 @@ router.put(
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const { notes } = req.body;
-      const authUser = req.user;
 
       if (!Array.isArray(notes)) {
         res.status(400).json({ success: false, error: 'Notlar dizisi gerekli' });
         return;
       }
 
-      const updatePromises = notes.map(async (noteUpdate: NoteUpdateEntry) => {
-        const { id, ...updateData } = noteUpdate;
-
-        // Sahiplik kontrolü: admin değilse, notu oluşturan kişi mi kontrol et
-        if (authUser?.role !== 'admin') {
-          const existingNote = await Note.findById(id);
-          if (
-            existingNote &&
-            (existingNote as typeof existingNote & { createdBy?: string }).createdBy &&
-            (existingNote as typeof existingNote & { createdBy?: string }).createdBy !==
-              authUser?.userId
-          ) {
-            return null; // Yetkisiz notları atla
-          }
-        }
-
-        return Note.findByIdAndUpdate(id, updateData, { new: true });
+      const result = await NotesService.bulkUpdateNotes({
+        notes,
+        role: req.user?.role,
+        userId: req.user?.userId,
       });
-
-      const results = await Promise.all(updatePromises);
-      const updatedNotes = results.filter(Boolean);
 
       res.json({
         success: true,
-        updated: updatedNotes.length,
-        notes: updatedNotes,
+        updated: result.updated,
+        notes: result.notes,
       });
     } catch (error) {
       logger.error('Toplu guncelleme hatasi', {
@@ -906,7 +746,7 @@ router.get(
   authenticateJWT,
   asyncHandler(async (req: Request, res: Response) => {
     try {
-      const templates = await Note.distinct('lesson');
+      const templates = await NotesService.getTemplates();
       res.json(templates);
     } catch (error) {
       logger.error('Sablon hatasi', { error: error instanceof Error ? error.message : error });
@@ -928,41 +768,26 @@ router.get(
         return;
       }
 
-      // N-H3: cap length and escape metacharacters before piping into $regex.
-      const searchRe = safeSearchRegex(String(q));
-      if (searchRe === null) {
+      const result = await NotesService.searchNotes({
+        q: String(q),
+        role: req.user?.role,
+        userId: req.user?.userId,
+        semester: semester as string | undefined,
+        academicYear: academicYear as string | undefined,
+      });
+
+      if (result.invalidQuery) {
         res
           .status(400)
           .json({ success: false, error: 'Arama terimi geçersiz veya çok uzun (≤100 karakter)' });
         return;
       }
-
-      const role = req.user?.role;
-      const userId = req.user?.userId;
-
-      const filter: MongoFilter<INote> = {
-        isActive: true,
-        $or: [{ studentId: searchRe }, { lesson: searchRe }, { description: searchRe }],
-      };
-
-      // Role-based filtering
-      if (role === 'student') {
-        filter.studentId = userId;
-      } else if (role === 'parent') {
-        const childIds = await getParentChildIds(userId!);
-        if (childIds.length === 0) {
-          res.json([]);
-          return;
-        }
-        filter.studentId = { $in: childIds };
+      if (result.earlyEmpty) {
+        res.json([]);
+        return;
       }
 
-      if (semester) filter.semester = semester;
-      if (academicYear) filter.academicYear = academicYear;
-
-      const notes = await Note.find(filter).sort({ lastUpdated: -1 }).limit(50).lean();
-
-      res.json(notes);
+      res.json(result.notes);
     } catch (error) {
       logger.error('Arama hatasi', { error: error instanceof Error ? error.message : error });
       res.status(500).json({ success: false, error: 'Arama yapılamadı' });
@@ -984,19 +809,7 @@ router.post(
         return;
       }
 
-      const notes = await Note.find({
-        semester,
-        academicYear,
-        isActive: true,
-      }).lean();
-
-      const backupData = {
-        timestamp: new Date(),
-        semester,
-        academicYear,
-        count: notes.length,
-        notes,
-      };
+      const backupData = await NotesService.backupNotes({ semester, academicYear });
 
       // Burada backup dosyası oluşturulabilir
       // Örneğin: fs.writeFileSync(`backup-${semester}-${academicYear}.json`, JSON.stringify(backupData));
