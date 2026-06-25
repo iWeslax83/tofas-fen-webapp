@@ -1,5 +1,6 @@
 import { beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 // Test env vars are set in vitest.config.ts `test.env` (which runs before
 // setupFiles). We intentionally do NOT call dotenv here — loading
@@ -12,18 +13,33 @@ import mongoose from 'mongoose';
 
 // Test database connection
 let testDbConnection: typeof mongoose | null = null;
+// In-memory MongoDB, started when USE_MEMORY_DB is true (the default — see
+// vitest.config.ts). Kept at module scope so afterAll can stop it.
+let mongoServer: MongoMemoryServer | null = null;
 
 // Global test timeout
 beforeAll(async () => {
   // Set up test database connection
   console.log('🧪 Setting up test environment...');
-  console.log(`📊 Test database: ${process.env.MONGODB_URI}`);
+
+  // Default path: a self-contained in-memory MongoDB so the suite needs no
+  // external mongod. Set TEST_MONGODB_URI to use an external DB instead.
+  let mongoUri = process.env.MONGODB_URI;
+  if (process.env.USE_MEMORY_DB === 'true') {
+    mongoServer = await MongoMemoryServer.create();
+    mongoUri = mongoServer.getUri();
+    // Point the app's own DB layer (and its reconnect logic) at the in-memory
+    // server too — otherwise it keeps dialing the configured external URI.
+    process.env.MONGODB_URI = mongoUri;
+  }
+
+  console.log(`📊 Test database: ${mongoUri}`);
   console.log(`🔑 JWT secret: ${process.env.JWT_SECRET ? 'Set' : 'Not set'}`);
   console.log(`🗄️ Redis URL: ${process.env.REDIS_URL}`);
 
   try {
     // Connect to test database
-    testDbConnection = await mongoose.connect(process.env.MONGODB_URI!, {
+    testDbConnection = await mongoose.connect(mongoUri!, {
       maxPoolSize: 1,
       minPoolSize: 1,
       serverSelectionTimeoutMS: 5000,
@@ -36,7 +52,8 @@ beforeAll(async () => {
     console.error('❌ Failed to connect to test database:', error);
     throw error;
   }
-}, 30000);
+  // 60s: first run may download the mongod binary into the local cache.
+}, 60000);
 
 afterAll(async () => {
   console.log('🧹 Cleaning up test environment...');
@@ -47,6 +64,11 @@ afterAll(async () => {
       await testDbConnection.connection.db.dropDatabase();
       await testDbConnection.connection.close();
       console.log('✅ Test database cleaned and closed');
+    }
+    // Stop the in-memory server if we started one.
+    if (mongoServer) {
+      await mongoServer.stop();
+      console.log('✅ In-memory MongoDB stopped');
     }
   } catch (error) {
     console.error('❌ Error cleaning up test database:', error);

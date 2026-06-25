@@ -114,6 +114,7 @@
     "@vitest/ui": "^3.2.4",
     "cross-env": "^10.1.0",
     "eslint": "^8.57.1",
+    "mongodb-memory-server": "^11.2.0",
     "rimraf": "^5.0.5",
     "supertest": "^6.3.3",
     "ts-node": "^10.9.1",
