@@ -44,14 +44,17 @@ export const globalErrorHandler = (
   } else {
     // Convert unknown errors to AppError. JSON parsing errors from
     // body-parser surface as SyntaxError with a 400 status field.
-    const statusCode = error instanceof SyntaxError && (error as any).status === 400 ? 400 : 500;
+    const statusCode =
+      error instanceof SyntaxError && (error as SyntaxError & { status?: number }).status === 400
+        ? 400
+        : 500;
     appError = new AppError(
       error.message || 'An unexpected error occurred',
       statusCode,
       false,
       req.path,
       req.method,
-      (req as any).user?.userId,
+      (req as unknown as { user?: { userId?: string } }).user?.userId,
     );
   }
 
@@ -153,7 +156,11 @@ function sendErrorResponse(res: Response, appError: AppError, req: Request): voi
     process.env.NODE_ENV === 'development' && process.env.EXPOSE_ERROR_DETAILS === 'true';
 
   // Prepare response data
-  const responseData: any = {
+  const responseData: {
+    success: boolean;
+    error: Record<string, unknown>;
+    requestId?: string;
+  } = {
     success: false,
     error: {
       message: appError.message,
@@ -164,9 +171,8 @@ function sendErrorResponse(res: Response, appError: AppError, req: Request): voi
 
   // Add additional details in development (gated)
   if (isDevelopment && responseData.error) {
-    const errObj = responseData.error as Record<string, any>;
     responseData.error = {
-      ...errObj,
+      ...responseData.error,
       name: appError.name,
       stack: appError.stack,
       path: appError.path,
@@ -175,8 +181,9 @@ function sendErrorResponse(res: Response, appError: AppError, req: Request): voi
   }
 
   // Add request ID if available
-  if ((req as any).requestId) {
-    responseData.requestId = (req as any).requestId;
+  const requestId = (req as unknown as { requestId?: string }).requestId;
+  if (requestId) {
+    responseData.requestId = requestId;
   }
 
   // Send response
@@ -234,8 +241,10 @@ export const asyncHandler = (
 /**
  * Validation error handler
  */
-export const handleValidationError = (error: any): AppError => {
-  const errors = Object.values(error.errors).map((err: any) => err.message);
+export const handleValidationError = (error: {
+  errors: Record<string, { message: string }>;
+}): AppError => {
+  const errors = Object.values(error.errors).map((err) => err.message);
   const message = `Validation Error: ${errors.join(', ')}`;
   return AppError.validation(message);
 };
@@ -257,7 +266,7 @@ export const handleJWTExpiredError = (): AppError => {
 /**
  * MongoDB duplicate key error handler
  */
-export const handleDuplicateKeyError = (error: any): AppError => {
+export const handleDuplicateKeyError = (error: { keyValue: Record<string, unknown> }): AppError => {
   const field = Object.keys(error.keyValue)[0];
   const value = error.keyValue[field];
   const message = `${field} '${value}' already exists`;
@@ -267,7 +276,7 @@ export const handleDuplicateKeyError = (error: any): AppError => {
 /**
  * MongoDB cast error handler
  */
-export const handleCastError = (error: any): AppError => {
+export const handleCastError = (error: { path: string; value: unknown }): AppError => {
   const message = `Invalid ${error.path}: ${error.value}`;
   return AppError.validation(message);
 };
