@@ -3,7 +3,8 @@
  * BFF layer with query complexity and depth limiting
  */
 
-import { ApolloServer } from 'apollo-server-express';
+import { ApolloServer } from '@apollo/server';
+import type { ExpressContextFunctionArgument } from '@apollo/server/express4';
 import depthLimit from 'graphql-depth-limit';
 import {
   createComplexityRule,
@@ -40,31 +41,13 @@ async function verifyToken(token: string): Promise<unknown> {
   }
 }
 
+// Apollo Server 4 takes the context function at the middleware boundary rather
+// than in the constructor — see createGraphQLContext below, passed to
+// expressMiddleware in index.ts.
 export function createApolloServer() {
-  return new ApolloServer({
+  return new ApolloServer<GraphQLContext>({
     typeDefs,
     resolvers,
-    context: async ({ req }): Promise<GraphQLContext> => {
-      // Extract token from Authorization header
-      const authHeader = req.headers.authorization || '';
-      const token = authHeader.replace('Bearer ', '');
-
-      let user = null;
-      if (token) {
-        user = await verifyToken(token);
-      }
-
-      // Create DataLoaders for this request
-      const userLoader = createUserLoader();
-
-      return {
-        user,
-        userLoader,
-        dataLoaders: {
-          user: userLoader,
-        },
-      };
-    },
     validationRules: [
       depthLimit(10), // Maximum query depth
       createComplexityRule({
@@ -75,12 +58,14 @@ export function createApolloServer() {
         },
       }),
     ],
-    formatError: (error) => {
-      logger.error('GraphQL Error:', error);
+    formatError: (formattedError) => {
+      logger.error('GraphQL Error:', formattedError);
+      // Apollo v4 already populates extensions.code; keep message/path/extensions
+      // and drop any internal stacktrace from the client-facing payload.
       return {
-        message: error.message,
-        code: error.extensions?.code,
-        path: error.path,
+        message: formattedError.message,
+        path: formattedError.path,
+        extensions: formattedError.extensions,
       };
     },
     plugins: [
@@ -105,4 +90,28 @@ export function createApolloServer() {
       process.env.GRAPHQL_INTROSPECTION === 'true' ||
       (process.env.NODE_ENV === 'development' && process.env.GRAPHQL_INTROSPECTION !== 'false'),
   });
+}
+
+// Per-request context: authenticate the bearer token and build fresh DataLoaders.
+// Passed to expressMiddleware(server, { context: createGraphQLContext }).
+export async function createGraphQLContext({
+  req,
+}: ExpressContextFunctionArgument): Promise<GraphQLContext> {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.replace('Bearer ', '');
+
+  let user = null;
+  if (token) {
+    user = await verifyToken(token);
+  }
+
+  const userLoader = createUserLoader();
+
+  return {
+    user,
+    userLoader,
+    dataLoaders: {
+      user: userLoader,
+    },
+  };
 }
