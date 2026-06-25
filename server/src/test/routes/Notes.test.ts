@@ -382,11 +382,8 @@ describe('GET /api/notes/stats', () => {
 // PUT /api/notes/bulk-update
 // -----------------------------------------------------------------------
 describe('PUT /api/notes/bulk-update', () => {
-  it('PUT /bulk-update is shadowed by PUT /:id — returns 400 (CastError on "bulk-update" as ObjectId)', async () => {
-    // CHARACTERIZATION: PUT /:id is registered before PUT /bulk-update in the
-    // router, so Express matches the literal string "bulk-update" as the :id
-    // parameter. Note.findById("bulk-update") throws a CastError, which the
-    // route catches and returns as 400.
+  it('updates multiple notes and returns the updated count', async () => {
+    // The route is now registered before PUT /:id, so it is reachable.
     asAdmin();
     const n1 = await seedNote({ lesson: 'Matematik', average: 50 });
     const n2 = await seedNote({ lesson: 'Fizik', average: 60 });
@@ -399,14 +396,14 @@ describe('PUT /api/notes/bulk-update', () => {
           { id: String(n2._id), average: 90 },
         ],
       })
-      .expect(400);
+      .expect(200);
 
-    expect(res.body.success).toBe(false);
-    expect(res.body.error).toBeDefined();
+    expect(res.body.success).toBe(true);
+    expect(res.body.updated).toBe(2);
+    expect(Array.isArray(res.body.notes)).toBe(true);
   });
 
-  it('sending invalid body to /bulk-update still returns 400 (shadowed by /:id)', async () => {
-    // Same routing shadow: any PUT to /bulk-update goes to /:id handler first.
+  it('returns 400 when the notes payload is not an array', async () => {
     asAdmin();
 
     const res = await request(app)

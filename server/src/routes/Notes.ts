@@ -269,6 +269,104 @@ router.post(
   }),
 );
 
+// Registered before PUT /:id so Express does not match the literal
+// "bulk-update" path segment as the :id route parameter.
+/**
+ * @swagger
+ * /api/notes/bulk-update:
+ *   put:
+ *     summary: Bulk update multiple notes
+ *     description: Update multiple notes at once. Non-admin users can only update notes they created. Teacher and admin only.
+ *     tags: [Notes]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - notes
+ *             properties:
+ *               notes:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - id
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       description: Note MongoDB _id
+ *                     grade:
+ *                       type: number
+ *                     lesson:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Bulk update result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 updated:
+ *                   type: integer
+ *                 notes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       400:
+ *         description: Notes array is required
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - requires teacher or admin role
+ *       500:
+ *         description: Internal server error
+ */
+router.put(
+  '/bulk-update',
+  authenticateJWT,
+  authorizeRoles(['teacher', 'admin']),
+  asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const { notes } = req.body;
+
+      if (!Array.isArray(notes)) {
+        res.status(400).json({ success: false, error: 'Notlar dizisi gerekli' });
+        return;
+      }
+
+      const result = await NotesService.bulkUpdateNotes({
+        notes,
+        role: req.user?.role,
+        userId: req.user?.userId,
+      });
+
+      res.json({
+        success: true,
+        updated: result.updated,
+        notes: result.notes,
+      });
+    } catch (error) {
+      logger.error('Toplu guncelleme hatasi', {
+        error: error instanceof Error ? error.message : error,
+      });
+      res.status(500).json({
+        success: false,
+        error: 'Notlar güncellenemedi',
+        details: (error as Error).message,
+      });
+    }
+  }),
+);
+
 /**
  * @swagger
  * /api/notes/{id}:
@@ -618,102 +716,6 @@ router.get(
     } catch (error) {
       logger.error('Istatistik hatasi', { error: error instanceof Error ? error.message : error });
       res.status(500).json({ success: false, error: 'İstatistikler hesaplanamadı' });
-    }
-  }),
-);
-
-/**
- * @swagger
- * /api/notes/bulk-update:
- *   put:
- *     summary: Bulk update multiple notes
- *     description: Update multiple notes at once. Non-admin users can only update notes they created. Teacher and admin only.
- *     tags: [Notes]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - notes
- *             properties:
- *               notes:
- *                 type: array
- *                 items:
- *                   type: object
- *                   required:
- *                     - id
- *                   properties:
- *                     id:
- *                       type: string
- *                       description: Note MongoDB _id
- *                     grade:
- *                       type: number
- *                     lesson:
- *                       type: string
- *                     description:
- *                       type: string
- *     responses:
- *       200:
- *         description: Bulk update result
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 updated:
- *                   type: integer
- *                 notes:
- *                   type: array
- *                   items:
- *                     type: object
- *       400:
- *         description: Notes array is required
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires teacher or admin role
- *       500:
- *         description: Internal server error
- */
-router.put(
-  '/bulk-update',
-  authenticateJWT,
-  authorizeRoles(['teacher', 'admin']),
-  asyncHandler(async (req: Request, res: Response) => {
-    try {
-      const { notes } = req.body;
-
-      if (!Array.isArray(notes)) {
-        res.status(400).json({ success: false, error: 'Notlar dizisi gerekli' });
-        return;
-      }
-
-      const result = await NotesService.bulkUpdateNotes({
-        notes,
-        role: req.user?.role,
-        userId: req.user?.userId,
-      });
-
-      res.json({
-        success: true,
-        updated: result.updated,
-        notes: result.notes,
-      });
-    } catch (error) {
-      logger.error('Toplu guncelleme hatasi', {
-        error: error instanceof Error ? error.message : error,
-      });
-      res.status(500).json({
-        success: false,
-        error: 'Notlar güncellenemedi',
-        details: (error as Error).message,
-      });
     }
   }),
 );
