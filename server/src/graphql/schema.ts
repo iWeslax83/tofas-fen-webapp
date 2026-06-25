@@ -3,7 +3,7 @@
  * BFF (Backend for Frontend) layer
  */
 
-import { gql } from 'apollo-server-express';
+import { gql } from 'graphql-tag';
 
 export const typeDefs = gql`
   scalar Date
@@ -33,8 +33,6 @@ export const typeDefs = gql`
     evciRequests(filters: EvciRequestFilters, page: Int, limit: Int): EvciRequestConnection
     evciRequest(id: ID!): EvciRequest
     myEvciRequests: [EvciRequest!]!
-
-
 
     # Dormitory queries
     meals(date: String): [Meal!]!
@@ -75,8 +73,6 @@ export const typeDefs = gql`
     createEvciRequest(input: CreateEvciRequestInput!): EvciRequest
     updateEvciRequest(id: ID!, input: UpdateEvciRequestInput!): EvciRequest
     deleteEvciRequest(id: ID!): Boolean
-
-
 
     # Maintenance mutations
     createMaintenanceRequest(input: CreateMaintenanceRequestInput!): MaintenanceRequest
@@ -152,8 +148,6 @@ export const typeDefs = gql`
     createdAt: Date!
   }
 
-
-
   type Meal {
     id: ID!
     date: Date!
@@ -226,8 +220,6 @@ export const typeDefs = gql`
     pageInfo: PageInfo!
   }
 
-
-
   type PageInfo {
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
@@ -259,8 +251,6 @@ export const typeDefs = gql`
     studentId: ID
     status: String
   }
-
-
 
   input MaintenanceRequestFilters {
     status: String
@@ -329,8 +319,6 @@ export const typeDefs = gql`
     reason: String
   }
 
-
-
   input CreateMaintenanceRequestInput {
     title: String!
     description: String!
@@ -350,4 +338,3 @@ export const typeDefs = gql`
     expiresIn: Int!
   }
 `;
-
