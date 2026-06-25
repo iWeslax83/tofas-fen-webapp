@@ -304,18 +304,16 @@ describe('POST /api/users', () => {
     expect(res.body.error.toLowerCase()).toContain('exist');
   });
 
-  it('password is hashed — raw password not stored in response', async () => {
+  it('does not expose the password hash or TCKN in the create response', async () => {
     asAdmin();
     const res = await request(app)
       .post('/api/users')
       .send({ id: 'hash1', adSoyad: 'Hash Test', sifre: 'plaintext', rol: 'student' })
       .expect(201);
 
-    // sifre may appear in response (POST / returns the raw user doc)
-    // but the value must NOT be the plaintext
-    if (res.body.sifre) {
-      expect(res.body.sifre).not.toBe('plaintext');
-    }
+    expect(res.body).toHaveProperty('id', 'hash1');
+    expect(res.body).not.toHaveProperty('sifre');
+    expect(res.body).not.toHaveProperty('tckn');
   });
 });
 
