@@ -3,7 +3,13 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IPerformanceMetric extends Document {
   id: string;
   type: 'api' | 'database' | 'frontend' | 'system' | 'cache' | 'memory' | 'cpu' | 'network';
-  category: 'response_time' | 'throughput' | 'error_rate' | 'resource_usage' | 'optimization' | 'bottleneck';
+  category:
+    | 'response_time'
+    | 'throughput'
+    | 'error_rate'
+    | 'resource_usage'
+    | 'optimization'
+    | 'bottleneck';
   metric: string;
   value: number;
   unit: string;
@@ -18,7 +24,7 @@ export interface IPerformanceMetric extends Document {
     device?: string;
     timestamp: Date;
   };
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -27,7 +33,13 @@ export interface IPerformanceMetric extends Document {
 export interface IOptimizationLog extends Document {
   id: string;
   type: 'automatic' | 'manual' | 'scheduled';
-  action: 'cache_clear' | 'db_optimization' | 'memory_cleanup' | 'query_optimization' | 'asset_compression' | 'cdn_update';
+  action:
+    | 'cache_clear'
+    | 'db_optimization'
+    | 'memory_cleanup'
+    | 'query_optimization'
+    | 'asset_compression'
+    | 'cdn_update';
   target: string;
   description: string;
   impact: 'low' | 'medium' | 'high';
@@ -52,7 +64,7 @@ export interface IPerformanceConfig extends Document {
   name: string;
   description: string;
   category: 'caching' | 'database' | 'api' | 'frontend' | 'monitoring';
-  settings: Record<string, any>;
+  settings: Record<string, unknown>;
   isEnabled: boolean;
   priority: number;
   schedule?: {
@@ -71,8 +83,23 @@ export interface IPerformanceConfig extends Document {
 
 const PerformanceMetricSchema = new Schema<IPerformanceMetric>({
   id: { type: String, required: true, unique: true },
-  type: { type: String, required: true, enum: ['api', 'database', 'frontend', 'system', 'cache', 'memory', 'cpu', 'network'] },
-  category: { type: String, required: true, enum: ['response_time', 'throughput', 'error_rate', 'resource_usage', 'optimization', 'bottleneck'] },
+  type: {
+    type: String,
+    required: true,
+    enum: ['api', 'database', 'frontend', 'system', 'cache', 'memory', 'cpu', 'network'],
+  },
+  category: {
+    type: String,
+    required: true,
+    enum: [
+      'response_time',
+      'throughput',
+      'error_rate',
+      'resource_usage',
+      'optimization',
+      'bottleneck',
+    ],
+  },
   metric: { type: String, required: true },
   value: { type: Number, required: true },
   unit: { type: String, required: true },
@@ -85,18 +112,29 @@ const PerformanceMetricSchema = new Schema<IPerformanceMetric>({
     userRole: String,
     browser: String,
     device: String,
-    timestamp: { type: Date, required: true }
+    timestamp: { type: Date, required: true },
   },
   metadata: { type: Schema.Types.Mixed, default: {} },
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 const OptimizationLogSchema = new Schema<IOptimizationLog>({
   id: { type: String, required: true, unique: true },
   type: { type: String, required: true, enum: ['automatic', 'manual', 'scheduled'] },
-  action: { type: String, required: true, enum: ['cache_clear', 'db_optimization', 'memory_cleanup', 'query_optimization', 'asset_compression', 'cdn_update'] },
+  action: {
+    type: String,
+    required: true,
+    enum: [
+      'cache_clear',
+      'db_optimization',
+      'memory_cleanup',
+      'query_optimization',
+      'asset_compression',
+      'cdn_update',
+    ],
+  },
   target: { type: String, required: true },
   description: { type: String, required: true },
   impact: { type: String, required: true, enum: ['low', 'medium', 'high'] },
@@ -105,7 +143,7 @@ const OptimizationLogSchema = new Schema<IOptimizationLog>({
     beforeMetrics: { type: Schema.Types.Mixed, default: {} },
     afterMetrics: { type: Schema.Types.Mixed, default: {} },
     improvement: { type: Number, default: 0 },
-    duration: { type: Number, default: 0 }
+    duration: { type: Number, default: 0 },
   },
   executedBy: { type: String, required: true },
   executedAt: { type: Date, required: true },
@@ -113,29 +151,35 @@ const OptimizationLogSchema = new Schema<IOptimizationLog>({
   error: String,
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 const PerformanceConfigSchema = new Schema<IPerformanceConfig>({
   id: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   description: { type: String, required: true },
-  category: { type: String, required: true, enum: ['caching', 'database', 'api', 'frontend', 'monitoring'] },
+  category: {
+    type: String,
+    required: true,
+    enum: ['caching', 'database', 'api', 'frontend', 'monitoring'],
+  },
   settings: { type: Schema.Types.Mixed, default: {} },
   isEnabled: { type: Boolean, default: true },
   priority: { type: Number, default: 1 },
   schedule: {
     type: { type: String, enum: ['interval', 'cron', 'manual'] },
-    value: String
+    value: String,
   },
-  conditions: [{
-    threshold: { type: Number, required: true },
-    operator: { type: String, required: true, enum: ['gt', 'lt', 'eq', 'gte', 'lte'] },
-    metric: { type: String, required: true }
-  }],
+  conditions: [
+    {
+      threshold: { type: Number, required: true },
+      operator: { type: String, required: true, enum: ['gt', 'lt', 'eq', 'gte', 'lte'] },
+      metric: { type: String, required: true },
+    },
+  ],
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 // Indexes for PerformanceMetric
@@ -169,11 +213,16 @@ PerformanceMetricSchema.methods.isAboveThreshold = function (): boolean {
 
 PerformanceMetricSchema.methods.getStatusColor = function (): string {
   switch (this.status) {
-    case 'normal': return 'green';
-    case 'warning': return 'yellow';
-    case 'critical': return 'red';
-    case 'optimized': return 'blue';
-    default: return 'gray';
+    case 'normal':
+      return 'green';
+    case 'warning':
+      return 'yellow';
+    case 'critical':
+      return 'red';
+    case 'optimized':
+      return 'blue';
+    default:
+      return 'gray';
   }
 };
 
@@ -190,20 +239,15 @@ OptimizationLogSchema.methods.calculateImprovement = function (): number {
 
 // Static methods
 PerformanceMetricSchema.statics.getMetricsByType = function (type: string, limit = 100) {
-  return this.find({ type, isActive: true })
-    .sort({ 'context.timestamp': -1 })
-    .limit(limit);
+  return this.find({ type, isActive: true }).sort({ 'context.timestamp': -1 }).limit(limit);
 };
 
 PerformanceMetricSchema.statics.getCriticalMetrics = function () {
-  return this.find({ status: 'critical', isActive: true })
-    .sort({ 'context.timestamp': -1 });
+  return this.find({ status: 'critical', isActive: true }).sort({ 'context.timestamp': -1 });
 };
 
 OptimizationLogSchema.statics.getRecentOptimizations = function (limit = 50) {
-  return this.find({ isActive: true })
-    .sort({ executedAt: -1 })
-    .limit(limit);
+  return this.find({ isActive: true }).sort({ executedAt: -1 }).limit(limit);
 };
 
 OptimizationLogSchema.statics.getOptimizationStats = function () {
@@ -214,17 +258,22 @@ OptimizationLogSchema.statics.getOptimizationStats = function () {
         _id: '$action',
         count: { $sum: 1 },
         avgImprovement: { $avg: '$results.improvement' },
-        totalDuration: { $sum: '$results.duration' }
-      }
-    }
+        totalDuration: { $sum: '$results.duration' },
+      },
+    },
   ]);
 };
 
 PerformanceConfigSchema.statics.getActiveConfigs = function () {
-  return this.find({ isEnabled: true, isActive: true })
-    .sort({ priority: 1 });
+  return this.find({ isEnabled: true, isActive: true }).sort({ priority: 1 });
 };
 
-export const PerformanceMetric = mongoose.models.PerformanceMetric || mongoose.model<IPerformanceMetric>('PerformanceMetric', PerformanceMetricSchema);
-export const OptimizationLog = mongoose.models.OptimizationLog || mongoose.model<IOptimizationLog>('OptimizationLog', OptimizationLogSchema);
-export const PerformanceConfig = mongoose.models.PerformanceConfig || mongoose.model<IPerformanceConfig>('PerformanceConfig', PerformanceConfigSchema);
+export const PerformanceMetric =
+  mongoose.models.PerformanceMetric ||
+  mongoose.model<IPerformanceMetric>('PerformanceMetric', PerformanceMetricSchema);
+export const OptimizationLog =
+  mongoose.models.OptimizationLog ||
+  mongoose.model<IOptimizationLog>('OptimizationLog', OptimizationLogSchema);
+export const PerformanceConfig =
+  mongoose.models.PerformanceConfig ||
+  mongoose.model<IPerformanceConfig>('PerformanceConfig', PerformanceConfigSchema);

@@ -11,7 +11,7 @@ export class ErrorHandlerWrapper {
       component: string;
       action: string;
       userId?: string;
-    }
+    },
   ): Promise<T> {
     try {
       return await apiCall();
@@ -25,8 +25,8 @@ export class ErrorHandlerWrapper {
         action: context.action,
         url: window.location.href,
         additionalData: {
-          userAgent: navigator.userAgent
-        }
+          userAgent: navigator.userAgent,
+        },
       };
 
       if (context.userId) {
@@ -38,7 +38,7 @@ export class ErrorHandlerWrapper {
         errorType,
         severity,
         errorContext,
-        error as Error
+        error as Error,
       );
 
       throw appError;
@@ -53,7 +53,7 @@ export class ErrorHandlerWrapper {
 
     // Network errors
     if (typeof error === 'object' && error !== null) {
-      const err = error as Record<string, any>;
+      const err = error as Record<string, unknown>;
       if (err.code === 'NETWORK_ERROR' || err.message?.includes('Network Error')) {
         return ErrorType.NETWORK;
       }
@@ -69,8 +69,10 @@ export class ErrorHandlerWrapper {
       }
 
       // Validation errors
-      if (err.response?.data?.error?.includes('validation') ||
-        err.response?.data?.error?.includes('required')) {
+      if (
+        err.response?.data?.error?.includes('validation') ||
+        err.response?.data?.error?.includes('required')
+      ) {
         return ErrorType.VALIDATION;
       }
     }
@@ -103,7 +105,7 @@ export class ErrorHandlerWrapper {
    */
   private static getErrorMessage(error: unknown): string {
     if (typeof error === 'object' && error !== null) {
-      const err = error as Record<string, any>;
+      const err = error as Record<string, unknown>;
       if (err.response?.data?.error) {
         return err.response.data.error;
       }
@@ -124,6 +126,6 @@ export class ErrorHandlerWrapper {
 // Hook for using error handling in components
 export function useApiErrorHandler() {
   return {
-    wrapApiCall: ErrorHandlerWrapper.wrapApiCall
+    wrapApiCall: ErrorHandlerWrapper.wrapApiCall,
   };
 }

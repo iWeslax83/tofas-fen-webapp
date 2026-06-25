@@ -1,20 +1,28 @@
 import { useState, useMemo, ReactNode } from 'react';
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from 'lucide-react';
 import './Table.css';
 
-export interface TableColumn<T = any> {
+export interface TableColumn<T = Record<string, unknown>> {
   key: string;
   header: string;
-  accessor?: (row: T) => any;
+  accessor?: (row: T) => unknown;
   sortable?: boolean;
   filterable?: boolean;
-  render?: (value: any, row: T) => ReactNode;
+  render?: (value: unknown, row: T) => ReactNode;
   width?: string;
   align?: 'left' | 'center' | 'right';
   className?: string;
 }
 
-export interface TableProps<T = any> {
+export interface TableProps<T = Record<string, unknown>> {
   data: T[];
   columns: TableColumn<T>[];
   sortable?: boolean;
@@ -28,7 +36,7 @@ export interface TableProps<T = any> {
   rowClassName?: (row: T) => string;
 }
 
-export const Table = <T extends Record<string, any>>({
+export const Table = <T extends Record<string, unknown>>({
   data,
   columns,
   sortable = true,
@@ -60,9 +68,7 @@ export const Table = <T extends Record<string, any>>({
         const filterValue = filters[column.key];
         if (!filterValue) return true;
 
-        const cellValue = column.accessor
-          ? column.accessor(row)
-          : row[column.key];
+        const cellValue = column.accessor ? column.accessor(row) : row[column.key];
 
         return String(cellValue || '')
           .toLowerCase()
@@ -88,9 +94,7 @@ export const Table = <T extends Record<string, any>>({
       if (bValue === null || bValue === undefined) return -1;
 
       if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortConfig.direction === 'asc'
-          ? aValue - bValue
-          : bValue - aValue;
+        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
       }
 
       const aStr = String(aValue).toLowerCase();
@@ -241,9 +245,8 @@ export const Table = <T extends Record<string, any>>({
         <div className="table-pagination">
           <div className="table-pagination-info">
             <span>
-              {((currentPage - 1) * pageSize + 1)} -{' '}
-              {Math.min(currentPage * pageSize, sortedData.length)} /{' '}
-              {sortedData.length}
+              {(currentPage - 1) * pageSize + 1} -{' '}
+              {Math.min(currentPage * pageSize, sortedData.length)} / {sortedData.length}
             </span>
           </div>
           <div className="table-pagination-controls">
@@ -294,4 +297,3 @@ export const Table = <T extends Record<string, any>>({
 };
 
 export default Table;
-

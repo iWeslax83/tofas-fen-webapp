@@ -264,7 +264,7 @@ router.post(
     const startTime = startRequestTimer();
 
     try {
-      logger.info('Manual backup triggered', { userId: (req as any).user?.id });
+      logger.info('Manual backup triggered', { userId: req.session.userId });
       const result = await BackupService.createBackup();
 
       const duration = endRequestTimer(startTime);
@@ -336,7 +336,7 @@ router.post(
     const startTime = startRequestTimer();
 
     try {
-      logger.info('Create and verify backup triggered', { userId: (req as any).user?.id });
+      logger.info('Create and verify backup triggered', { userId: req.session.userId });
       const result = await BackupService.createAndVerifyBackup();
 
       const duration = endRequestTimer(startTime);

@@ -45,8 +45,8 @@ export interface EventPayload {
   eventType: EventType;
   timestamp: Date;
   userId?: string;
-  data: Record<string, any>;
-  metadata?: Record<string, any>;
+  data: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 // Event handler type
@@ -215,9 +215,9 @@ class EventService {
    */
   async publish(
     eventType: EventType,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     userId?: string,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, unknown>,
   ): Promise<void> {
     const payload: EventPayload = {
       eventId: this.generateEventId(),
@@ -305,7 +305,8 @@ class EventService {
       const ws = getWebSocket();
       if (ws) {
         // Broadcast to all connected users or specific target audience
-        const targetUsers = payload.data.targetAudience || [];
+        const targetAudience = payload.data.targetAudience;
+        const targetUsers = Array.isArray(targetAudience) ? (targetAudience as string[]) : [];
         if (targetUsers.length > 0) {
           ws.sendBulkNotifications(targetUsers, payload.data);
         } else {

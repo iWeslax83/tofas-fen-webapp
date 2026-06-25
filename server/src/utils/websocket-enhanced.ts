@@ -72,11 +72,10 @@ export function initializeEventDrivenWebSocket() {
  */
 export async function publishEvent(
   eventType: EventType,
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   userId?: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>,
 ) {
   const eventService = getEventService();
   await eventService.publish(eventType, data, userId, metadata);
 }
-

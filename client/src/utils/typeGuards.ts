@@ -4,7 +4,7 @@ import { IUser, UserRole, ApiResponse, AppError, Theme } from '../@types';
 export const isUser = (obj: unknown): obj is IUser => {
   if (!obj || typeof obj !== 'object' || obj === null) return false;
 
-  const o = obj as any;
+  const o = obj as Record<string, unknown>;
   return (
     typeof o._id === 'string' &&
     typeof o.id === 'string' &&
@@ -52,7 +52,7 @@ export const isPartialUser = (obj: unknown): obj is Partial<IUser> => {
 export const isApiResponse = <T>(obj: unknown): obj is ApiResponse<T> => {
   if (!obj || typeof obj !== 'object' || obj === null) return false;
 
-  const o = obj as any;
+  const o = obj as Record<string, unknown>;
   return typeof o.success === 'boolean' && typeof o.statusCode === 'number';
 };
 
@@ -83,7 +83,7 @@ export const isPaginatedResponse = <T>(
 export const isAppError = (obj: unknown): obj is AppError => {
   if (!obj || typeof obj !== 'object' || obj === null) return false;
 
-  const o = obj as any;
+  const o = obj as Record<string, unknown>;
   return (
     typeof o.id === 'string' &&
     typeof o.message === 'string' &&
@@ -95,16 +95,17 @@ export const isAppError = (obj: unknown): obj is AppError => {
 export const isError = (obj: unknown): obj is Error => {
   if (!obj || typeof obj !== 'object' || obj === null) return false;
 
-  const o = obj as any;
-  return typeof o.message === 'string' && typeof (obj as any).name === 'string';
+  const o = obj as Record<string, unknown>;
+  return typeof o.message === 'string' && typeof o.name === 'string';
 };
 
 // Theme Type Guards
 export const isTheme = (obj: unknown): obj is Theme => {
   if (!obj || typeof obj !== 'object' || obj === null) return false;
 
-  const o = obj as any;
+  const o = obj as Record<string, unknown>;
   return (
+    typeof o.mode === 'string' &&
     ['light', 'dark', 'system'].includes(o.mode) &&
     typeof o.primaryColor === 'string' &&
     typeof o.secondaryColor === 'string' &&
