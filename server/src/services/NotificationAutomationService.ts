@@ -2,15 +2,26 @@ import { NotificationService } from './NotificationService';
 import { User } from '../models';
 import logger from '../utils/logger';
 
+/** Generic event payload — shape is determined at runtime by the emitting code. */
+type EventPayload = Record<string, unknown>;
+
 export interface AutomationRule {
   id: string;
   name: string;
   event: string;
-  conditions: Record<string, any>;
+  conditions: Record<string, unknown>;
   notification: {
     title: string;
     message: string;
-    type: 'info' | 'success' | 'warning' | 'error' | 'request' | 'approval' | 'reminder' | 'announcement';
+    type:
+      | 'info'
+      | 'success'
+      | 'warning'
+      | 'error'
+      | 'request'
+      | 'approval'
+      | 'reminder'
+      | 'announcement';
     category: 'academic' | 'administrative' | 'social' | 'technical' | 'security' | 'general';
     priority: 'low' | 'medium' | 'high' | 'urgent';
     icon?: string;
@@ -41,15 +52,15 @@ export class NotificationAutomationService {
         category: 'academic',
         priority: 'medium',
         icon: '📝',
-        actionText: 'Ödevi Görüntüle'
+        actionText: 'Ödevi Görüntüle',
       },
       recipients: {
         type: 'role',
-        roles: ['student', 'parent']
+        roles: ['student', 'parent'],
       },
       enabled: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     },
     {
       id: '2',
@@ -63,14 +74,14 @@ export class NotificationAutomationService {
         category: 'academic',
         priority: 'high',
         icon: '⏰',
-        actionText: 'Ödevi Görüntüle'
+        actionText: 'Ödevi Görüntüle',
       },
       recipients: {
-        type: 'event_related'
+        type: 'event_related',
       },
       enabled: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     },
     {
       id: '3',
@@ -84,14 +95,14 @@ export class NotificationAutomationService {
         category: 'academic',
         priority: 'medium',
         icon: '📊',
-        actionText: 'Notları Görüntüle'
+        actionText: 'Notları Görüntüle',
       },
       recipients: {
-        type: 'event_related'
+        type: 'event_related',
       },
       enabled: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     },
     {
       id: '4',
@@ -105,14 +116,14 @@ export class NotificationAutomationService {
         category: 'administrative',
         priority: 'medium',
         icon: '📢',
-        actionText: 'Duyuruyu Görüntüle'
+        actionText: 'Duyuruyu Görüntüle',
       },
       recipients: {
-        type: 'all'
+        type: 'all',
       },
       enabled: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     },
 
     {
@@ -127,24 +138,24 @@ export class NotificationAutomationService {
         category: 'technical',
         priority: 'high',
         icon: '⚠️',
-        actionText: 'Detayları Görüntüle'
+        actionText: 'Detayları Görüntüle',
       },
       recipients: {
-        type: 'all'
+        type: 'all',
       },
       enabled: true,
       createdAt: new Date(),
-      updatedAt: new Date()
-    }
+      updatedAt: new Date(),
+    },
   ];
 
   /**
    * Process an event and trigger relevant notifications
    */
-  static async processEvent(event: string, data: any): Promise<void> {
+  static async processEvent(event: string, data: EventPayload): Promise<void> {
     try {
-      const relevantRules = this.automationRules.filter(rule =>
-        rule.enabled && rule.event === event
+      const relevantRules = this.automationRules.filter(
+        (rule) => rule.enabled && rule.event === event,
       );
 
       for (const rule of relevantRules) {
@@ -154,9 +165,9 @@ export class NotificationAutomationService {
       }
     } catch (error) {
       logger.error('Error processing notification event', {
-        error: (error as any).message,
+        error: (error as Error).message,
         event,
-        data
+        data,
       });
     }
   }
@@ -164,25 +175,28 @@ export class NotificationAutomationService {
   /**
    * Evaluate rule conditions
    */
-  private static async evaluateConditions(conditions: Record<string, any>, data: any): Promise<boolean> {
+  private static async evaluateConditions(
+    conditions: Record<string, unknown>,
+    data: EventPayload,
+  ): Promise<boolean> {
     try {
       // Check days before condition for homework due dates
-      if (conditions.daysBefore && data.dueDate) {
-        const dueDate = new Date(data.dueDate);
+      if (conditions.daysBefore !== undefined && data.dueDate !== undefined) {
+        const dueDate = new Date(data.dueDate as string);
         const now = new Date();
         const diffTime = dueDate.getTime() - now.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        return diffDays <= conditions.daysBefore;
+        return diffDays <= (conditions.daysBefore as number);
       }
 
       // Add more condition types as needed
       return true;
     } catch (error) {
       logger.error('Error evaluating notification conditions', {
-        error: (error as any).message,
+        error: (error as Error).message,
         conditions,
-        data
+        data,
       });
       return false;
     }
@@ -191,7 +205,10 @@ export class NotificationAutomationService {
   /**
    * Trigger notification based on rule
    */
-  private static async triggerNotification(rule: AutomationRule, data: any): Promise<void> {
+  private static async triggerNotification(
+    rule: AutomationRule,
+    data: EventPayload,
+  ): Promise<void> {
     try {
       const notificationData = {
         title: this.interpolateString(rule.notification.title, data),
@@ -200,13 +217,15 @@ export class NotificationAutomationService {
         category: rule.notification.category,
         priority: rule.notification.priority,
         icon: rule.notification.icon,
-        actionUrl: rule.notification.actionUrl ? this.interpolateString(rule.notification.actionUrl, data) : undefined,
+        actionUrl: rule.notification.actionUrl
+          ? this.interpolateString(rule.notification.actionUrl, data)
+          : undefined,
         actionText: rule.notification.actionText,
         sender: {
           id: 'system',
           name: 'Sistem',
-          role: 'system'
-        }
+          role: 'system',
+        },
       };
 
       // Determine recipients
@@ -215,15 +234,18 @@ export class NotificationAutomationService {
       switch (rule.recipients.type) {
         case 'all': {
           const allUsers = await User.find({}, 'id');
-          recipients = allUsers.map(user => user.id);
+          recipients = allUsers.map((user) => user.id);
           break;
         }
         case 'role':
           if (rule.recipients.roles) {
-            const roleUsers = await User.find({
-              rol: { $in: rule.recipients.roles }
-            }, 'id');
-            recipients = roleUsers.map(user => user.id);
+            const roleUsers = await User.find(
+              {
+                rol: { $in: rule.recipients.roles },
+              },
+              'id',
+            );
+            recipients = roleUsers.map((user) => user.id);
           }
           break;
         case 'specific':
@@ -240,21 +262,21 @@ export class NotificationAutomationService {
         await NotificationService.createBulkNotifications({
           ...notificationData,
           userIds: recipients,
-          actionUrl: notificationData.actionUrl || ''
-        } as any);
+          actionUrl: notificationData.actionUrl ?? '',
+        });
 
         logger.info('Automated notification triggered', {
           ruleId: rule.id,
           ruleName: rule.name,
           event: rule.event,
-          recipientCount: recipients.length
+          recipientCount: recipients.length,
         });
       }
     } catch (error) {
       logger.error('Error triggering automated notification', {
-        error: (error as any).message,
+        error: (error as Error).message,
         ruleId: rule.id,
-        data
+        data,
       });
     }
   }
@@ -262,7 +284,10 @@ export class NotificationAutomationService {
   /**
    * Get recipients related to the event
    */
-  private static async getEventRelatedRecipients(event: string, data: any): Promise<string[]> {
+  private static async getEventRelatedRecipients(
+    event: string,
+    data: EventPayload,
+  ): Promise<string[]> {
     try {
       switch (event) {
         case 'homework.created':
@@ -270,33 +295,34 @@ export class NotificationAutomationService {
           // Get all students and parents
           const students = await User.find({ rol: 'student' }, 'id');
           const parents = await User.find({ rol: 'parent' }, 'id');
-          return [...students.map(s => s.id), ...parents.map(p => p.id)];
+          return [...students.map((s) => s.id), ...parents.map((p) => p.id)];
         }
 
         case 'grade.updated': {
           // Get the specific student and their parent
-          if (data.studentId) {
-            const student = await User.findOne({ id: data.studentId }, 'id');
-            const parent = await User.findOne({
-              rol: 'parent',
-              // Assuming there's a relationship field
-              // This would need to be adjusted based on your data model
-            }, 'id');
+          if (data.studentId !== undefined) {
+            const student = await User.findOne({ id: data.studentId as string }, 'id');
+            const parent = await User.findOne(
+              {
+                rol: 'parent',
+                // Assuming there's a relationship field
+                // This would need to be adjusted based on your data model
+              },
+              'id',
+            );
 
-            const recipients = [student?.id].filter(Boolean);
+            const recipients = [student?.id].filter(Boolean) as string[];
             if (parent) recipients.push(parent.id);
             return recipients;
           }
           break;
         }
 
-
-
         case 'announcement.created':
         case 'system.maintenance': {
           // Get all users
           const allUsers = await User.find({}, 'id');
-          return allUsers.map(user => user.id);
+          return allUsers.map((user) => user.id);
         }
 
         default:
@@ -306,9 +332,9 @@ export class NotificationAutomationService {
       return [];
     } catch (error) {
       logger.error('Error getting event-related recipients', {
-        error: (error as any).message,
+        error: (error as Error).message,
         event,
-        data
+        data,
       });
       return [];
     }
@@ -317,9 +343,10 @@ export class NotificationAutomationService {
   /**
    * Interpolate string with data variables
    */
-  private static interpolateString(template: string, data: any): string {
-    return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-      return data[key] || match;
+  private static interpolateString(template: string, data: EventPayload): string {
+    return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) => {
+      const value = data[key];
+      return typeof value === 'string' ? value : match;
     });
   }
 
@@ -334,19 +361,19 @@ export class NotificationAutomationService {
    * Get rule by ID
    */
   static getRule(id: string): AutomationRule | undefined {
-    return this.automationRules.find(rule => rule.id === id);
+    return this.automationRules.find((rule) => rule.id === id);
   }
 
   /**
    * Update rule
    */
   static updateRule(id: string, updates: Partial<AutomationRule>): boolean {
-    const index = this.automationRules.findIndex(rule => rule.id === id);
+    const index = this.automationRules.findIndex((rule) => rule.id === id);
     if (index !== -1) {
       this.automationRules[index] = {
         ...this.automationRules[index],
         ...updates,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
       return true;
     }
@@ -361,7 +388,7 @@ export class NotificationAutomationService {
       ...rule,
       id: Date.now().toString(),
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     this.automationRules.push(newRule);
@@ -372,7 +399,7 @@ export class NotificationAutomationService {
    * Delete rule
    */
   static deleteRule(id: string): boolean {
-    const index = this.automationRules.findIndex(rule => rule.id === id);
+    const index = this.automationRules.findIndex((rule) => rule.id === id);
     if (index !== -1) {
       this.automationRules.splice(index, 1);
       return true;

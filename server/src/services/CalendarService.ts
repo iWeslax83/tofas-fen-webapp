@@ -1,6 +1,7 @@
 import { CalendarEvent, Calendar, ICalendarEvent, ICalendar } from '../models/Calendar';
-import { NotificationService } from './NotificationService';
+import { NotificationService, CreateNotificationData } from './NotificationService';
 import { User } from '../models/User';
+import { Document } from 'mongoose';
 
 export interface CalendarFilters {
   startDate?: Date;
@@ -53,15 +54,18 @@ export interface EventCreateData {
 
 export class CalendarService {
   // Calendar Management
-  static async createCalendar(userId: string, data: {
-    name: string;
-    description?: string;
-    color?: string;
-    isDefault?: boolean;
-    isPublic?: boolean;
-    allowedRoles?: string[];
-    settings?: any;
-  }): Promise<ICalendar> {
+  static async createCalendar(
+    userId: string,
+    data: {
+      name: string;
+      description?: string;
+      color?: string;
+      isDefault?: boolean;
+      isPublic?: boolean;
+      allowedRoles?: string[];
+      settings?: Partial<ICalendar['settings']>;
+    },
+  ): Promise<ICalendar> {
     const calendar = new Calendar({
       id: `cal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name: data.name,
@@ -77,42 +81,55 @@ export class CalendarService {
         workingHours: {
           start: '08:00',
           end: '17:00',
-          days: [1, 2, 3, 4, 5] // Monday-Friday
+          days: [1, 2, 3, 4, 5], // Monday-Friday
         },
         timezone: 'Europe/Istanbul',
-        ...data.settings
-      }
+        ...data.settings,
+      },
     });
 
     return await calendar.save();
   }
 
   static async getUserCalendars(userId: string, userRole: string): Promise<ICalendar[]> {
-    const query: any = {
+    const query: Record<string, unknown> = {
       $or: [
         { ownerId: userId },
         { 'sharedWith.userId': userId },
-        { isPublic: true, allowedRoles: { $in: [userRole] } }
-      ]
+        { isPublic: true, allowedRoles: { $in: [userRole] } },
+      ],
     };
 
     return await Calendar.find(query).sort({ isDefault: -1, name: 1 });
   }
 
-  static async getCalendarById(calendarId: string, userId: string, userRole: string): Promise<ICalendar | null> {
+  static async getCalendarById(
+    calendarId: string,
+    userId: string,
+    userRole: string,
+  ): Promise<ICalendar | null> {
     const calendar = await Calendar.findOne({ id: calendarId });
 
     if (!calendar) return null;
 
     // Check access permissions
     if (calendar.ownerId === userId) return calendar;
-    if (calendar.sharedWith.some(share => share.userId === userId)) return calendar;
+    if (calendar.sharedWith.some((share) => share.userId === userId)) return calendar;
     if (calendar.isPublic && calendar.allowedRoles.includes(userRole)) return calendar;
 
     return null;
   }
 
-  static async updateCalendar(calendarId: string, userId: string, updates: any): Promise<ICalendar | null> {
+  static async updateCalendar(
+    calendarId: string,
+    userId: string,
+    updates: Partial<
+      Pick<
+        ICalendar,
+        'name' | 'description' | 'color' | 'isDefault' | 'isPublic' | 'allowedRoles' | 'settings'
+      >
+    >,
+  ): Promise<ICalendar | null> {
     const calendar = await Calendar.findOne({ id: calendarId });
 
     if (!calendar || calendar.ownerId !== userId) return null;
@@ -135,10 +152,14 @@ export class CalendarService {
     return true;
   }
 
-  static async shareCalendar(calendarId: string, ownerId: string, shareData: {
-    userId: string;
-    permission: 'read' | 'write' | 'admin';
-  }): Promise<boolean> {
+  static async shareCalendar(
+    calendarId: string,
+    ownerId: string,
+    shareData: {
+      userId: string;
+      permission: 'read' | 'write' | 'admin';
+    },
+  ): Promise<boolean> {
     const calendar = await Calendar.findOne({ id: calendarId });
 
     if (!calendar || calendar.ownerId !== ownerId) return false;
@@ -149,7 +170,7 @@ export class CalendarService {
 
     // Add or update share
     const existingShareIndex = calendar.sharedWith.findIndex(
-      share => share.userId === shareData.userId
+      (share) => share.userId === shareData.userId,
     );
 
     if (existingShareIndex >= 0) {
@@ -157,7 +178,7 @@ export class CalendarService {
     } else {
       calendar.sharedWith.push({
         userId: shareData.userId,
-        permission: shareData.permission
+        permission: shareData.permission,
       });
     }
 
@@ -177,7 +198,7 @@ export class CalendarService {
     const overlappingEvents = await CalendarEvent.find({
       calendarId: eventData.calendarId,
       startDate: { $lt: eventData.endDate },
-      endDate: { $gt: eventData.startDate }
+      endDate: { $gt: eventData.startDate },
     });
 
     if (overlappingEvents.length > 0) {
@@ -187,7 +208,7 @@ export class CalendarService {
     const event = new CalendarEvent({
       id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       ...eventData,
-      createdBy: userId
+      createdBy: userId,
     });
 
     const savedEvent = await event.save();
@@ -206,18 +227,18 @@ export class CalendarService {
   static async getEvents(
     userId: string,
     userRole: string,
-    filters: CalendarFilters = {}
+    filters: CalendarFilters = {},
   ): Promise<ICalendarEvent[]> {
     const userCalendars = await this.getUserCalendars(userId, userRole);
-    const calendarIds = userCalendars.map(cal => cal.id);
+    const calendarIds = userCalendars.map((cal) => cal.id);
 
-    const query: any = {
+    const query: Record<string, unknown> = {
       calendarId: { $in: calendarIds },
       $or: [
         { createdBy: userId },
         { 'attendees.userId': userId },
-        { isPublic: true, allowedRoles: { $in: [userRole] } }
-      ]
+        { isPublic: true, allowedRoles: { $in: [userRole] } },
+      ],
     };
 
     if (filters.startDate && filters.endDate) {
@@ -234,7 +255,7 @@ export class CalendarService {
       query.$or = [
         { title: { $regex: filters.search, $options: 'i' } },
         { description: { $regex: filters.search, $options: 'i' } },
-        { location: { $regex: filters.search, $options: 'i' } }
+        { location: { $regex: filters.search, $options: 'i' } },
       ];
     }
 
@@ -243,9 +264,15 @@ export class CalendarService {
       .populate('attendees.userId', 'adSoyad email');
   }
 
-  static async getEventById(eventId: string, userId: string, userRole: string): Promise<ICalendarEvent | null> {
-    const event = await CalendarEvent.findOne({ id: eventId })
-      .populate('attendees.userId', 'adSoyad email');
+  static async getEventById(
+    eventId: string,
+    userId: string,
+    userRole: string,
+  ): Promise<ICalendarEvent | null> {
+    const event = await CalendarEvent.findOne({ id: eventId }).populate(
+      'attendees.userId',
+      'adSoyad email',
+    );
 
     if (!event) return null;
 
@@ -259,7 +286,7 @@ export class CalendarService {
   static async updateEvent(
     eventId: string,
     userId: string,
-    updates: Partial<EventCreateData>
+    updates: Partial<EventCreateData>,
   ): Promise<ICalendarEvent | null> {
     const event = await CalendarEvent.findOne({ id: eventId });
 
@@ -268,7 +295,7 @@ export class CalendarService {
     // Check permissions
     if (event.createdBy !== userId) {
       const calendar = await Calendar.findOne({ id: event.calendarId });
-      const share = calendar?.sharedWith.find(s => s.userId === userId);
+      const share = calendar?.sharedWith.find((s) => s.userId === userId);
       if (!share || share.permission === 'read') {
         return null;
       }
@@ -296,10 +323,7 @@ export class CalendarService {
     // Delete recurring events if this is a recurring event
     if (event.isRecurring) {
       await CalendarEvent.deleteMany({
-        $or: [
-          { id: eventId },
-          { parentEventId: eventId }
-        ]
+        $or: [{ id: eventId }, { parentEventId: eventId }],
       });
     } else {
       await CalendarEvent.deleteOne({ id: eventId });
@@ -314,13 +338,13 @@ export class CalendarService {
   static async respondToEvent(
     eventId: string,
     userId: string,
-    response: 'accepted' | 'declined' | 'tentative'
+    response: 'accepted' | 'declined' | 'tentative',
   ): Promise<boolean> {
     const event = await CalendarEvent.findOne({ id: eventId });
 
     if (!event) return false;
 
-    const attendeeIndex = event.attendees.findIndex(a => a.userId === userId);
+    const attendeeIndex = event.attendees.findIndex((a) => a.userId === userId);
     if (attendeeIndex === -1) return false;
 
     event.attendees[attendeeIndex].response = response;
@@ -341,15 +365,15 @@ export class CalendarService {
     let occurrenceCount = 0;
     const maxOccurrences = endAfter || 365; // Limit to prevent infinite loops
 
-    // eslint-disable-next-line no-constant-condition
+     
     while (occurrenceCount < maxOccurrences) {
       // Calculate next occurrence
       switch (frequency) {
         case 'daily':
-          currentDate = new Date(currentDate.getTime() + (interval * 24 * 60 * 60 * 1000));
+          currentDate = new Date(currentDate.getTime() + interval * 24 * 60 * 60 * 1000);
           break;
         case 'weekly':
-          currentDate = new Date(currentDate.getTime() + (interval * 7 * 24 * 60 * 60 * 1000));
+          currentDate = new Date(currentDate.getTime() + interval * 7 * 24 * 60 * 60 * 1000);
           break;
         case 'monthly':
           currentDate.setMonth(currentDate.getMonth() + interval);
@@ -375,7 +399,7 @@ export class CalendarService {
         endDate: newEndDate,
         parentEventId: parentEvent.id,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
 
       delete recurringEvent._id;
@@ -395,18 +419,20 @@ export class CalendarService {
   // Reminders
   static async processReminders(): Promise<void> {
     const now = new Date();
-    const reminderTime = new Date(now.getTime() + (15 * 60 * 1000)); // 15 minutes from now
+    const reminderTime = new Date(now.getTime() + 15 * 60 * 1000); // 15 minutes from now
 
     const eventsWithReminders = await CalendarEvent.find({
       'reminders.sent': false,
-      startDate: { $lte: reminderTime, $gt: now }
+      startDate: { $lte: reminderTime, $gt: now },
     }).populate('attendees.userId', 'adSoyad email');
 
     for (const eventDoc of eventsWithReminders) {
       const event = eventDoc as unknown as ICalendarEvent;
       for (const reminder of event.reminders) {
         if (!reminder.sent) {
-          const reminderDate = new Date(event.startDate.getTime() - (reminder.minutesBefore * 60 * 1000));
+          const reminderDate = new Date(
+            event.startDate.getTime() - reminder.minutesBefore * 60 * 1000,
+          );
 
           if (reminderDate <= now) {
             await this.sendReminder(event, reminder);
@@ -414,18 +440,21 @@ export class CalendarService {
           }
         }
       }
-      await (eventDoc as any).save();
+      await (eventDoc as Document).save();
     }
   }
 
-  private static async sendReminder(event: ICalendarEvent, reminder: any): Promise<void> {
-    const attendees = event.attendees.filter(a => a.response !== 'declined');
+  private static async sendReminder(
+    event: ICalendarEvent,
+    reminder: ICalendarEvent['reminders'][number],
+  ): Promise<void> {
+    const attendees = event.attendees.filter((a) => a.response !== 'declined');
 
     for (const attendee of attendees) {
       const user = await User.findOne({ id: attendee.userId });
       if (!user) continue;
 
-      const notificationData: any = {
+      const notificationData: CreateNotificationData = {
         title: `Hatırlatma: ${event.title}`,
         message: `${event.title} etkinliği ${reminder.minutesBefore} dakika sonra başlayacak.`,
         type: 'reminder',
@@ -433,23 +462,23 @@ export class CalendarService {
         category: 'administrative',
         recipients: [attendee.userId],
         sender: { id: String(event.createdBy), name: 'Calendar', role: 'system' },
-        actionUrl: `/calendar/event/${event.id}`
+        actionUrl: `/calendar/event/${event.id}`,
       };
 
       if (reminder.type === 'email') {
         await NotificationService.sendEmailNotification(user.id, notificationData);
       } else if (reminder.type === 'push') {
-        await NotificationService.createNotification(notificationData as any);
+        await NotificationService.createNotification(notificationData);
       }
     }
   }
 
   // Notifications
   private static async notifyEventAttendees(event: ICalendarEvent, action: string): Promise<void> {
-    const attendees = event.attendees.filter(a => a.userId !== event.createdBy);
+    const attendees = event.attendees.filter((a) => a.userId !== event.createdBy);
 
     for (const attendee of attendees) {
-      const notificationData: any = {
+      const notificationData: CreateNotificationData = {
         title: `Etkinlik ${action === 'created' ? 'oluşturuldu' : action === 'updated' ? 'güncellendi' : 'silindi'}`,
         message: `${event.title} etkinliği ${action === 'created' ? 'oluşturuldu' : action === 'updated' ? 'güncellendi' : 'silindi'}.`,
         type: 'announcement',
@@ -457,15 +486,19 @@ export class CalendarService {
         category: 'administrative',
         recipients: [attendee.userId],
         sender: { id: String(event.createdBy), name: 'Calendar', role: 'system' },
-        actionUrl: `/calendar/event/${event.id}`
+        actionUrl: `/calendar/event/${event.id}`,
       };
 
-      await NotificationService.createNotification(notificationData as any);
+      await NotificationService.createNotification(notificationData);
     }
   }
 
-  private static async notifyEventOrganizer(event: ICalendarEvent, _action: string, data: any): Promise<void> {
-    const notificationData: any = {
+  private static async notifyEventOrganizer(
+    event: ICalendarEvent,
+    _action: string,
+    data: { userId: string; response: string },
+  ): Promise<void> {
+    const notificationData: CreateNotificationData = {
       title: 'Etkinlik yanıtı',
       message: `Bir katılımcı etkinliğinize yanıt verdi.`,
       type: 'info',
@@ -473,16 +506,25 @@ export class CalendarService {
       category: 'administrative',
       recipients: [event.createdBy],
       sender: { id: String(data.userId), name: 'Calendar', role: 'system' },
-      actionUrl: `/calendar/event/${event.id}`
+      actionUrl: `/calendar/event/${event.id}`,
     };
 
-    await NotificationService.createNotification(notificationData as any);
+    await NotificationService.createNotification(notificationData);
   }
 
   // Analytics
-  static async getCalendarStats(userId: string, userRole: string): Promise<any> {
+  static async getCalendarStats(
+    userId: string,
+    userRole: string,
+  ): Promise<{
+    totalEvents: number;
+    upcomingEvents: number;
+    eventsThisMonth: number;
+    typeDistribution: Record<string, number>;
+    priorityDistribution: Record<string, number>;
+  }> {
     const userCalendars = await this.getUserCalendars(userId, userRole);
-    const calendarIds = userCalendars.map(cal => cal.id);
+    const calendarIds = userCalendars.map((cal) => cal.id);
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -495,9 +537,9 @@ export class CalendarService {
           $or: [
             { createdBy: userId },
             { 'attendees.userId': userId },
-            { isPublic: true, allowedRoles: userRole }
-          ]
-        }
+            { isPublic: true, allowedRoles: userRole },
+          ],
+        },
       },
       {
         $group: {
@@ -505,12 +547,8 @@ export class CalendarService {
           totalEvents: { $sum: 1 },
           upcomingEvents: {
             $sum: {
-              $cond: [
-                { $gte: ['$startDate', now] },
-                1,
-                0
-              ]
-            }
+              $cond: [{ $gte: ['$startDate', now] }, 1, 0],
+            },
           },
           eventsThisMonth: {
             $sum: {
@@ -518,22 +556,22 @@ export class CalendarService {
                 {
                   $and: [
                     { $gte: ['$startDate', startOfMonth] },
-                    { $lte: ['$startDate', endOfMonth] }
-                  ]
+                    { $lte: ['$startDate', endOfMonth] },
+                  ],
                 },
                 1,
-                0
-              ]
-            }
+                0,
+              ],
+            },
           },
           byType: {
-            $push: '$type'
+            $push: '$type',
           },
           byPriority: {
-            $push: '$priority'
-          }
-        }
-      }
+            $push: '$priority',
+          },
+        },
+      },
     ]);
 
     if (stats.length === 0) {
@@ -542,27 +580,33 @@ export class CalendarService {
         upcomingEvents: 0,
         eventsThisMonth: 0,
         typeDistribution: {},
-        priorityDistribution: {}
+        priorityDistribution: {},
       };
     }
 
     const stat = stats[0];
-    const typeDistribution = stat.byType.reduce((acc: any, type: string) => {
-      acc[type] = (acc[type] || 0) + 1;
-      return acc;
-    }, {});
+    const typeDistribution = stat.byType.reduce(
+      (acc: Record<string, number>, type: string) => {
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
-    const priorityDistribution = stat.byPriority.reduce((acc: any, priority: string) => {
-      acc[priority] = (acc[priority] || 0) + 1;
-      return acc;
-    }, {});
+    const priorityDistribution = stat.byPriority.reduce(
+      (acc: Record<string, number>, priority: string) => {
+        acc[priority] = (acc[priority] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     return {
       totalEvents: stat.totalEvents,
       upcomingEvents: stat.upcomingEvents,
       eventsThisMonth: stat.eventsThisMonth,
       typeDistribution,
-      priorityDistribution
+      priorityDistribution,
     };
   }
 }
