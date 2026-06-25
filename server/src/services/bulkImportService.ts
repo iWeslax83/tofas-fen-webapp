@@ -41,13 +41,13 @@ export async function bulkLinkParentChild(links: ParentChildLink[]): Promise<Bul
   // Batch verify existence
   const parents = (await User.find({ id: { $in: parentIds }, rol: 'parent' })
     .select('id childId')
-    .lean()) as any[];
+    .lean()) as Array<{ id: string; childId?: string[] }>;
   const children = (await User.find({ id: { $in: childIds }, rol: 'student' })
     .select('id parentId')
-    .lean()) as any[];
+    .lean()) as Array<{ id: string; parentId?: string }>;
 
-  const parentMap = new Map(parents.map((p: any) => [p.id, p.childId || []]));
-  const childSet = new Set(children.map((c: any) => c.id));
+  const parentMap = new Map(parents.map((p) => [p.id, p.childId || []]));
+  const childSet = new Set(children.map((c) => c.id));
 
   // Group links by parent for efficient bulkWrite
   const parentUpdates = new Map<string, string[]>();

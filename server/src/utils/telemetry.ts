@@ -7,8 +7,14 @@
 // development environments. If OpenTelemetry packages are missing, telemetry will be skipped.
 import logger from './logger';
 
+// Minimal interface for the dynamically-loaded NodeSDK instance
+interface TelemetrySdk {
+  start(): void;
+  shutdown(): Promise<void>;
+}
+
 // Initialize OpenTelemetry SDK
-let sdk: any = null;
+let sdk: TelemetrySdk | null = null;
 
 export function initializeTelemetry() {
   if (sdk) {
@@ -17,7 +23,8 @@ export function initializeTelemetry() {
   }
 
   // Only initialize in production or when explicitly enabled
-  const enableTelemetry = process.env.ENABLE_TELEMETRY === 'true' || process.env.NODE_ENV === 'production';
+  const enableTelemetry =
+    process.env.ENABLE_TELEMETRY === 'true' || process.env.NODE_ENV === 'production';
 
   if (!enableTelemetry) {
     logger.info('Telemetry disabled. Set ENABLE_TELEMETRY=true to enable.');
@@ -27,20 +34,18 @@ export function initializeTelemetry() {
   try {
     // Dynamically require OpenTelemetry packages so missing deps don't crash the app
     // (they are optional for local development)
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+    /* eslint-disable @typescript-eslint/no-require-imports */
     const { NodeSDK } = require('@opentelemetry/sdk-node');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const { Resource } = require('@opentelemetry/resources');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const { PrometheusExporter } = require('@opentelemetry/exporter-prometheus');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-    const { PeriodicExportingMetricReader, ConsoleMetricExporter } = require('@opentelemetry/sdk-metrics');
+    const {
+      PeriodicExportingMetricReader,
+      ConsoleMetricExporter,
+    } = require('@opentelemetry/sdk-metrics');
+    /* eslint-enable @typescript-eslint/no-require-imports */
     const serviceName = process.env.SERVICE_NAME || 'tofas-fen-backend';
     const serviceVersion = process.env.SERVICE_VERSION || '1.0.0';
 
@@ -52,18 +57,23 @@ export function initializeTelemetry() {
     });
 
     // Prometheus metrics exporter
-    const prometheusExporter = new PrometheusExporter({
-      port: parseInt(process.env.PROMETHEUS_PORT || '9464'),
-      endpoint: '/metrics',
-    }, () => {
-      logger.info(`Prometheus metrics server started on port ${process.env.PROMETHEUS_PORT || '9464'}`);
-    });
+    const prometheusExporter = new PrometheusExporter(
+      {
+        port: parseInt(process.env.PROMETHEUS_PORT || '9464'),
+        endpoint: '/metrics',
+      },
+      () => {
+        logger.info(
+          `Prometheus metrics server started on port ${process.env.PROMETHEUS_PORT || '9464'}`,
+        );
+      },
+    );
 
     // Trace exporter (OTLP or Jaeger)
     const traceExporter = process.env.JAEGER_ENDPOINT
       ? new OTLPTraceExporter({
-        url: process.env.JAEGER_ENDPOINT,
-      })
+          url: process.env.JAEGER_ENDPOINT,
+        })
       : new ConsoleMetricExporter(); // Fallback to console
 
     // Create SDK
@@ -99,12 +109,13 @@ export function initializeTelemetry() {
 export function shutdownTelemetry(): Promise<void> {
   return new Promise((resolve) => {
     if (sdk) {
-      sdk.shutdown()
+      sdk
+        .shutdown()
         .then(() => {
           logger.info('Telemetry SDK shut down');
           resolve();
         })
-        .catch((error: any) => {
+        .catch((error: unknown) => {
           logger.error('Error shutting down telemetry SDK:', error);
           resolve();
         });
@@ -126,4 +137,3 @@ process.on('SIGINT', () => {
     process.exit(0);
   });
 });
-

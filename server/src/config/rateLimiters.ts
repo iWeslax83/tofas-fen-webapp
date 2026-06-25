@@ -21,7 +21,7 @@ const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS || 50
  * the login endpoint anonymously can't exhaust a legitimate user's quota.
  */
 function keyByUserOrIp(req: express.Request): string {
-  const userId = (req as any).user?.userId;
+  const userId = req.user?.userId;
   if (userId) return `u:${userId}`;
   return `ip:${req.ip || 'unknown'}`;
 }
@@ -184,7 +184,7 @@ export function createRedisRateLimitStore(): RedisStore | undefined {
     }
     if (!redisStoreClient) return undefined;
     return new RedisStore({
-      sendCommand: (...args: string[]) => (redisStoreClient as any).sendCommand(args),
+      sendCommand: (...args: string[]) => redisStoreClient!.sendCommand(args),
     });
   } catch {
     logger.warn('Failed to create Redis rate limit store, using in-memory fallback');
@@ -199,7 +199,9 @@ export function createEndpointLimiter(opts: { windowMs: number; max: number; mes
     message: { error: opts.message },
     standardHeaders: true,
     legacyHeaders: false,
-    store: createRedisRateLimitStore() as any,
+    // RedisStore (root node_modules) and express-rate-limit Store (server node_modules)
+    // are structurally identical but TypeScript treats them as distinct due to dual-install.
+    store: createRedisRateLimitStore() as unknown as Parameters<typeof rateLimit>[0]['store'],
   });
 }
 

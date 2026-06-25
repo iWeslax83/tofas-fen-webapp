@@ -74,115 +74,127 @@ export interface ICalendar extends Document {
   updatedAt: Date;
 }
 
-const calendarEventSchema = new Schema<ICalendarEvent>({
-  id: { type: String, required: true, unique: true },
-  title: { type: String, required: true, trim: true },
-  description: { type: String, trim: true },
-  startDate: { type: Date, required: true },
-  endDate: { type: Date, required: true },
-  allDay: { type: Boolean, default: false },
-  location: { type: String, trim: true },
-  type: {
-    type: String,
-    required: true,
-    enum: ['class', 'exam', 'activity', 'meeting', 'holiday', 'personal', 'reminder']
-  },
-  priority: {
-    type: String,
-    default: 'medium',
-    enum: ['low', 'medium', 'high', 'urgent']
-  },
-  status: {
-    type: String,
-    default: 'scheduled',
-    enum: ['scheduled', 'in-progress', 'completed', 'cancelled']
-  },
-  color: { type: String, default: '#3B82F6' },
-  isRecurring: { type: Boolean, default: false },
-  recurringPattern: {
-    frequency: {
-      type: String,
-      enum: ['daily', 'weekly', 'monthly', 'yearly']
-    },
-    interval: { type: Number, default: 1, min: 1 },
-    endDate: { type: Date },
-    endAfter: { type: Number, min: 1 },
-    daysOfWeek: [{ type: Number, min: 0, max: 6 }], // 0=Sunday, 1=Monday, etc.
-    dayOfMonth: { type: Number, min: 1, max: 31 },
-    monthOfYear: { type: Number, min: 1, max: 12 }
-  },
-  reminders: [{
+const calendarEventSchema = new Schema<ICalendarEvent>(
+  {
+    id: { type: String, required: true, unique: true },
+    title: { type: String, required: true, trim: true },
+    description: { type: String, trim: true },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    allDay: { type: Boolean, default: false },
+    location: { type: String, trim: true },
     type: {
       type: String,
-      enum: ['email', 'push', 'sms']
+      required: true,
+      enum: ['class', 'exam', 'activity', 'meeting', 'holiday', 'personal', 'reminder'],
     },
-    minutesBefore: { type: Number, required: true, min: 0 },
-    sent: { type: Boolean, default: false }
-  }],
-  attendees: [{
-    userId: { type: String, required: true, ref: 'User' },
-    role: {
+    priority: {
       type: String,
-      enum: ['organizer', 'attendee', 'optional']
+      default: 'medium',
+      enum: ['low', 'medium', 'high', 'urgent'],
     },
-    response: {
+    status: {
       type: String,
-      default: 'pending',
-      enum: ['accepted', 'declined', 'pending', 'tentative']
-    }
-  }],
-  resources: {
-    room: { type: String },
-    equipment: [{ type: String }],
-    materials: [{ type: String }]
+      default: 'scheduled',
+      enum: ['scheduled', 'in-progress', 'completed', 'cancelled'],
+    },
+    color: { type: String, default: '#3B82F6' },
+    isRecurring: { type: Boolean, default: false },
+    recurringPattern: {
+      frequency: {
+        type: String,
+        enum: ['daily', 'weekly', 'monthly', 'yearly'],
+      },
+      interval: { type: Number, default: 1, min: 1 },
+      endDate: { type: Date },
+      endAfter: { type: Number, min: 1 },
+      daysOfWeek: [{ type: Number, min: 0, max: 6 }], // 0=Sunday, 1=Monday, etc.
+      dayOfMonth: { type: Number, min: 1, max: 31 },
+      monthOfYear: { type: Number, min: 1, max: 12 },
+    },
+    reminders: [
+      {
+        type: {
+          type: String,
+          enum: ['email', 'push', 'sms'],
+        },
+        minutesBefore: { type: Number, required: true, min: 0 },
+        sent: { type: Boolean, default: false },
+      },
+    ],
+    attendees: [
+      {
+        userId: { type: String, required: true, ref: 'User' },
+        role: {
+          type: String,
+          enum: ['organizer', 'attendee', 'optional'],
+        },
+        response: {
+          type: String,
+          default: 'pending',
+          enum: ['accepted', 'declined', 'pending', 'tentative'],
+        },
+      },
+    ],
+    resources: {
+      room: { type: String },
+      equipment: [{ type: String }],
+      materials: [{ type: String }],
+    },
+    tags: [{ type: String, trim: true }],
+    isPublic: { type: Boolean, default: false },
+    allowedRoles: [{ type: String }],
+    createdBy: { type: String, required: true },
+    calendarId: { type: String, required: true },
+    parentEventId: { type: String },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
   },
-  tags: [{ type: String, trim: true }],
-  isPublic: { type: Boolean, default: false },
-  allowedRoles: [{ type: String }],
-  createdBy: { type: String, required: true },
-  calendarId: { type: String, required: true },
-  parentEventId: { type: String },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-}, {
-  timestamps: true
-});
+  {
+    timestamps: true,
+  },
+);
 
-const calendarSchema = new Schema<ICalendar>({
-  id: { type: String, required: true, unique: true },
-  name: { type: String, required: true, trim: true },
-  description: { type: String, trim: true },
-  color: { type: String, default: '#3B82F6' },
-  isDefault: { type: Boolean, default: false },
-  isPublic: { type: Boolean, default: false },
-  allowedRoles: [{ type: String }],
-  ownerId: { type: String, required: true },
-  sharedWith: [{
-    userId: { type: String, required: true },
-    permission: {
-      type: String,
-      enum: ['read', 'write', 'admin']
-    }
-  }],
-  settings: {
-    defaultView: {
-      type: String,
-      default: 'month',
-      enum: ['month', 'week', 'day', 'agenda']
+const calendarSchema = new Schema<ICalendar>(
+  {
+    id: { type: String, required: true, unique: true },
+    name: { type: String, required: true, trim: true },
+    description: { type: String, trim: true },
+    color: { type: String, default: '#3B82F6' },
+    isDefault: { type: Boolean, default: false },
+    isPublic: { type: Boolean, default: false },
+    allowedRoles: [{ type: String }],
+    ownerId: { type: String, required: true },
+    sharedWith: [
+      {
+        userId: { type: String, required: true },
+        permission: {
+          type: String,
+          enum: ['read', 'write', 'admin'],
+        },
+      },
+    ],
+    settings: {
+      defaultView: {
+        type: String,
+        default: 'month',
+        enum: ['month', 'week', 'day', 'agenda'],
+      },
+      defaultReminder: { type: Number, default: 15 },
+      workingHours: {
+        start: { type: String, default: '08:00' },
+        end: { type: String, default: '17:00' },
+        days: [{ type: Number, min: 0, max: 6 }], // Default: Monday-Friday
+      },
+      timezone: { type: String, default: 'Europe/Istanbul' },
     },
-    defaultReminder: { type: Number, default: 15 },
-    workingHours: {
-      start: { type: String, default: '08:00' },
-      end: { type: String, default: '17:00' },
-      days: [{ type: Number, min: 0, max: 6 }] // Default: Monday-Friday
-    },
-    timezone: { type: String, default: 'Europe/Istanbul' }
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
   },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-}, {
-  timestamps: true
-});
+  {
+    timestamps: true,
+  },
+);
 
 // Indexes for efficient querying
 calendarEventSchema.index({ calendarId: 1, startDate: 1, endDate: 1 });
@@ -209,9 +221,13 @@ calendarEventSchema.methods.getNextOccurrence = function (): Date | null {
 
   switch (this.recurringPattern.frequency) {
     case 'daily':
-      return new Date(lastOccurrence.getTime() + (this.recurringPattern.interval * 24 * 60 * 60 * 1000));
+      return new Date(
+        lastOccurrence.getTime() + this.recurringPattern.interval * 24 * 60 * 60 * 1000,
+      );
     case 'weekly':
-      return new Date(lastOccurrence.getTime() + (this.recurringPattern.interval * 7 * 24 * 60 * 60 * 1000));
+      return new Date(
+        lastOccurrence.getTime() + this.recurringPattern.interval * 7 * 24 * 60 * 60 * 1000,
+      );
     case 'monthly': {
       const nextMonth = new Date(lastOccurrence);
       nextMonth.setMonth(nextMonth.getMonth() + this.recurringPattern.interval);
@@ -232,19 +248,21 @@ calendarEventSchema.statics.getEventsForDateRange = function (
   calendarId: string,
   startDate: Date,
   endDate: Date,
-  userId?: string
+  userId?: string,
 ) {
-  const query: any = {
+  const query: {
+    calendarId: string;
+    startDate: { $lte: Date };
+    endDate: { $gte: Date };
+    $or?: Array<Record<string, string>>;
+  } = {
     calendarId,
     startDate: { $lte: endDate },
-    endDate: { $gte: startDate }
+    endDate: { $gte: startDate },
   };
 
   if (userId) {
-    query.$or = [
-      { createdBy: userId },
-      { 'attendees.userId': userId }
-    ];
+    query.$or = [{ createdBy: userId }, { 'attendees.userId': userId }];
   }
 
   return this.find(query).sort({ startDate: 1 });
@@ -252,13 +270,16 @@ calendarEventSchema.statics.getEventsForDateRange = function (
 
 calendarEventSchema.statics.getUpcomingReminders = function (minutes: number = 15) {
   const now = new Date();
-  const reminderTime = new Date(now.getTime() + (minutes * 60 * 1000));
+  const reminderTime = new Date(now.getTime() + minutes * 60 * 1000);
 
   return this.find({
     'reminders.sent': false,
-    startDate: { $lte: reminderTime, $gt: now }
+    startDate: { $lte: reminderTime, $gt: now },
   });
 };
 
-export const CalendarEvent = mongoose.models.CalendarEvent || mongoose.model<ICalendarEvent>('CalendarEvent', calendarEventSchema);
-export const Calendar = mongoose.models.Calendar || mongoose.model<ICalendar>('Calendar', calendarSchema);
+export const CalendarEvent =
+  mongoose.models.CalendarEvent ||
+  mongoose.model<ICalendarEvent>('CalendarEvent', calendarEventSchema);
+export const Calendar =
+  mongoose.models.Calendar || mongoose.model<ICalendar>('Calendar', calendarSchema);

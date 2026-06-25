@@ -58,7 +58,7 @@ const upload = multer({
 router.post(
   '/',
   authenticateJWT,
-  uploadLimiter as any,
+  uploadLimiter as import('express').RequestHandler,
   upload.array('attachments', 5), // Max 5 files
   verifyUploadedFiles,
   asyncHandler(async (req: Request, res: Response) => {
@@ -92,8 +92,8 @@ router.post(
     const dilekce = new Dilekce({
       userId: user.userId,
       // Tip denetiminde esneklik için any cast kullanıyoruz
-      userName: (dbUser as any).adSoyad,
-      userRole: (dbUser as any).rol,
+      userName: (dbUser as { adSoyad?: string }).adSoyad,
+      userRole: (dbUser as { rol?: string }).rol,
       type,
       subject,
       content,
@@ -128,12 +128,13 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const { userId, type, status, priority, page = '1', limit = '50', includeChildren } = req.query;
 
-    const authUser = (req as any).user as {
-      userId: string;
-      role: 'student' | 'teacher' | 'parent' | 'admin' | string;
-    };
+    const authUser = (req as unknown as { user?: { userId: string; role: string } }).user;
+    if (!authUser) {
+      res.status(401).json({ error: 'Kullanıcı bilgisi bulunamadı' });
+      return;
+    }
 
-    const query: any = {};
+    const query: Record<string, unknown> = {};
 
     // Role-based filtering
     if (authUser.role === 'admin') {
@@ -152,7 +153,7 @@ router.get(
           isActive: true,
         })
           .select('id')
-          .lean()) as any[];
+          .lean()) as { id: string }[];
 
         const childIds = children.map((child) => child.id);
 
@@ -201,7 +202,7 @@ router.get(
   authenticateJWT,
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const user = (req as any).user;
+    const user = (req as unknown as { user?: { userId: string; role: string } }).user;
 
     const dilekce = await Dilekce.findById(id);
     if (!dilekce) {
@@ -238,7 +239,9 @@ router.put(
       return;
     }
 
-    const admin = (req as any).user;
+    const admin = (
+      req as unknown as { user?: { userId: string; role: string; id?: string; adSoyad?: string } }
+    ).user;
     const dilekce = await Dilekce.findById(id);
 
     if (!dilekce) {
@@ -283,7 +286,7 @@ router.put(
     const { id } = req.params;
     const { subject, content, priority, category } = req.body;
 
-    const user = (req as any).user;
+    const user = (req as unknown as { user?: { userId: string; role: string } }).user;
     const dilekce = await Dilekce.findById(id);
 
     if (!dilekce) {
@@ -331,7 +334,7 @@ router.delete(
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    const user = (req as any).user;
+    const user = (req as unknown as { user?: { userId: string; role: string } }).user;
     const dilekce = await Dilekce.findById(id);
 
     if (!dilekce) {

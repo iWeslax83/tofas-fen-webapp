@@ -118,7 +118,7 @@ export async function migrateEvciRequests(): Promise<void> {
   });
 
   for (const doc of docsWithoutFields) {
-    const updates: Record<string, any> = {};
+    const updates: Record<string, string> = {};
     if (!doc.parentApproval) {
       updates.parentApproval = 'approved';
     }
@@ -145,10 +145,10 @@ export async function migrateEvciRequests(): Promise<void> {
 
   for (const dup of duplicates) {
     // En yeni olanı tut, diğerlerini sil
-    const sorted = dup.docs.sort(
-      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    const sorted = (dup.docs as Array<{ _id: unknown; createdAt: string | Date }>).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
-    const toDelete = sorted.slice(1).map((d: any) => d._id);
+    const toDelete = sorted.slice(1).map((d) => d._id);
     if (toDelete.length > 0) {
       await EvciRequest.deleteMany({ _id: { $in: toDelete } });
     }

@@ -214,7 +214,7 @@ router.get(
       const { studentId } = req.params;
       const { semester, academicYear } = req.query;
 
-      const filter: any = {
+      const filter: MongoFilter<INote> = {
         studentId,
         isActive: true,
       };
@@ -357,10 +357,11 @@ router.put(
       }
 
       // Sadece notu oluşturan öğretmen veya admin güncelleyebilir
+      const existingNoteDoc = existingNote as typeof existingNote & { createdBy?: string };
       if (
         authUser?.role !== 'admin' &&
-        (existingNote as any).createdBy &&
-        (existingNote as any).createdBy !== authUser?.userId
+        existingNoteDoc.createdBy &&
+        existingNoteDoc.createdBy !== authUser?.userId
       ) {
         res.status(403).json({ success: false, error: 'Bu notu güncelleme yetkiniz yok' });
         return;
@@ -719,7 +720,7 @@ router.get(
       const role = req.user?.role;
       const userId = req.user?.userId;
 
-      const filter: any = { isActive: true };
+      const filter: MongoFilter<INote> = { isActive: true };
 
       // Role-based filtering
       if (role === 'student') {
@@ -837,7 +838,7 @@ router.put(
         return;
       }
 
-      const updatePromises = notes.map(async (noteUpdate: any) => {
+      const updatePromises = notes.map(async (noteUpdate: NoteUpdateEntry) => {
         const { id, ...updateData } = noteUpdate;
 
         // Sahiplik kontrolü: admin değilse, notu oluşturan kişi mi kontrol et
@@ -845,8 +846,9 @@ router.put(
           const existingNote = await Note.findById(id);
           if (
             existingNote &&
-            (existingNote as any).createdBy &&
-            (existingNote as any).createdBy !== authUser?.userId
+            (existingNote as typeof existingNote & { createdBy?: string }).createdBy &&
+            (existingNote as typeof existingNote & { createdBy?: string }).createdBy !==
+              authUser?.userId
           ) {
             return null; // Yetkisiz notları atla
           }
@@ -938,7 +940,7 @@ router.get(
       const role = req.user?.role;
       const userId = req.user?.userId;
 
-      const filter: any = {
+      const filter: MongoFilter<INote> = {
         isActive: true,
         $or: [{ studentId: searchRe }, { lesson: searchRe }, { description: searchRe }],
       };

@@ -4,7 +4,15 @@ export interface INotification extends Document {
   userId: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error' | 'request' | 'approval' | 'reminder' | 'announcement';
+  type:
+    | 'info'
+    | 'success'
+    | 'warning'
+    | 'error'
+    | 'request'
+    | 'approval'
+    | 'reminder'
+    | 'announcement';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   category: 'academic' | 'administrative' | 'social' | 'technical' | 'security' | 'general';
   read: boolean;
@@ -16,7 +24,7 @@ export interface INotification extends Document {
   sentAt?: Date;
   deliveredAt?: Date;
   readAt?: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   relatedEntity?: {
     type: 'user' | 'note' | 'announcement' | 'request' | 'club' | 'event';
     id: string;
@@ -31,100 +39,114 @@ export interface INotification extends Document {
   updatedAt: Date;
 }
 
-const notificationSchema = new Schema<INotification>({
-  userId: {
-    type: String,
-    required: true,
-    index: true
-  },
-  title: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 200
-  },
-  message: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 1000
-  },
-  type: {
-    type: String,
-    enum: ['info', 'success', 'warning', 'error', 'request', 'approval', 'reminder', 'announcement'],
-    default: 'info',
-    index: true
-  },
-  priority: {
-    type: String,
-    enum: ['low', 'medium', 'high', 'urgent'],
-    default: 'medium',
-    index: true
-  },
-  category: {
-    type: String,
-    enum: ['academic', 'administrative', 'social', 'technical', 'security', 'general'],
-    default: 'general',
-    index: true
-  },
-  read: {
-    type: Boolean,
-    default: false,
-    index: true
-  },
-  archived: {
-    type: Boolean,
-    default: false,
-    index: true
-  },
-  actionUrl: {
-    type: String,
-    trim: true
-  },
-  actionText: {
-    type: String,
-    trim: true,
-    maxlength: 50
-  },
-  icon: {
-    type: String,
-    trim: true
-  },
-  expiresAt: {
-    type: Date,
-    index: true
-  },
-  sentAt: {
-    type: Date,
-    default: Date.now
-  },
-  deliveredAt: {
-    type: Date
-  },
-  readAt: {
-    type: Date
-  },
-  metadata: {
-    type: Schema.Types.Mixed
-  },
-  relatedEntity: {
+const notificationSchema = new Schema<INotification>(
+  {
+    userId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 200,
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 1000,
+    },
     type: {
       type: String,
-      enum: ['user', 'note', 'announcement', 'request', 'club', 'event']
+      enum: [
+        'info',
+        'success',
+        'warning',
+        'error',
+        'request',
+        'approval',
+        'reminder',
+        'announcement',
+      ],
+      default: 'info',
+      index: true,
     },
-    id: String
+    priority: {
+      type: String,
+      enum: ['low', 'medium', 'high', 'urgent'],
+      default: 'medium',
+      index: true,
+    },
+    category: {
+      type: String,
+      enum: ['academic', 'administrative', 'social', 'technical', 'security', 'general'],
+      default: 'general',
+      index: true,
+    },
+    read: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    archived: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    actionUrl: {
+      type: String,
+      trim: true,
+    },
+    actionText: {
+      type: String,
+      trim: true,
+      maxlength: 50,
+    },
+    icon: {
+      type: String,
+      trim: true,
+    },
+    expiresAt: {
+      type: Date,
+      index: true,
+    },
+    sentAt: {
+      type: Date,
+      default: Date.now,
+    },
+    deliveredAt: {
+      type: Date,
+    },
+    readAt: {
+      type: Date,
+    },
+    metadata: {
+      type: Schema.Types.Mixed,
+    },
+    relatedEntity: {
+      type: {
+        type: String,
+        enum: ['user', 'note', 'announcement', 'request', 'club', 'event'],
+      },
+      id: String,
+    },
+    recipients: [
+      {
+        type: String,
+      },
+    ],
+    sender: {
+      id: String,
+      name: String,
+      role: String,
+    },
   },
-  recipients: [{
-    type: String
-  }],
-  sender: {
-    id: String,
-    name: String,
-    role: String
-  }
-}, {
-  timestamps: true
-});
+  {
+    timestamps: true,
+  },
+);
 
 // Indexes for better query performance
 notificationSchema.index({ userId: 1, read: 1, createdAt: -1 });
@@ -160,34 +182,34 @@ notificationSchema.statics.getUnreadCount = function (userId: string) {
     userId,
     read: false,
     archived: false,
-    $or: [
-      { expiresAt: { $exists: false } },
-      { expiresAt: { $gt: new Date() } }
-    ]
+    $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: new Date() } }],
   });
 };
 
 // Static method to get notifications with pagination
-notificationSchema.statics.getNotifications = function (userId: string, options: {
-  page?: number;
-  limit?: number;
-  read?: boolean;
-  type?: string;
-  category?: string;
-  priority?: string;
-  includeArchived?: boolean;
-} = {}) {
-  const {
-    page = 1,
-    limit = 20,
-    read,
-    type,
-    category,
-    priority,
-    includeArchived = false
-  } = options;
+notificationSchema.statics.getNotifications = function (
+  userId: string,
+  options: {
+    page?: number;
+    limit?: number;
+    read?: boolean;
+    type?: string;
+    category?: string;
+    priority?: string;
+    includeArchived?: boolean;
+  } = {},
+) {
+  const { page = 1, limit = 20, read, type, category, priority, includeArchived = false } = options;
 
-  const query: any = { userId };
+  const query: {
+    userId: string;
+    read?: boolean;
+    type?: string;
+    category?: string;
+    priority?: string;
+    archived?: boolean;
+    $or?: Array<Record<string, unknown>>;
+  } = { userId };
 
   if (read !== undefined) query.read = read;
   if (type) query.type = type;
@@ -196,10 +218,7 @@ notificationSchema.statics.getNotifications = function (userId: string, options:
   if (!includeArchived) query.archived = false;
 
   // Exclude expired notifications
-  query.$or = [
-    { expiresAt: { $exists: false } },
-    { expiresAt: { $gt: new Date() } }
-  ];
+  query.$or = [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: new Date() } }];
 
   return this.find(query)
     .sort({ priority: -1, createdAt: -1 })
@@ -207,4 +226,5 @@ notificationSchema.statics.getNotifications = function (userId: string, options:
     .limit(limit);
 };
 
-export const Notification = mongoose.models.Notification || mongoose.model<INotification>("Notification", notificationSchema);
+export const Notification =
+  mongoose.models.Notification || mongoose.model<INotification>('Notification', notificationSchema);

@@ -53,7 +53,7 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const { role } = req.query;
-      const filter: any = {};
+      const filter: Record<string, unknown> = {};
       if (role) {
         filter.rol = role;
       }
@@ -131,7 +131,7 @@ router.get(
     try {
       const { role } = req.params;
       const { search } = req.query;
-      const filter: any = { rol: role };
+      const filter: Record<string, unknown> = { rol: role };
 
       if (search) {
         const re = safeSearchRegex(String(search));
@@ -214,7 +214,7 @@ router.get(
  */
 router.post('/parent-child-link', authenticateJWT, async (req, res) => {
   const { parentId, childId } = req.body;
-  const authUser = (req as any).user;
+  const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
 
   // Yetki kontrolü: Admin veya parentId kendisi olmalı
   if (authUser?.role !== 'admin' && authUser?.userId !== parentId) {
@@ -274,7 +274,7 @@ router.post('/parent-child-link', authenticateJWT, async (req, res) => {
  */
 router.get('/parent/:parentId/children', authenticateJWT, async (req, res) => {
   const { parentId } = req.params;
-  const authUser = (req as any).user;
+  const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
 
   const allowedRoles = ['admin', 'teacher'];
   if (!allowedRoles.includes(authUser.role) && authUser.userId !== parentId) {
@@ -428,7 +428,7 @@ router.post(
  */
 router.put('/:userId', authenticateJWT, async (req, res) => {
   const { userId } = req.params;
-  const authUser = (req as any).user;
+  const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
 
   // GÜVENLİK: Kullanıcı sadece kendini güncelleyebilir, admin herkesi güncelleyebilir
   if (authUser?.userId !== userId && authUser?.role !== 'admin') {
@@ -511,7 +511,7 @@ router.put('/:userId', authenticateJWT, async (req, res) => {
  */
 router.put('/:userId/update', authenticateJWT, async (req, res) => {
   const { userId } = req.params;
-  const authUser = (req as any).user;
+  const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
 
   // GÜVENLİK: Kullanıcı sadece kendini güncelleyebilir, admin herkesi güncelleyebilir
   if (authUser?.userId !== userId && authUser?.role !== 'admin') {
@@ -533,7 +533,9 @@ router.put('/:userId/update', authenticateJWT, async (req, res) => {
 
   // If email is being changed, reset verification and disable 2FA (#18)
   if (updateData.email) {
-    const currentUser = (await User.findOne({ id: userId }).select('email').lean()) as any;
+    const currentUser = (await User.findOne({ id: userId }).select('email').lean()) as {
+      email?: string;
+    } | null;
     if (currentUser && currentUser.email !== updateData.email) {
       updateData.emailVerified = false;
       updateData.emailVerificationCode = null;
@@ -787,7 +789,7 @@ router.delete('/:userId', authenticateJWT, authorizeRoles(['admin']), async (req
  */
 router.get('/me', authenticateJWT, async (req, res) => {
   try {
-    const userId = (req as any).user?.userId;
+    const userId = (req as unknown as { user?: { userId?: string; role?: string } }).user?.userId;
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
@@ -837,7 +839,7 @@ router.get('/me', authenticateJWT, async (req, res) => {
 router.get('/:userId', authenticateJWT, async (req, res) => {
   try {
     const { userId } = req.params;
-    const authUser = (req as any).user;
+    const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
 
     // Sadece kendi bilgilerini veya admin/teacher tüm kullanıcıları görebilir
     if (authUser?.userId !== userId && authUser?.role !== 'admin' && authUser?.role !== 'teacher') {

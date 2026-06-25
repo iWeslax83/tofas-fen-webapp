@@ -5,7 +5,8 @@
 
 import { IResolvers } from '@graphql-tools/utils';
 import DataLoader from 'dataloader';
-import { User } from '../../models/User';
+import { FilterQuery } from 'mongoose';
+import { User, IUser } from '../../models/User';
 import Announcement from '../../models/Announcement';
 import { Homework } from '../../models/Homework';
 import Note from '../../models/Note';
@@ -27,10 +28,10 @@ export const createUserLoader = () => {
 
 // Context type
 export interface GraphQLContext {
-  user?: any;
-  userLoader: DataLoader<string, any>;
+  user?: IUser | null;
+  userLoader: DataLoader<string, IUser | null>;
   dataLoaders: {
-    user: DataLoader<string, any>;
+    user: DataLoader<string, IUser | null>;
   };
 }
 
@@ -49,7 +50,7 @@ export const resolvers: IResolvers = {
     },
 
     users: async (_parent, { role, page = 1, limit = 20 }) => {
-      const query: any = {};
+      const query: FilterQuery<IUser> = {};
       if (role) query.rol = role;
 
       const skip = (page - 1) * limit;
@@ -71,7 +72,7 @@ export const resolvers: IResolvers = {
     },
 
     announcements: async (_parent, { filters = {}, page = 1, limit = 20 }) => {
-      const query: any = {};
+      const query: FilterQuery<typeof Announcement> = {};
       if (filters.targetAudience) {
         query.targetAudience = { $in: filters.targetAudience };
       }
@@ -101,7 +102,7 @@ export const resolvers: IResolvers = {
     },
 
     homeworks: async (_parent, { filters = {}, page = 1, limit = 20 }) => {
-      const query: any = {};
+      const query: FilterQuery<typeof Homework> = {};
       if (filters.assignedTo) query.assignedTo = filters.assignedTo;
       if (filters.createdBy) query.createdBy = filters.createdBy;
       if (filters.dueDateFrom || filters.dueDateTo) {
@@ -138,7 +139,7 @@ export const resolvers: IResolvers = {
     },
 
     evciRequests: async (_parent, { filters = {}, page = 1, limit = 20 }) => {
-      const query: any = {};
+      const query: FilterQuery<typeof EvciRequest> = {};
       if (filters.studentId) query.studentId = filters.studentId;
       if (filters.status) query.status = filters.status;
 
@@ -165,7 +166,7 @@ export const resolvers: IResolvers = {
       return EvciRequest.find({ studentId: context.user._id }).populate('approvedBy');
     },
 
-    meals: async (_parent, { date }) => {
+    meals: async (_parent, { date: _date }) => {
       // Implementation depends on your Meal model
       // This is a placeholder
       return [];

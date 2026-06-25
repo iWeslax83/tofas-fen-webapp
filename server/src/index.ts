@@ -282,7 +282,10 @@ if (process.env.NODE_ENV !== 'test') {
         // Initialize Redis-backed services (WAF, SecurityAlerts)
         if (isRedisConfigured) {
           initWafRedis(cacheRedis);
-          initSecurityAlertRedis(cacheRedis);
+          // Guarded by isRedisConfigured: cacheRedis is the real ioredis client
+          // here (the RedisStub fallback only exists when Redis is unconfigured),
+          // and SecurityAlertService needs real sorted-set/set commands.
+          initSecurityAlertRedis(cacheRedis as Parameters<typeof initSecurityAlertRedis>[0]);
         }
 
         // Initialize WebSocket for real-time notifications

@@ -13,7 +13,7 @@ export const validateRequest = (req: Request, res: Response, next: NextFunction)
       userAgent: req.get('User-Agent'),
       path: req.path,
       method: req.method,
-      userId: (req as any).user?.id || 'anonymous',
+      userId: req.user?.userId || 'anonymous',
       errors: errors.array(),
     });
 
@@ -36,12 +36,12 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
 
     // Sanitize query parameters
     if (req.query) {
-      req.query = sanitizeObject(req.query);
+      req.query = sanitizeObject(req.query) as typeof req.query;
     }
 
     // Sanitize URL parameters
     if (req.params) {
-      req.params = sanitizeObject(req.params);
+      req.params = sanitizeObject(req.params) as typeof req.params;
     }
 
     next();
@@ -57,13 +57,13 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
 };
 
 // Recursively sanitize objects and arrays
-const sanitizeObject = (obj: any): any => {
+const sanitizeObject = (obj: unknown): unknown => {
   if (Array.isArray(obj)) {
     return obj.map((item) => sanitizeObject(item));
   }
 
   if (obj !== null && typeof obj === 'object') {
-    const sanitized: any = {};
+    const sanitized: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
       sanitized[key] = sanitizeObject(value);
     }

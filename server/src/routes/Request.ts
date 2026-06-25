@@ -13,7 +13,7 @@ router.get(
   authenticateJWT,
   asyncHandler(async (req, res) => {
     try {
-      const authUser = (req as any).user;
+      const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
       // IDOR koruması: Sadece kendi taleplerini veya admin görebilir
       if (authUser?.userId !== req.params.userId && authUser?.role !== 'admin') {
         return res.status(403).json({ error: 'Bu talepleri görme yetkiniz yok' });
@@ -113,8 +113,11 @@ router.delete(
         return res.status(404).json({ error: 'Talep bulunamadı' });
       }
       // Sahiplik kontrolü: Sadece talebi oluşturan veya admin silebilir
-      const authUser = (req as any).user;
-      if ((requestDoc as any).userId !== authUser?.userId && authUser?.role !== 'admin') {
+      const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
+      if (
+        (requestDoc as { userId?: string }).userId !== authUser?.userId &&
+        authUser?.role !== 'admin'
+      ) {
         return res.status(403).json({ error: 'Bu talebi silme yetkiniz yok' });
       }
       await RequestModel.findByIdAndDelete(req.params.id);

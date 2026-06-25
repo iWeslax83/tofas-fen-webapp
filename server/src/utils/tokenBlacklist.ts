@@ -1,12 +1,24 @@
 import { Redis } from 'ioredis';
 import logger from './logger';
 
+/** Minimal subset of the Redis API used by this class */
+interface RedisLike {
+  get(key: string): Promise<string | null>;
+  setex(key: string, ttl: number, value: string): Promise<unknown>;
+  del(...keys: string[]): Promise<number>;
+  keys(pattern: string): Promise<string[]>;
+  quit(): Promise<unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  on(event: string, listener: (...args: any[]) => void): this;
+  memory?(command: string, key: string): Promise<number | null>;
+}
+
 /**
  * Token Blacklist Manager
  * Manages blacklisted tokens for security purposes
  */
 class TokenBlacklistManager {
-  private redis: Redis | any;
+  private redis: RedisLike;
   private static instance: TokenBlacklistManager;
   private isConnected: boolean = false;
   private memoryStore: Map<string, number> = new Map(); // token → expiresAt timestamp
@@ -16,23 +28,25 @@ class TokenBlacklistManager {
     // Initialize Redis connection (prefer REDIS_URL if provided)
     const redisUrl = process.env.REDIS_URL;
     const isDevelopment = process.env.NODE_ENV !== 'production';
-    
+
     try {
       if (redisUrl) {
-        this.redis = new Redis(redisUrl as any, {
+        this.redis = new Redis(redisUrl, {
           maxRetriesPerRequest: 3,
           lazyConnect: true,
           retryStrategy: (times: number) => {
             if (times > 3) {
               if (isDevelopment) {
-                logger.warn('Redis connection failed, continuing without Redis in development mode');
+                logger.warn(
+                  'Redis connection failed, continuing without Redis in development mode',
+                );
                 return null; // Stop retrying in development
               }
               return null; // Stop retrying after 3 attempts
             }
             return Math.min(times * 50, 2000);
           },
-          enableOfflineQueue: false
+          enableOfflineQueue: false,
         });
       } else {
         this.redis = new Redis({
@@ -44,22 +58,27 @@ class TokenBlacklistManager {
           retryStrategy: (times: number) => {
             if (times > 3) {
               if (isDevelopment) {
-                logger.warn('Redis connection failed, continuing without Redis in development mode');
+                logger.warn(
+                  'Redis connection failed, continuing without Redis in development mode',
+                );
                 return null;
               }
               return null;
             }
             return Math.min(times * 50, 2000);
           },
-          enableOfflineQueue: false
-        } as any);
+          enableOfflineQueue: false,
+        });
       }
 
       // Handle Redis connection errors gracefully
       this.redis.on('error', (error: Error) => {
         this.isConnected = false;
         if (isDevelopment) {
-          logger.warn('Redis connection error (development mode, continuing without Redis):', error.message);
+          logger.warn(
+            'Redis connection error (development mode, continuing without Redis):',
+            error.message,
+          );
         } else {
           logger.error('Redis connection error:', error);
         }
@@ -81,8 +100,8 @@ class TokenBlacklistManager {
         del: async () => 0,
         keys: async () => [],
         quit: async () => undefined,
-        on: () => undefined
-      } as any;
+        on: () => ({ on: () => undefined }) as unknown as RedisLike,
+      } satisfies RedisLike;
     }
   }
 
@@ -98,14 +117,17 @@ class TokenBlacklistManager {
    */
   private startCleanupInterval(): void {
     if (this.cleanupInterval) return;
-    this.cleanupInterval = setInterval(() => {
-      const now = Date.now();
-      for (const [token, expiresAt] of this.memoryStore) {
-        if (expiresAt <= now) {
-          this.memoryStore.delete(token);
+    this.cleanupInterval = setInterval(
+      () => {
+        const now = Date.now();
+        for (const [token, expiresAt] of this.memoryStore) {
+          if (expiresAt <= now) {
+            this.memoryStore.delete(token);
+          }
         }
-      }
-    }, 5 * 60 * 1000);
+      },
+      5 * 60 * 1000,
+    );
     // Allow process to exit without waiting for this interval
     if (this.cleanupInterval.unref) {
       this.cleanupInterval.unref();
@@ -218,10 +240,10 @@ class TokenBlacklistManager {
     try {
       const keys = await this.redis.keys('blacklist:*');
       const info = await this.redis.memory('USAGE', 'blacklist:*');
-      
+
       return {
         count: keys.length,
-        memory: String(info || '0')
+        memory: String(info || '0'),
       };
     } catch (error) {
       logger.warn('Error getting blacklist stats:', error);

@@ -3,6 +3,7 @@
  * This migration creates essential indexes for performance optimization
  */
 
+import type { IndexSpecification, CreateIndexesOptions } from 'mongoose/node_modules/mongodb';
 import { User } from '../models/User';
 import logger from '../utils/logger';
 
@@ -18,13 +19,18 @@ const migration: Migration = {
   async up() {
     logger.info('Running migration: 001-create-indexes (up)');
 
-    const safeCreateIndex = async (collection: any, spec: any, options: any) => {
+    const safeCreateIndex = async (
+      collection: (typeof User)['collection'],
+      spec: IndexSpecification,
+      options: CreateIndexesOptions,
+    ) => {
       try {
         await collection.createIndex(spec, options);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Skip if index already exists (code 85 = IndexOptionsConflict, code 86 = IndexKeySpecsConflict)
-        if (error.code === 85 || error.code === 86) {
-          logger.info(`⏭️  Index ${options.name} already exists, skipping`);
+        const mongoError = error as { code?: number };
+        if (mongoError.code === 85 || mongoError.code === 86) {
+          logger.info(`⏭️  Index ${String(options.name)} already exists, skipping`);
         } else {
           throw error;
         }
