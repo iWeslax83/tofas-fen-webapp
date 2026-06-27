@@ -232,13 +232,14 @@ if (process.env.ENABLE_GRAPHQL === 'true' || process.env.NODE_ENV !== 'productio
     app.use('/graphql', graphqlLimiter);
   });
 
-  import('./graphql/server')
-    .then(({ createApolloServer }) => {
+  Promise.all([import('./graphql/server'), import('@apollo/server/express4')])
+    .then(async ([{ createApolloServer, createGraphQLContext }, { expressMiddleware }]) => {
       const apolloServer = createApolloServer();
-      apolloServer.start().then(() => {
-        apolloServer.applyMiddleware({ app, path: '/graphql' });
-        logger.info(`GraphQL server ready at http://localhost:${PORT}${apolloServer.graphqlPath}`);
-      });
+      await apolloServer.start();
+      // Body parsing is already applied globally (express.json above). The
+      // graphqlLimiter mounted earlier still runs before this handler.
+      app.use('/graphql', expressMiddleware(apolloServer, { context: createGraphQLContext }));
+      logger.info(`GraphQL server ready at http://localhost:${PORT}/graphql`);
     })
     .catch((err) => {
       logger.warn('GraphQL server could not be initialized (optional in dev)', {
@@ -281,7 +282,10 @@ if (process.env.NODE_ENV !== 'test') {
         // Initialize Redis-backed services (WAF, SecurityAlerts)
         if (isRedisConfigured) {
           initWafRedis(cacheRedis);
-          initSecurityAlertRedis(cacheRedis);
+          // Guarded by isRedisConfigured: cacheRedis is the real ioredis client
+          // here (the RedisStub fallback only exists when Redis is unconfigured),
+          // and SecurityAlertService needs real sorted-set/set commands.
+          initSecurityAlertRedis(cacheRedis as Parameters<typeof initSecurityAlertRedis>[0]);
         }
 
         // Initialize WebSocket for real-time notifications

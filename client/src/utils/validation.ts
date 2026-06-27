@@ -222,9 +222,9 @@ export const scheduleSchema = yup.object({
 });
 
 // Generic validation helper
-export const validateForm = async <T>(
-  schema: yup.ObjectSchema<any>,
-  data: T,
+export const validateForm = async <T extends yup.AnyObject>(
+  schema: yup.ObjectSchema<T>,
+  data: unknown,
 ): Promise<{ isValid: boolean; errors: Record<string, string> }> => {
   try {
     await schema.validate(data, { abortEarly: false });

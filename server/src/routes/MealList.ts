@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { MealList, IMealList } from '../models/MealList';
+import { FilterQuery } from 'mongoose';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import { validateMealList } from '../middleware/validation';
 import logger from '../utils/logger';
@@ -14,7 +15,7 @@ router.get(
   asyncHandler(async (req, res) => {
     try {
       const { date, mealType } = req.query;
-      const filter: any = {};
+      const filter: FilterQuery<IMealList> = {};
 
       if (date) {
         filter.date = new Date(date as string);

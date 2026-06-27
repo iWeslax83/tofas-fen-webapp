@@ -199,10 +199,11 @@ export class CommunicationService {
     };
 
     // Update unread count for other participants
-    conversation.participants.forEach((participant: any) => {
+    conversation.participants.forEach((participant) => {
       if (participant.userId !== data.senderId && participant.isActive) {
-        const current = (conversation.unreadCount as any).get(participant.userId) || 0;
-        (conversation.unreadCount as any).set(participant.userId, current + 1);
+        const current =
+          (conversation.unreadCount as Record<string, number>)[participant.userId] || 0;
+        (conversation.unreadCount as Record<string, number>)[participant.userId] = current + 1;
       }
     });
 
@@ -250,12 +251,15 @@ export class CommunicationService {
 
     // Mark messages as read
     const unreadMessages = messageDocs.filter(
-      (msg: any) =>
-        msg.senderId !== userId && !msg.readBy.some((read: any) => read.userId === userId),
+      (msg) =>
+        (msg as IMessage).senderId !== userId &&
+        !(msg as IMessage).readBy.some((read) => read.userId === userId),
     );
 
-    for (const message of unreadMessages as any[]) {
-      await (message as any).markAsRead(userId);
+    for (const message of unreadMessages) {
+      await (message as IMessage & { markAsRead: (userId: string) => Promise<void> }).markAsRead(
+        userId,
+      );
     }
 
     const messages = messageDocs.reverse() as unknown as IMessage[];
@@ -317,7 +321,9 @@ export class CommunicationService {
       throw new Error('Cannot react to deleted message');
     }
 
-    await (message as any).addReaction(userId, emoji);
+    await (
+      message as IMessage & { addReaction: (userId: string, emoji: string) => Promise<void> }
+    ).addReaction(userId, emoji);
     return message;
   }
 
@@ -375,7 +381,7 @@ export class CommunicationService {
     userId: string,
     filters?: ConversationFilters,
   ): Promise<IConversation[]> {
-    const query: any = {
+    const query: Record<string, unknown> = {
       'participants.userId': userId,
       'participants.isActive': true,
     };
@@ -397,12 +403,12 @@ export class CommunicationService {
       .populate('participants.userId', 'name role avatar');
 
     if (filters?.hasUnread) {
-      return (conversations as any[]).filter(
-        (conv: any) => (conv.unreadCount?.get(userId) || 0) > 0,
+      return (conversations as unknown as IConversation[]).filter(
+        (conv) => ((conv.unreadCount as Record<string, number>)[userId] || 0) > 0,
       );
     }
 
-    return conversations as any;
+    return conversations as unknown as IConversation[];
   }
 
   static async addParticipant(
@@ -415,8 +421,12 @@ export class CommunicationService {
       throw new Error('Conversation not found');
     }
 
-    await (conversation as any).addParticipant(userId, role);
-    return conversation as any;
+    await (
+      conversation as IConversation & {
+        addParticipant: (userId: string, role: string) => Promise<void>;
+      }
+    ).addParticipant(userId, role);
+    return conversation as unknown as IConversation;
   }
 
   static async removeParticipant(conversationId: string, userId: string): Promise<IConversation> {
@@ -425,8 +435,10 @@ export class CommunicationService {
       throw new Error('Conversation not found');
     }
 
-    await (conversation as any).removeParticipant(userId);
-    return conversation as any;
+    await (
+      conversation as IConversation & { removeParticipant: (userId: string) => Promise<void> }
+    ).removeParticipant(userId);
+    return conversation as unknown as IConversation;
   }
 
   // Email Management
@@ -492,7 +504,7 @@ export class CommunicationService {
     limit: number = 20,
   ): Promise<{ emails: IEmail[]; total: number }> {
     const skip = (page - 1) * limit;
-    let query: any;
+    let query: Record<string, unknown>;
 
     if (type === 'sent') {
       query = { 'from.userId': userId };
@@ -550,7 +562,7 @@ export class CommunicationService {
     category?: string;
     isActive?: boolean;
   }): Promise<IChatRoom[]> {
-    const query: any = {};
+    const query: Record<string, unknown> = {};
 
     if (filters?.type) {
       query.type = filters.type;
@@ -663,7 +675,7 @@ export class CommunicationService {
     userId: string,
     filters?: { isFavorite?: boolean; isBlocked?: boolean; tags?: string[] },
   ): Promise<IContact[]> {
-    const query: any = { userId };
+    const query: Record<string, unknown> = { userId };
 
     if (filters?.isFavorite !== undefined) {
       query.isFavorite = filters.isFavorite;
@@ -723,8 +735,8 @@ export class CommunicationService {
     }
 
     contact.isBlocked = false;
-    contact.blockedAt = undefined as any;
-    contact.blockReason = undefined as any;
+    contact.blockedAt = undefined;
+    contact.blockReason = undefined;
     contact.updatedAt = new Date();
     await contact.save();
 
@@ -737,7 +749,7 @@ export class CommunicationService {
     query: string,
     filters?: MessageFilters,
   ): Promise<IMessage[]> {
-    const searchQuery: any = {
+    const searchQuery: Record<string, unknown> = {
       $or: [
         { content: { $regex: query, $options: 'i' } },
         { senderName: { $regex: query, $options: 'i' } },
@@ -762,9 +774,10 @@ export class CommunicationService {
     }
 
     if (filters?.dateFrom || filters?.dateTo) {
-      searchQuery.createdAt = {};
-      if (filters.dateFrom) searchQuery.createdAt.$gte = filters.dateFrom;
-      if (filters.dateTo) searchQuery.createdAt.$lte = filters.dateTo;
+      const dateFilter: { $gte?: Date; $lte?: Date } = {};
+      if (filters.dateFrom) dateFilter.$gte = filters.dateFrom;
+      if (filters.dateTo) dateFilter.$lte = filters.dateTo;
+      searchQuery.createdAt = dateFilter;
     }
 
     if (filters?.hasAttachments) {
@@ -774,7 +787,12 @@ export class CommunicationService {
     return await Message.find(searchQuery).sort({ createdAt: -1 }).limit(100);
   }
 
-  static async getCommunicationStats(userId: string): Promise<any> {
+  static async getCommunicationStats(userId: string): Promise<{
+    totalMessages?: number;
+    totalConversations?: number;
+    messagesByType?: Array<{ contentType: string; date: string }>;
+    unreadCount: number;
+  }> {
     const stats = await Message.aggregate([
       { $match: { senderId: userId } },
       {

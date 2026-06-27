@@ -13,8 +13,11 @@ import * as Sentry from '@sentry/react';
 import { safeConsoleError, safeConsoleLog } from './utils/safeLogger';
 
 // Fix for "process is not defined" error
-if (typeof window !== 'undefined' && !(window as any).process) {
-  (window as any).process = {
+if (
+  typeof window !== 'undefined' &&
+  !(window as Window & { process?: { env: { NODE_ENV: string } } }).process
+) {
+  (window as Window & { process?: { env: { NODE_ENV: string } } }).process = {
     env: {
       NODE_ENV: import.meta.env.MODE || 'development',
     },

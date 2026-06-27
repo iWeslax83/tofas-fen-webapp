@@ -1,101 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { EvciRequest, getWeekMonday } from '../models/EvciRequest';
-import { User } from '../models/User';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import { getParentChildIds, verifyParentChildAccess } from '../middleware/parentChildAccess';
-import { NotificationService } from '../services/NotificationService';
 import { AuditLogService } from '../services/auditLogService';
-import { publishEvent } from '../utils/websocket-enhanced';
-import { EventType } from '../services/EventService';
-import { EvciWindowOverride } from '../models/EvciWindowOverride';
-import { EvciExportService } from '../services/evciExportService';
-import { PushNotificationService } from '../services/pushNotificationService';
+import { getWeekMonday } from '../models/EvciRequest';
+import { EvciRequestService } from '../services/EvciRequestService';
 import logger from '../utils/logger';
 
 const router = Router();
-
-/**
- * Türkiye saatiyle (UTC+3) mevcut zamanı döner.
- */
-function getTurkeyNow(): Date {
-  const now = new Date();
-  // UTC milisaniye + 3 saat offset
-  const turkeyOffset = 3 * 60 * 60 * 1000;
-  return new Date(now.getTime() + turkeyOffset + now.getTimezoneOffset() * 60 * 1000);
-}
-
-/**
- * Talep penceresi açık mı? Önce override kontrol, sonra default gün kontrolü.
- */
-async function isSubmissionWindowOpen(): Promise<boolean> {
-  const turkeyNow = getTurkeyNow();
-  const weekOf = getWeekMonday(turkeyNow);
-
-  // Override kontrolü
-  const override = await EvciWindowOverride.findOne({ weekOf });
-  if (override) {
-    return override.isOpen;
-  }
-
-  const day = turkeyNow.getDay(); // 0=Pazar, 1=Pazartesi, ..., 4=Perşembe
-  return day >= 1 && day <= 4;
-}
-
-/**
- * Zaman penceresi bilgisini hesapla.
- */
-async function getSubmissionWindowInfo() {
-  const turkeyNow = getTurkeyNow();
-  const day = turkeyNow.getDay();
-  const weekOf = getWeekMonday(turkeyNow);
-
-  // Override kontrolü
-  const override = await EvciWindowOverride.findOne({ weekOf });
-  let isOpen: boolean;
-  let reason: string | undefined;
-
-  if (override) {
-    isOpen = override.isOpen;
-    reason = override.reason;
-  } else {
-    isOpen = day >= 1 && day <= 4;
-  }
-
-  // Bu haftanın pazartesisi (pencere başlangıcı)
-  const mondayDiff = day === 0 ? 6 : day - 1;
-  const windowStart = new Date(turkeyNow);
-  windowStart.setDate(turkeyNow.getDate() - mondayDiff);
-  windowStart.setHours(0, 0, 0, 0);
-
-  // Bu haftanın perşembesi 23:59 (pencere bitişi)
-  const windowEnd = new Date(windowStart);
-  windowEnd.setDate(windowStart.getDate() + 3); // Perşembe
-  windowEnd.setHours(23, 59, 59, 999);
-
-  // Sonraki pencere başlangıcı
-  let nextWindowStart: Date;
-  if (day >= 5 || day === 0) {
-    // Cuma, Cumartesi veya Pazar: sonraki Pazartesi
-    const daysUntilMonday = day === 0 ? 1 : 8 - day;
-    nextWindowStart = new Date(turkeyNow);
-    nextWindowStart.setDate(turkeyNow.getDate() + daysUntilMonday);
-    nextWindowStart.setHours(0, 0, 0, 0);
-  } else {
-    // Pazartesi-Perşembe: pencere zaten açık, sonraki pencere gelecek hafta
-    nextWindowStart = new Date(windowStart);
-    nextWindowStart.setDate(windowStart.getDate() + 7);
-  }
-
-  return {
-    isOpen,
-    reason,
-    windowStart: windowStart.toISOString(),
-    windowEnd: windowEnd.toISOString(),
-    nextWindowStart: nextWindowStart.toISOString(),
-    serverTime: turkeyNow.toISOString(),
-    weekOf,
-  };
-}
 
 // ============================================================
 // Named routes MUST come before /:id routes (Express KRİTİK)
@@ -118,7 +29,7 @@ async function getSubmissionWindowInfo() {
  */
 router.get('/submission-window', authenticateJWT, async (_req: Request, res: Response) => {
   try {
-    res.json(await getSubmissionWindowInfo());
+    res.json(await EvciRequestService.getSubmissionWindowInfo());
   } catch (error) {
     logger.error('Error getting submission window', {
       error: error instanceof Error ? error.message : error,
@@ -159,97 +70,7 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const weeks = Math.min(Math.max(parseInt(req.query.weeks as string) || 8, 1), 52);
-
-      // Haftalık trend için tarih aralığını hesapla
-      const turkeyNow = getTurkeyNow();
-      const currentWeekOf = getWeekMonday(turkeyNow);
-      const startDate = new Date(currentWeekOf);
-      startDate.setDate(startDate.getDate() - (weeks - 1) * 7);
-      const startWeekOf = getWeekMonday(startDate);
-
-      // Aggregation: summary + weekly + parentApproval in one pipeline
-      const [summaryAgg, weeklyAgg, approvalAgg] = await Promise.all([
-        // Summary counts
-        EvciRequest.aggregate([
-          { $match: { weekOf: { $gte: startWeekOf } } },
-          {
-            $group: {
-              _id: null,
-              total: { $sum: 1 },
-              going: { $sum: { $cond: ['$willGo', 1, 0] } },
-              notGoing: { $sum: { $cond: ['$willGo', 0, 1] } },
-            },
-          },
-        ]),
-
-        // Weekly trend
-        EvciRequest.aggregate([
-          { $match: { weekOf: { $gte: startWeekOf } } },
-          {
-            $group: {
-              _id: '$weekOf',
-              total: { $sum: 1 },
-              going: { $sum: { $cond: ['$willGo', 1, 0] } },
-              notGoing: { $sum: { $cond: ['$willGo', 0, 1] } },
-            },
-          },
-          { $sort: { _id: 1 } },
-          { $project: { _id: 0, weekOf: '$_id', total: 1, going: 1, notGoing: 1 } },
-        ]),
-
-        // Parent approval counts
-        EvciRequest.aggregate([
-          { $match: { weekOf: { $gte: startWeekOf } } },
-          {
-            $group: {
-              _id: '$parentApproval',
-              count: { $sum: 1 },
-            },
-          },
-        ]),
-      ]);
-
-      const summary = summaryAgg[0] || { total: 0, going: 0, notGoing: 0 };
-      delete summary._id;
-
-      const approvalMap: Record<string, number> = {};
-      for (const a of approvalAgg) {
-        approvalMap[a._id || 'pending'] = a.count;
-      }
-
-      // Sınıf dağılımı — requires student lookup (no foreign key in Mongoose for this)
-      const studentIds = await EvciRequest.distinct('studentId', { weekOf: { $gte: startWeekOf } });
-      const students = await User.find({ id: { $in: studentIds } })
-        .select('id sinif sube')
-        .lean();
-      const studentMap = new Map(students.map((s) => [s.id, s]));
-
-      // Count requests per class using aggregation
-      const classAgg = await EvciRequest.aggregate([
-        { $match: { weekOf: { $gte: startWeekOf } } },
-        { $group: { _id: '$studentId', count: { $sum: 1 } } },
-      ]);
-
-      const classMap: Record<string, number> = {};
-      for (const entry of classAgg) {
-        const st = studentMap.get(entry._id);
-        const cls = st?.sinif ? `${st.sinif}${st.sube || ''}` : 'Bilinmeyen';
-        classMap[cls] = (classMap[cls] || 0) + entry.count;
-      }
-      const classDistribution = Object.entries(classMap)
-        .map(([className, count]) => ({ className, count }))
-        .sort((a, b) => b.count - a.count);
-
-      res.json({
-        summary,
-        weekly: weeklyAgg,
-        classDistribution,
-        parentApproval: {
-          approved: approvalMap['approved'] || 0,
-          rejected: approvalMap['rejected'] || 0,
-          pending: approvalMap['pending'] || 0,
-        },
-      });
+      res.json(await EvciRequestService.getStats(weeks));
     } catch (error) {
       logger.error('Error getting evci stats', {
         error: error instanceof Error ? error.message : error,
@@ -294,38 +115,25 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const format = (req.query.format as string) || 'excel';
-      const weekOf = (req.query.weekOf as string) || getWeekMonday(getTurkeyNow());
+      const weekOf =
+        (req.query.weekOf as string) ||
+        getWeekMonday(
+          (() => {
+            const now = new Date();
+            const turkeyOffset = 3 * 60 * 60 * 1000;
+            return new Date(now.getTime() + turkeyOffset + now.getTimezoneOffset() * 60 * 1000);
+          })(),
+        );
 
-      const requests = await EvciRequest.find({ weekOf }).sort({ studentName: 1 });
-
-      // Öğrenci bilgilerini al
-      const studentIds = [...new Set(requests.map((r) => r.studentId))];
-      const students = await User.find({ id: { $in: studentIds } }).select('id sinif sube oda');
-      const studentMap = new Map(students.map((s) => [s.id, s]));
-
-      const rows = requests.map((r) => {
-        const st = studentMap.get(r.studentId);
-        return {
-          studentName: r.studentName || '-',
-          studentId: r.studentId,
-          sinif: st?.sinif ? `${st.sinif}${st.sube || ''}` : '-',
-          oda: st?.oda || '-',
-          willGo: r.willGo,
-          destination: r.destination || '-',
-          startDate: r.startDate || '-',
-          endDate: r.endDate || '-',
-          parentApproval: r.parentApproval,
-          rejectionReason: r.rejectionReason || '-',
-        };
-      });
+      const rows = await EvciRequestService.buildExportRows(weekOf);
 
       if (format === 'pdf') {
-        const buffer = await EvciExportService.generatePdf(rows, weekOf);
+        const buffer = await EvciRequestService.generatePdfExport(rows, weekOf);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=evci-${weekOf}.pdf`);
         res.send(buffer);
       } else {
-        const buffer = await EvciExportService.generateExcel(rows, weekOf);
+        const buffer = await EvciRequestService.generateExcelExport(rows, weekOf);
         res.setHeader(
           'Content-Type',
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -334,7 +142,6 @@ router.get(
         res.send(buffer);
       }
 
-      // Audit log (async, fire-and-forget)
       AuditLogService.log(req, 'export' as 'read', 'evci_request', {
         details: { format, weekOf, count: rows.length },
       });
@@ -406,24 +213,18 @@ router.post(
       }
 
       const userId = req.user?.userId;
-
-      const updateFields: Record<string, unknown> = {
-        status,
-        approvedBy: userId,
-        approvedAt: new Date(),
-      };
-      if (adminNote) updateFields.adminNote = adminNote;
-
-      // Admin onayladıysa veli onayı da otomatik onayla
-      if (status === 'approved') {
-        updateFields.parentApproval = 'approved';
-        updateFields.parentApprovalAt = new Date();
-        updateFields.parentApprovalBy = userId;
-      }
-
-      const result = await EvciRequest.updateMany({ _id: { $in: ids } }, { $set: updateFields });
+      const { modifiedCount, updatedRequests } = await EvciRequestService.bulkUpdateStatus(
+        ids,
+        status as 'approved' | 'rejected',
+        adminNote,
+        userId,
+      );
 
       // Audit log + WS events (fire-and-forget)
+      const { publishEvent } = await import('../utils/websocket-enhanced');
+      const { EventType } = await import('../services/EventService');
+      const { PushNotificationService } = await import('../services/pushNotificationService');
+
       for (const id of ids) {
         AuditLogService.log(req, status === 'approved' ? 'approve' : 'reject', 'evci_request', {
           resourceId: id,
@@ -431,17 +232,12 @@ router.post(
         });
       }
 
-      // Notify affected students
-      const updatedReqs = await EvciRequest.find({ _id: { $in: ids } });
-      for (const evciReq of updatedReqs) {
+      for (const evciReq of updatedRequests) {
         const eventType =
           status === 'approved' ? EventType.EVCI_REQUEST_APPROVED : EventType.EVCI_REQUEST_REJECTED;
         publishEvent(
           eventType,
-          {
-            studentId: evciReq.studentId,
-            studentName: evciReq.studentName,
-          },
+          { studentId: evciReq.studentId, studentName: evciReq.studentName },
           evciReq.studentId,
         ).catch((err: unknown) =>
           logger.error('Async side-effect failed', {
@@ -449,7 +245,6 @@ router.post(
           }),
         );
 
-        // Push notification to student
         const bulkPushTitle =
           status === 'approved' ? 'Evci Talebi Onaylandı' : 'Evci Talebi Reddedildi';
         const bulkPushBody =
@@ -467,7 +262,7 @@ router.post(
         );
       }
 
-      res.json({ modifiedCount: result.modifiedCount });
+      res.json({ modifiedCount });
     } catch (error) {
       logger.error('Error bulk updating evci requests', {
         error: error instanceof Error ? error.message : error,
@@ -500,12 +295,7 @@ router.post(
       }
 
       const userId = req.user?.userId;
-
-      const override = await EvciWindowOverride.findOneAndUpdate(
-        { weekOf },
-        { isOpen, reason: reason || '', createdBy: userId },
-        { upsert: true, new: true },
-      );
+      const override = await EvciRequestService.setWindowOverride(weekOf, isOpen, reason, userId);
 
       AuditLogService.log(req, 'update', 'evci_request', {
         details: { windowOverride: true, weekOf, isOpen, reason },
@@ -530,22 +320,7 @@ router.get(
     try {
       const page = Math.max(parseInt(req.query.page as string) || 1, 1);
       const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 200);
-      const skip = (page - 1) * limit;
-
-      const [requests, total] = await Promise.all([
-        EvciRequest.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
-        EvciRequest.countDocuments(),
-      ]);
-
-      res.json({
-        requests,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      });
+      res.json(await EvciRequestService.listAll(page, limit));
     } catch (error) {
       logger.error('Error fetching evci requests', {
         error: error instanceof Error ? error.message : error,
@@ -562,7 +337,6 @@ router.get('/parent/:parentId', authenticateJWT, async (req: Request, res: Respo
     const role = req.user?.role;
     const userId = req.user?.userId;
 
-    // Veli sadece kendi ID'si ile çağırabilir, admin/teacher herkesi sorgulayabilir
     if (role === 'parent' && parentId !== userId) {
       return res
         .status(403)
@@ -572,22 +346,7 @@ router.get('/parent/:parentId', authenticateJWT, async (req: Request, res: Respo
       return res.status(403).json({ error: 'Bu işlem için yetkiniz yok' });
     }
 
-    const childIds = await getParentChildIds(parentId);
-    if (!childIds || childIds.length === 0) {
-      return res.json({ requests: [], children: [] });
-    }
-
-    // Çocuk bilgileri
-    const children = await User.find({ id: { $in: childIds }, rol: 'student' }).select(
-      'id adSoyad sinif sube oda pansiyon',
-    );
-
-    // Talepleri getir
-    const requests = await EvciRequest.find({ studentId: { $in: childIds } }).sort({
-      createdAt: -1,
-    });
-
-    res.json({ requests, children });
+    res.json(await EvciRequestService.getParentRequests(parentId));
   } catch (error) {
     logger.error('Error fetching parent evci requests', {
       error: error instanceof Error ? error.message : error,
@@ -603,10 +362,7 @@ router.get(
   verifyParentChildAccess('params.studentId'),
   async (req, res) => {
     try {
-      const list = await EvciRequest.find({ studentId: req.params.studentId }).sort({
-        createdAt: -1,
-      });
-      res.json(list);
+      res.json(await EvciRequestService.getStudentRequests(req.params.studentId));
     } catch (error) {
       logger.error('Error fetching student evci requests', {
         error: error instanceof Error ? error.message : error,
@@ -625,14 +381,13 @@ router.post(
     try {
       const { studentId, willGo, startDate, endDate, destination } = req.body;
 
-      // Zorunlu alanları kontrol et
       if (!studentId) {
         return res.status(400).json({ error: 'Öğrenci ID zorunludur' });
       }
 
-      // Ownership validation
       const role = req.user?.role;
       const userId = req.user?.userId;
+
       if (role === 'student' && studentId !== userId) {
         return res
           .status(403)
@@ -647,11 +402,10 @@ router.post(
         }
       }
 
-      // Zaman penceresi kontrolü (admin hariç)
-      if (role !== 'admin' && !(await isSubmissionWindowOpen())) {
+      if (role !== 'admin' && !(await EvciRequestService.isSubmissionWindowOpen())) {
         return res.status(400).json({
           error: 'Evci talepleri sadece Pazartesi-Perşembe arasında oluşturulabilir',
-          submissionWindow: await getSubmissionWindowInfo(),
+          submissionWindow: await EvciRequestService.getSubmissionWindowInfo(),
         });
       }
 
@@ -659,10 +413,8 @@ router.post(
         return res.status(400).json({ error: 'willGo alanı zorunludur' });
       }
 
-      // Normalize willGo to boolean
       const willGoNormalized = willGo === true || willGo === 'true';
 
-      // willGo true ise çıkış/dönüş günü ve yer gerekli
       if (willGoNormalized) {
         if (!startDate) {
           return res.status(400).json({ error: 'Çıkış günü zorunludur' });
@@ -675,99 +427,33 @@ router.post(
         }
       }
 
-      // weekOf hesapla
-      const weekOf = getWeekMonday(getTurkeyNow());
-
-      // Aynı (studentId, weekOf) ile kayıt kontrolü
-      const existingReq = await EvciRequest.findOne({ studentId, weekOf });
-      if (existingReq) {
-        if (existingReq.parentApproval === 'rejected') {
-          // Reddedilmiş talep varsa sil, yenisini oluştur
-          await EvciRequest.findByIdAndDelete(existingReq._id);
-        } else {
-          return res
-            .status(409)
-            .json({ error: 'Bu hafta için zaten bir evci talebiniz bulunmaktadır' });
-        }
-      }
-
-      // Öğrenci adını al
-      const user = await User.findOne({ id: studentId });
-      const studentName = user ? user.adSoyad : 'Bilinmeyen Öğrenci';
-
-      const newReq = new EvciRequest({
-        studentId,
-        studentName,
-        willGo: willGoNormalized,
-        startDate: startDate || null,
-        endDate: endDate || null,
-        destination: destination || null,
-        weekOf,
-        parentApproval: 'pending',
-      });
-      await newReq.save();
-
-      // Veli(ler)e bildirim gönder
+      let result;
       try {
-        const parents = await User.find({ childId: studentId, rol: 'parent', isActive: true });
-        const parentIds = parents.map((p) => p.id);
-        for (const parent of parents) {
-          await NotificationService.createNotification({
-            userId: parent.id,
-            title: 'Yeni Evci Talebi',
-            message: `${studentName} yeni bir evci talebi oluşturdu. Onayınız bekleniyor.`,
-            type: 'approval',
-            priority: 'high',
-            category: 'administrative',
-            sendEmail: true,
-            emailSubject: 'Evci Talebi - Onayınız Bekleniyor',
-            actionUrl: '/parent/evci',
-            actionText: 'Talebi Görüntüle',
-          });
-        }
-
-        // WebSocket event
-        publishEvent(
-          EventType.EVCI_REQUEST_CREATED,
-          {
-            studentId,
-            studentName,
-            parentIds,
-          },
+        result = await EvciRequestService.createRequest({
+          studentId,
+          willGo,
+          startDate,
+          endDate,
+          destination,
           userId,
-        ).catch((err: unknown) =>
-          logger.error('Async side-effect failed', {
-            error: err instanceof Error ? err.message : err,
-          }),
-        );
-
-        // Push notifications to parents
-        for (const parent of parents) {
-          PushNotificationService.sendToUser(parent.id, {
-            title: 'Yeni Evci Talebi',
-            body: `${studentName} yeni bir evci talebi oluşturdu. Onayınız bekleniyor.`,
-            url: '/parent/evci',
-          }).catch((err: unknown) =>
-            logger.error('Async side-effect failed', {
-              error: err instanceof Error ? err.message : err,
-            }),
-          );
-        }
-      } catch (notifError) {
-        logger.error('Error sending parent notifications', {
-          error: notifError instanceof Error ? notifError.message : notifError,
         });
+      } catch (createErr) {
+        if (
+          createErr instanceof Error &&
+          (createErr as Error & { statusCode?: number }).statusCode === 409
+        ) {
+          return res.status(409).json({ error: createErr.message });
+        }
+        throw createErr;
       }
 
-      // Audit log (fire-and-forget)
       AuditLogService.log(req, 'create', 'evci_request', {
-        resourceId: String(newReq._id),
-        details: { studentId, weekOf, willGo: willGoNormalized },
+        resourceId: String(result.request._id),
+        details: { studentId, weekOf: result.request.weekOf, willGo: willGoNormalized },
       });
 
-      res.status(201).json(newReq);
+      res.status(201).json(result.request);
     } catch (error) {
-      // Unique index violation (duplicate key)
       if (error instanceof Error && (error as Error & { code?: number }).code === 11000) {
         return res
           .status(409)
@@ -798,58 +484,21 @@ router.patch(
         return res.status(400).json({ error: 'Admin notu en fazla 500 karakter olabilir' });
       }
 
-      const evciReq = await EvciRequest.findById(req.params.id);
-      if (!evciReq) {
-        return res.status(404).json({ error: 'Evci talebi bulunamadı' });
+      let evciReq;
+      try {
+        evciReq = await EvciRequestService.applyAdminApproval({
+          id: req.params.id,
+          action: action as 'approve' | 'reject',
+          adminNote,
+          userId,
+        });
+      } catch (err) {
+        if (err instanceof Error && (err as Error & { statusCode?: number }).statusCode === 404) {
+          return res.status(404).json({ error: err.message });
+        }
+        throw err;
       }
 
-      const status = action === 'approve' ? 'approved' : 'rejected';
-      evciReq.status = status;
-      evciReq.approvedBy = userId;
-      evciReq.approvedAt = new Date();
-      if (adminNote) evciReq.adminNote = adminNote;
-
-      // Admin onayladıysa veli onayı da otomatik onayla
-      if (action === 'approve' && evciReq.parentApproval === 'pending') {
-        evciReq.parentApproval = 'approved';
-        evciReq.parentApprovalAt = new Date();
-        evciReq.parentApprovalBy = userId;
-      }
-
-      await evciReq.save();
-
-      // WebSocket + Push
-      const eventType =
-        action === 'approve' ? EventType.EVCI_REQUEST_APPROVED : EventType.EVCI_REQUEST_REJECTED;
-      publishEvent(
-        eventType,
-        {
-          studentId: evciReq.studentId,
-          studentName: evciReq.studentName,
-        },
-        evciReq.studentId,
-      ).catch((err: unknown) =>
-        logger.error('Async side-effect failed', {
-          error: err instanceof Error ? err.message : err,
-        }),
-      );
-
-      const pushTitle = action === 'approve' ? 'Evci Talebi Onaylandı' : 'Evci Talebi Reddedildi';
-      const pushBody =
-        action === 'approve'
-          ? 'Evci talebiniz yönetici tarafından onaylandı.'
-          : 'Evci talebiniz yönetici tarafından reddedildi.';
-      PushNotificationService.sendToUser(evciReq.studentId, {
-        title: pushTitle,
-        body: pushBody,
-        url: '/student/evci',
-      }).catch((err: unknown) =>
-        logger.error('Async side-effect failed', {
-          error: err instanceof Error ? err.message : err,
-        }),
-      );
-
-      // Audit log
       AuditLogService.log(req, action === 'approve' ? 'approve' : 'reject', 'evci_request', {
         resourceId: String(evciReq._id),
         details: { studentId: evciReq.studentId, adminNote, individualAction: true },
@@ -879,105 +528,22 @@ router.patch(
         return res.status(400).json({ error: "action alanı 'approve' veya 'reject' olmalıdır" });
       }
 
-      const evciReq = await EvciRequest.findById(req.params.id);
-      if (!evciReq) {
-        return res.status(404).json({ error: 'Evci talebi bulunamadı' });
-      }
-
-      // Veli-öğrenci ilişkisi doğrula
-      const childIds = await getParentChildIds(userId!);
-      if (!childIds.includes(evciReq.studentId)) {
-        return res.status(403).json({ error: 'Bu evci talebini onaylama/reddetme yetkiniz yok' });
-      }
-
-      // Sadece pending durumundaki talepler onaylanabilir/reddedilebilir
-      if (evciReq.parentApproval !== 'pending') {
-        return res.status(400).json({ error: 'Bu talep zaten onaylanmış veya reddedilmiş' });
-      }
-
-      evciReq.parentApproval = action === 'approve' ? 'approved' : 'rejected';
-      evciReq.parentApprovalAt = new Date();
-      evciReq.parentApprovalBy = userId;
-
-      // Veli onayı admin onayını bypass etmez — sadece parentApproval set edilir
-      // Admin onayı ayrıca gereklidir
-
-      // Red sebebi kaydet
-      if (action === 'reject') {
-        evciReq.rejectionReason = reason || null;
-      }
-
-      await evciReq.save();
-
-      // Öğrenciye bildirim gönder
+      let evciReq;
       try {
-        if (action === 'approve') {
-          await NotificationService.createNotification({
-            userId: evciReq.studentId,
-            title: 'Veli Onayı Alındı',
-            message: 'Veliniz evci talebinizi onayladı. Yönetici onayı bekleniyor.',
-            type: 'info',
-            priority: 'medium',
-            category: 'administrative',
-            sendEmail: true,
-            emailSubject: 'Evci Talebi - Veli Onayı Alındı',
-            actionUrl: '/student/evci',
-            actionText: 'Talebi Görüntüle',
-          });
-        } else {
-          const reasonText = reason ? ` Sebep: ${reason}` : '';
-          await NotificationService.createNotification({
-            userId: evciReq.studentId,
-            title: 'Evci Talebi Reddedildi',
-            message: `Veliniz evci talebinizi reddetti.${reasonText} Yeni talep oluşturabilirsiniz.`,
-            type: 'warning',
-            priority: 'high',
-            category: 'administrative',
-            sendEmail: true,
-            emailSubject: 'Evci Talebiniz Reddedildi',
-            actionUrl: '/student/evci',
-            actionText: 'Yeni Talep Oluştur',
-          });
-        }
-
-        // WebSocket event
-        const eventType =
-          action === 'approve' ? EventType.EVCI_REQUEST_APPROVED : EventType.EVCI_REQUEST_REJECTED;
-        publishEvent(
-          eventType,
-          {
-            studentId: evciReq.studentId,
-            studentName: evciReq.studentName,
-          },
-          evciReq.studentId,
-        ).catch((err: unknown) =>
-          logger.error('Async side-effect failed', {
-            error: err instanceof Error ? err.message : err,
-          }),
-        );
-
-        // Push notification to student
-        const pushTitle = action === 'approve' ? 'Evci Talebi Onaylandı' : 'Evci Talebi Reddedildi';
-        const pushBody =
-          action === 'approve'
-            ? 'Veliniz evci talebinizi onayladı.'
-            : `Veliniz evci talebinizi reddetti.${reason ? ` Sebep: ${reason}` : ''}`;
-        PushNotificationService.sendToUser(evciReq.studentId, {
-          title: pushTitle,
-          body: pushBody,
-          url: '/student/evci',
-        }).catch((err: unknown) =>
-          logger.error('Async side-effect failed', {
-            error: err instanceof Error ? err.message : err,
-          }),
-        );
-      } catch (notifError) {
-        logger.error('Error sending student notification', {
-          error: notifError instanceof Error ? notifError.message : notifError,
+        evciReq = await EvciRequestService.applyParentApproval({
+          id: req.params.id,
+          action: action as 'approve' | 'reject',
+          reason,
+          userId: userId!,
         });
+      } catch (err) {
+        const typed = err as Error & { statusCode?: number };
+        if (typed.statusCode === 404) return res.status(404).json({ error: typed.message });
+        if (typed.statusCode === 403) return res.status(403).json({ error: typed.message });
+        if (typed.statusCode === 400) return res.status(400).json({ error: typed.message });
+        throw err;
       }
 
-      // Audit log (fire-and-forget)
       AuditLogService.log(req, action === 'approve' ? 'approve' : 'reject', 'evci_request', {
         resourceId: String(evciReq._id),
         details: { studentId: evciReq.studentId, reason },
@@ -1000,7 +566,7 @@ router.delete(
   authorizeRoles(['admin', 'student', 'parent']),
   async (req, res) => {
     try {
-      const evciReq = await EvciRequest.findById(req.params.id);
+      const evciReq = await EvciRequestService.findById(req.params.id);
       if (!evciReq) {
         return res.status(404).json({ error: 'Evci talebi bulunamadı' });
       }
@@ -1008,7 +574,6 @@ router.delete(
       const role = req.user?.role;
       const userId = req.user?.userId;
 
-      // Veli onaylanmışsa öğrenci/veli silemez (admin hariç)
       if (role !== 'admin' && evciReq.parentApproval === 'approved') {
         return res.status(403).json({ error: 'Veli tarafından onaylanmış talep silinemez' });
       }
@@ -1023,9 +588,8 @@ router.delete(
         }
       }
 
-      await EvciRequest.findByIdAndDelete(req.params.id);
+      await EvciRequestService.deleteRequest(req.params.id);
 
-      // Audit log (fire-and-forget)
       AuditLogService.log(req, 'delete', 'evci_request', {
         resourceId: req.params.id,
         details: { studentId: evciReq.studentId },
@@ -1048,7 +612,7 @@ router.patch(
   authorizeRoles(['admin', 'student', 'parent']),
   async (req, res) => {
     try {
-      const evciReq = await EvciRequest.findById(req.params.id);
+      const evciReq = await EvciRequestService.findById(req.params.id);
       if (!evciReq) {
         return res.status(404).json({ error: 'Evci talebi bulunamadı' });
       }
@@ -1056,7 +620,6 @@ router.patch(
       const role = req.user?.role;
       const userId = req.user?.userId;
 
-      // Veli onaylanmışsa öğrenci/veli güncelleyemez (admin hariç)
       if (role !== 'admin' && evciReq.parentApproval === 'approved') {
         return res.status(403).json({ error: 'Veli tarafından onaylanmış talep güncellenemez' });
       }
@@ -1071,7 +634,6 @@ router.patch(
         }
       }
 
-      // Admin değilse korumalı alanları body'den sil
       const updateData = { ...req.body };
       if (role !== 'admin') {
         delete updateData.parentApproval;
@@ -1081,12 +643,8 @@ router.patch(
         delete updateData.weekOf;
       }
 
-      const updated = await EvciRequest.findByIdAndUpdate(req.params.id, updateData, {
-        new: true,
-        runValidators: true,
-      });
+      const updated = await EvciRequestService.updateRequest(req.params.id, updateData);
 
-      // Audit log (fire-and-forget)
       AuditLogService.log(req, 'update', 'evci_request', {
         resourceId: req.params.id,
         details: { studentId: evciReq.studentId, updatedFields: Object.keys(updateData) },

@@ -161,7 +161,9 @@ const NotEkleme: React.FC = () => {
           importedCount: 0,
           savedCount: 0,
           totalNotes: 0,
-          errors: (error as any)?.response?.data?.errors || [],
+          errors:
+            (error as { response?: { data?: { errors?: string[] } } })?.response?.data?.errors ||
+            [],
         });
       }
     } finally {

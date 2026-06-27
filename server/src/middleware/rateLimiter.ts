@@ -1,5 +1,5 @@
 import rateLimit from 'express-rate-limit';
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
 
 /**
@@ -27,7 +27,7 @@ export const createRateLimiter = (options: {
       options.keyGenerator ||
       ((req: Request) => {
         // Use user ID if authenticated, otherwise IP
-        return (req as any).user?.userId || req.ip || 'anonymous';
+        return req.user?.userId || req.ip || 'anonymous';
       }),
     skip:
       options.skip ||
@@ -39,7 +39,7 @@ export const createRateLimiter = (options: {
       // Log rate limit violation
       logger.warn('Rate limit exceeded', {
         ip: req.ip,
-        userId: (req as any).user?.userId,
+        userId: req.user?.userId,
         path: req.path,
         method: req.method,
         userAgent: req.get('User-Agent'),
@@ -102,7 +102,7 @@ export const userSpecificLimiter = createRateLimiter({
   max: 50, // 50 requests per 15 minutes per user
   message: 'Hesabınız için çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.',
   keyGenerator: (req: Request) => {
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       return req.ip || 'anonymous';
     }
@@ -123,8 +123,8 @@ export const ipLimiter = createRateLimiter({
 /**
  * Dynamic rate limiter based on user role
  */
-export const roleBasedLimiter = (req: Request, res: Response, next: any) => {
-  const user = (req as any).user;
+export const roleBasedLimiter = (req: Request, res: Response, next: NextFunction) => {
+  const user = req.user;
 
   if (!user) {
     return ipLimiter(req, res, next);
@@ -147,9 +147,6 @@ export const roleBasedLimiter = (req: Request, res: Response, next: any) => {
     case 'parent':
       maxRequests = 50;
       break;
-
-      maxRequests = 150;
-      break;
     default:
       maxRequests = 50;
   }
@@ -161,13 +158,13 @@ export const roleBasedLimiter = (req: Request, res: Response, next: any) => {
     keyGenerator: (_req: Request) => `role:${user.role}:${user.userId}`,
   });
 
-  return limiter(req, res, next as any);
+  return limiter(req, res, next);
 };
 
 /**
  * Adaptive rate limiter that adjusts based on server load
  */
-export const adaptiveLimiter = (req: Request, res: Response, next: (err?: unknown) => void) => {
+export const adaptiveLimiter = (req: Request, res: Response, next: NextFunction) => {
   // This would integrate with monitoring service to adjust limits
   // based on server CPU, memory, and response times
 
@@ -177,7 +174,7 @@ export const adaptiveLimiter = (req: Request, res: Response, next: (err?: unknow
     message: 'Sunucu yükü nedeniyle istek limiti düşürüldü. Lütfen daha sonra tekrar deneyin.',
   });
 
-  return baseLimiter(req, res, next as any);
+  return baseLimiter(req, res, next);
 };
 
 /**
@@ -189,7 +186,7 @@ export const endpointSpecificLimiter = (endpoint: string, maxRequests: number) =
     max: maxRequests,
     message: `${endpoint} endpoint'i için çok fazla istek gönderildi.`,
     keyGenerator: (req: Request) => {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
       return userId ? `endpoint:${endpoint}:user:${userId}` : `endpoint:${endpoint}:ip:${req.ip}`;
     },
   });

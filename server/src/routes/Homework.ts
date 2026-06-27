@@ -231,9 +231,9 @@ router.get(
   authenticateJWT,
   asyncHandler(async (req, res) => {
     try {
-      let homework: any = await Homework.findOne({ id: req.params.id }).lean();
+      let homework = (await Homework.findOne({ id: req.params.id }).lean()) as IHomework | null;
       if (!homework) {
-        homework = await Homework.findById(req.params.id).lean();
+        homework = (await Homework.findById(req.params.id).lean()) as IHomework | null;
       }
 
       if (!homework) {

@@ -13,7 +13,13 @@ export class PushNotificationService {
    * Kullanıcıya push bildirimi gönder (tüm cihazlarına)
    */
   static async sendToUser(userId: string, payload: PushPayload): Promise<void> {
-    let webpush: any;
+    let webpush: {
+      setVapidDetails(subject: string, publicKey: string, privateKey: string): void;
+      sendNotification(
+        subscription: { endpoint: string; keys: Record<string, string> },
+        payload: string,
+      ): Promise<unknown>;
+    };
     try {
       webpush = await import('web-push');
     } catch {
@@ -44,13 +50,11 @@ export class PushNotificationService {
 
     for (const sub of subscriptions) {
       try {
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: sub.keys },
-          pushPayload
-        );
-      } catch (error: any) {
+        await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, pushPayload);
+      } catch (error: unknown) {
         // Expired/invalid subscription — temizle
-        if (error?.statusCode === 410 || error?.statusCode === 404) {
+        const statusCode = (error as { statusCode?: number })?.statusCode;
+        if (statusCode === 410 || statusCode === 404) {
           await PushSubscription.deleteOne({ _id: sub._id });
           logger.info(`Removed expired push subscription for user ${userId}`);
         } else {

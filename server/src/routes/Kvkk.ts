@@ -90,7 +90,15 @@ router.post(
         profiling: 'Profilleme ve otomatik karar verme',
       };
 
-      const updateData: any = {
+      const updateData: Partial<{
+        granted: boolean;
+        version: string;
+        description: string;
+        ipAddress: string | undefined;
+        userAgent: string | undefined;
+        grantedAt: Date | null;
+        revokedAt: Date | null;
+      }> = {
         granted,
         version: '1.0',
         description: descriptions[consentType],
@@ -111,7 +119,7 @@ router.post(
         { upsert: true, new: true },
       );
 
-      AuditLogService.log(req, granted ? 'create' : 'delete', 'kvkk_consent' as any, {
+      AuditLogService.log(req, granted ? 'create' : 'delete', 'kvkk_consent', {
         details: { consentType, granted },
       });
 
@@ -141,10 +149,10 @@ router.get(
 
       // Strip sensitive fields
       const { sifre, twoFactorCode, twoFactorExpiry, emailVerificationCode, ...safeUser } =
-        user as any;
+        user as Record<string, unknown>;
 
       // Mask TCKN
-      if (safeUser.tckn) {
+      if (typeof safeUser.tckn === 'string') {
         const { maskTckn } = await import('../utils/encryption');
         safeUser.tcknMasked = maskTckn(safeUser.tckn);
         delete safeUser.tckn; // Don't expose raw encrypted TCKN
@@ -152,7 +160,7 @@ router.get(
 
       const consents = await KvkkConsent.find({ userId }).lean();
 
-      AuditLogService.log(req, 'read' as any, 'kvkk_data_export' as any, {
+      AuditLogService.log(req, 'read', 'kvkk_data_export', {
         details: { userId },
       });
 
@@ -207,7 +215,7 @@ router.post(
       });
       await request.save();
 
-      AuditLogService.log(req, 'create', 'kvkk_deletion_request' as any, {
+      AuditLogService.log(req, 'create', 'kvkk_deletion_request', {
         resourceId: String(request._id),
         details: { userId, reason },
       });
@@ -258,7 +266,7 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const status = req.query.status as string;
-      const filter: any = {};
+      const filter: Record<string, string> = {};
       if (status) filter.status = status;
 
       const requests = await DataDeletionRequest.find(filter).sort({ requestedAt: -1 }).lean();
@@ -336,7 +344,7 @@ router.patch(
       request.retainReason = retainReason || 'KVKK Madde 28 - Yasal saklama yükümlülüğü';
       await request.save();
 
-      AuditLogService.log(req, 'delete', 'kvkk_deletion' as any, {
+      AuditLogService.log(req, 'delete', 'kvkk_deletion', {
         resourceId: String(request._id),
         details: { userId: request.userId, deletedCollections },
       });

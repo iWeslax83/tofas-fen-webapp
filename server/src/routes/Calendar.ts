@@ -235,7 +235,7 @@ router.post(
     body('permission').isIn(['read', 'write', 'admin']).withMessage('Geçersiz izin türü'),
     validateRequest,
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: Request, res: Response) => {
     try {
       const success = await CalendarService.shareCalendar(req.params.id, req.user.userId, req.body);
 
@@ -271,7 +271,7 @@ router.get(
     query('search').optional().trim(),
     validateRequest,
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: Request, res: Response) => {
     try {
       const filters: CalendarFilters = {
         startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
@@ -391,7 +391,7 @@ router.post(
     body('response').isIn(['accepted', 'declined', 'tentative']).withMessage('Geçersiz yanıt'),
     validateRequest,
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: Request, res: Response) => {
     try {
       const success = await CalendarService.respondToEvent(
         req.params.id,
@@ -464,7 +464,7 @@ router.get(
     query('endDate').optional().isISO8601().withMessage('Geçersiz bitiş tarihi'),
     validateRequest,
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: Request, res: Response) => {
     try {
       const calendar = await CalendarService.getCalendarById(
         req.params.calendarId,
@@ -518,7 +518,7 @@ router.post(
   '/import/:calendarId',
   authenticateJWT,
   [body('events').isArray().withMessage('Etkinlikler dizi olmalıdır'), validateRequest],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: Request, res: Response) => {
     try {
       const calendar = await CalendarService.getCalendarById(
         req.params.calendarId,

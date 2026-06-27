@@ -11,7 +11,12 @@ export class BackupService {
    * MongoDB veritabanı yedeği al (mongodump kullanır).
    * Eğer mongodump yoksa, mongoexport ile koleksiyon bazlı JSON yedek alır.
    */
-  static async createBackup(): Promise<{ success: boolean; path?: string; error?: string; method?: string }> {
+  static async createBackup(): Promise<{
+    success: boolean;
+    path?: string;
+    error?: string;
+    method?: string;
+  }> {
     // Backup dizinini oluştur
     if (!fs.existsSync(BACKUP_DIR)) {
       fs.mkdirSync(BACKUP_DIR, { recursive: true });
@@ -42,7 +47,10 @@ export class BackupService {
     }
   }
 
-  private static runMongodump(mongoUri: string, backupPath: string): Promise<{ success: boolean; path: string; method: string }> {
+  private static runMongodump(
+    mongoUri: string,
+    backupPath: string,
+  ): Promise<{ success: boolean; path: string; method: string }> {
     return new Promise((resolve, reject) => {
       const cmd = `mongodump --uri="${mongoUri}" --out="${backupPath}" --gzip`;
 
@@ -61,7 +69,9 @@ export class BackupService {
     });
   }
 
-  private static async runMongooseExport(backupPath: string): Promise<{ success: boolean; path: string; method: string }> {
+  private static async runMongooseExport(
+    backupPath: string,
+  ): Promise<{ success: boolean; path: string; method: string }> {
     const mongoose = (await import('mongoose')).default;
     const db = mongoose.connection.db;
 
@@ -110,9 +120,10 @@ export class BackupService {
   static async cleanOldBackups(): Promise<number> {
     if (!fs.existsSync(BACKUP_DIR)) return 0;
 
-    const entries = fs.readdirSync(BACKUP_DIR)
-      .filter(e => e.startsWith('backup-'))
-      .map(name => ({
+    const entries = fs
+      .readdirSync(BACKUP_DIR)
+      .filter((e) => e.startsWith('backup-'))
+      .map((name) => ({
         name,
         path: path.join(BACKUP_DIR, name),
         time: fs.statSync(path.join(BACKUP_DIR, name)).mtime.getTime(),
@@ -142,9 +153,10 @@ export class BackupService {
   static listBackups(): Array<{ name: string; date: string; size: number }> {
     if (!fs.existsSync(BACKUP_DIR)) return [];
 
-    return fs.readdirSync(BACKUP_DIR)
-      .filter(e => e.startsWith('backup-'))
-      .map(name => {
+    return fs
+      .readdirSync(BACKUP_DIR)
+      .filter((e) => e.startsWith('backup-'))
+      .map((name) => {
         const fullPath = path.join(BACKUP_DIR, name);
         const stat = fs.statSync(fullPath);
         return {
@@ -200,9 +212,7 @@ export class BackupService {
       };
     }
 
-    const targetBackup = backupName
-      ? backups.find(b => b.name === backupName)
-      : backups[0]; // Latest
+    const targetBackup = backupName ? backups.find((b) => b.name === backupName) : backups[0]; // Latest
 
     if (!targetBackup) {
       return {
@@ -313,7 +323,14 @@ export class BackupService {
     verification: {
       valid: boolean;
       backupName: string;
-      details: any;
+      details: {
+        exists: boolean;
+        hasMetaFile: boolean;
+        collections: string[];
+        totalSize: number;
+        fileCount: number;
+        errors: string[];
+      };
     } | null;
   }> {
     const backup = await BackupService.createBackup();

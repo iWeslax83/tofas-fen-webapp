@@ -1,7 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 import mongoose from 'mongoose';
-import { PerformanceMetric, OptimizationLog, PerformanceConfig } from '../models/Performance';
-import { NotificationService } from './NotificationService';
+import {
+  PerformanceMetric,
+  OptimizationLog,
+  PerformanceConfig,
+  IPerformanceMetric,
+  IOptimizationLog,
+  IPerformanceConfig,
+} from '../models/Performance';
+import { NotificationService, CreateNotificationData } from './NotificationService';
 import {
   createReadStream,
   createWriteStream,
@@ -52,7 +59,7 @@ export interface MetricData {
     device?: string;
     timestamp: Date;
   };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface OptimizationData {
@@ -64,8 +71,34 @@ export interface OptimizationData {
   executedBy: string;
 }
 
+type SystemMetrics = {
+  memory: { rss: number; heapTotal: number; heapUsed: number; external: number };
+  cpu: { user: number; system: number };
+  disk:
+    | { total: string; used: string; available: string; usagePercent: string }
+    | { error: string };
+  timestamp: Date;
+};
+
+type DatabaseMetrics = {
+  collections: number;
+  dataSize: number;
+  storageSize: number;
+  indexes: number;
+  indexSize: number;
+  timestamp: Date;
+};
+
+type APIMetrics = {
+  totalRequests: number;
+  errorRequests: number;
+  errorRate: number;
+  avgResponseTime: number;
+  timestamp: Date;
+};
+
 export class PerformanceService {
-  private static cache = new Map<string, any>();
+  private static cache = new Map<string, unknown>();
   private static cacheExpiry = new Map<string, number>();
   private static readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -105,13 +138,13 @@ export class PerformanceService {
     page = 1,
     limit = 50,
   ): Promise<{
-    metrics: any[];
+    metrics: IPerformanceMetric[];
     total: number;
     page: number;
     totalPages: number;
   }> {
     try {
-      const query: any = { isActive: true };
+      const query: Record<string, unknown> = { isActive: true };
 
       if (filters.type) query.type = filters.type;
       if (filters.category) query.category = filters.category;
@@ -119,9 +152,10 @@ export class PerformanceService {
       if (filters.userId) query['context.userId'] = filters.userId;
       if (filters.userRole) query['context.userRole'] = filters.userRole;
       if (filters.startDate || filters.endDate) {
-        query['context.timestamp'] = {};
-        if (filters.startDate) query['context.timestamp'].$gte = filters.startDate;
-        if (filters.endDate) query['context.timestamp'].$lte = filters.endDate;
+        const timestampFilter: Record<string, Date> = {};
+        if (filters.startDate) timestampFilter.$gte = filters.startDate;
+        if (filters.endDate) timestampFilter.$lte = filters.endDate;
+        query['context.timestamp'] = timestampFilter;
       }
 
       const skip = (page - 1) * limit;
@@ -130,7 +164,7 @@ export class PerformanceService {
           .sort({ 'context.timestamp': -1 })
           .skip(skip)
           .limit(limit)
-          .lean(),
+          .lean() as unknown as Promise<IPerformanceMetric[]>,
         PerformanceMetric.countDocuments(query),
       ]);
 
@@ -148,7 +182,7 @@ export class PerformanceService {
     }
   }
 
-  static async getMetricsByType(type: string, limit = 100): Promise<any[]> {
+  static async getMetricsByType(type: string, limit = 100): Promise<IPerformanceMetric[]> {
     try {
       return await PerformanceMetric.find({ type, isActive: true })
         .sort({ 'context.timestamp': -1 })
@@ -162,7 +196,7 @@ export class PerformanceService {
     }
   }
 
-  static async getCriticalMetrics(): Promise<any[]> {
+  static async getCriticalMetrics(): Promise<IPerformanceMetric[]> {
     try {
       return await PerformanceMetric.find({ status: 'critical', isActive: true })
         .sort({ 'context.timestamp': -1 })
@@ -176,7 +210,7 @@ export class PerformanceService {
   }
 
   // Optimization Management
-  static async createOptimization(data: OptimizationData): Promise<any> {
+  static async createOptimization(data: OptimizationData): Promise<IOptimizationLog> {
     try {
       const optimization = new OptimizationLog({
         id: uuidv4(),
@@ -213,13 +247,13 @@ export class PerformanceService {
     page = 1,
     limit = 50,
   ): Promise<{
-    optimizations: any[];
+    optimizations: IOptimizationLog[];
     total: number;
     page: number;
     totalPages: number;
   }> {
     try {
-      const query: any = { isActive: true };
+      const query: Record<string, unknown> = { isActive: true };
 
       if (filters.type) query.type = filters.type;
       if (filters.action) query.action = filters.action;
@@ -227,14 +261,19 @@ export class PerformanceService {
       if (filters.impact) query.impact = filters.impact;
       if (filters.executedBy) query.executedBy = filters.executedBy;
       if (filters.startDate || filters.endDate) {
-        query.executedAt = {};
-        if (filters.startDate) query.executedAt.$gte = filters.startDate;
-        if (filters.endDate) query.executedAt.$lte = filters.endDate;
+        const executedAtFilter: Record<string, Date> = {};
+        if (filters.startDate) executedAtFilter.$gte = filters.startDate;
+        if (filters.endDate) executedAtFilter.$lte = filters.endDate;
+        query.executedAt = executedAtFilter;
       }
 
       const skip = (page - 1) * limit;
       const [optimizations, total] = await Promise.all([
-        OptimizationLog.find(query).sort({ executedAt: -1 }).skip(skip).limit(limit).lean(),
+        OptimizationLog.find(query)
+          .sort({ executedAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean() as unknown as Promise<IOptimizationLog[]>,
         OptimizationLog.countDocuments(query),
       ]);
 
@@ -252,7 +291,9 @@ export class PerformanceService {
     }
   }
 
-  static async getOptimizationStats(): Promise<any[]> {
+  static async getOptimizationStats(): Promise<
+    { _id: string; count: number; avgImprovement: number }[]
+  > {
     try {
       const stats = await OptimizationLog.aggregate([
         { $match: { isActive: true } },
@@ -278,12 +319,12 @@ export class PerformanceService {
     name: string;
     description: string;
     category: string;
-    settings: Record<string, any>;
+    settings: Record<string, unknown>;
     isEnabled?: boolean;
     priority?: number;
     schedule?: { type: string; value: string };
     conditions?: Array<{ threshold: number; operator: string; metric: string }>;
-  }): Promise<any> {
+  }): Promise<IPerformanceConfig> {
     try {
       const config = new PerformanceConfig({
         id: uuidv4(),
@@ -305,9 +346,9 @@ export class PerformanceService {
     }
   }
 
-  static async getConfigs(category?: string): Promise<any[]> {
+  static async getConfigs(category?: string): Promise<IPerformanceConfig[]> {
     try {
-      const query: any = { isEnabled: true, isActive: true };
+      const query: Record<string, unknown> = { isEnabled: true, isActive: true };
       if (category) query.category = category;
       return await PerformanceConfig.find(query).lean();
     } catch (error) {
@@ -318,7 +359,10 @@ export class PerformanceService {
     }
   }
 
-  static async updateConfig(id: string, updates: Partial<any>): Promise<any> {
+  static async updateConfig(
+    id: string,
+    updates: Partial<IPerformanceConfig>,
+  ): Promise<IPerformanceConfig | null> {
     try {
       const config = await PerformanceConfig.findOneAndUpdate(
         { id, isActive: true },
@@ -335,11 +379,11 @@ export class PerformanceService {
   }
 
   // Performance Monitoring
-  static async getSystemMetrics(): Promise<any> {
+  static async getSystemMetrics(): Promise<SystemMetrics> {
     try {
       const cacheKey = 'system_metrics';
       if (this.isCacheValid(cacheKey)) {
-        return this.cache.get(cacheKey);
+        return this.cache.get(cacheKey) as SystemMetrics;
       }
 
       const [memoryUsage, cpuUsage, diskUsage] = await Promise.all([
@@ -365,11 +409,11 @@ export class PerformanceService {
     }
   }
 
-  static async getDatabaseMetrics(): Promise<any> {
+  static async getDatabaseMetrics(): Promise<DatabaseMetrics> {
     try {
       const cacheKey = 'database_metrics';
       if (this.isCacheValid(cacheKey)) {
-        return this.cache.get(cacheKey);
+        return this.cache.get(cacheKey) as DatabaseMetrics;
       }
 
       const db = mongoose.connection.db;
@@ -394,11 +438,11 @@ export class PerformanceService {
     }
   }
 
-  static async getAPIMetrics(): Promise<any> {
+  static async getAPIMetrics(): Promise<APIMetrics> {
     try {
       const cacheKey = 'api_metrics';
       if (this.isCacheValid(cacheKey)) {
-        return this.cache.get(cacheKey);
+        return this.cache.get(cacheKey) as APIMetrics;
       }
 
       const now = new Date();
@@ -467,7 +511,7 @@ export class PerformanceService {
     }
   }
 
-  static async executeOptimization(optimization: any): Promise<void> {
+  static async executeOptimization(optimization: IOptimizationLog): Promise<void> {
     try {
       // Update status to running
       optimization.status = 'running';
@@ -548,7 +592,7 @@ export class PerformanceService {
     return 'critical';
   }
 
-  private static async triggerCriticalAlert(metric: any): Promise<void> {
+  private static async triggerCriticalAlert(metric: IPerformanceMetric): Promise<void> {
     try {
       await NotificationService.createNotification({
         title: 'Performance Alert',
@@ -558,7 +602,7 @@ export class PerformanceService {
         category: 'technical',
         recipients: ['admin'],
         sender: { id: 'system', name: 'System', role: 'system' },
-      } as any);
+      } satisfies CreateNotificationData);
     } catch (error) {
       logger.error('Error triggering critical alert', {
         error: error instanceof Error ? error.message : error,
@@ -566,7 +610,7 @@ export class PerformanceService {
     }
   }
 
-  private static async getMemoryUsage(): Promise<any> {
+  private static async getMemoryUsage(): Promise<SystemMetrics['memory']> {
     const usage = process.memoryUsage();
     return {
       rss: Math.round(usage.rss / 1024 / 1024), // MB
@@ -576,7 +620,7 @@ export class PerformanceService {
     };
   }
 
-  private static async getCPUUsage(): Promise<any> {
+  private static async getCPUUsage(): Promise<SystemMetrics['cpu']> {
     const startUsage = process.cpuUsage();
     await new Promise((resolve) => setTimeout(resolve, 100));
     const endUsage = process.cpuUsage(startUsage);
@@ -587,7 +631,7 @@ export class PerformanceService {
     };
   }
 
-  private static async getDiskUsage(): Promise<any> {
+  private static async getDiskUsage(): Promise<SystemMetrics['disk']> {
     try {
       const { stdout } = await execAsync('df -h .');
       const lines = stdout.split('\n');
@@ -678,14 +722,16 @@ export class PerformanceService {
     logger.info('CDN update completed');
   }
 
-  private static async checkAndExecuteOptimization(config: any): Promise<void> {
+  private static async checkAndExecuteOptimization(config: IPerformanceConfig): Promise<void> {
     // Check if conditions are met for automatic execution
     const shouldExecute = await this.evaluateConditions(config.conditions);
 
     if (shouldExecute) {
       await this.createOptimization({
         type: 'automatic',
-        action: config.settings.action || 'cache_clear',
+        action: (typeof config.settings.action === 'string'
+          ? config.settings.action
+          : 'cache_clear') as IOptimizationLog['action'],
         target: config.name,
         description: `Automatic optimization triggered for ${config.name}`,
         impact: 'medium',
@@ -694,7 +740,9 @@ export class PerformanceService {
     }
   }
 
-  private static async evaluateConditions(conditions: any[]): Promise<boolean> {
+  private static async evaluateConditions(
+    conditions: IPerformanceConfig['conditions'],
+  ): Promise<boolean> {
     if (!conditions || conditions.length === 0) return false;
 
     for (const condition of conditions) {
@@ -733,7 +781,7 @@ export class PerformanceService {
     }
   }
 
-  private static async notifyOptimizationSuccess(optimization: any): Promise<void> {
+  private static async notifyOptimizationSuccess(optimization: IOptimizationLog): Promise<void> {
     try {
       await NotificationService.createNotification({
         title: 'Optimization Success',
@@ -743,7 +791,7 @@ export class PerformanceService {
         category: 'technical',
         recipients: ['admin'],
         sender: { id: 'system', name: 'System', role: 'system' },
-      } as any);
+      } satisfies CreateNotificationData);
     } catch (error) {
       logger.error('Error sending optimization success notification', {
         error: error instanceof Error ? error.message : error,
@@ -751,7 +799,10 @@ export class PerformanceService {
     }
   }
 
-  private static async notifyOptimizationFailure(optimization: any, error: string): Promise<void> {
+  private static async notifyOptimizationFailure(
+    optimization: IOptimizationLog,
+    error: string,
+  ): Promise<void> {
     try {
       await NotificationService.createNotification({
         title: 'Optimization Failed',
@@ -761,7 +812,7 @@ export class PerformanceService {
         category: 'technical',
         recipients: ['admin'],
         sender: { id: 'system', name: 'System', role: 'system' },
-      } as any);
+      } satisfies CreateNotificationData);
     } catch (error) {
       logger.error('Error sending optimization failure notification', {
         error: error instanceof Error ? error.message : error,
@@ -770,7 +821,7 @@ export class PerformanceService {
   }
 
   // Cache management
-  private static setCache(key: string, value: any): void {
+  private static setCache(key: string, value: unknown): void {
     this.cache.set(key, value);
     this.cacheExpiry.set(key, Date.now() + this.CACHE_TTL);
   }

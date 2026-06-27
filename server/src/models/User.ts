@@ -304,7 +304,11 @@ UserSchema.statics.findByRole = function (role: string) {
 };
 
 UserSchema.statics.findStudentsByClass = function (sinif: string, sube?: string) {
-  const query: any = { rol: 'student', sinif, isActive: true };
+  const query: { rol: string; sinif: string; isActive: boolean; sube?: string } = {
+    rol: 'student',
+    sinif,
+    isActive: true,
+  };
   if (sube) query.sube = sube;
   return this.find(query);
 };

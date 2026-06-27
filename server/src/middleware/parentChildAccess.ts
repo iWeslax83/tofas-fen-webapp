@@ -7,7 +7,9 @@ import logger from '../utils/logger';
  * Returns the list of student IDs linked to this parent.
  */
 export async function getParentChildIds(parentUserId: string): Promise<string[]> {
-  const parent = await User.findOne({ id: parentUserId, rol: 'parent' }).select('childId').lean() as any;
+  const parent = (await User.findOne({ id: parentUserId, rol: 'parent' })
+    .select('childId')
+    .lean()) as { childId?: string | string[] } | null;
   if (!parent || !parent.childId) return [];
   return Array.isArray(parent.childId) ? parent.childId : [parent.childId];
 }
@@ -71,7 +73,9 @@ export function verifyParentChildAccess(studentIdSource: string) {
       // Any other role - deny
       res.status(403).json({ error: 'Insufficient permissions' });
     } catch (error) {
-      logger.error('Parent-child access check error', { error: error instanceof Error ? error.message : error });
+      logger.error('Parent-child access check error', {
+        error: error instanceof Error ? error.message : error,
+      });
       res.status(500).json({ error: 'Yetki kontrolü sırasında hata oluştu' });
     }
   };

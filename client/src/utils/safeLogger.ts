@@ -46,7 +46,7 @@ export const safeStringify = (value: unknown): string => {
 // leaking information via the browser console. Real errors should be routed
 // through Sentry (which has its own scrubbing); these helpers are for local
 // debugging only.
-const IS_DEV = typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV === true;
+const IS_DEV = typeof import.meta !== 'undefined' && import.meta.env?.DEV === true;
 
 /**
  * Safe console.error that prevents object-to-primitive conversion errors.

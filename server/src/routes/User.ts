@@ -1,14 +1,24 @@
 import { Router } from 'express';
 import { Request, Response } from 'express';
-import { User } from '../models';
-import bcrypt from 'bcryptjs';
-import { BCRYPT_COST } from '../modules/auth/services/authService';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import multer from 'multer';
 import { verifyUploadedFiles } from '../config/upload';
-import { parseParentChildFile, bulkLinkParentChild } from '../services/bulkImportService';
 import logger from '../utils/logger';
-import { safeSearchRegex } from '../utils/regex';
+import {
+  listUsers,
+  listUsersByRole,
+  getUserById,
+  getUserByIdForView,
+  createUser,
+  createUserLegacy,
+  updateUser,
+  updateUserLegacy,
+  getUserEmailById,
+  deleteUser,
+  linkParentChild,
+  getChildrenForParent,
+  bulkLinkParentChildFromFile,
+} from '../services/UserService';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -53,14 +63,7 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const { role } = req.query;
-      const filter: any = {};
-      if (role) {
-        filter.rol = role;
-      }
-
-      // Select all fields except sensitive ones
-      // Select all fields except sensitive ones
-      const users = await User.find(filter).select('-sifre -tckn');
+      const users = await listUsers({ role: role ? String(role) : undefined });
       res.json(users);
     } catch (error) {
       logger.error('Error getting users', {
@@ -131,40 +134,25 @@ router.get(
     try {
       const { role } = req.params;
       const { search } = req.query;
-      const filter: any = { rol: role };
-
-      if (search) {
-        const re = safeSearchRegex(String(search));
-        if (re === null) {
-          // Empty after trim, or > 100 chars — return early with a 400 to
-          // preserve the prior contract.
-          return res.status(400).json({ error: 'Arama terimi çok uzun (en fazla 100 karakter)' });
-        }
-        filter.$or = [{ adSoyad: re }, { id: re }];
-      }
-
-      // Clamp pagination (B-H5) — previously page/limit were declared but the
-      // find() query ignored them, so a single call could return the entire
-      // users collection.
       const page = Math.max(parseInt(String(req.query.page ?? '1'), 10) || 1, 1);
       const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '50'), 10) || 50, 1), 200);
 
-      const total = await User.countDocuments(filter);
-      const users = await User.find(filter)
-        .select('-sifre -tckn')
-        .skip((page - 1) * limit)
-        .limit(limit);
+      const result = await listUsersByRole({
+        role,
+        search: search ? String(search) : undefined,
+        page,
+        limit,
+      });
+
+      if (result.badSearch) {
+        return res.status(400).json({ error: 'Arama terimi çok uzun (en fazla 100 karakter)' });
+      }
 
       res.json({
-        data: users,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
+        data: result.data,
+        pagination: result.pagination,
       });
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: 'Internal error' });
     }
   },
@@ -214,32 +202,21 @@ router.get(
  */
 router.post('/parent-child-link', authenticateJWT, async (req, res) => {
   const { parentId, childId } = req.body;
-  const authUser = (req as any).user;
+  const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
 
   // Yetki kontrolü: Admin veya parentId kendisi olmalı
   if (authUser?.role !== 'admin' && authUser?.userId !== parentId) {
     return res.status(403).json({ error: 'Bu işlem için yetkiniz yok' });
   }
 
-  const parent = await User.findOne({ id: parentId });
-  const child = await User.findOne({ id: childId });
-  if (!parent || !child) {
+  const result = await linkParentChild({ parentId, childId });
+  if (result.notFound) {
     res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     return;
   }
-  if (parent.rol !== 'parent' || child.rol !== 'student') {
+  if (result.invalidRole) {
     res.status(400).json({ error: 'Geçersiz rol' });
     return;
-  }
-  if (!parent.childId) parent.childId = [];
-  if (!parent.childId.includes(childId)) {
-    parent.childId.push(childId);
-    await parent.save();
-  }
-  // Also update the student's parentId for bidirectional link
-  if (child.parentId !== parentId) {
-    child.parentId = parentId;
-    await child.save();
   }
   res.json({ success: true });
 });
@@ -274,20 +251,19 @@ router.post('/parent-child-link', authenticateJWT, async (req, res) => {
  */
 router.get('/parent/:parentId/children', authenticateJWT, async (req, res) => {
   const { parentId } = req.params;
-  const authUser = (req as any).user;
+  const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
 
   const allowedRoles = ['admin', 'teacher'];
   if (!allowedRoles.includes(authUser.role) && authUser.userId !== parentId) {
     return res.status(403).json({ error: 'Bu işlem için yetkiniz yok' });
   }
 
-  const parent = await User.findOne({ id: parentId });
-  if (!parent) {
+  const result = await getChildrenForParent(parentId);
+  if (result.notFound) {
     res.status(404).json({ error: 'Parent not found' });
     return;
   }
-  const children = await User.find({ id: { $in: parent.childId || [] } }).select('-sifre');
-  res.json(children);
+  res.json(result.children);
 });
 
 // Şifre değiştirme endpoint'i kaldırıldı - artık TCKN kullanılıyor ve değiştirilemez
@@ -356,21 +332,23 @@ router.post(
         return res.status(400).json({ error: 'Dosya yüklenmedi' });
       }
 
-      const links = parseParentChildFile(req.file.buffer, req.file.originalname);
-      if (links.length === 0) {
+      const result = await bulkLinkParentChildFromFile({
+        fileBuffer: req.file.buffer,
+        originalname: req.file.originalname,
+        preview: req.query.preview === 'true',
+      });
+
+      if (result.noData) {
         return res.status(400).json({ error: 'Dosyada eşleştirme verisi bulunamadı' });
       }
 
-      // Preview mode
-      if (req.query.preview === 'true') {
+      if (result.preview) {
         return res.json({
           preview: true,
-          total: links.length,
-          links: links.slice(0, 100), // Show first 100 for preview
+          total: result.total,
+          links: result.links,
         });
       }
-
-      const result = await bulkLinkParentChild(links);
 
       res.json({
         linked: result.linked,
@@ -428,7 +406,7 @@ router.post(
  */
 router.put('/:userId', authenticateJWT, async (req, res) => {
   const { userId } = req.params;
-  const authUser = (req as any).user;
+  const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
 
   // GÜVENLİK: Kullanıcı sadece kendini güncelleyebilir, admin herkesi güncelleyebilir
   if (authUser?.userId !== userId && authUser?.role !== 'admin') {
@@ -445,16 +423,10 @@ router.put('/:userId', authenticateJWT, async (req, res) => {
     delete updateData.tckn;
   }
 
-  try {
-    const user = await User.findOneAndUpdate({ id: userId }, updateData, {
-      new: true,
-      runValidators: true,
-    }).select('-sifre -tckn');
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user);
-  } catch (error) {
-    res.status(400).json({ error: 'Update failed' });
-  }
+  const result = await updateUser({ userId, updateData });
+  if (result.notFound) return res.status(404).json({ error: 'User not found' });
+  if (result.updateFailed) return res.status(400).json({ error: 'Update failed' });
+  res.json(result.user);
 });
 
 /**
@@ -511,7 +483,7 @@ router.put('/:userId', authenticateJWT, async (req, res) => {
  */
 router.put('/:userId/update', authenticateJWT, async (req, res) => {
   const { userId } = req.params;
-  const authUser = (req as any).user;
+  const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
 
   // GÜVENLİK: Kullanıcı sadece kendini güncelleyebilir, admin herkesi güncelleyebilir
   if (authUser?.userId !== userId && authUser?.role !== 'admin') {
@@ -533,8 +505,8 @@ router.put('/:userId/update', authenticateJWT, async (req, res) => {
 
   // If email is being changed, reset verification and disable 2FA (#18)
   if (updateData.email) {
-    const currentUser = (await User.findOne({ id: userId }).select('email').lean()) as any;
-    if (currentUser && currentUser.email !== updateData.email) {
+    const currentEmail = await getUserEmailById(userId);
+    if (currentEmail !== null && currentEmail !== updateData.email) {
       updateData.emailVerified = false;
       updateData.emailVerificationCode = null;
       updateData.emailVerificationExpiry = null;
@@ -545,16 +517,11 @@ router.put('/:userId/update', authenticateJWT, async (req, res) => {
   }
 
   try {
-    const user = await User.findOneAndUpdate({ id: userId }, updateData, {
-      new: true,
-      runValidators: true,
-    }).select('-sifre');
-
-    if (!user) {
+    const result = await updateUserLegacy({ userId, updateData });
+    if (result.notFound) {
       return res.status(404).json({ error: 'User not found' });
     }
-
-    res.json({ success: true, user });
+    res.json({ success: true, user: result.user });
   } catch (error) {
     logger.error('User update error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Internal server error' });
@@ -610,37 +577,19 @@ router.put('/:userId/update', authenticateJWT, async (req, res) => {
  */
 router.post('/', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   const { id, adSoyad, sifre, rol, sinif, sube, email } = req.body;
-  if (!id || !adSoyad || !rol || !sifre) {
+
+  const result = await createUser({ id, adSoyad, sifre, rol, sinif, sube, email });
+
+  if (result.validationError) {
     return res.status(400).json({ error: 'Validation failed' });
   }
-
-  // Prevent NoSQL injection via object payloads in string fields
-  if (
-    typeof id !== 'string' ||
-    typeof adSoyad !== 'string' ||
-    typeof rol !== 'string' ||
-    typeof sifre !== 'string' ||
-    (email && typeof email !== 'string')
-  ) {
+  if (result.typeError) {
     return res.status(400).json({ error: 'Invalid input types' });
   }
-  const existingUser = await User.findOne({ id });
-  if (existingUser) {
+  if (result.duplicate) {
     return res.status(400).json({ error: 'User already exists (duplicate)' });
   }
-  const hashedPassword = await bcrypt.hash(sifre, BCRYPT_COST);
-  const user = new User({
-    id,
-    adSoyad,
-    sifre: hashedPassword,
-    rol,
-    sinif,
-    sube,
-    email,
-    isActive: true,
-  });
-  await user.save();
-  res.status(201).json(user);
+  res.status(201).json(result.user);
 });
 
 /**
@@ -699,40 +648,31 @@ router.post('/', authenticateJWT, authorizeRoles(['admin']), async (req, res) =>
 router.post('/create', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   const { id, adSoyad, tckn, sifre, rol, sinif, sube, oda, pansiyon, email } = req.body;
 
-  if (!id || !adSoyad || !rol) {
-    res.status(400).json({ error: 'Gerekli alanlar eksik' });
-    return;
-  }
-
-  const existingUser = await User.findOne({ id });
-  if (existingUser) {
-    res.status(400).json({ error: 'Kullanıcı zaten mevcut' });
-    return;
-  }
-
-  // Only bcrypt hashed passwords allowed - TCKN plaintext removed for security
-  if (!sifre) {
-    res.status(400).json({ error: 'Şifre gereklidir' });
-    return;
-  }
-
-  // Hash password with bcrypt
-  const hashedPassword = await bcrypt.hash(sifre, BCRYPT_COST);
-
-  const user = new User({
+  const result = await createUserLegacy({
     id,
     adSoyad,
-    sifre: hashedPassword,
+    tckn,
+    sifre,
     rol,
     sinif,
     sube,
     oda,
     pansiyon,
     email,
-    isActive: true,
   });
 
-  await user.save();
+  if (result.missingFields) {
+    res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    return;
+  }
+  if (result.duplicate) {
+    res.status(400).json({ error: 'Kullanıcı zaten mevcut' });
+    return;
+  }
+  if (result.missingPassword) {
+    res.status(400).json({ error: 'Şifre gereklidir' });
+    return;
+  }
   res.status(201).json({ success: true });
 });
 
@@ -762,7 +702,7 @@ router.post('/create', authenticateJWT, authorizeRoles(['admin']), async (req, r
  */
 router.delete('/:userId', authenticateJWT, authorizeRoles(['admin']), async (req, res) => {
   const { userId } = req.params;
-  await User.deleteOne({ id: userId });
+  await deleteUser(userId);
   res.status(204).end();
 });
 
@@ -787,12 +727,12 @@ router.delete('/:userId', authenticateJWT, authorizeRoles(['admin']), async (req
  */
 router.get('/me', authenticateJWT, async (req, res) => {
   try {
-    const userId = (req as any).user?.userId;
+    const userId = (req as unknown as { user?: { userId?: string; role?: string } }).user?.userId;
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const user = await User.findOne({ id: userId }).select('-sifre -tckn');
+    const user = await getUserById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -837,14 +777,14 @@ router.get('/me', authenticateJWT, async (req, res) => {
 router.get('/:userId', authenticateJWT, async (req, res) => {
   try {
     const { userId } = req.params;
-    const authUser = (req as any).user;
+    const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
 
     // Sadece kendi bilgilerini veya admin/teacher tüm kullanıcıları görebilir
     if (authUser?.userId !== userId && authUser?.role !== 'admin' && authUser?.role !== 'teacher') {
       return res.status(403).json({ error: 'Bu kullanıcıyı görme yetkiniz yok' });
     }
 
-    const user = await User.findOne({ id: userId }).select('-sifre -tckn');
+    const user = await getUserByIdForView(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
