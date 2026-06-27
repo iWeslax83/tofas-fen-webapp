@@ -13,7 +13,7 @@ const OUTPUT_FILE = path.join(OUTPUT_DIR, 'openapi.yaml');
 /**
  * Convert OpenAPI spec to YAML format
  */
-function jsonToYaml(obj: any, indent = 0): string {
+function jsonToYaml(obj: unknown, indent = 0): string {
   const indentStr = '  '.repeat(indent);
   let yaml = '';
 
@@ -41,9 +41,13 @@ function jsonToYaml(obj: any, indent = 0): string {
         yaml += `${indentStr}${key}:\n`;
         yaml += jsonToYaml(value, indent + 1);
       } else {
-        const formattedValue = typeof value === 'string' && value.includes('\n')
-          ? `|\n${value.split('\n').map(line => `${indentStr}  ${line}`).join('\n')}`
-          : value;
+        const formattedValue =
+          typeof value === 'string' && value.includes('\n')
+            ? `|\n${value
+                .split('\n')
+                .map((line) => `${indentStr}  ${line}`)
+                .join('\n')}`
+            : value;
         yaml += `${indentStr}${key}: ${formattedValue}\n`;
       }
     });
@@ -100,4 +104,3 @@ if (require.main === module) {
 }
 
 export { generateOpenApi };
-

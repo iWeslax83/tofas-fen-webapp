@@ -22,7 +22,7 @@ router.post(
   authorizeRoles(['ziyaretci', 'admin']),
   async (req: Request, res: Response) => {
     try {
-      const authUser = (req as any).user;
+      const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
 
       // Find existing visitor conversation for this user
       let conversation = await Conversation.findOne({
@@ -90,7 +90,7 @@ router.get(
   authorizeRoles(['ziyaretci', 'admin']),
   async (req: Request, res: Response) => {
     try {
-      const authUser = (req as any).user;
+      const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
       const { conversationId } = req.params;
       const { page = '1', limit = '50' } = req.query;
 
@@ -129,7 +129,7 @@ router.post(
   authorizeRoles(['ziyaretci', 'admin']),
   async (req: Request, res: Response) => {
     try {
-      const authUser = (req as any).user;
+      const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
       const { conversationId, content } = req.body;
 
       if (!conversationId || !content) {

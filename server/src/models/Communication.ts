@@ -214,57 +214,65 @@ const MessageSchema = new Schema<IMessage>({
   contentType: {
     type: String,
     enum: ['text', 'image', 'file', 'audio', 'video', 'location', 'system'],
-    default: 'text'
+    default: 'text',
   },
-  attachments: [{
-    filename: { type: String, required: true },
-    originalName: { type: String, required: true },
-    mimeType: { type: String, required: true },
-    size: { type: Number, required: true },
-    url: { type: String, required: true },
-    thumbnailUrl: { type: String }
-  }],
+  attachments: [
+    {
+      filename: { type: String, required: true },
+      originalName: { type: String, required: true },
+      mimeType: { type: String, required: true },
+      size: { type: Number, required: true },
+      url: { type: String, required: true },
+      thumbnailUrl: { type: String },
+    },
+  ],
   replyTo: { type: String, index: true },
   forwardedFrom: { type: String },
   edited: { type: Boolean, default: false },
   editedAt: { type: Date },
   deleted: { type: Boolean, default: false },
   deletedAt: { type: Date },
-  readBy: [{
-    userId: { type: String, required: true },
-    readAt: { type: Date, default: Date.now }
-  }],
-  deliveredTo: [{
-    userId: { type: String, required: true },
-    deliveredAt: { type: Date, default: Date.now }
-  }],
-  reactions: [{
-    userId: { type: String, required: true },
-    emoji: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now }
-  }],
+  readBy: [
+    {
+      userId: { type: String, required: true },
+      readAt: { type: Date, default: Date.now },
+    },
+  ],
+  deliveredTo: [
+    {
+      userId: { type: String, required: true },
+      deliveredAt: { type: Date, default: Date.now },
+    },
+  ],
+  reactions: [
+    {
+      userId: { type: String, required: true },
+      emoji: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
   metadata: {
     location: {
       latitude: { type: Number },
       longitude: { type: Number },
-      address: { type: String }
+      address: { type: String },
     },
     duration: { type: Number },
     dimensions: {
       width: { type: Number },
-      height: { type: Number }
-    }
+      height: { type: Number },
+    },
   },
   priority: {
     type: String,
     enum: ['low', 'normal', 'high', 'urgent'],
-    default: 'normal'
+    default: 'normal',
   },
   expiresAt: { type: Date, index: true },
   isEncrypted: { type: Boolean, default: false },
   encryptionKey: { type: String },
   createdAt: { type: Date, default: Date.now, index: true },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 // Conversation Schema
@@ -273,21 +281,23 @@ const ConversationSchema = new Schema<IConversation>({
   type: {
     type: String,
     enum: ['direct', 'group', 'broadcast', 'announcement'],
-    required: true
+    required: true,
   },
   title: { type: String },
   description: { type: String },
-  participants: [{
-    userId: { type: String, required: true },
-    role: {
-      type: String,
-      enum: ['admin', 'moderator', 'member', 'readonly'],
-      default: 'member'
+  participants: [
+    {
+      userId: { type: String, required: true },
+      role: {
+        type: String,
+        enum: ['admin', 'moderator', 'member', 'readonly'],
+        default: 'member',
+      },
+      joinedAt: { type: Date, default: Date.now },
+      leftAt: { type: Date },
+      isActive: { type: Boolean, default: true },
     },
-    joinedAt: { type: Date, default: Date.now },
-    leftAt: { type: Date },
-    isActive: { type: Boolean, default: true }
-  }],
+  ],
   admins: [{ type: String }],
   moderators: [{ type: String }],
   settings: {
@@ -300,21 +310,21 @@ const ConversationSchema = new Schema<IConversation>({
     archiveAfterDays: { type: Number, default: 30 },
     requireApproval: { type: Boolean, default: false },
     readReceipts: { type: Boolean, default: true },
-    typingIndicators: { type: Boolean, default: true }
+    typingIndicators: { type: Boolean, default: true },
   },
   lastMessage: {
     messageId: { type: String },
     content: { type: String },
     senderId: { type: String },
     senderName: { type: String },
-    timestamp: { type: Date }
+    timestamp: { type: Date },
   },
   unreadCount: { type: Map, of: Number, default: {} },
   isActive: { type: Boolean, default: true },
   isArchived: { type: Boolean, default: false },
   archivedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 // Email Schema
@@ -323,43 +333,47 @@ const EmailSchema = new Schema<IEmail>({
   from: {
     userId: { type: String, required: true },
     email: { type: String, required: true },
-    name: { type: String, required: true }
+    name: { type: String, required: true },
   },
-  to: [{
-    userId: { type: String },
-    email: { type: String, required: true },
-    name: { type: String },
-    type: {
-      type: String,
-      enum: ['to', 'cc', 'bcc'],
-      default: 'to'
-    }
-  }],
+  to: [
+    {
+      userId: { type: String },
+      email: { type: String, required: true },
+      name: { type: String },
+      type: {
+        type: String,
+        enum: ['to', 'cc', 'bcc'],
+        default: 'to',
+      },
+    },
+  ],
   subject: { type: String, required: true },
   content: { type: String, required: true },
   contentType: {
     type: String,
     enum: ['text', 'html'],
-    default: 'text'
+    default: 'text',
   },
-  attachments: [{
-    filename: { type: String, required: true },
-    originalName: { type: String, required: true },
-    mimeType: { type: String, required: true },
-    size: { type: Number, required: true },
-    url: { type: String, required: true }
-  }],
+  attachments: [
+    {
+      filename: { type: String, required: true },
+      originalName: { type: String, required: true },
+      mimeType: { type: String, required: true },
+      size: { type: Number, required: true },
+      url: { type: String, required: true },
+    },
+  ],
   replyTo: { type: String },
   forwardedFrom: { type: String },
   priority: {
     type: String,
     enum: ['low', 'normal', 'high'],
-    default: 'normal'
+    default: 'normal',
   },
   status: {
     type: String,
     enum: ['draft', 'sent', 'delivered', 'read', 'failed'],
-    default: 'draft'
+    default: 'draft',
   },
   sentAt: { type: Date },
   deliveredAt: { type: Date },
@@ -370,7 +384,7 @@ const EmailSchema = new Schema<IEmail>({
   encryptionKey: { type: String },
   expiresAt: { type: Date, index: true },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 // Chat Room Schema
@@ -381,25 +395,27 @@ const ChatRoomSchema = new Schema<IChatRoom>({
   type: {
     type: String,
     enum: ['public', 'private', 'restricted'],
-    default: 'public'
+    default: 'public',
   },
   category: {
     type: String,
     enum: ['general', 'academic', 'social', 'announcements', 'support', 'events'],
-    default: 'general'
+    default: 'general',
   },
   maxParticipants: { type: Number },
   currentParticipants: { type: Number, default: 0 },
-  participants: [{
-    userId: { type: String, required: true },
-    role: {
-      type: String,
-      enum: ['admin', 'moderator', 'member', 'readonly'],
-      default: 'member'
+  participants: [
+    {
+      userId: { type: String, required: true },
+      role: {
+        type: String,
+        enum: ['admin', 'moderator', 'member', 'readonly'],
+        default: 'member',
+      },
+      joinedAt: { type: Date, default: Date.now },
+      isActive: { type: Boolean, default: true },
     },
-    joinedAt: { type: Date, default: Date.now },
-    isActive: { type: Boolean, default: true }
-  }],
+  ],
   admins: [{ type: String }],
   moderators: [{ type: String }],
   rules: [{ type: String }],
@@ -416,13 +432,13 @@ const ChatRoomSchema = new Schema<IChatRoom>({
     readReceipts: { type: Boolean, default: true },
     typingIndicators: { type: Boolean, default: true },
     slowMode: { type: Boolean, default: false },
-    slowModeInterval: { type: Number, default: 5 } // seconds
+    slowModeInterval: { type: Number, default: 5 }, // seconds
   },
   isActive: { type: Boolean, default: true },
   isArchived: { type: Boolean, default: false },
   archivedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 // Contact Schema
@@ -438,7 +454,7 @@ const ContactSchema = new Schema<IContact>({
   status: {
     type: String,
     enum: ['online', 'offline', 'away', 'busy', 'invisible'],
-    default: 'offline'
+    default: 'offline',
   },
   lastSeen: { type: Date },
   isFavorite: { type: Boolean, default: false },
@@ -449,7 +465,7 @@ const ContactSchema = new Schema<IContact>({
   tags: [{ type: String }],
   groups: [{ type: String }],
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 // Indexes
@@ -478,7 +494,9 @@ ContactSchema.index({ userId: 1, isBlocked: 1 });
 
 // Instance methods
 MessageSchema.methods.markAsRead = function (userId: string) {
-  const existingRead = this.readBy.find((read: any) => read.userId === userId);
+  const existingRead = this.readBy.find(
+    (read: { userId: string; readAt: Date }) => read.userId === userId,
+  );
   if (!existingRead) {
     this.readBy.push({ userId, readAt: new Date() });
   }
@@ -486,7 +504,9 @@ MessageSchema.methods.markAsRead = function (userId: string) {
 };
 
 MessageSchema.methods.markAsDelivered = function (userId: string) {
-  const existingDelivery = this.deliveredTo.find((delivery: any) => delivery.userId === userId);
+  const existingDelivery = this.deliveredTo.find(
+    (delivery: { userId: string; deliveredAt: Date }) => delivery.userId === userId,
+  );
   if (!existingDelivery) {
     this.deliveredTo.push({ userId, deliveredAt: new Date() });
   }
@@ -494,7 +514,9 @@ MessageSchema.methods.markAsDelivered = function (userId: string) {
 };
 
 MessageSchema.methods.addReaction = function (userId: string, emoji: string) {
-  const existingReaction = this.reactions.find((reaction: any) => reaction.userId === userId);
+  const existingReaction = this.reactions.find(
+    (reaction: { userId: string; emoji: string; createdAt: Date }) => reaction.userId === userId,
+  );
   if (existingReaction) {
     existingReaction.emoji = emoji;
     existingReaction.createdAt = new Date();
@@ -505,25 +527,33 @@ MessageSchema.methods.addReaction = function (userId: string, emoji: string) {
 };
 
 ConversationSchema.methods.addParticipant = function (userId: string, role: string = 'member') {
-  const existingParticipant = this.participants.find((p: any) => p.userId === userId);
+  const existingParticipant = this.participants.find(
+    (p: { userId: string; isActive: boolean }) => p.userId === userId,
+  );
   if (!existingParticipant) {
     this.participants.push({
       userId,
       role,
       joinedAt: new Date(),
-      isActive: true
+      isActive: true,
     });
-    this.currentParticipants = this.participants.filter((p: any) => p.isActive).length;
+    this.currentParticipants = this.participants.filter(
+      (p: { isActive: boolean }) => p.isActive,
+    ).length;
   }
   return this.save();
 };
 
 ConversationSchema.methods.removeParticipant = function (userId: string) {
-  const participant = this.participants.find((p: any) => p.userId === userId);
+  const participant = this.participants.find(
+    (p: { userId: string; isActive: boolean; leftAt?: Date }) => p.userId === userId,
+  );
   if (participant) {
     participant.isActive = false;
     participant.leftAt = new Date();
-    this.currentParticipants = this.participants.filter((p: any) => p.isActive).length;
+    this.currentParticipants = this.participants.filter(
+      (p: { isActive: boolean }) => p.isActive,
+    ).length;
   }
   return this.save();
 };
@@ -534,7 +564,7 @@ MessageSchema.statics.getUnreadCount = function (userId: string, conversationId:
     conversationId,
     senderId: { $ne: userId },
     'readBy.userId': { $ne: userId },
-    deleted: false
+    deleted: false,
   });
 };
 
@@ -542,13 +572,17 @@ ConversationSchema.statics.getConversationsForUser = function (userId: string) {
   return this.find({
     'participants.userId': userId,
     'participants.isActive': true,
-    isActive: true
+    isActive: true,
   }).sort({ updatedAt: -1 });
 };
 
 // Export models
-export const Message = mongoose.models.Message || mongoose.model<IMessage>('Message', MessageSchema);
-export const Conversation = mongoose.models.Conversation || mongoose.model<IConversation>('Conversation', ConversationSchema);
+export const Message =
+  mongoose.models.Message || mongoose.model<IMessage>('Message', MessageSchema);
+export const Conversation =
+  mongoose.models.Conversation || mongoose.model<IConversation>('Conversation', ConversationSchema);
 export const Email = mongoose.models.Email || mongoose.model<IEmail>('Email', EmailSchema);
-export const ChatRoom = mongoose.models.ChatRoom || mongoose.model<IChatRoom>('ChatRoom', ChatRoomSchema);
-export const Contact = mongoose.models.Contact || mongoose.model<IContact>('Contact', ContactSchema);
+export const ChatRoom =
+  mongoose.models.ChatRoom || mongoose.model<IChatRoom>('ChatRoom', ChatRoomSchema);
+export const Contact =
+  mongoose.models.Contact || mongoose.model<IContact>('Contact', ContactSchema);

@@ -1,4 +1,5 @@
 import express from 'express';
+import { Request, Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import { CommunicationService } from '../services/CommunicationService';
 import { requireAuth } from '../middleware/auth';
@@ -9,6 +10,19 @@ import fs from 'fs';
 import { createEndpointLimiter } from '../config/rateLimiters';
 import { verifyUploadedFiles } from '../config/upload';
 import { asyncHandler } from '../middleware/errorHandler';
+
+// Local request shape used by handlers in this file.
+// req.user is populated by JWT middleware but typed with legacy `.id`/`.name`
+// properties (rather than the JWTPayload `.userId`) — keep as-is at runtime.
+// Using Omit+intersection avoids conflicting with the global JWTPayload augmentation.
+type AuthedRequest = Omit<Request, 'user'> & {
+  user?: {
+    id?: string;
+    email?: string;
+    name?: string;
+    role?: string;
+  };
+};
 
 const router = express.Router();
 
@@ -139,9 +153,9 @@ const validateContactCreate = [
 router.post(
   '/messages',
   requireAuth,
-  messageLimiter as any,
+  messageLimiter,
   validateMessageCreate,
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -155,8 +169,10 @@ router.post(
 
       const message = await CommunicationService.createMessage(messageData);
       return res.status(201).json(message);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -169,7 +185,7 @@ router.get(
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 100 }),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -187,8 +203,10 @@ router.get(
       );
 
       return res.json(result);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -200,7 +218,7 @@ router.put(
     param('messageId').isString().notEmpty(),
     body('content').isString().notEmpty().isLength({ max: 5000 }),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -212,8 +230,10 @@ router.put(
 
       const message = await CommunicationService.updateMessage(messageId, req.user.id, updates);
       return res.json(message);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -222,7 +242,7 @@ router.delete(
   '/messages/:messageId',
   requireAuth,
   [param('messageId').isString().notEmpty()],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -232,8 +252,10 @@ router.delete(
       const { messageId } = req.params;
       await CommunicationService.deleteMessage(messageId, req.user.id);
       return res.status(204).send();
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -245,7 +267,7 @@ router.post(
     param('messageId').isString().notEmpty(),
     body('emoji').isString().notEmpty().isLength({ max: 10 }),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -257,8 +279,10 @@ router.post(
 
       const message = await CommunicationService.addReaction(messageId, req.user.id, emoji);
       return res.json(message);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -268,7 +292,7 @@ router.post(
   '/conversations',
   requireAuth,
   validateConversationCreate,
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -282,8 +306,10 @@ router.post(
 
       const conversation = await CommunicationService.createConversation(conversationData);
       return res.status(201).json(conversation);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -297,7 +323,7 @@ router.get(
     query('isArchived').optional().isBoolean(),
     query('hasUnread').optional().isBoolean(),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -313,8 +339,10 @@ router.get(
 
       const conversations = await CommunicationService.getConversations(req.user.id, filters);
       return res.json(conversations);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -323,7 +351,7 @@ router.get(
   '/conversations/:conversationId',
   requireAuth,
   [param('conversationId').isString().notEmpty()],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -339,8 +367,10 @@ router.get(
       }
 
       return res.json(conversation);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -353,7 +383,7 @@ router.post(
     body('userId').isString().notEmpty(),
     body('role').optional().isIn(['admin', 'moderator', 'member', 'readonly']),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -365,8 +395,10 @@ router.post(
 
       const conversation = await CommunicationService.addParticipant(conversationId, userId, role);
       return res.json(conversation);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -375,7 +407,7 @@ router.delete(
   '/conversations/:conversationId/participants/:userId',
   requireAuth,
   [param('conversationId').isString().notEmpty(), param('userId').isString().notEmpty()],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -385,8 +417,10 @@ router.delete(
       const { conversationId, userId } = req.params;
       const conversation = await CommunicationService.removeParticipant(conversationId, userId);
       return res.json(conversation);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -396,7 +430,7 @@ router.post(
   '/emails',
   requireAuth,
   validateEmailCreate,
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -414,8 +448,10 @@ router.post(
 
       const email = await CommunicationService.createEmail(emailData);
       res.status(201).json(email);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -424,7 +460,7 @@ router.post(
   '/emails/:emailId/send',
   requireAuth,
   [param('emailId').isString().notEmpty()],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -434,8 +470,10 @@ router.post(
       const { emailId } = req.params;
       const email = await CommunicationService.sendEmail(emailId);
       res.json(email);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -448,7 +486,7 @@ router.get(
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 100 }),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -465,8 +503,10 @@ router.get(
       );
 
       return res.json(result);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -476,7 +516,7 @@ router.post(
   '/chatrooms',
   requireAuth,
   validateChatRoomCreate,
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -490,8 +530,10 @@ router.post(
 
       const chatRoom = await CommunicationService.createChatRoom(chatRoomData);
       res.status(201).json(chatRoom);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -506,7 +548,7 @@ router.get(
       .isIn(['general', 'academic', 'social', 'announcements', 'support', 'events']),
     query('isActive').optional().isBoolean(),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -521,8 +563,10 @@ router.get(
 
       const chatRooms = await CommunicationService.getChatRooms(filters);
       res.json(chatRooms);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -531,7 +575,7 @@ router.post(
   '/chatrooms/:roomId/join',
   requireAuth,
   [param('roomId').isString().notEmpty()],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -541,8 +585,10 @@ router.post(
       const { roomId } = req.params;
       const chatRoom = await CommunicationService.joinChatRoom(roomId, req.user.id);
       res.json(chatRoom);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -551,7 +597,7 @@ router.post(
   '/chatrooms/:roomId/leave',
   requireAuth,
   [param('roomId').isString().notEmpty()],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -561,8 +607,10 @@ router.post(
       const { roomId } = req.params;
       const chatRoom = await CommunicationService.leaveChatRoom(roomId, req.user.id);
       res.json(chatRoom);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -572,7 +620,7 @@ router.post(
   '/contacts',
   requireAuth,
   validateContactCreate,
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -586,8 +634,10 @@ router.post(
 
       const contact = await CommunicationService.createContact(contactData);
       res.status(201).json(contact);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -601,7 +651,7 @@ router.get(
     query('tags').optional().isArray(),
     query('tags.*').isString(),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -616,8 +666,10 @@ router.get(
 
       const contacts = await CommunicationService.getContacts(req.user.id, filters);
       res.json(contacts);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -629,7 +681,7 @@ router.put(
     param('contactId').isString().notEmpty(),
     body('status').isIn(['online', 'offline', 'away', 'busy', 'invisible']),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -641,8 +693,10 @@ router.put(
 
       const contact = await CommunicationService.updateContactStatus(contactId, status);
       res.json(contact);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -654,7 +708,7 @@ router.post(
     param('contactId').isString().notEmpty(),
     body('reason').optional().isString().isLength({ max: 200 }),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -666,8 +720,10 @@ router.post(
 
       const contact = await CommunicationService.blockContact(contactId, reason);
       res.json(contact);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -676,7 +732,7 @@ router.post(
   '/contacts/:contactId/unblock',
   requireAuth,
   [param('contactId').isString().notEmpty()],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -686,8 +742,10 @@ router.post(
       const { contactId } = req.params;
       const contact = await CommunicationService.unblockContact(contactId);
       res.json(contact);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -706,7 +764,7 @@ router.get(
     query('dateTo').optional().isISO8601(),
     query('hasAttachments').optional().isBoolean(),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -730,8 +788,10 @@ router.get(
         searchFilters,
       );
       res.json(messages);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -739,12 +799,14 @@ router.get(
 router.get(
   '/stats',
   requireAuth,
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
-      const stats = await CommunicationService.getCommunicationStats((req as any).user?.id);
+      const stats = await CommunicationService.getCommunicationStats(req.user?.id);
       res.json(stats);
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );
@@ -753,10 +815,10 @@ router.get(
 router.post(
   '/upload',
   requireAuth,
-  commUploadLimiter as any,
+  commUploadLimiter,
   upload.array('attachments', 10),
   verifyUploadedFiles,
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthedRequest, res: Response) => {
     try {
       if (!req.files || req.files.length === 0) {
         return res.status(400).json({ error: 'No files uploaded' });
@@ -771,8 +833,10 @@ router.post(
       }));
 
       res.json({ files: uploadedFiles });
-    } catch (error: any) {
-      return res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   }),
 );

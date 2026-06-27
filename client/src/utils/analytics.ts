@@ -13,7 +13,7 @@ interface FeedbackData {
   title: string;
   description: string;
   priority?: 'low' | 'medium' | 'high';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 class Analytics {
@@ -31,7 +31,7 @@ class Analytics {
   /**
    * Track page view
    */
-  async trackPageView(path: string, metadata?: Record<string, any>): Promise<void> {
+  async trackPageView(path: string, metadata?: Record<string, unknown>): Promise<void> {
     try {
       await apiClient.post('/api/analytics/tracking', {
         path,
@@ -51,7 +51,7 @@ class Analytics {
   /**
    * Track user action
    */
-  async trackAction(action: string, metadata?: Record<string, any>): Promise<void> {
+  async trackAction(action: string, metadata?: Record<string, unknown>): Promise<void> {
     try {
       await apiClient.post('/api/analytics/action', {
         action,
@@ -71,7 +71,7 @@ class Analytics {
    */
   async submitFeedback(
     feedback: FeedbackData,
-  ): Promise<{ success: boolean; data?: any; error?: string }> {
+  ): Promise<{ success: boolean; data?: unknown; error?: string }> {
     try {
       const response = await apiClient.post('/api/analytics/feedback', feedback);
       return response.data;
@@ -87,7 +87,7 @@ class Analytics {
   /**
    * Get user metrics
    */
-  async getUserMetrics(startDate?: Date, endDate?: Date): Promise<any> {
+  async getUserMetrics(startDate?: Date, endDate?: Date): Promise<unknown> {
     try {
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startDate.toISOString());

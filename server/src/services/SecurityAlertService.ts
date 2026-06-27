@@ -13,7 +13,7 @@ interface SecurityEvent {
   type: string;
   userId?: string;
   ip?: string;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   timestamp: Date;
   severity: 'low' | 'medium' | 'high' | 'critical';
 }
@@ -41,12 +41,13 @@ const memAlertCooldowns: Map<string, number> = new Map();
 const ALERT_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes between same alert type
 
 // Redis client reference
-let redis: any = null;
+import type { Redis as RedisClient } from 'ioredis';
+let redis: RedisClient | null = null;
 
 /**
  * Initialize SecurityAlertService with Redis for distributed tracking.
  */
-export function initSecurityAlertRedis(redisClient: any): void {
+export function initSecurityAlertRedis(redisClient: RedisClient): void {
   redis = redisClient;
   logger.info('SecurityAlertService: Redis initialized for distributed tracking');
 }
@@ -395,8 +396,10 @@ export class SecurityAlertService {
 
     // Notify admin users
     try {
-      const admins = await User.find({ rol: 'admin', isActive: true }).select('id').lean();
-      const adminIds = admins.map((a: any) => a.id);
+      const admins = (await User.find({ rol: 'admin', isActive: true })
+        .select('id')
+        .lean()) as Array<{ id: string }>;
+      const adminIds = admins.map((a) => a.id);
 
       const severityEmoji: Record<string, string> = {
         low: 'Bilgi',
@@ -456,7 +459,15 @@ export class SecurityAlertService {
   /**
    * Get current security status summary.
    */
-  static async getSecurityStatus(): Promise<Record<string, any>> {
+  static async getSecurityStatus(): Promise<{
+    recentLoginFailures: number;
+    uniqueFailedIPs: number;
+    uniqueFailedUsers: number;
+    recentRoleChanges: number;
+    activeDataExportUsers?: number;
+    activeAlertCooldowns?: number;
+    redisEnabled: boolean;
+  }> {
     const now = Date.now();
 
     if (redis) {

@@ -15,14 +15,28 @@ const SUSPICIOUS_THRESHOLD = 50; // requests with suspicious patterns
 const SUSPICIOUS_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 const BLOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 
+/** Minimal Redis interface required by the WAF (subset of ioredis API) */
+interface WafRedisClient {
+  get(key: string): Promise<string | null>;
+  setex(key: string, seconds: number, value: string): Promise<unknown>;
+  del(...keys: string[]): Promise<unknown>;
+}
+
+/** Extended interface for clients that support pipelining via multi() */
+interface WafRedisClientWithMulti extends WafRedisClient {
+  multi(): {
+    incr(key: string): { expire(key: string, seconds: number): { exec(): Promise<unknown> } };
+  };
+}
+
 // Redis client reference (set via initWafRedis)
-let redisClient: any = null;
+let redisClient: WafRedisClient | null = null;
 
 /**
  * Initialize WAF with Redis for distributed IP blocking.
  * Call this after Redis is connected.
  */
-export function initWafRedis(redis: any): void {
+export function initWafRedis(redis: WafRedisClient): void {
   redisClient = redis;
   logger.info('WAF: Redis initialized for distributed IP tracking');
 }
@@ -190,9 +204,10 @@ function trackSuspiciousActivity(ip: string, type: string, detail: string): void
   }
 
   // Track in Redis for distributed counting
-  if (redisClient) {
+  if (redisClient && 'multi' in redisClient) {
+    const pipelineClient = redisClient as WafRedisClientWithMulti;
     const key = `waf:suspicious:${ip}`;
-    redisClient
+    pipelineClient
       .multi()
       .incr(key)
       .expire(key, Math.floor(SUSPICIOUS_WINDOW_MS / 1000))

@@ -266,11 +266,11 @@ export class Analytics {
     this.trackEvent('page_view', { page });
   }
 
-  trackUserAction(action: string, details?: Record<string, any>): void {
+  trackUserAction(action: string, details?: Record<string, unknown>): void {
     this.trackEvent('user_action', { action, ...details });
   }
 
-  trackError(error: Error, context?: Record<string, any>): void {
+  trackError(error: Error, context?: Record<string, unknown>): void {
     this.trackEvent('error', {
       message: error.message,
       stack: error.stack,
@@ -305,7 +305,9 @@ export class Analytics {
 export class MemoryMonitor {
   static checkMemoryUsage(): void {
     if (typeof window !== 'undefined' && 'memory' in performance) {
-      const memory = (performance as any).memory;
+      const memory = (
+        performance as Performance & { memory: { usedJSHeapSize: number; jsHeapSizeLimit: number } }
+      ).memory;
       const usedMB = Math.round(memory.usedJSHeapSize / 1024 / 1024);
       const limitMB = Math.round(memory.jsHeapSizeLimit / 1024 / 1024);
 

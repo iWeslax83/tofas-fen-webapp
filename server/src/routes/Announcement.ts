@@ -122,7 +122,7 @@ router.get(
       if (role === 'student') {
         const student = (await User.findOne({ id: authUser?.userId })
           .select('sinif sube')
-          .lean()) as any;
+          .lean()) as { sinif?: string; sube?: string } | null;
         const classCode =
           student?.sinif && student?.sube ? `${student.sinif}${student.sube}` : undefined;
 

@@ -118,8 +118,8 @@ router.post('/', registrationLimiter, async (req: Request, res: Response) => {
 router.get('/', authenticateJWT, authorizeRoles(['admin']), async (req: Request, res: Response) => {
   try {
     const { status, page = '1', limit = '20' } = req.query;
-    const filter: any = {};
-    if (status) filter.status = status;
+    const filter: Record<string, string> = {};
+    if (status) filter.status = status as string;
 
     const pageNum = Math.max(parseInt(page as string) || 1, 1);
     const limitNum = Math.min(Math.max(parseInt(limit as string) || 20, 1), 100);
@@ -187,7 +187,7 @@ router.put(
   async (req: Request, res: Response) => {
     try {
       const { status, rejectionReason } = req.body;
-      const authUser = (req as any).user;
+      const authUser = (req as unknown as { user?: { userId: string; role: string } }).user;
 
       if (!['pending', 'approved', 'rejected', 'interview'].includes(status)) {
         return res.status(400).json({ error: 'Gecersiz durum' });

@@ -87,14 +87,14 @@ class MonitoringService {
     let totalIdle = 0;
     let totalTick = 0;
 
-    cpus.forEach(cpu => {
+    cpus.forEach((cpu) => {
       for (const type in cpu.times) {
-        totalTick += (cpu.times as any)[type];
+        totalTick += (cpu.times as Record<string, number>)[type];
       }
       totalIdle += cpu.times.idle;
     });
 
-    return 100 - (totalIdle / totalTick * 100);
+    return 100 - (totalIdle / totalTick) * 100;
   }
 
   // Request sayacını artır
@@ -110,7 +110,7 @@ class MonitoringService {
   // Response time ekle
   addResponseTime(time: number): void {
     this.responseTimes.push(time);
-    
+
     // Son 100 response time'ı tut
     if (this.responseTimes.length > 100) {
       this.responseTimes.shift();
@@ -121,11 +121,12 @@ class MonitoringService {
   getPerformanceMetrics(): PerformanceMetrics {
     const now = Date.now();
     const timeWindow = (now - this.lastResetTime) / 1000; // saniye
-    
-    const avgResponseTime = this.responseTimes.length > 0 
-      ? this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length 
-      : 0;
-    
+
+    const avgResponseTime =
+      this.responseTimes.length > 0
+        ? this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length
+        : 0;
+
     const requestsPerSecond = timeWindow > 0 ? this.requestCount / timeWindow : 0;
     const errorRate = this.requestCount > 0 ? (this.errorCount / this.requestCount) * 100 : 0;
 
@@ -140,7 +141,8 @@ class MonitoringService {
   // Metrikleri sıfırla (her saat)
   resetMetrics(): void {
     const now = Date.now();
-    if (now - this.lastResetTime > 3600000) { // 1 saat
+    if (now - this.lastResetTime > 3600000) {
+      // 1 saat
       this.requestCount = 0;
       this.errorCount = 0;
       this.responseTimes = [];
@@ -152,19 +154,19 @@ class MonitoringService {
   // Health check yap
   async performHealthCheck(): Promise<HealthCheck> {
     const metrics = this.getSystemMetrics();
-    
+
     // Basit health check'ler
     const checks = {
       database: true, // Gerçek uygulamada DB bağlantısı kontrol edilir
-      redis: true,    // Gerçek uygulamada Redis bağlantısı kontrol edilir
+      redis: true, // Gerçek uygulamada Redis bağlantısı kontrol edilir
       memory: metrics.memory.percentage < 90,
       cpu: metrics.cpu.usage < 90,
     };
 
     // Status belirle
-    const allChecksPass = Object.values(checks).every(check => check);
-    const someChecksFail = Object.values(checks).some(check => !check);
-    
+    const allChecksPass = Object.values(checks).every((check) => check);
+    const someChecksFail = Object.values(checks).some((check) => !check);
+
     let status: 'healthy' | 'unhealthy' | 'degraded' = 'healthy';
     if (!allChecksPass) {
       status = someChecksFail ? 'unhealthy' : 'degraded';
@@ -184,15 +186,15 @@ class MonitoringService {
   checkMemoryLeak(): boolean {
     // const _metrics = this.getSystemMetrics();
     const memoryUsage = process.memoryUsage();
-    
+
     // Heap kullanımı %80'i geçerse uyarı
     const heapUsagePercentage = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
-    
+
     if (heapUsagePercentage > 80) {
       logger.warn(`High memory usage detected: ${heapUsagePercentage.toFixed(2)}%`);
       return true;
     }
-    
+
     return false;
   }
 
@@ -222,7 +224,14 @@ class MonitoringService {
   }
 
   // Monitoring raporu oluştur
-  generateReport(): any {
+  generateReport(): {
+    timestamp: string;
+    uptime: number;
+    system: SystemMetrics;
+    performance: PerformanceMetrics;
+    warnings: string[];
+    memoryLeak: boolean;
+  } {
     const systemMetrics = this.getSystemMetrics();
     const performanceMetrics = this.getPerformanceMetrics();
     const warnings = this.checkPerformanceWarnings();
@@ -252,9 +261,13 @@ export const endRequestTimer = (startTime: number) => {
   return duration;
 };
 
-export const logRequestMetrics = (_req: any, res: any, _duration: number) => {
+export const logRequestMetrics = (
+  _req: unknown,
+  res: { statusCode: number },
+  _duration: number,
+) => {
   monitoringService.incrementRequestCount();
-  
+
   if (res.statusCode >= 400) {
     monitoringService.incrementErrorCount();
   }
@@ -265,4 +278,4 @@ export const logRequestMetrics = (_req: any, res: any, _duration: number) => {
   }
 };
 
-export default monitoringService; 
+export default monitoringService;

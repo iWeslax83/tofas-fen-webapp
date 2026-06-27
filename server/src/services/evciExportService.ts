@@ -1,5 +1,23 @@
 import ExcelJS from 'exceljs';
 
+interface PDFDocInstance extends NodeJS.EventEmitter {
+  fontSize(size: number): PDFDocInstance;
+  font(name: string): PDFDocInstance;
+  text(
+    text: string,
+    xOrOptions?: number | Record<string, unknown>,
+    yOrOptions?: number | Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ): PDFDocInstance;
+  moveDown(lines?: number): PDFDocInstance;
+  moveTo(x: number, y: number): PDFDocInstance;
+  lineTo(x: number, y: number): PDFDocInstance;
+  stroke(): PDFDocInstance;
+  addPage(): PDFDocInstance;
+  end(): void;
+  y: number;
+}
+
 interface EvciExportRow {
   studentName: string;
   studentId: string;
@@ -48,17 +66,29 @@ export class EvciExportService {
       sheet.addRow({
         ...row,
         willGo: row.willGo ? 'Gidecek' : 'Gitmeyecek',
-        parentApproval: row.parentApproval === 'approved'
-          ? 'Onaylandı'
-          : row.parentApproval === 'rejected'
-            ? 'Reddedildi'
-            : 'Beklemede',
+        parentApproval:
+          row.parentApproval === 'approved'
+            ? 'Onaylandı'
+            : row.parentApproval === 'rejected'
+              ? 'Reddedildi'
+              : 'Beklemede',
       });
     }
 
     // Hafta bilgisi notu
     sheet.addRow([]);
-    sheet.addRow([`Hafta: ${weekOf}`, '', '', '', '', '', '', '', '', `Oluşturulma: ${new Date().toLocaleDateString('tr-TR')}`]);
+    sheet.addRow([
+      `Hafta: ${weekOf}`,
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      `Oluşturulma: ${new Date().toLocaleDateString('tr-TR')}`,
+    ]);
 
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);
@@ -69,12 +99,14 @@ export class EvciExportService {
    */
   static async generatePdf(rows: EvciExportRow[], weekOf: string): Promise<Buffer> {
     // Dynamic import for pdfkit (optional dependency)
-    let PDFDocument: any;
+    let PDFDocument: new (options: Record<string, unknown>) => PDFDocInstance;
     try {
       PDFDocument = (await import('pdfkit')).default;
     } catch {
       // If pdfkit is not installed, fall back to a simple text-based approach
-      throw new Error('pdfkit modülü yüklü değil. PDF export için: cd server && npm install pdfkit');
+      throw new Error(
+        'pdfkit modülü yüklü değil. PDF export için: cd server && npm install pdfkit',
+      );
     }
 
     return new Promise((resolve, reject) => {
@@ -88,11 +120,23 @@ export class EvciExportService {
       // Başlık
       doc.fontSize(16).text(`Evci Talepleri - Hafta: ${weekOf}`, { align: 'center' });
       doc.moveDown(0.5);
-      doc.fontSize(9).text(`Oluşturulma: ${new Date().toLocaleDateString('tr-TR')}`, { align: 'center' });
+      doc
+        .fontSize(9)
+        .text(`Oluşturulma: ${new Date().toLocaleDateString('tr-TR')}`, { align: 'center' });
       doc.moveDown(1);
 
       // Tablo başlıkları
-      const headers = ['Ad Soyad', 'Sınıf', 'Oda', 'Durum', 'Yer', 'Başlangıç', 'Bitiş', 'Veli Onay', 'Red Sebebi'];
+      const headers = [
+        'Ad Soyad',
+        'Sınıf',
+        'Oda',
+        'Durum',
+        'Yer',
+        'Başlangıç',
+        'Bitiş',
+        'Veli Onay',
+        'Red Sebebi',
+      ];
       const colWidths = [120, 50, 40, 60, 80, 70, 70, 70, 120];
       const startX = 30;
       let y = doc.y;
@@ -105,7 +149,10 @@ export class EvciExportService {
         x += colWidths[i] + 5;
       });
       y += 15;
-      doc.moveTo(startX, y).lineTo(startX + colWidths.reduce((a, b) => a + b, 0) + colWidths.length * 5, y).stroke();
+      doc
+        .moveTo(startX, y)
+        .lineTo(startX + colWidths.reduce((a, b) => a + b, 0) + colWidths.length * 5, y)
+        .stroke();
       y += 5;
 
       // Veri satırları
@@ -124,7 +171,11 @@ export class EvciExportService {
           row.destination,
           row.startDate,
           row.endDate,
-          row.parentApproval === 'approved' ? 'Onaylandı' : row.parentApproval === 'rejected' ? 'Reddedildi' : 'Beklemede',
+          row.parentApproval === 'approved'
+            ? 'Onaylandı'
+            : row.parentApproval === 'rejected'
+              ? 'Reddedildi'
+              : 'Beklemede',
           row.rejectionReason,
         ];
         values.forEach((v, i) => {
@@ -137,9 +188,13 @@ export class EvciExportService {
       // Özet
       doc.moveDown(1);
       const total = rows.length;
-      const going = rows.filter(r => r.willGo).length;
+      const going = rows.filter((r) => r.willGo).length;
       doc.fontSize(9).font('Helvetica-Bold');
-      doc.text(`Toplam: ${total} | Gidecek: ${going} | Gitmeyecek: ${total - going}`, startX, y + 10);
+      doc.text(
+        `Toplam: ${total} | Gidecek: ${going} | Gitmeyecek: ${total - going}`,
+        startX,
+        y + 10,
+      );
 
       doc.end();
     });
