@@ -22,11 +22,20 @@ interface Announcement {
   _id?: string;
   title: string;
   content: string;
-  date: string;
+  date?: string;
+  /** Backend timestamp — fallback when `date` isn't set. */
+  createdAt?: string;
   expire?: string;
 }
 
-const fieldLabel = 'font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]';
+/** Format a date string as tr-TR, returning '' for missing/invalid input. */
+const formatTrDate = (value?: string): string => {
+  if (!value) return '';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('tr-TR');
+};
+
+const fieldLabel = 'text-sm font-medium text-[var(--ink-2)]';
 const textareaClasses = cn(
   'w-full bg-transparent border border-[var(--rule)] px-2 py-2 text-sm',
   'text-[var(--ink)] placeholder:text-[var(--ink-dim)] font-serif resize-y',
@@ -143,9 +152,7 @@ export default function DuyurularPage() {
   if (isLoading) {
     return (
       <ModernDashboardLayout pageTitle="Duyurular" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Duyurular yükleniyor…
-        </div>
+        <div className="p-6 text-sm text-[var(--ink-dim)]">Duyurular yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -183,9 +190,7 @@ export default function DuyurularPage() {
                 <div className="px-4 py-2 border-b border-[var(--rule)] flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Bell size={12} className="text-[var(--ink-dim)]" />
-                    <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-                      Duyuru
-                    </span>
+                    <span className="text-xs font-medium text-[var(--ink-dim)]">Duyuru</span>
                   </div>
                   {user?.rol === 'admin' && (
                     <button
@@ -207,14 +212,16 @@ export default function DuyurularPage() {
                     {announcement.content}
                   </p>
                   <div className="pt-2 border-t border-[var(--rule)] space-y-1">
-                    <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
-                      <Calendar size={10} />
-                      Yayın: {new Date(announcement.date).toLocaleDateString('tr-TR')}
-                    </div>
-                    {announcement.expire && (
-                      <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                    {formatTrDate(announcement.date ?? announcement.createdAt) && (
+                      <div className="flex items-center gap-1.5 text-xs text-[var(--ink-dim)]">
                         <Calendar size={10} />
-                        Son Geçerlilik: {new Date(announcement.expire).toLocaleDateString('tr-TR')}
+                        Yayın: {formatTrDate(announcement.date ?? announcement.createdAt)}
+                      </div>
+                    )}
+                    {formatTrDate(announcement.expire) && (
+                      <div className="flex items-center gap-1.5 text-xs text-[var(--ink-dim)]">
+                        <Calendar size={10} />
+                        Son Geçerlilik: {formatTrDate(announcement.expire)}
                       </div>
                     )}
                   </div>
