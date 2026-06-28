@@ -23,15 +23,15 @@ export interface HomeworkQueueProps {
 }
 
 /**
- * TABLO III — ödev kuyruğu. Devlet stili: mono başlık, ders kodu,
- * süreyi gösteren chip (gerekirse kırmızı).
+ * Ödev kuyruğu — ders kodu, ders adı ve süreyi gösteren chip
+ * (gerekirse kırmızı).
  */
 export function HomeworkQueue({ rows }: HomeworkQueueProps) {
   if (rows.length === 0) return null;
   return (
     <section>
       <DocumentTable>
-        <DocumentTableCaption>Tablo III — Ödev Kuyruğu</DocumentTableCaption>
+        <DocumentTableCaption>Ödev Kuyruğu</DocumentTableCaption>
         <DocumentTableHeader>
           <DocumentTableRow>
             <DocumentTableHead className="w-10" aria-label="Tamamla" />

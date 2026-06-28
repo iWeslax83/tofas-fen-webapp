@@ -301,9 +301,6 @@ const NotEkleme: React.FC = () => {
       <div className="p-6 space-y-6">
         {/* ── Page header ── */}
         <header>
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-            Belge No. {new Date().getFullYear()}/NE
-          </div>
           <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Toplu Not İçe Aktarma</h1>
         </header>
 

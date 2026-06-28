@@ -46,11 +46,14 @@ describe('DocumentTable primitives', () => {
     expect(screen.getByRole('cell', { name: 'Onaylandı' })).toBeInTheDocument();
   });
 
-  it('applies the Devlet mono header styling on <th>', () => {
+  it('applies the clean header styling on <th>', () => {
     renderTable();
     const th = screen.getByRole('columnheader', { name: 'Konu' });
-    expect(th.className).toContain('font-mono');
-    expect(th.className).toContain('uppercase');
+    expect(th.className).toContain('text-xs');
+    expect(th.className).toContain('font-semibold');
+    // De-bureaucratized: no more mono/uppercase ministerial header styling.
+    expect(th.className).not.toContain('font-mono');
+    expect(th.className).not.toContain('uppercase');
   });
 
   it('applies the underline rule below the thead block', () => {

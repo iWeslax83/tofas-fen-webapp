@@ -134,9 +134,6 @@ export default function VisitorChatPage() {
     <ModernDashboardLayout pageTitle={pageTitle}>
       <div className="p-6 max-w-5xl mx-auto h-[calc(100vh-160px)] flex flex-col">
         <header className="mb-4">
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-            Belge No. {new Date().getFullYear()}/Z-S
-          </div>
           <h1 className="font-serif text-2xl text-[var(--ink)] mt-1 flex items-center gap-2">
             <MessageCircle size={20} className="text-[var(--ink-dim)]" />
             {pageTitle}

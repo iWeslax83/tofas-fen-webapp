@@ -29,9 +29,9 @@ describe('DataTable', () => {
     expect(rows.length).toBe(1 + sample.length);
   });
 
-  it('renders the caption prop', () => {
+  it('no longer renders the ministerial caption (kept as a no-op prop)', () => {
     render(<DataTable columns={cols} data={sample} caption="Tablo I — Liste" />);
-    expect(screen.getByText('Tablo I — Liste')).toBeInTheDocument();
+    expect(screen.queryByText('Tablo I — Liste')).toBeNull();
   });
 
   it('renders the toolbar slot above the table', () => {

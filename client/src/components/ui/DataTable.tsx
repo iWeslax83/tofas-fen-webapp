@@ -16,7 +16,6 @@ import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import {
   DocumentTable,
   DocumentTableBody,
-  DocumentTableCaption,
   DocumentTableCell,
   DocumentTableHead,
   DocumentTableHeader,
@@ -49,7 +48,6 @@ export interface DataTableProps<TData, TValue> {
 export function DataTable<TData, TValue>({
   columns,
   data,
-  caption,
   pageSize = 20,
   paginated = true,
   toolbar,
@@ -77,7 +75,6 @@ export function DataTable<TData, TValue>({
     <div className="space-y-3">
       {toolbar}
       <DocumentTable>
-        {caption && <DocumentTableCaption>{caption}</DocumentTableCaption>}
         <DocumentTableHeader>
           {table.getHeaderGroups().map((group) => (
             <DocumentTableRow key={group.id}>

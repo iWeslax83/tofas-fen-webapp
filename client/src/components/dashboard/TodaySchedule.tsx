@@ -23,15 +23,15 @@ export interface TodayScheduleProps {
 }
 
 /**
- * TABLO II — bugünkü program. The active row is rendered with the
- * state accent bg + an "AKTİF" chip.
+ * Bugünkü program. The active row is rendered with the state accent bg +
+ * an "Aktif" chip.
  */
 export function TodaySchedule({ rows }: TodayScheduleProps) {
   if (rows.length === 0) return null;
   return (
     <section>
       <DocumentTable>
-        <DocumentTableCaption>Tablo II — Bugünkü Program</DocumentTableCaption>
+        <DocumentTableCaption>Bugünkü Program</DocumentTableCaption>
         <DocumentTableHeader>
           <DocumentTableRow>
             <DocumentTableHead>Saat</DocumentTableHead>

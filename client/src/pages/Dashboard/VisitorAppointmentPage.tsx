@@ -159,9 +159,6 @@ export default function VisitorAppointmentPage() {
       <div className="p-6 space-y-6 max-w-3xl mx-auto">
         <header className="flex items-end justify-between gap-4 flex-wrap">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-              Belge No. {new Date().getFullYear()}/R-Z
-            </div>
             <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Randevu Al</h1>
           </div>
           <Button variant="primary" size="sm" onClick={() => setShowForm((v) => !v)}>
