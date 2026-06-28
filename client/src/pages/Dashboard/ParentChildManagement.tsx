@@ -305,9 +305,6 @@ function ParentChildManagementContent() {
     <ModernDashboardLayout pageTitle="Veli-Öğrenci Eşleştirme" breadcrumb={breadcrumb}>
       <div className="p-6 space-y-6">
         <header>
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-            Belge No. {new Date().getFullYear()}/E
-          </div>
           <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Veli-Öğrenci Eşleştirme</h1>
         </header>
 

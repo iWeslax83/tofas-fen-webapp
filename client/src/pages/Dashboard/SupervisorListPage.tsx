@@ -262,9 +262,6 @@ export default function SupervisorListPage() {
       <div className="p-6 space-y-6">
         <header className="flex items-end justify-between gap-4 flex-wrap">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-              Belge No. {new Date().getFullYear()}/B-L
-            </div>
             <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Belletmen Listesi</h1>
           </div>
           <Button variant="secondary" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
@@ -334,7 +331,6 @@ export default function SupervisorListPage() {
         )}
 
         <DataTable
-          caption="Tablo I — Belletmen Listeleri"
           columns={columns}
           data={supervisorLists}
           emptyState="Filtrelenen kriterlere uygun belletmen listesi bulunamadı."

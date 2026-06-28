@@ -149,9 +149,6 @@ export default function DersProgramiPage() {
     <ModernDashboardLayout pageTitle="Ders Programı" breadcrumb={breadcrumb}>
       <div className="p-6 space-y-6">
         <header>
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-            Belge No. {new Date().getFullYear()}/D-P
-          </div>
           <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Ders Programı</h1>
         </header>
 

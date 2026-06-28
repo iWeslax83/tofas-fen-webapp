@@ -314,14 +314,10 @@ const AdminDilekceListPage: React.FC = () => {
     <ModernDashboardLayout pageTitle="Dilekçe Yönetimi" breadcrumb={breadcrumb}>
       <div className="p-6 space-y-6">
         <header>
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-            Belge No. {new Date().getFullYear()}/D-Y
-          </div>
           <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Dilekçe Yönetimi</h1>
         </header>
 
         <DataTable
-          caption="Tablo I — Başvuru Listesi"
           columns={columns}
           data={filteredDilekceler}
           emptyState="Filtrelenen kriterlere uygun dilekçe bulunamadı."

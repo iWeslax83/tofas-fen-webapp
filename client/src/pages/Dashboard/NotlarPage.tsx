@@ -125,26 +125,16 @@ export default function NotlarPage() {
     <ModernDashboardLayout pageTitle="Notlarım" breadcrumb={breadcrumb}>
       <div className="p-6 space-y-6">
         <header>
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-            Belge No. {new Date().getFullYear()}/N-{user?.id ?? '—'}
-          </div>
           <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Notlarım</h1>
         </header>
 
         <div className={showChart ? 'grid lg:grid-cols-3 gap-6' : ''}>
           <div className={showChart ? 'lg:col-span-2' : ''}>
-            <DataTable
-              caption="Tablo I — Ders Notları"
-              columns={NOTE_COLUMNS}
-              data={notes}
-              emptyState="Henüz not girilmemiş."
-            />
+            <DataTable columns={NOTE_COLUMNS} data={notes} emptyState="Henüz not girilmemiş." />
           </div>
           {showChart && (
             <aside>
-              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] mb-2">
-                Tablo II — Dönem Grafiği
-              </div>
+              <div className="text-sm font-semibold text-[var(--ink-2)] mb-3">Dönem Grafiği</div>
               <Suspense
                 fallback={
                   <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
