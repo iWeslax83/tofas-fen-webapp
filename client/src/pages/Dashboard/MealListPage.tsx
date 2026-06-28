@@ -276,10 +276,12 @@ export default function MealListPage() {
         </header>
 
         {isAdmin && (
-          <Card>
-            <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center gap-2">
-              <Upload size={12} />
-              <span className="text-xs font-medium">Yeni Yemek Listesi Yükle</span>
+          <Card accentBar>
+            <div className="px-4 py-2 border-b border-[var(--rule)] flex items-center gap-2">
+              <Upload size={12} className="text-[var(--ink-dim)]" />
+              <span className="text-xs font-medium text-[var(--ink-dim)]">
+                Yeni Yemek Listesi Yükle
+              </span>
             </div>
             <form onSubmit={handleFileUpload} className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
               <Field label="Ay" htmlFor="meal-upload-month">
