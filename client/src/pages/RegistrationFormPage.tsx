@@ -31,7 +31,7 @@ interface FieldProps {
 
 const Field = ({ label, htmlFor, required, fullWidth, children }: FieldProps) => (
   <label htmlFor={htmlFor} className={cn('flex flex-col gap-1', fullWidth && 'md:col-span-2')}>
-    <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+    <span className="text-xs font-medium text-[var(--ink-dim)]">
       {label}
       {required && <span className="text-[var(--state)] ml-1">*</span>}
     </span>
@@ -48,9 +48,7 @@ interface SectionProps {
 const Section = ({ number, title, children }: SectionProps) => (
   <section className="space-y-3">
     <div className="flex items-center gap-2 border-b border-[var(--rule)] pb-1">
-      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-        Bölüm {number}
-      </span>
+      <span className="text-xs font-medium text-[var(--ink-dim)]">Bölüm {number}</span>
       <h2 className="font-serif text-base text-[var(--ink)]">{title}</h2>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{children}</div>
@@ -111,9 +109,7 @@ export default function RegistrationFormPage() {
         <div className="flex-1 flex items-center justify-center p-6">
           <Card className="w-full max-w-md" contentClassName="p-0">
             <div className="bg-[var(--state)] text-white px-4 py-2">
-              <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
-                Başvuru Alındı
-              </span>
+              <span className="text-xs font-medium">Başvuru Alındı</span>
             </div>
             <div className="p-8 flex flex-col items-center text-center gap-4">
               <div className="w-16 h-16 border-2 border-[var(--ink)] flex items-center justify-center">
@@ -143,7 +139,7 @@ export default function RegistrationFormPage() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[5fr_7fr]">
         <aside className="bg-[var(--ink)] text-[var(--paper)] p-8 lg:p-12 flex flex-col justify-between min-h-[30vh] lg:min-h-screen">
           <div className="space-y-6">
-            <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/60">
+            <div className="text-xs font-medium text-white/60">
               Türkiye Cumhuriyeti · Resmî Belge
             </div>
             <div className="flex items-center gap-4">
@@ -153,9 +149,7 @@ export default function RegistrationFormPage() {
                 className="w-16 h-16 bg-white p-2 border border-white/20"
               />
               <div>
-                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/60">
-                  Yeni Kayıt
-                </div>
+                <div className="text-xs font-medium text-white/60">Yeni Kayıt</div>
                 <h1 className="font-serif text-2xl text-white leading-tight">Tofaş Fen Lisesi</h1>
               </div>
             </div>
@@ -166,7 +160,7 @@ export default function RegistrationFormPage() {
               Başvuru formundaki tüm bilgiler doğru ve eksiksiz doldurulmalıdır. Yönetim, sağlanan
               iletişim adresi üzerinden geri dönüş yapacaktır.
             </p>
-            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/50">
+            <p className="text-xs font-medium text-white/50">
               © {new Date().getFullYear()} Tofaş Fen Lisesi. Tüm hakları saklıdır.
             </p>
           </div>
@@ -175,7 +169,7 @@ export default function RegistrationFormPage() {
         <main className="p-8 lg:p-12 flex flex-col justify-center min-h-[60vh] lg:min-h-screen">
           <div className="w-full max-w-2xl mx-auto">
             <header className="mb-8">
-              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+              <div className="text-xs font-medium text-[var(--ink-dim)]">
                 Form 03 · Kayıt Başvurusu
               </div>
               <h2 className="font-serif text-2xl text-[var(--ink)] mt-1">
@@ -317,7 +311,7 @@ export default function RegistrationFormPage() {
             <div className="mt-6 pt-4 border-t border-[var(--rule)] text-center">
               <Link
                 to="/login"
-                className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] hover:text-[var(--state)]"
+                className="text-xs font-medium text-[var(--ink-dim)] hover:text-[var(--state)]"
               >
                 Zaten hesabınız var mı? Giriş yapın
               </Link>

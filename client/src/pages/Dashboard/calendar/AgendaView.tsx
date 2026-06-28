@@ -34,7 +34,7 @@ export default function AgendaView({ filteredEvents, onEventClick }: AgendaViewP
               style={{ borderLeftColor: event.color }}
             >
               <div className="min-w-[100px]">
-                <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                <div className="text-xs font-medium text-[var(--ink-dim)]">
                   {new Date(event.startDate).toLocaleDateString('tr-TR', {
                     weekday: 'short',
                     month: 'short',

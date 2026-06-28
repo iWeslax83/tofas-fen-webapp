@@ -93,9 +93,7 @@ export default function NotlarPage() {
     return (
       <ModernDashboardLayout pageTitle="Notlarım" breadcrumb={breadcrumb}>
         <div className="p-6">
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-            Yükleniyor…
-          </div>
+          <div className="text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
         </div>
       </ModernDashboardLayout>
     );
@@ -137,7 +135,7 @@ export default function NotlarPage() {
               <div className="text-sm font-semibold text-[var(--ink-2)] mb-3">Dönem Grafiği</div>
               <Suspense
                 fallback={
-                  <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                  <div className="text-xs font-medium text-[var(--ink-dim)]">
                     Grafik yükleniyor…
                   </div>
                 }

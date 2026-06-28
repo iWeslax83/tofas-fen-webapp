@@ -108,9 +108,7 @@ interface FieldProps {
 
 const Field = ({ label, children, fullWidth }: FieldProps) => (
   <label className={cn('flex flex-col gap-1', fullWidth && 'md:col-span-2')}>
-    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-      {label}
-    </span>
+    <span className="text-xs font-medium text-[var(--ink-dim)]">{label}</span>
     {children}
   </label>
 );
@@ -177,7 +175,7 @@ const DilekcePage: React.FC = () => {
         accessorKey: 'type',
         header: 'Tür',
         cell: (info) => (
-          <span className="font-mono text-xs uppercase tracking-wider text-[var(--ink-dim)]">
+          <span className="text-xs uppercase tracking-wider text-[var(--ink-dim)]">
             {TYPE_LABELS[info.getValue<DilekceType>()]}
           </span>
         ),
@@ -251,9 +249,7 @@ const DilekcePage: React.FC = () => {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Dilekçe" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -369,9 +365,7 @@ function NewDilekceModal({ onClose, onCreated }: NewDilekceModalProps) {
       >
         <div onClick={(e) => e.stopPropagation()}>
           <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
-              Yeni Dilekçe Başvurusu
-            </span>
+            <span className="text-xs font-medium">Yeni Dilekçe Başvurusu</span>
             <button
               type="button"
               onClick={onClose}
@@ -506,7 +500,7 @@ function DilekceDetailModal({ dilekce, onClose }: DilekceDetailModalProps) {
       >
         <div onClick={(e) => e.stopPropagation()}>
           <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+            <span className="text-xs font-medium">
               Dilekçe · No. {dilekce._id.slice(-6).toUpperCase()}
             </span>
             <button
@@ -525,13 +519,13 @@ function DilekceDetailModal({ dilekce, onClose }: DilekceDetailModalProps) {
               <Chip tone={PRIORITY_TONES[dilekce.priority]}>
                 {PRIORITY_LABELS[dilekce.priority]} öncelik
               </Chip>
-              <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)] ml-auto">
+              <span className="text-xs font-medium text-[var(--ink-dim)] ml-auto">
                 {formatDateTime(dilekce.createdAt)}
               </span>
             </div>
 
             <header>
-              <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+              <div className="text-xs font-medium text-[var(--ink-dim)]">
                 {TYPE_LABELS[dilekce.type]}
                 {dilekce.category && ` · ${dilekce.category}`}
               </div>
@@ -604,7 +598,7 @@ function DilekceDetailModal({ dilekce, onClose }: DilekceDetailModalProps) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1">
+      <div className="text-xs font-medium text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1">
         {title}
       </div>
       <div>{children}</div>

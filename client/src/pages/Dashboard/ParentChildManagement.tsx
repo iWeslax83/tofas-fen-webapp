@@ -294,9 +294,7 @@ function ParentChildManagementContent() {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Veli-Öğrenci Eşleştirme" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -422,16 +420,12 @@ function StatsBar({
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--rule)] border border-[var(--rule)]">
       {items.map(({ label, value, icon: Icon, hint }) => (
         <div key={label} className="bg-[var(--paper)] p-4">
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+          <div className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
             <Icon size={12} />
             {label}
           </div>
           <div className="font-serif text-2xl text-[var(--ink)] mt-2">{value}</div>
-          {hint && (
-            <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim-2)] mt-1">
-              {hint}
-            </div>
-          )}
+          {hint && <div className="text-xs font-medium text-[var(--ink-dim-2)] mt-1">{hint}</div>}
         </div>
       ))}
     </div>

@@ -24,7 +24,7 @@ export function LinkedPairsList({
   return (
     <Card>
       <div className="border-b border-[var(--rule)] p-3 flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+        <div className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
           <Link2 size={12} />
           Mevcut Bağlantılar
           <span className="font-serif text-[var(--ink-2)] text-xs">{linkedPairs.length}</span>

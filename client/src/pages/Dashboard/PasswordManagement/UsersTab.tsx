@@ -108,9 +108,7 @@ export default function UsersTab() {
           <option value="yes">Şifresi var</option>
           <option value="no">Şifresi yok</option>
         </select>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
-          {filtered.length} kayıt
-        </span>
+        <span className="text-xs font-medium text-[var(--ink-dim)]">{filtered.length} kayıt</span>
       </div>
 
       <table className="w-full border-collapse text-sm">
@@ -119,7 +117,7 @@ export default function UsersTab() {
             {['ID', 'Ad Soyad', 'Rol', 'Sınıf', 'Şifre Durumu', 'İşlem'].map((h) => (
               <th
                 key={h}
-                className="text-left px-3 py-2 border-b border-[var(--rule)] font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]"
+                className="text-left px-3 py-2 border-b border-[var(--rule)] text-xs font-medium text-[var(--ink-dim)]"
               >
                 {h}
               </th>

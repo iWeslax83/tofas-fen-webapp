@@ -27,7 +27,7 @@ export function ConfirmationModal({
       <Card className="relative w-full max-w-md" contentClassName="p-0">
         <div onClick={(e) => e.stopPropagation()}>
           <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-[0.25em] flex items-center gap-2">
+            <span className="text-xs font-medium flex items-center gap-2">
               <AlertTriangle size={12} />
               Bağlantıyı Kaldır
             </span>

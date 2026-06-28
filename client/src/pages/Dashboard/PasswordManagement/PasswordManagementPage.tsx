@@ -37,7 +37,7 @@ export default function PasswordManagementPage() {
                 aria-selected={active}
                 onClick={() => setTab(key)}
                 className={cn(
-                  'h-9 px-4 text-xs font-mono uppercase tracking-wider transition-colors',
+                  'h-9 px-4 text-xs uppercase tracking-wider transition-colors',
                   'border-b-2 -mb-px',
                   active
                     ? 'border-[var(--state)] text-[var(--ink)]'

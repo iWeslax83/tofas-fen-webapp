@@ -53,7 +53,7 @@ interface ManualNote {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1 mb-3">
+    <div className="text-xs font-medium text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1 mb-3">
       {children}
     </div>
   );
@@ -61,7 +61,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+    <span className="text-xs font-medium text-[var(--ink-dim)]">
       {children}
       {required && <span className="text-[var(--state)] ml-0.5">*</span>}
     </span>
@@ -284,9 +284,7 @@ const NotEkleme: React.FC = () => {
           { label: 'Not Ekleme' },
         ]}
       >
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -319,7 +317,7 @@ const NotEkleme: React.FC = () => {
                 type="button"
                 onClick={() => setActiveTab(key)}
                 className={cn(
-                  'inline-flex items-center gap-2 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.2em] border-b-2 -mb-px transition-colors',
+                  'inline-flex items-center gap-2 px-4 py-2 text-[11px] uppercase tracking-[0.2em] border-b-2 -mb-px transition-colors',
                   active
                     ? 'border-[var(--state)] text-[var(--ink)]'
                     : 'border-transparent text-[var(--ink-dim)] hover:text-[var(--ink)]',
@@ -573,9 +571,7 @@ const NotEkleme: React.FC = () => {
 
               {/* Average display */}
               <div className="mt-4 pt-3 border-t border-[var(--rule)] flex items-baseline gap-3">
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                  Ortalama
-                </span>
+                <span className="text-xs font-medium text-[var(--ink-dim)]">Ortalama</span>
                 <span className="font-serif text-2xl text-[var(--ink)]">{manualNote.average}</span>
               </div>
             </Card>
@@ -670,9 +666,7 @@ const NotEkleme: React.FC = () => {
           <div className="flex items-start gap-2">
             <Info size={14} className="text-[var(--ink-dim)] mt-0.5 shrink-0" />
             <div className="space-y-1">
-              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                Önemli Bilgiler
-              </div>
+              <div className="text-xs font-medium text-[var(--ink-dim)]">Önemli Bilgiler</div>
               <ul className="space-y-0.5">
                 {[
                   'Dosya boyutu maksimum 10 MB olmalıdır.',
