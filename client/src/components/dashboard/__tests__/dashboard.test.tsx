@@ -41,9 +41,9 @@ describe('KpiTable', () => {
     expect(screen.queryByText('+2')).toBeNull();
   });
 
-  it('emits the section heading "Tablo I — Anahtar Göstergeler"', () => {
+  it('emits the section heading "Genel Bakış"', () => {
     render(<KpiTable items={[{ label: 'X', value: '10' }]} />);
-    expect(screen.getByText(/Tablo I/)).toBeInTheDocument();
+    expect(screen.getByText('Genel Bakış')).toBeInTheDocument();
   });
 });
 
@@ -85,12 +85,7 @@ describe('AnnouncementCard', () => {
     expect(screen.getByText("Saat 14:00'te.")).toBeInTheDocument();
   });
 
-  it('renders the file number when supplied', () => {
-    render(<AnnouncementCard title="t" body="b" fileNo="2026/123" />);
-    expect(screen.getByText(/2026\/123/)).toBeInTheDocument();
-  });
-
-  it('omits the file number when not supplied', () => {
+  it('no longer renders a ministerial file number', () => {
     render(<AnnouncementCard title="t" body="b" />);
     expect(screen.queryByText(/Dosya No/)).toBeNull();
   });
@@ -138,8 +133,8 @@ describe('HomeworkQueue', () => {
     ).toBeInTheDocument();
   });
 
-  it('emits the table caption "Tablo III — Ödev Kuyruğu"', () => {
+  it('emits the table caption "Ödev Kuyruğu"', () => {
     render(<HomeworkQueue rows={[{ id: '1', code: 'X', subject: 'Y', dueLabel: 'Z' }]} />);
-    expect(screen.getByText(/Tablo III/)).toBeInTheDocument();
+    expect(screen.getByText('Ödev Kuyruğu')).toBeInTheDocument();
   });
 });
