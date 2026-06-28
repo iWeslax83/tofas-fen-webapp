@@ -73,7 +73,7 @@ describe('Notification Ownership Checks', () => {
       } as any);
 
       const res = await request(app)
-        .patch('/notifications/notif1/read')
+        .patch('/notifications/507f1f77bcf86cd799439011/read')
         .set('x-test-user', JSON.stringify({ userId: 'user1', role: 'student' }));
 
       expect(res.status).toBe(403);
@@ -87,7 +87,7 @@ describe('Notification Ownership Checks', () => {
       } as any);
 
       const res = await request(app)
-        .patch('/notifications/notif1/read')
+        .patch('/notifications/507f1f77bcf86cd799439011/read')
         .set('x-test-user', JSON.stringify({ userId: 'user1', role: 'student' }));
 
       expect(res.status).toBe(200);
@@ -101,7 +101,7 @@ describe('Notification Ownership Checks', () => {
       } as any);
 
       const res = await request(app)
-        .patch('/notifications/notif1/read')
+        .patch('/notifications/507f1f77bcf86cd799439011/read')
         .set('x-test-user', JSON.stringify({ userId: 'admin1', role: 'admin' }));
 
       expect(res.status).toBe(200);
@@ -112,7 +112,7 @@ describe('Notification Ownership Checks', () => {
       vi.mocked(Notification.findById).mockResolvedValue(null as any);
 
       const res = await request(app)
-        .patch('/notifications/notif1/read')
+        .patch('/notifications/507f1f77bcf86cd799439011/read')
         .set('x-test-user', JSON.stringify({ userId: 'user1', role: 'student' }));
 
       expect(res.status).toBe(404);
@@ -184,7 +184,7 @@ describe('Notification Ownership Checks', () => {
       } as any);
 
       const res = await request(app)
-        .patch('/notifications/notif1/archive')
+        .patch('/notifications/507f1f77bcf86cd799439011/archive')
         .set('x-test-user', JSON.stringify({ userId: 'user1', role: 'student' }));
 
       expect(res.status).toBe(403);
@@ -198,7 +198,7 @@ describe('Notification Ownership Checks', () => {
       } as any);
 
       const res = await request(app)
-        .patch('/notifications/notif1/archive')
+        .patch('/notifications/507f1f77bcf86cd799439011/archive')
         .set('x-test-user', JSON.stringify({ userId: 'user1', role: 'student' }));
 
       expect(res.status).toBe(200);
@@ -212,7 +212,7 @@ describe('Notification Ownership Checks', () => {
       } as any);
 
       const res = await request(app)
-        .patch('/notifications/notif1/archive')
+        .patch('/notifications/507f1f77bcf86cd799439011/archive')
         .set('x-test-user', JSON.stringify({ userId: 'admin1', role: 'admin' }));
 
       expect(res.status).toBe(200);
@@ -223,7 +223,7 @@ describe('Notification Ownership Checks', () => {
       vi.mocked(Notification.findById).mockResolvedValue(null as any);
 
       const res = await request(app)
-        .patch('/notifications/notif1/archive')
+        .patch('/notifications/507f1f77bcf86cd799439011/archive')
         .set('x-test-user', JSON.stringify({ userId: 'user1', role: 'student' }));
 
       expect(res.status).toBe(404);
