@@ -49,26 +49,22 @@ export interface KpiTableProps {
 }
 
 /**
- * TABLO I — KPI grid. Mono uppercase labels, big serif numbers,
- * outline chips for deltas. Items the parent doesn't pass aren't
- * rendered, so an empty `items` array means the table is hidden.
+ * Genel bakış KPI grid — big serif numbers, outline chips for deltas.
+ * Items the parent doesn't pass aren't rendered, so an empty `items`
+ * array means the grid is hidden.
  */
 export function KpiTable({ items }: KpiTableProps) {
   if (items.length === 0) return null;
   return (
     <section>
-      <h2 className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] mb-2">
-        Tablo I — Anahtar Göstergeler
-      </h2>
+      <h2 className="text-sm font-semibold text-[var(--ink-2)] mb-3">Genel Bakış</h2>
       <div
-        className="grid border border-[var(--rule)] divide-x divide-[var(--rule)]"
+        className="grid rounded-lg border border-[var(--rule)] divide-x divide-[var(--rule)] overflow-hidden"
         style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
       >
         {items.map((item) => (
           <div key={item.label} className="p-4">
-            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-              {item.label}
-            </div>
+            <div className="text-xs text-[var(--ink-dim)]">{item.label}</div>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="font-serif text-3xl text-[var(--ink)] leading-none">
                 {item.value}

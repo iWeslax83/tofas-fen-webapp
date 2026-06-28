@@ -16,10 +16,8 @@ export function QuickActions({ actions }: QuickActionsProps) {
   if (actions.length === 0) return null;
   return (
     <section>
-      <h2 className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] mb-2">
-        Hızlı İşlem
-      </h2>
-      <ul className="border border-[var(--rule)] divide-y divide-[var(--rule)]">
+      <h2 className="text-sm font-semibold text-[var(--ink-2)] mb-3">Hızlı İşlemler</h2>
+      <ul className="rounded-lg border border-[var(--rule)] divide-y divide-[var(--rule)] overflow-hidden">
         {actions.map((a) => (
           <li key={a.key}>
             <button

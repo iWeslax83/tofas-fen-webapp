@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
 import { TodaySchedule } from '../TodaySchedule';
-import { OfficialNoticeHero } from '../OfficialNoticeHero';
+import { WelcomeHero } from '../WelcomeHero';
 
 describe('TodaySchedule', () => {
   it('renders nothing when rows is empty', () => {
@@ -13,13 +13,13 @@ describe('TodaySchedule', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('emits the table caption "Tablo II — Bugünkü Program"', () => {
+  it('emits the table caption "Bugünkü Program"', () => {
     render(
       <TodaySchedule
         rows={[{ id: '1', time: '08:30', subject: 'Mat', teacher: 'A.A.', room: '101' }]}
       />,
     );
-    expect(screen.getByText(/Tablo II/)).toBeInTheDocument();
+    expect(screen.getByText('Bugünkü Program')).toBeInTheDocument();
   });
 
   it('renders one body row per schedule item with time/subject/teacher/room', () => {
@@ -60,33 +60,21 @@ describe('TodaySchedule', () => {
   });
 });
 
-describe('OfficialNoticeHero', () => {
-  it('renders the salutation with the supplied name', () => {
-    render(<OfficialNoticeHero adSoyad="Ali Veli" />);
-    // Name is wrapped in a span — match within an outer paragraph.
+describe('WelcomeHero', () => {
+  it('renders a friendly greeting with the supplied name', () => {
+    render(<WelcomeHero adSoyad="Ali Veli" />);
     expect(screen.getByText('Ali Veli')).toBeInTheDocument();
-    expect(screen.getByText(/Sayın/)).toBeInTheDocument();
+    expect(screen.getByText(/Merhaba/)).toBeInTheDocument();
   });
 
-  it('uses the supplied notice number verbatim', () => {
-    render(<OfficialNoticeHero adSoyad="Ali" noticeNo="2026/0428-A" />);
-    expect(screen.getByText(/No\. 2026\/0428-A/)).toBeInTheDocument();
+  it('uses the supplied subtitle verbatim when provided', () => {
+    render(<WelcomeHero adSoyad="Ali" subtitle="4 aktif ödev" />);
+    expect(screen.getByText('4 aktif ödev')).toBeInTheDocument();
   });
 
-  it('falls back to a today-derived notice number when not supplied', () => {
-    render(<OfficialNoticeHero adSoyad="Ali" />);
-    // Format yyyy/MMdd — match the structural pattern.
-    const banner = screen.getByText(/Resmi Bildirim/);
-    expect(banner.textContent).toMatch(/No\.\s+\d{4}\/\d{4}/);
-  });
-
-  it('uses the supplied body verbatim when provided', () => {
-    render(<OfficialNoticeHero adSoyad="Ali" body="Özel mesaj." />);
-    expect(screen.getByText('Özel mesaj.')).toBeInTheDocument();
-  });
-
-  it('falls back to a Turkish default body when no body is provided', () => {
-    render(<OfficialNoticeHero adSoyad="Ali" />);
-    expect(screen.getByText(/akademik kayıtlarınız işlenmiştir/)).toBeInTheDocument();
+  it('falls back to a Turkish date subtitle when none is supplied', () => {
+    render(<WelcomeHero adSoyad="Ali" />);
+    // Turkish long date contains the year.
+    expect(screen.getByText(new RegExp(String(new Date().getFullYear())))).toBeInTheDocument();
   });
 });
