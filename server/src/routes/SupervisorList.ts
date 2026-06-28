@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { validateObjectId } from '../middleware/validateObjectId';
 import { SupervisorList, ISupervisorList } from '../models/SupervisorList';
 import { FilterQuery } from 'mongoose';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
@@ -6,6 +7,9 @@ import { validateSupervisorList } from '../middleware/validation';
 import logger from '../utils/logger';
 
 const router = Router();
+
+// Reject malformed ObjectIds (400) before findById() can throw a CastError (500)
+router.param('id', validateObjectId);
 
 // Tüm belletmen nöbet listelerini getir
 router.get('/', authenticateJWT, async (req, res) => {
