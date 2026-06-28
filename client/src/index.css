@@ -7,9 +7,13 @@
 @import url('./styles/fonts.css');
 @import url('./styles/tokens.css');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind v4: import the engine and explicitly load the legacy JS config.
+   v4 does NOT auto-load tailwind.config.ts, and the old `@tailwind base/
+   components/utilities` directives don't trigger v4's source detection — so
+   without this, utilities (flex, p-4, bg-surface, font-sans…) aren't
+   generated and the app renders unstyled. */
+@import 'tailwindcss';
+@config '../tailwind.config.ts';
 
 /* Animations moved to theme.css */
 
