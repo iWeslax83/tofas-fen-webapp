@@ -269,14 +269,11 @@ function StatsBar({ stats }: { stats: Stats }) {
     { label: 'Reddedildi', value: stats.rejected, tone: 'state' },
   ];
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {items.map((s) => (
-        <div key={s.label} className="bg-[var(--paper)] p-4">
+        <div key={s.label} className="rounded-lg border border-[var(--rule)] p-4">
           <div className="text-xs font-medium text-[var(--ink-dim)]">{s.label}</div>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="font-serif text-2xl text-[var(--ink)]">{s.value}</span>
-            <Chip tone={s.tone}>{s.label}</Chip>
-          </div>
+          <div className="mt-2 font-serif text-2xl text-[var(--ink)]">{s.value}</div>
         </div>
       ))}
     </div>

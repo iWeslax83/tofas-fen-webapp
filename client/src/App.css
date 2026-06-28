@@ -31,13 +31,10 @@ body {
 }
 
 
-/* Reset Styles */
-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-}
+/* Button resets are handled by Tailwind's preflight (in the base layer), so
+   utilities like bg-[var(--ink)] / border-[var(--ink)] correctly win. A plain
+   unlayered `button { background: none; border: none }` here used to override
+   every Tailwind button background/border, making primary buttons invisible. */
 
 a {
   text-decoration: none;
