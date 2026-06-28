@@ -36,12 +36,7 @@ body {
    unlayered `button { background: none; border: none }` here used to override
    every Tailwind button background/border, making primary buttons invisible. */
 
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-}
+/* `a` and `img` resets are likewise covered by Tailwind preflight in the
+   base layer (a { color: inherit }, img { max-width: 100%; height: auto }).
+   The unlayered `a { color: inherit }` here used to override Tailwind link
+   colour utilities (e.g. text-[var(--ink-dim)] on a link), so it's removed. */
