@@ -242,14 +242,10 @@ export default function OdevlerPage() {
     <ModernDashboardLayout pageTitle="Ödevler" breadcrumb={breadcrumb}>
       <div className="p-6 space-y-6">
         <header>
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-            Belge No. {new Date().getFullYear()}/Ö
-          </div>
           <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Ödevler</h1>
         </header>
 
         <DataTable
-          caption="Tablo I — Ödev Listesi"
           columns={columns}
           data={searchedHomeworks}
           emptyState="Seçilen kriterlere uygun ödev bulunamadı."
