@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { validateObjectIdParam } from '../middleware/validateObjectId';
 import { Notification } from '../models';
 import { NotificationService } from '../services/NotificationService';
 import { requireAuth, requireRole } from '../middleware/auth';
@@ -90,6 +91,7 @@ router.get(
 // Mark notification as read - IDOR protected
 router.patch(
   '/:id/read',
+  validateObjectIdParam('id'),
   asyncHandler(async (req, res) => {
     try {
       const { id } = req.params;
@@ -162,6 +164,7 @@ router.patch(
 // Archive notification - IDOR protected
 router.patch(
   '/:id/archive',
+  validateObjectIdParam('id'),
   asyncHandler(async (req, res) => {
     try {
       const { id } = req.params;
@@ -272,6 +275,7 @@ router.post(
 // Delete notification (admin only)
 router.delete(
   '/:id',
+  validateObjectIdParam('id'),
   requireRole(['admin']),
   asyncHandler(async (req, res) => {
     try {
@@ -367,29 +371,6 @@ router.post(
   }),
 );
 
-// Get notification by ID
-router.get(
-  '/:id',
-  asyncHandler(async (req, res) => {
-    try {
-      const { id } = req.params;
-      const notification = await Notification.findById(id);
-
-      if (!notification) {
-        return res.status(404).json({ success: false, error: 'Bildirim bulunamadı' });
-      }
-
-      res.json({ success: true, data: notification });
-    } catch (error) {
-      logger.error('Error fetching notification by ID', {
-        error: error.message,
-        id: req.params.id,
-      });
-      res.status(500).json({ success: false, error: 'Bildirim getirilemedi' });
-    }
-  }),
-);
-
 // Get all notifications for admin (with pagination and filters)
 router.get(
   '/admin',
@@ -453,6 +434,32 @@ router.get(
     } catch (error) {
       logger.error('Error fetching notification templates', { error: error.message });
       res.status(500).json({ success: false, error: 'Şablonlar getirilemedi' });
+    }
+  }),
+);
+
+// Get notification by ID
+// NOTE: must stay AFTER all single-segment literal GET routes (/admin, /stats, /templates),
+// otherwise '/:id' captures them and findById() throws a CastError -> 500.
+router.get(
+  '/:id',
+  validateObjectIdParam('id'),
+  asyncHandler(async (req, res) => {
+    try {
+      const { id } = req.params;
+      const notification = await Notification.findById(id);
+
+      if (!notification) {
+        return res.status(404).json({ success: false, error: 'Bildirim bulunamadı' });
+      }
+
+      res.json({ success: true, data: notification });
+    } catch (error) {
+      logger.error('Error fetching notification by ID', {
+        error: error.message,
+        id: req.params.id,
+      });
+      res.status(500).json({ success: false, error: 'Bildirim getirilemedi' });
     }
   }),
 );

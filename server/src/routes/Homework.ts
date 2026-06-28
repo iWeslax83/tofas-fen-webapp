@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { isValidObjectId } from 'mongoose';
 import { Homework, IHomework } from '../models/Homework';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import { validateHomework } from '../middleware/validation';
@@ -232,7 +233,7 @@ router.get(
   asyncHandler(async (req, res) => {
     try {
       let homework = (await Homework.findOne({ id: req.params.id }).lean()) as IHomework | null;
-      if (!homework) {
+      if (!homework && isValidObjectId(req.params.id)) {
         homework = (await Homework.findById(req.params.id).lean()) as IHomework | null;
       }
 
@@ -662,7 +663,7 @@ router.delete(
 
       // Hem id hem _id ile arama yap (MongoDB _id veya custom id field)
       let homework = await Homework.findOne({ id: id });
-      if (!homework) {
+      if (!homework && isValidObjectId(id)) {
         homework = await Homework.findById(id);
       }
 
@@ -677,7 +678,7 @@ router.delete(
 
       // Hem id hem _id ile silme dene
       let deleted = await Homework.findOneAndDelete({ id: id });
-      if (!deleted) {
+      if (!deleted && isValidObjectId(id)) {
         deleted = await Homework.findByIdAndDelete(id);
       }
 
