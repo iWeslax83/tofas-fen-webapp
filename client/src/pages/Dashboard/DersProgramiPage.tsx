@@ -125,9 +125,7 @@ export default function DersProgramiPage() {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Ders Programı" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -171,13 +169,13 @@ export default function DersProgramiPage() {
                     <div className="flex items-center gap-3">
                       <BookOpen size={18} className="text-[var(--ink-dim)]" />
                       <div>
-                        <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                        <div className="text-xs font-medium text-[var(--ink-dim)]">
                           Sınıf {sinif} · Şube {sube}
                         </div>
                         <h2 className="font-serif text-lg text-[var(--ink)]">{label}</h2>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                    <div className="flex items-center gap-1 text-xs font-medium text-[var(--ink-dim)]">
                       <Clock size={10} />
                       Son güncelleme: {new Date().toLocaleDateString('tr-TR')}
                     </div>
@@ -198,7 +196,7 @@ export default function DersProgramiPage() {
                             aria-expanded={isExpanded}
                           >
                             <div className="flex flex-col items-start">
-                              <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                              <span className="text-xs font-medium text-[var(--ink-dim)]">
                                 {day}
                               </span>
                               <span className="font-serif text-sm text-[var(--ink)]">

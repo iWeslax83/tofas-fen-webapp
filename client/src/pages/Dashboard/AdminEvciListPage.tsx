@@ -85,9 +85,7 @@ interface FieldProps {
 }
 const Field = ({ label, children }: FieldProps) => (
   <label className="flex flex-col gap-1">
-    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-      {label}
-    </span>
+    <span className="text-xs font-medium text-[var(--ink-dim)]">{label}</span>
     {children}
   </label>
 );
@@ -432,9 +430,7 @@ export default function AdminEvciListPage() {
           return st?.sinif ? `${st.sinif}${st.sube || ''}` : '—';
         },
         cell: (info) => (
-          <span className="font-mono text-xs uppercase text-[var(--ink-dim)]">
-            {info.getValue<string>()}
-          </span>
+          <span className="text-xs uppercase text-[var(--ink-dim)]">{info.getValue<string>()}</span>
         ),
       },
       {
@@ -552,9 +548,7 @@ export default function AdminEvciListPage() {
   if (isLoading) {
     return (
       <ModernDashboardLayout pageTitle="Evci Talepleri Yönetimi" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -587,14 +581,14 @@ export default function AdminEvciListPage() {
                   <button
                     type="button"
                     onClick={() => handleExport('excel')}
-                    className="block w-full text-left px-3 py-2 font-mono text-xs uppercase tracking-wider text-[var(--ink)] hover:bg-[var(--surface)]"
+                    className="block w-full text-left px-3 py-2 text-xs uppercase tracking-wider text-[var(--ink)] hover:bg-[var(--surface)]"
                   >
                     Excel (.xlsx)
                   </button>
                   <button
                     type="button"
                     onClick={() => handleExport('pdf')}
-                    className="block w-full text-left px-3 py-2 font-mono text-xs uppercase tracking-wider text-[var(--ink)] hover:bg-[var(--surface)] border-t border-[var(--rule)]"
+                    className="block w-full text-left px-3 py-2 text-xs uppercase tracking-wider text-[var(--ink)] hover:bg-[var(--surface)] border-t border-[var(--rule)]"
                   >
                     PDF
                   </button>
@@ -630,9 +624,7 @@ export default function AdminEvciListPage() {
           <Card>
             <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center gap-2">
               <Settings2 size={12} />
-              <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
-                Talep Penceresi Override
-              </span>
+              <span className="text-xs font-medium">Talep Penceresi Override</span>
             </div>
             <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
               <Field label="Hafta Başlangıcı (Pazartesi)">
@@ -676,9 +668,7 @@ export default function AdminEvciListPage() {
           <Card>
             <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center gap-2">
               <Plus size={12} />
-              <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
-                Yeni Evci Talebi
-              </span>
+              <span className="text-xs font-medium">Yeni Evci Talebi</span>
             </div>
             <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Öğrenci ID">
@@ -788,7 +778,7 @@ export default function AdminEvciListPage() {
                       type="button"
                       onClick={() => setFilterParentApproval(f.key)}
                       className={cn(
-                        'h-8 px-3 text-xs font-mono uppercase tracking-wider border transition-colors',
+                        'h-8 px-3 text-xs uppercase tracking-wider border transition-colors',
                         active
                           ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
                           : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
@@ -806,7 +796,7 @@ export default function AdminEvciListPage() {
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+            <span className="text-xs font-medium text-[var(--ink-dim)]">
               Sayfa {page} / {totalPages} · Toplam {totalCount} talep
             </span>
             <div className="flex items-center gap-2">
@@ -834,7 +824,7 @@ export default function AdminEvciListPage() {
 
         {filteredRequests.some((r) => r.parentApproval === 'rejected' && r.rejectionReason) && (
           <Card contentClassName="p-4 space-y-2">
-            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1">
+            <div className="text-xs font-medium text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1">
               Red Sebepleri
             </div>
             <ul className="space-y-1">

@@ -16,12 +16,7 @@ export default function PendingBatchesList({
   const regen = useRegenerateBatch();
   const cancel = useCancelBatch();
 
-  if (isLoading)
-    return (
-      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-        Yükleniyor...
-      </p>
-    );
+  if (isLoading) return <p className="text-xs font-medium text-[var(--ink-dim)]">Yükleniyor...</p>;
   if (batches.length === 0)
     return <p className="font-mono text-xs text-[var(--ink-dim)]">Bekleyen batch yok.</p>;
 
@@ -31,9 +26,7 @@ export default function PendingBatchesList({
         <div key={b.batchId} className="border border-[var(--rule)] bg-[var(--surface)] p-3">
           <div className="flex justify-between items-center mb-3">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                {b.batchId}
-              </p>
+              <p className="text-xs font-medium text-[var(--ink-dim)]">{b.batchId}</p>
               <p className="font-serif text-sm text-[var(--ink)] mt-0.5">
                 <span className="font-medium">{b.totalCount}</span> kullanıcı,{' '}
                 <span className="font-mono text-xs text-[var(--ink-dim)]">

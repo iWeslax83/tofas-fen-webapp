@@ -50,7 +50,7 @@ export default function PasswordRevealModal({
       <div className="bg-[var(--paper)] border border-[var(--rule)] max-w-md w-full">
         {/* Modal header bar */}
         <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
-          <span className="font-mono text-[10px] uppercase tracking-[0.25em]">Şifre Üretildi</span>
+          <span className="text-xs font-medium">Şifre Üretildi</span>
           <button
             type="button"
             onClick={onClose}
@@ -81,12 +81,12 @@ export default function PasswordRevealModal({
           </Button>
 
           {clearedAt && (
-            <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--warn)] text-center">
+            <p className="text-xs font-medium text-[var(--warn)] text-center">
               Pano 60 saniye sonra temizlendi.
             </p>
           )}
           {!clearedAt && copied && (
-            <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)] text-center">
+            <p className="text-xs font-medium text-[var(--ink-dim)] text-center">
               Pano 60 saniye içinde otomatik temizlenecek.
             </p>
           )}

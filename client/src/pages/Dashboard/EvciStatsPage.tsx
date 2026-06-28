@@ -76,7 +76,7 @@ function useChartColors(): ChartColors {
 }
 
 const selectClasses = cn(
-  'h-9 bg-transparent border border-[var(--rule)] px-2 text-xs font-mono uppercase tracking-wider',
+  'h-9 bg-transparent border border-[var(--rule)] px-2 text-xs uppercase tracking-wider',
   'text-[var(--ink)] focus:outline-none focus:border-[var(--state)]',
   'transition-colors',
 );
@@ -97,9 +97,7 @@ function SummaryCard({
       </div>
       <div className="flex flex-col">
         <span className="font-serif text-2xl text-[var(--ink)] leading-none">{value}</span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)] mt-1">
-          {label}
-        </span>
+        <span className="text-xs font-medium text-[var(--ink-dim)] mt-1">{label}</span>
       </div>
     </div>
   );
@@ -120,9 +118,7 @@ function ChartCard({
     <Card contentClassName="p-0" className={className}>
       <div className="px-4 py-2 border-b border-[var(--rule)] flex items-center gap-2">
         <Icon size={12} className="text-[var(--ink-dim)]" />
-        <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          {title}
-        </span>
+        <span className="text-xs font-medium text-[var(--ink-dim)]">{title}</span>
       </div>
       <div className="p-4">{children}</div>
     </Card>
@@ -174,7 +170,7 @@ export default function EvciStatsPage() {
   if (isLoading) {
     return (
       <ModernDashboardLayout pageTitle="Evci İstatistikleri" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">
           İstatistikler yükleniyor…
         </div>
       </ModernDashboardLayout>

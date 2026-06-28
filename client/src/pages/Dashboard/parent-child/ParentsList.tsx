@@ -88,7 +88,7 @@ export function ParentsList({
   return (
     <Card className="flex flex-col" contentClassName="flex flex-col h-[28rem]">
       <div className="border-b border-[var(--rule)] p-3 space-y-2">
-        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+        <div className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
           <Users size={12} />
           Veliler
           <span className="ml-auto font-serif text-[var(--ink-2)] text-xs">
@@ -115,7 +115,7 @@ export function ParentsList({
             aria-pressed={showUnmatchedParents}
             title="Sadece eşleşmemiş velileri göster"
             className={cn(
-              'h-8 px-2 text-[10px] font-mono uppercase tracking-wider border transition-colors',
+              'h-8 px-2 text-[10px] uppercase tracking-wider border transition-colors',
               showUnmatchedParents
                 ? 'bg-[var(--state)] text-white border-[var(--state)]'
                 : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',

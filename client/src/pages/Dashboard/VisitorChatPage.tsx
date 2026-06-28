@@ -147,9 +147,7 @@ export default function VisitorChatPage() {
               contentClassName="p-0 flex flex-col h-full"
             >
               <div className="border-b border-[var(--rule)] px-4 py-2 flex items-center gap-2">
-                <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-                  Sohbetler
-                </span>
+                <span className="text-xs font-medium text-[var(--ink-dim)]">Sohbetler</span>
                 <span className="font-serif text-xs text-[var(--ink-2)] ml-auto">
                   {conversations.length}
                 </span>
@@ -197,11 +195,11 @@ export default function VisitorChatPage() {
             contentClassName="p-0 flex flex-col h-full"
           >
             {loading ? (
-              <div className="flex-1 flex items-center justify-center font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+              <div className="flex-1 flex items-center justify-center text-xs font-medium text-[var(--ink-dim)]">
                 Yükleniyor…
               </div>
             ) : !activeConversationId ? (
-              <div className="flex-1 flex items-center justify-center font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+              <div className="flex-1 flex items-center justify-center text-xs font-medium text-[var(--ink-dim)]">
                 Bir sohbet seçin
               </div>
             ) : (
@@ -234,10 +232,7 @@ export default function VisitorChatPage() {
                           >
                             {!isMe && (
                               <div
-                                className={cn(
-                                  'font-mono text-[10px] uppercase tracking-wider mb-1',
-                                  'text-[var(--ink-dim)]',
-                                )}
+                                className={cn('text-xs font-medium mb-1', 'text-[var(--ink-dim)]')}
                               >
                                 {msg.senderName} ·{' '}
                                 {msg.senderRole === 'admin' ? 'Yönetici' : 'Ziyaretçi'}

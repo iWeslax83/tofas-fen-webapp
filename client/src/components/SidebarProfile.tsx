@@ -28,9 +28,7 @@ export function SidebarProfile({ name, userId, role, pansiyon, photoSrc }: Sideb
     <div className="p-4 border-b border-[var(--rule)] flex gap-3">
       <Portrait name={name} src={photoSrc} size="md" />
       <div className="flex-1 min-w-0">
-        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Sicil
-        </div>
+        <div className="text-xs font-medium text-[var(--ink-dim)]">Sicil</div>
         <div className="font-mono text-xs text-[var(--ink-2)] truncate">{userId}</div>
         <div className="mt-1.5 font-serif text-sm text-[var(--ink)] leading-snug truncate">
           {name}

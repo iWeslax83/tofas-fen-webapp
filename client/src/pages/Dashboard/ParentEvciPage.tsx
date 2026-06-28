@@ -209,9 +209,7 @@ export default function ParentEvciPage() {
   if (isLoading) {
     return (
       <ModernDashboardLayout pageTitle="Evci Çıkış İşlemleri" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -241,9 +239,7 @@ export default function ParentEvciPage() {
 
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <label className="flex items-center gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-              Öğrenci
-            </span>
+            <span className="text-xs font-medium text-[var(--ink-dim)]">Öğrenci</span>
             <select
               value={selectedChild}
               onChange={(e) => setSelectedChild(e.target.value)}
@@ -296,9 +292,7 @@ export default function ParentEvciPage() {
 
                   <div className="p-4 space-y-3">
                     <div>
-                      <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
-                        Hedef
-                      </div>
+                      <div className="text-xs font-medium text-[var(--ink-dim)]">Hedef</div>
                       <h3 className="font-serif text-lg text-[var(--ink)] mt-0.5">
                         {request.willGo ? request.destination || 'Evci' : 'Evciye Gitmeyecek'}
                       </h3>
@@ -345,7 +339,7 @@ export default function ParentEvciPage() {
                     )}
 
                     {status !== 'pending' && request.parentApprovalAt && (
-                      <div className="pt-2 border-t border-[var(--rule)] flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                      <div className="pt-2 border-t border-[var(--rule)] flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
                         <AlertCircle size={10} />
                         {status === 'approved' ? 'Onay' : 'Red'} ·{' '}
                         {formatDate(request.parentApprovalAt)}
@@ -368,9 +362,7 @@ export default function ParentEvciPage() {
           <Card className="relative w-full max-w-md" contentClassName="p-0">
             <div onClick={(e) => e.stopPropagation()}>
               <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
-                <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
-                  Red Sebebi
-                </span>
+                <span className="text-xs font-medium">Red Sebebi</span>
                 <button
                   type="button"
                   onClick={() => setRejectModalOpen(false)}
@@ -423,7 +415,7 @@ interface InfoRowProps {
 function InfoRow({ icon: Icon, label, value }: InfoRowProps) {
   return (
     <div className="grid grid-cols-[110px_1fr] items-center gap-3 text-sm">
-      <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--ink-dim)]">
         <Icon size={10} />
         {label}
       </span>

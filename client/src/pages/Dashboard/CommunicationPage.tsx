@@ -311,7 +311,7 @@ const CommunicationPage: React.FC = () => {
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
                     className={cn(
-                      'inline-flex items-center gap-2 px-4 py-2 font-mono text-xs uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap',
+                      'inline-flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap',
                       active
                         ? 'border-[var(--state)] text-[var(--ink)] bg-[var(--surface)]'
                         : 'border-transparent text-[var(--ink-dim)] hover:text-[var(--ink)] hover:border-[var(--rule-2)]',
@@ -365,9 +365,7 @@ const CommunicationPage: React.FC = () => {
               exit={{ height: 0, opacity: 0 }}
             >
               <div className="flex items-center gap-2">
-                <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                  Tür:
-                </label>
+                <label className="text-xs font-medium text-[var(--ink-dim)]">Tür:</label>
                 <select
                   value={filters.type}
                   onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value }))}
@@ -381,9 +379,7 @@ const CommunicationPage: React.FC = () => {
                 </select>
               </div>
               <div className="flex items-center gap-2">
-                <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                  Öncelik:
-                </label>
+                <label className="text-xs font-medium text-[var(--ink-dim)]">Öncelik:</label>
                 <select
                   value={filters.priority}
                   onChange={(e) => setFilters((prev) => ({ ...prev, priority: e.target.value }))}
@@ -405,9 +401,7 @@ const CommunicationPage: React.FC = () => {
                   }
                   className="accent-[var(--state)]"
                 />
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                  Dosya Eki Olanlar
-                </span>
+                <span className="text-xs font-medium text-[var(--ink-dim)]">Dosya Eki Olanlar</span>
               </label>
               <label className="flex items-center gap-2 text-sm text-[var(--ink)] cursor-pointer">
                 <input
@@ -418,9 +412,7 @@ const CommunicationPage: React.FC = () => {
                   }
                   className="accent-[var(--state)]"
                 />
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                  Sadece Okunmamış
-                </span>
+                <span className="text-xs font-medium text-[var(--ink-dim)]">Sadece Okunmamış</span>
               </label>
             </motion.div>
           )}

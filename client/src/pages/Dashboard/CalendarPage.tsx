@@ -192,9 +192,7 @@ export default function CalendarPage() {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Takvim" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -266,7 +264,7 @@ export default function CalendarPage() {
                   type="button"
                   onClick={() => setViewType(v.key)}
                   className={cn(
-                    'h-8 px-3 text-xs font-mono uppercase tracking-wider border transition-colors',
+                    'h-8 px-3 text-xs uppercase tracking-wider border transition-colors',
                     active
                       ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
                       : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',

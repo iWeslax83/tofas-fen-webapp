@@ -21,7 +21,7 @@ export default function EventModal({ show, selectedEvent, onClose }: EventModalP
       <Card className="relative w-full max-w-md" contentClassName="p-0">
         <div onClick={(e) => e.stopPropagation()}>
           <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+            <span className="text-xs font-medium">
               {selectedEvent ? 'Etkinlik Detayı' : 'Yeni Etkinlik'}
             </span>
             <button
@@ -38,19 +38,19 @@ export default function EventModal({ show, selectedEvent, onClose }: EventModalP
             <div className="p-6 space-y-4">
               <h2 className="font-serif text-xl text-[var(--ink)]">{selectedEvent.title}</h2>
               <ul className="space-y-2">
-                <li className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                <li className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
                   <Clock size={10} />
                   <span className="text-[var(--ink-2)]">
                     {formatTime(selectedEvent.startDate)} → {formatTime(selectedEvent.endDate)}
                   </span>
                 </li>
                 {selectedEvent.location && (
-                  <li className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                  <li className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
                     <MapPin size={10} />
                     <span className="text-[var(--ink-2)]">{selectedEvent.location}</span>
                   </li>
                 )}
-                <li className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                <li className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
                   <Users size={10} />
                   <span className="text-[var(--ink-2)]">
                     {selectedEvent.attendees.length} katılımcı

@@ -17,9 +17,7 @@ export default function DayView({ currentDate, filteredEvents, onEventClick }: D
   return (
     <div className="space-y-3">
       <header className="px-2">
-        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Bölüm
-        </div>
+        <div className="text-xs font-medium text-[var(--ink-dim)]">Bölüm</div>
         <h2 className="font-serif text-xl text-[var(--ink)]">
           {currentDate.toLocaleDateString('tr-TR', {
             weekday: 'long',
@@ -47,7 +45,7 @@ export default function DayView({ currentDate, filteredEvents, onEventClick }: D
                   style={{ borderLeftColor: event.color }}
                 >
                   <div className="min-w-[120px]">
-                    <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                    <div className="text-xs font-medium text-[var(--ink-dim)]">
                       {formatTime(event.startDate)}
                     </div>
                     <div className="font-mono text-[10px] text-[var(--ink-dim-2)]">
@@ -62,7 +60,7 @@ export default function DayView({ currentDate, filteredEvents, onEventClick }: D
                       </p>
                     )}
                     {event.location && (
-                      <div className="mt-2 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                      <div className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[var(--ink-dim)]">
                         <MapPin size={10} />
                         {event.location}
                       </div>
