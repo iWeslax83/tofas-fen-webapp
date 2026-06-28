@@ -241,105 +241,119 @@ export default function EvciStatsPage() {
           <SummaryCard icon={Home} value={stats.summary.notGoing} label="Gitmeyecek" />
         </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <ChartCard icon={PieChartIcon} title="Gidecek / Gitmeyecek">
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  dataKey="value"
-                  stroke="var(--paper)"
-                  label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={index} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={tooltipStyle} />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartCard>
+        {/* Charts Grid — only when there's data; empty chart shells look broken */}
+        {stats.summary.total === 0 ? (
+          <Card contentClassName="p-10 flex flex-col items-center gap-3 text-center">
+            <BarChart3 size={48} className="text-[var(--ink-dim)]" />
+            <h3 className="font-serif text-lg text-[var(--ink)]">Bu aralıkta veri yok</h3>
+            <p className="font-serif text-sm text-[var(--ink-dim)]">
+              Seçilen hafta aralığında evci talebi bulunmuyor. Farklı bir aralık seçmeyi
+              deneyebilirsiniz.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ChartCard icon={PieChartIcon} title="Gidecek / Gitmeyecek">
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    dataKey="value"
+                    stroke="var(--paper)"
+                    label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={index} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle} />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartCard>
 
-          <ChartCard icon={PieChartIcon} title="Veli Onay Durumu">
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={approvalPieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  dataKey="value"
-                  stroke="var(--paper)"
-                  label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
-                >
-                  {approvalPieData.map((entry, index) => (
-                    <Cell key={index} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={tooltipStyle} />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartCard>
+            <ChartCard icon={PieChartIcon} title="Veli Onay Durumu">
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={approvalPieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    dataKey="value"
+                    stroke="var(--paper)"
+                    label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
+                  >
+                    {approvalPieData.map((entry, index) => (
+                      <Cell key={index} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle} />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartCard>
 
-          <ChartCard icon={BarChart3} title="Sınıf Dağılımı">
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={stats.classDistribution.slice(0, 10)}>
-                <CartesianGrid strokeDasharray="3 3" stroke={colors.rule} />
-                <XAxis dataKey="className" fontSize={12} stroke={colors.inkDim} />
-                <YAxis stroke={colors.inkDim} fontSize={12} />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: colors.rule, opacity: 0.3 }} />
-                <Bar dataKey="count" name="Talep Sayısı">
-                  {stats.classDistribution.slice(0, 10).map((_entry, index) => (
-                    <Cell key={index} fill={colors.bars[index % colors.bars.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
+            <ChartCard icon={BarChart3} title="Sınıf Dağılımı">
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={stats.classDistribution.slice(0, 10)}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={colors.rule} />
+                  <XAxis dataKey="className" fontSize={12} stroke={colors.inkDim} />
+                  <YAxis stroke={colors.inkDim} fontSize={12} />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    cursor={{ fill: colors.rule, opacity: 0.3 }}
+                  />
+                  <Bar dataKey="count" name="Talep Sayısı">
+                    {stats.classDistribution.slice(0, 10).map((_entry, index) => (
+                      <Cell key={index} fill={colors.bars[index % colors.bars.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
 
-          <ChartCard icon={TrendingUp} title="Haftalık Trend" className="lg:col-span-2">
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={stats.weekly}>
-                <CartesianGrid strokeDasharray="3 3" stroke={colors.rule} />
-                <XAxis dataKey="weekOf" fontSize={11} stroke={colors.inkDim} />
-                <YAxis stroke={colors.inkDim} fontSize={12} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Legend wrapperStyle={{ fontFamily: 'var(--font-mono)', fontSize: 11 }} />
-                <Line
-                  type="monotone"
-                  dataKey="going"
-                  name="Gidecek"
-                  stroke={colors.ok}
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="notGoing"
-                  name="Gitmeyecek"
-                  stroke={colors.state}
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="total"
-                  name="Toplam"
-                  stroke={colors.ink}
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                  dot={{ r: 3 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
+            <ChartCard icon={TrendingUp} title="Haftalık Trend" className="lg:col-span-2">
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={stats.weekly}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={colors.rule} />
+                  <XAxis dataKey="weekOf" fontSize={11} stroke={colors.inkDim} />
+                  <YAxis stroke={colors.inkDim} fontSize={12} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Legend wrapperStyle={{ fontFamily: 'var(--font-mono)', fontSize: 11 }} />
+                  <Line
+                    type="monotone"
+                    dataKey="going"
+                    name="Gidecek"
+                    stroke={colors.ok}
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="notGoing"
+                    name="Gitmeyecek"
+                    stroke={colors.state}
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="total"
+                    name="Toplam"
+                    stroke={colors.ink}
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={{ r: 3 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+        )}
       </div>
     </ModernDashboardLayout>
   );
