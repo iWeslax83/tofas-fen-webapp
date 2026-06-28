@@ -23,10 +23,8 @@ interface FieldProps {
 }
 
 const Field = ({ label, htmlFor, children }: FieldProps) => (
-  <label htmlFor={htmlFor} className="flex flex-col gap-1">
-    <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-      {label}
-    </span>
+  <label htmlFor={htmlFor} className="flex flex-col gap-1.5">
+    <span className="text-sm font-medium text-[var(--ink-2)]">{label}</span>
     {children}
   </label>
 );
@@ -95,9 +93,7 @@ export default function LoginPage() {
   if (user?.rol) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--paper)]">
-        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yönlendiriliyor…
-        </div>
+        <div className="text-sm text-[var(--ink-dim)]">Yönlendiriliyor…</div>
       </div>
     );
   }
@@ -165,39 +161,39 @@ export default function LoginPage() {
       <div className="h-1.5 bg-[var(--state)]" aria-hidden="true" />
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[5fr_7fr]">
-        <aside className="bg-[#0d0d0d] text-white p-8 lg:p-12 flex flex-col justify-between min-h-[40vh] lg:min-h-screen">
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <img
-                src="/tofaslogo.png"
-                alt="Tofaş Fen Lisesi logosu"
-                className="w-16 h-16 bg-white p-2 border border-white/20"
-              />
-              <div>
-                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/60">
-                  Bilgi Sistemi
-                </div>
-                <h1 className="font-serif text-3xl text-white leading-tight">Tofaş Fen Lisesi</h1>
-              </div>
-            </div>
+        <aside className="bg-[#0d0d0d] text-white p-8 lg:p-12 flex flex-col min-h-[36vh] lg:min-h-screen">
+          <div className="flex items-center gap-3">
+            <img
+              src="/tofaslogo.png"
+              alt="Tofaş Fen Lisesi logosu"
+              className="w-12 h-12 rounded-lg bg-white p-1.5"
+            />
+            <span className="text-sm font-medium text-white/70">Bilgi Sistemi</span>
           </div>
 
-          <div className="space-y-3 border-t border-white/15 pt-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/50">
-              © {new Date().getFullYear()} Tofaş Fen Lisesi. Tüm hakları saklıdır.
+          <div className="flex-1 flex flex-col justify-center py-10 max-w-sm">
+            <h1 className="font-serif text-4xl text-white leading-tight">Tofaş Fen Lisesi</h1>
+            <p className="mt-4 text-base text-white/60 leading-relaxed">
+              Notlar, ödevler, ders programı, duyurular ve pansiyon işlemleri tek bir yerde.
             </p>
           </div>
+
+          <p className="text-xs text-white/40">
+            © {new Date().getFullYear()} Tofaş Fen Lisesi. Tüm hakları saklıdır.
+          </p>
         </aside>
 
         <main className="p-8 lg:p-12 flex flex-col justify-center min-h-[60vh] lg:min-h-screen">
           <div className="w-full max-w-md mx-auto">
             <header className="mb-8">
-              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-                {requires2FA ? 'Doğrulama' : 'Giriş'}
-              </div>
-              <h2 className="font-serif text-2xl text-[var(--ink)] mt-1">
+              <h2 className="font-serif text-2xl text-[var(--ink)]">
                 {requires2FA ? 'İki Adımlı Doğrulama' : 'Sisteme Giriş'}
               </h2>
+              <p className="mt-1 text-sm text-[var(--ink-dim)]">
+                {requires2FA
+                  ? 'E-postanıza gönderilen 6 haneli kodu girin.'
+                  : 'Kullanıcı ID ve şifrenizle giriş yapın.'}
+              </p>
             </header>
 
             {!requires2FA ? (
@@ -276,7 +272,7 @@ export default function LoginPage() {
                 <div className="pt-3 border-t border-[var(--rule)] text-center">
                   <Link
                     to="/kayit-basvurusu"
-                    className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] hover:text-[var(--state)]"
+                    className="text-sm text-[var(--ink-dim)] hover:text-[var(--state)]"
                   >
                     Yeni kayıt başvurusu
                   </Link>
@@ -321,13 +317,15 @@ export default function LoginPage() {
                 </div>
 
                 {countdown > 0 && (
-                  <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                  <div className="text-sm text-[var(--ink-dim)]">
                     Kod geçerlilik süresi:{' '}
-                    <strong className="text-[var(--ink)]">{formatCountdown(countdown)}</strong>
+                    <strong className="text-[var(--ink)] font-mono">
+                      {formatCountdown(countdown)}
+                    </strong>
                   </div>
                 )}
                 {countdown === 0 && twoFactorExpiresAt && (
-                  <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--state)]">
+                  <div className="text-sm text-[var(--state)]">
                     Kodun süresi doldu. Lütfen yeni kod isteyin.
                   </div>
                 )}
