@@ -18,15 +18,15 @@ export function DataTablePagination<TData>({ table }: DataTablePaginationProps<T
 
   return (
     <div className="flex items-center justify-between flex-wrap gap-3 pt-2">
-      <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+      <div className="text-xs text-[var(--ink-dim)]">
         {selectedCount > 0 && `${selectedCount} seçili · `}
         {start}–{end} / {totalRows}
       </div>
       <div className="flex items-center gap-3">
-        <label className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+        <label className="flex items-center gap-2 text-xs text-[var(--ink-dim)]">
           Sayfa
           <select
-            className="bg-transparent border border-[var(--rule)] px-2 py-1 font-mono text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--state)]"
+            className="bg-transparent border border-[var(--rule)] rounded px-2 py-1 text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--state)]"
             value={pageSize}
             onChange={(e) => table.setPageSize(Number(e.target.value))}
           >
@@ -56,7 +56,7 @@ export function DataTablePagination<TData>({ table }: DataTablePaginationProps<T
           >
             <ChevronLeft size={14} />
           </Button>
-          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)] px-2">
+          <span className="text-xs text-[var(--ink-dim)] px-2">
             {pageIndex + 1} / {pageCount || 1}
           </span>
           <Button

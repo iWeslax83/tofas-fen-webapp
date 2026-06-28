@@ -4,7 +4,7 @@ import { GraduationCap } from 'lucide-react';
 import { useUser, useIsLoading } from '../stores/authStore';
 import ModernDashboardLayout from './ModernDashboardLayout';
 import EmailVerificationBanner from './EmailVerificationBanner';
-import { OfficialNoticeHero } from './dashboard/OfficialNoticeHero';
+import { WelcomeHero } from './dashboard/WelcomeHero';
 import { KpiTable, type KpiItem } from './dashboard/KpiTable';
 import { TodaySchedule, type ScheduleRow } from './dashboard/TodaySchedule';
 import { HomeworkQueue, type HomeworkRow } from './dashboard/HomeworkQueue';
@@ -162,7 +162,7 @@ const ModernDashboard: React.FC = () => {
   return (
     <ModernDashboardLayout pageTitle="Panel">
       <div className="space-y-6 p-6">
-        <OfficialNoticeHero adSoyad={authUser.adSoyad} />
+        <WelcomeHero adSoyad={authUser.adSoyad} />
         <EmailVerificationBanner />
         <KpiTable items={kpiItems} />
         <TodaySchedule rows={scheduleRows} />
@@ -171,18 +171,10 @@ const ModernDashboard: React.FC = () => {
           <AnnouncementCard
             title={announcement.title}
             body={announcement.body}
-            fileNo={announcement.fileNo}
             date={announcement.date}
           />
         )}
         <QuickActions actions={quickActions} />
-        <footer className="border-t border-[var(--rule)] pt-4 mt-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          <span>Tofaş Fen Lisesi · Bilgi Sistemi</span>
-          <span>
-            Dosya No: {new Date().getFullYear()}/
-            {String(authUser.id).slice(-4).toUpperCase().padStart(4, '0')}
-          </span>
-        </footer>
       </div>
     </ModernDashboardLayout>
   );

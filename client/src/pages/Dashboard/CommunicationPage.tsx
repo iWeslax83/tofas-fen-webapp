@@ -295,9 +295,6 @@ const CommunicationPage: React.FC = () => {
         {/* Document header */}
         <div className="px-6 pt-6 pb-4 border-b border-[var(--rule)] bg-[var(--paper)]">
           <header>
-            <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-              Belge No. {new Date().getFullYear()}/İL
-            </div>
             <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">İletişim</h1>
           </header>
 

@@ -236,9 +236,6 @@ export default function ParentEvciPage() {
     <ModernDashboardLayout pageTitle="Evci Çıkış İşlemleri" breadcrumb={breadcrumb}>
       <div className="p-6 space-y-6">
         <header>
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-            Belge No. {new Date().getFullYear()}/E-V
-          </div>
           <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Evci Çıkış İşlemleri</h1>
         </header>
 

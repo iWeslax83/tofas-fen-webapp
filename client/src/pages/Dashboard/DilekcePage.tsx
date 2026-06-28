@@ -262,14 +262,10 @@ const DilekcePage: React.FC = () => {
     <ModernDashboardLayout pageTitle="Dilekçe" breadcrumb={breadcrumb}>
       <div className="p-6 space-y-6">
         <header>
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-            Belge No. {new Date().getFullYear()}/D
-          </div>
           <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Dilekçelerim</h1>
         </header>
 
         <DataTable
-          caption="Tablo I — Dilekçe Listesi"
           columns={columns}
           data={dilekceler}
           emptyState="Henüz bir dilekçeniz yok."

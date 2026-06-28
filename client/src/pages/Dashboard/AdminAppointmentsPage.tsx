@@ -190,14 +190,10 @@ export default function AdminAppointmentsPage() {
     <ModernDashboardLayout pageTitle="Randevu Başvuruları" breadcrumb={breadcrumb}>
       <div className="p-6 space-y-6">
         <header>
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-            Belge No. {new Date().getFullYear()}/R
-          </div>
           <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Randevu Başvuruları</h1>
         </header>
 
         <DataTable
-          caption="Tablo I — Randevu Listesi"
           columns={columns}
           data={appointments}
           emptyState="Seçilen kriterlere uygun randevu bulunamadı."
