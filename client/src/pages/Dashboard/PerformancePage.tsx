@@ -280,7 +280,7 @@ const PerformancePage: React.FC = () => {
                 type="button"
                 onClick={() => setActiveTab(t.key)}
                 className={cn(
-                  'h-9 px-3 text-xs font-mono uppercase tracking-wider border transition-colors flex items-center gap-2',
+                  'h-9 px-3 text-xs uppercase tracking-wider border transition-colors flex items-center gap-2',
                   active
                     ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
                     : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
@@ -302,7 +302,7 @@ const PerformancePage: React.FC = () => {
         )}
 
         {loading && (
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          <div className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
             <RefreshCw size={12} className="animate-spin" />
             Yükleniyor…
           </div>
@@ -426,9 +426,7 @@ function DashboardTab({
       <Card contentClassName="p-0">
         <div className="px-4 py-2 border-b border-[var(--rule)] flex items-center gap-2">
           <Zap size={12} className="text-[var(--ink-dim)]" />
-          <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-            Hızlı Optimizasyonlar
-          </span>
+          <span className="text-xs font-medium text-[var(--ink-dim)]">Hızlı Optimizasyonlar</span>
         </div>
         <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           <Button
@@ -479,15 +477,13 @@ function SystemCard({
 }) {
   return (
     <div className="bg-[var(--paper)] p-4 space-y-2">
-      <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+      <div className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
         <Icon size={12} />
         {label}
       </div>
       <div className="flex items-baseline gap-1">
         <span className="font-serif text-3xl text-[var(--ink)]">{value}</span>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
-          {unit}
-        </span>
+        <span className="text-xs font-medium text-[var(--ink-dim)]">{unit}</span>
       </div>
       <ul className="space-y-0.5">
         {details.map((d) => (
@@ -620,7 +616,7 @@ function MetricsTab({
               <li key={m.id} className="p-4 flex items-center gap-4 flex-wrap">
                 <div className="flex-1 min-w-0">
                   <div className="font-serif text-sm text-[var(--ink)]">{m.metric}</div>
-                  <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)] mt-0.5">
+                  <div className="text-xs font-medium text-[var(--ink-dim)] mt-0.5">
                     {m.type} · {m.category}
                   </div>
                   <div className="font-mono text-[10px] text-[var(--ink-dim-2)] mt-0.5">
@@ -629,9 +625,7 @@ function MetricsTab({
                 </div>
                 <div className="flex flex-col items-end">
                   <span className="font-serif text-xl text-[var(--ink)]">{m.value}</span>
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
-                    {m.unit}
-                  </span>
+                  <span className="text-xs font-medium text-[var(--ink-dim)]">{m.unit}</span>
                 </div>
                 <Chip tone={STATUS_TONES[m.status] ?? 'default'}>{m.status}</Chip>
               </li>
@@ -642,7 +636,7 @@ function MetricsTab({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+          <span className="text-xs font-medium text-[var(--ink-dim)]">
             Sayfa {page} / {totalPages}
           </span>
           <div className="flex items-center gap-2">
@@ -700,15 +694,13 @@ function OptimizationsTab({ optimizations }: { optimizations: Optimization[] }) 
                     <AlertTriangle size={12} className="text-[var(--state)]" />
                   )}
                   {o.status === 'pending' && <Clock size={12} className="text-[var(--ink-dim)]" />}
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
-                    {o.action}
-                  </span>
+                  <span className="text-xs font-medium text-[var(--ink-dim)]">{o.action}</span>
                 </div>
                 <Chip tone={STATUS_TONES[o.status] ?? 'default'}>{o.status}</Chip>
               </div>
               <div className="p-4 space-y-2">
                 <p className="font-serif text-sm text-[var(--ink)]">{o.description}</p>
-                <div className="flex items-center gap-3 flex-wrap font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                <div className="flex items-center gap-3 flex-wrap text-xs font-medium text-[var(--ink-dim)]">
                   <span>{o.type}</span>
                   <Chip tone="outline">{o.impact} etki</Chip>
                   <span>· {o.executedBy}</span>
@@ -785,12 +777,12 @@ function ConfigsTab({ configs }: { configs: Config[] }) {
                   <Chip tone={c.isEnabled ? 'black' : 'default'}>
                     {c.isEnabled ? 'Aktif' : 'Pasif'}
                   </Chip>
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                  <span className="text-xs font-medium text-[var(--ink-dim)]">
                     Öncelik: {c.priority}
                   </span>
                 </div>
                 {c.schedule && (
-                  <div className="flex items-center gap-1 pt-2 border-t border-[var(--rule)] font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                  <div className="flex items-center gap-1 pt-2 border-t border-[var(--rule)] text-xs font-medium text-[var(--ink-dim)]">
                     <Clock size={10} />
                     {c.schedule.type}: {c.schedule.value}
                   </div>

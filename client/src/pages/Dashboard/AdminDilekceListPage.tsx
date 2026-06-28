@@ -241,7 +241,7 @@ const AdminDilekceListPage: React.FC = () => {
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="text-[var(--ink-2)]">{row.original.userName}</span>
-            <span className="font-mono text-[10px] uppercase text-[var(--ink-dim)]">
+            <span className="text-xs font-medium text-[var(--ink-dim)]">
               {ROLE_LABELS[row.original.userRole] || row.original.userRole}
             </span>
           </div>
@@ -251,7 +251,7 @@ const AdminDilekceListPage: React.FC = () => {
         accessorKey: 'type',
         header: 'Tür',
         cell: (info) => (
-          <span className="font-mono text-xs uppercase tracking-wider text-[var(--ink-dim)]">
+          <span className="text-xs uppercase tracking-wider text-[var(--ink-dim)]">
             {TYPE_LABELS[info.getValue<DilekceType>()]}
           </span>
         ),
@@ -303,9 +303,7 @@ const AdminDilekceListPage: React.FC = () => {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Dilekçe Yönetimi" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -372,7 +370,7 @@ const AdminDilekceListPage: React.FC = () => {
                       type="button"
                       onClick={() => setFilterStatus(f.key)}
                       className={cn(
-                        'h-8 px-3 text-xs font-mono uppercase tracking-wider border transition-colors',
+                        'h-8 px-3 text-xs uppercase tracking-wider border transition-colors',
                         active
                           ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
                           : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
@@ -449,7 +447,7 @@ function DilekceReviewModal({ dilekce, onClose, onUpdateStatus }: DilekceReviewM
       >
         <div onClick={(e) => e.stopPropagation()}>
           <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+            <span className="text-xs font-medium">
               Dilekçe İncelemesi · No. {dilekce._id.slice(-6).toUpperCase()}
             </span>
             <button
@@ -468,13 +466,13 @@ function DilekceReviewModal({ dilekce, onClose, onUpdateStatus }: DilekceReviewM
               <Chip tone={PRIORITY_TONES[dilekce.priority]}>
                 {PRIORITY_LABELS[dilekce.priority]} öncelik
               </Chip>
-              <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)] ml-auto">
+              <span className="text-xs font-medium text-[var(--ink-dim)] ml-auto">
                 {formatDateTime(dilekce.createdAt)}
               </span>
             </div>
 
             <header>
-              <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+              <div className="text-xs font-medium text-[var(--ink-dim)]">
                 {TYPE_LABELS[dilekce.type]}
                 {dilekce.category && ` · ${dilekce.category}`}
               </div>
@@ -534,9 +532,7 @@ function DilekceReviewModal({ dilekce, onClose, onUpdateStatus }: DilekceReviewM
 
             {availableIntents.length > 0 && (
               <div className="border-t border-[var(--rule)] pt-4 space-y-3">
-                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-                  İşlem
-                </div>
+                <div className="text-xs font-medium text-[var(--ink-dim)]">İşlem</div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {availableIntents.map((key) => {
                     const action = REVIEW_ACTIONS[key];
@@ -551,7 +547,7 @@ function DilekceReviewModal({ dilekce, onClose, onUpdateStatus }: DilekceReviewM
                           setResponse('');
                         }}
                         className={cn(
-                          'h-8 px-3 text-xs font-mono uppercase tracking-wider border transition-colors',
+                          'h-8 px-3 text-xs uppercase tracking-wider border transition-colors',
                           active
                             ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
                             : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
@@ -567,7 +563,7 @@ function DilekceReviewModal({ dilekce, onClose, onUpdateStatus }: DilekceReviewM
                 {intent && (
                   <div className="space-y-3">
                     <label className="flex flex-col gap-1">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                      <span className="text-xs font-medium text-[var(--ink-dim)]">
                         {REVIEW_ACTIONS[intent].noteLabel}
                       </span>
                       <textarea
@@ -579,7 +575,7 @@ function DilekceReviewModal({ dilekce, onClose, onUpdateStatus }: DilekceReviewM
                     </label>
                     {REVIEW_ACTIONS[intent].responseField && (
                       <label className="flex flex-col gap-1">
-                        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                        <span className="text-xs font-medium text-[var(--ink-dim)]">
                           Resmi Yanıt
                         </span>
                         <textarea
@@ -628,7 +624,7 @@ function DilekceReviewModal({ dilekce, onClose, onUpdateStatus }: DilekceReviewM
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1">
+      <div className="text-xs font-medium text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1">
         {title}
       </div>
       <div>{children}</div>

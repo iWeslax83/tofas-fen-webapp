@@ -36,7 +36,7 @@ export default function WeekView({ currentDate, filteredEvents, onEventClick }: 
               }`}
             >
               <span
-                className={`font-mono text-[10px] uppercase tracking-wider ${
+                className={`text-xs font-medium ${
                   isToday ? 'text-white' : 'text-[var(--ink-dim)]'
                 }`}
               >
@@ -50,9 +50,7 @@ export default function WeekView({ currentDate, filteredEvents, onEventClick }: 
             </div>
             <div className="flex-1 p-2 space-y-1 min-h-[120px]">
               {dayEvents.length === 0 ? (
-                <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim-2)]">
-                  —
-                </span>
+                <span className="text-xs font-medium text-[var(--ink-dim-2)]">—</span>
               ) : (
                 dayEvents.map((event) => (
                   <button

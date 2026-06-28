@@ -36,9 +36,7 @@ export default function ResetReasonModal({
       <div className="bg-[var(--paper)] border border-[var(--rule)] max-w-md w-full">
         {/* Modal header bar */}
         <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
-          <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
-            Şifre Sıfırlama Sebebi
-          </span>
+          <span className="text-xs font-medium">Şifre Sıfırlama Sebebi</span>
           <button
             type="button"
             onClick={onCancel}
@@ -53,9 +51,7 @@ export default function ResetReasonModal({
           <p className="font-mono text-xs text-[var(--ink-dim)]">{userLabel}</p>
 
           <label className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-              Sebep
-            </span>
+            <span className="text-xs font-medium text-[var(--ink-dim)]">Sebep</span>
             <select value={reason} onChange={(e) => setReason(e.target.value)} className={inputCls}>
               {RESET_REASONS.map((r) => (
                 <option key={r.value} value={r.value}>
@@ -67,9 +63,7 @@ export default function ResetReasonModal({
 
           {reason === 'other' && (
             <label className="flex flex-col gap-1">
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                Açıklama
-              </span>
+              <span className="text-xs font-medium text-[var(--ink-dim)]">Açıklama</span>
               <textarea
                 value={note}
                 maxLength={280}

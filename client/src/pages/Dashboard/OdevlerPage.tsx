@@ -69,9 +69,7 @@ interface FieldProps {
 }
 const Field = ({ label, children }: FieldProps) => (
   <label className="flex flex-col gap-1">
-    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-      {label}
-    </span>
+    <span className="text-xs font-medium text-[var(--ink-dim)]">{label}</span>
     {children}
   </label>
 );
@@ -150,7 +148,7 @@ export default function OdevlerPage() {
         accessorKey: 'subject',
         header: 'Ders',
         cell: (info) => (
-          <span className="font-mono text-[var(--ink-dim)] text-xs uppercase tracking-wider">
+          <span className="text-[var(--ink-dim)] text-xs uppercase tracking-wider">
             {info.getValue<string>()}
           </span>
         ),
@@ -231,9 +229,7 @@ export default function OdevlerPage() {
   if (isLoading) {
     return (
       <ModernDashboardLayout pageTitle="Ödevler" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -304,7 +300,7 @@ function NewHomeworkModal({ onClose, onSuccess }: NewHomeworkModalProps) {
       >
         <div onClick={(e) => e.stopPropagation()}>
           <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">Yeni Ödev</span>
+            <span className="text-xs font-medium">Yeni Ödev</span>
             <button
               type="button"
               onClick={onClose}

@@ -16,12 +16,7 @@ export default function AuditLogTab() {
   const selectCls =
     'h-8 px-3 text-xs font-mono border border-[var(--rule)] bg-[var(--paper)] text-[var(--ink)] focus:outline-none focus:border-[var(--state)]';
 
-  if (isLoading)
-    return (
-      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-        Yükleniyor...
-      </p>
-    );
+  if (isLoading) return <p className="text-xs font-medium text-[var(--ink-dim)]">Yükleniyor...</p>;
   if (!data) return null;
 
   const totalPages = Math.max(1, Math.ceil(data.total / data.limit));
@@ -51,7 +46,7 @@ export default function AuditLogTab() {
             {['Zaman', 'Kullanıcı', 'Admin', 'Aksiyon', 'Sebep', 'Not'].map((h) => (
               <th
                 key={h}
-                className="text-left px-3 py-2 border-b border-[var(--rule)] font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]"
+                className="text-left px-3 py-2 border-b border-[var(--rule)] text-xs font-medium text-[var(--ink-dim)]"
               >
                 {h}
               </th>
@@ -86,7 +81,7 @@ export default function AuditLogTab() {
         >
           Önceki
         </Button>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+        <span className="text-xs font-medium text-[var(--ink-dim)]">
           Sayfa {page} / {totalPages}
         </span>
         <Button

@@ -52,7 +52,7 @@ interface FieldProps {
 
 const Field = ({ label, htmlFor, required, children }: FieldProps) => (
   <label htmlFor={htmlFor} className="flex flex-col gap-1">
-    <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+    <span className="text-xs font-medium text-[var(--ink-dim)]">
       {label}
       {required && <span className="text-[var(--state)] ml-1">*</span>}
     </span>
@@ -190,9 +190,7 @@ export default function VisitorAppointmentPage() {
           <Card>
             <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center gap-2">
               <CalendarDays size={12} />
-              <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
-                Yeni Randevu Talebi
-              </span>
+              <span className="text-xs font-medium">Yeni Randevu Talebi</span>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -224,15 +222,15 @@ export default function VisitorAppointmentPage() {
 
               <Field label="Saat Dilimi" required>
                 {!date ? (
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                  <span className="text-xs font-medium text-[var(--ink-dim)]">
                     Önce bir tarih seçin
                   </span>
                 ) : loadingSlots ? (
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                  <span className="text-xs font-medium text-[var(--ink-dim)]">
                     Müsait saatler yükleniyor…
                   </span>
                 ) : availableSlots.length === 0 ? (
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--state)]">
+                  <span className="text-xs font-medium text-[var(--state)]">
                     Bu tarihte müsait saat bulunmuyor
                   </span>
                 ) : (
@@ -246,7 +244,7 @@ export default function VisitorAppointmentPage() {
                           onClick={() => setTimeSlot(slot)}
                           aria-pressed={active}
                           className={cn(
-                            'h-8 px-3 text-xs font-mono uppercase tracking-wider border transition-colors flex items-center gap-1',
+                            'h-8 px-3 text-xs uppercase tracking-wider border transition-colors flex items-center gap-1',
                             active
                               ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
                               : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
@@ -289,16 +287,12 @@ export default function VisitorAppointmentPage() {
 
         <section className="space-y-3">
           <div className="flex items-center gap-2 border-b border-[var(--rule)] pb-1">
-            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-              Bölüm I
-            </span>
+            <span className="text-xs font-medium text-[var(--ink-dim)]">Bölüm I</span>
             <h2 className="font-serif text-base text-[var(--ink)]">Randevularım</h2>
           </div>
 
           {loading ? (
-            <div className="px-4 py-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-              Yükleniyor…
-            </div>
+            <div className="px-4 py-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
           ) : appointments.length === 0 ? (
             <Card contentClassName="p-10 flex flex-col items-center text-center gap-3">
               <CalendarDays size={32} className="text-[var(--ink-dim)]" />
@@ -310,7 +304,7 @@ export default function VisitorAppointmentPage() {
                 {appointments.map((apt) => (
                   <li key={apt._id} className="p-4 flex items-center gap-4 flex-wrap">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                      <div className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
                         <CalendarDays size={10} />
                         {new Date(apt.date).toLocaleDateString('tr-TR')} · {apt.timeSlot}
                       </div>

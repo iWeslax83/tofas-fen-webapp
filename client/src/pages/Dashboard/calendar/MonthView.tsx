@@ -36,7 +36,7 @@ export default function MonthView({
         {WEEKDAYS.map((day) => (
           <div
             key={day}
-            className="px-2 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] text-center"
+            className="px-2 py-2 text-xs font-medium text-[var(--ink-dim)] text-center"
           >
             {day}
           </div>
