@@ -31,10 +31,7 @@ export const DocumentTableCaption = forwardRef<
 >(({ className, ...props }, ref) => (
   <caption
     ref={ref}
-    className={cn(
-      'mb-2 font-mono text-xs uppercase tracking-[0.2em] text-[var(--ink-dim)] text-left',
-      className,
-    )}
+    className={cn('mb-3 text-sm font-medium text-[var(--ink-2)] text-left', className)}
     {...props}
   />
 ));
@@ -82,7 +79,7 @@ export const DocumentTableHead = forwardRef<
   <th
     ref={ref}
     className={cn(
-      'h-10 px-3 text-left align-middle font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)] font-semibold',
+      'h-11 px-3 text-left align-middle text-xs font-semibold text-[var(--ink-dim)]',
       className,
     )}
     {...props}
