@@ -322,7 +322,7 @@ export default function SenkronizasyonPage() {
 
         {/* User grid */}
         {loading ? (
-          <div className="p-16 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+          <div className="p-16 text-center text-xs font-medium text-[var(--ink-dim)]">
             Yükleniyor…
           </div>
         ) : (
@@ -338,7 +338,7 @@ export default function SenkronizasyonPage() {
               />
             ))}
             {filteredUsers.length === 0 && (
-              <div className="col-span-full bg-[var(--paper)] p-12 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+              <div className="col-span-full bg-[var(--paper)] p-12 text-center text-xs font-medium text-[var(--ink-dim)]">
                 Arama kriterlerine uygun kullanıcı bulunamadı.
               </div>
             )}
@@ -350,9 +350,7 @@ export default function SenkronizasyonPage() {
           <Card accentBar contentClassName="p-6 space-y-6">
             {/* Panel header */}
             <div className="border-b border-[var(--rule)] pb-4">
-              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-                Eşleştirme Paneli
-              </div>
+              <div className="text-xs font-medium text-[var(--ink-dim)]">Eşleştirme Paneli</div>
               <h2 className="font-serif text-xl text-[var(--ink)] mt-1 flex items-center gap-2">
                 <Users size={18} />
                 Veli: {selectedParent.adSoyad}
@@ -365,7 +363,7 @@ export default function SenkronizasyonPage() {
 
             {/* Manual assign by ID */}
             <div className="border border-[var(--rule)] bg-[var(--surface)] p-4 space-y-3">
-              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+              <div className="text-xs font-medium text-[var(--ink-dim)]">
                 ID ile Manuel Eşleştir
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -389,9 +387,7 @@ export default function SenkronizasyonPage() {
             {/* Student selection */}
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-                  Mevcut Öğrenciler
-                </div>
+                <div className="text-xs font-medium text-[var(--ink-dim)]">Mevcut Öğrenciler</div>
                 <div className="flex flex-wrap gap-2">
                   <input
                     type="text"
@@ -449,7 +445,7 @@ export default function SenkronizasyonPage() {
                   );
                 })}
                 {filteredStudents.length === 0 && (
-                  <div className="col-span-full bg-[var(--paper)] p-8 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                  <div className="col-span-full bg-[var(--paper)] p-8 text-center text-xs font-medium text-[var(--ink-dim)]">
                     Arama kriterlerine uygun öğrenci bulunamadı.
                   </div>
                 )}
@@ -459,7 +455,7 @@ export default function SenkronizasyonPage() {
             {/* Selected children summary */}
             {selectedChildren.length > 0 && (
               <div className="border border-[var(--rule)] bg-[var(--surface)] p-4 space-y-3">
-                <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+                <div className="text-xs font-medium text-[var(--ink-dim)]">
                   Seçilen Çocuklar ({selectedChildren.length})
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -590,9 +586,7 @@ function UserCard({ u, selected, onEdit, onSelectParent, onDelete }: UserCardPro
           {u.rol === 'parent' && u.childId && u.childId.length > 0 && (
             <div className="col-span-2 bg-[var(--paper)] p-2 text-center">
               <div className="font-serif text-lg text-[var(--ink)]">{u.childId.length}</div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                Çocuk Sayısı
-              </div>
+              <div className="text-xs font-medium text-[var(--ink-dim)]">Çocuk Sayısı</div>
             </div>
           )}
         </div>
@@ -620,9 +614,7 @@ function StatCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-[var(--paper)] p-2 text-center">
       <div className="font-serif text-base text-[var(--ink)]">{value}</div>
-      <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-        {label}
-      </div>
+      <div className="text-xs font-medium text-[var(--ink-dim)]">{label}</div>
     </div>
   );
 }

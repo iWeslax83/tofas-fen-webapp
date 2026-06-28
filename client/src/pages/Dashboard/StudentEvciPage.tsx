@@ -100,9 +100,7 @@ interface FieldProps {
 
 const Field = ({ label, children, error }: FieldProps) => (
   <label className="flex flex-col gap-1">
-    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-      {label}
-    </span>
+    <span className="text-xs font-medium text-[var(--ink-dim)]">{label}</span>
     {children}
     {error && <span className="font-mono text-[10px] text-[var(--state)]">{error}</span>}
   </label>
@@ -378,9 +376,7 @@ const StudentEvciPage = () => {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Evci İşlemleri" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -536,7 +532,7 @@ const StudentEvciPage = () => {
                       <div className="border-t border-[var(--rule)] pt-2 mt-2 flex items-start gap-2">
                         <AlertCircle size={12} className="text-[var(--state)] mt-1 shrink-0" />
                         <div className="flex-1">
-                          <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+                          <div className="text-xs font-medium text-[var(--ink-dim)]">
                             Red Sebebi
                           </div>
                           <p className="font-serif text-sm text-[var(--ink-2)]">
@@ -565,7 +561,7 @@ const StudentEvciPage = () => {
           >
             <div onClick={(e) => e.stopPropagation()}>
               <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
-                <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+                <span className="text-xs font-medium">
                   {editingIndex !== null ? 'Talep Düzenle' : 'Yeni Evci Talebi'}
                 </span>
                 <button
@@ -652,7 +648,7 @@ const StudentEvciPage = () => {
                         <button
                           type="button"
                           onClick={applyTemplate}
-                          className="mt-1 self-start inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)] hover:text-[var(--state)]"
+                          className="mt-1 self-start inline-flex items-center gap-1 text-xs font-medium text-[var(--ink-dim)] hover:text-[var(--state)]"
                         >
                           <Copy size={10} />
                           Geçen haftaki gibi ({lastTemplate.destination})
@@ -690,7 +686,7 @@ interface InfoRowProps {
 function InfoRow({ icon: Icon, label, value }: InfoRowProps) {
   return (
     <div className="grid grid-cols-[100px_1fr] items-center gap-3 text-sm">
-      <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--ink-dim)]">
         <Icon size={10} />
         {label}
       </span>

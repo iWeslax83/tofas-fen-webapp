@@ -53,9 +53,7 @@ interface FieldProps {
 }
 const Field = ({ label, htmlFor, children }: FieldProps) => (
   <label htmlFor={htmlFor} className="flex flex-col gap-1">
-    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-      {label}
-    </span>
+    <span className="text-xs font-medium text-[var(--ink-dim)]">{label}</span>
     {children}
   </label>
 );
@@ -240,9 +238,7 @@ export default function MealListPage() {
   if (loading && !isRefreshing) {
     return (
       <ModernDashboardLayout pageTitle="Yemek Listesi" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -252,9 +248,7 @@ export default function MealListPage() {
       <ModernDashboardLayout pageTitle="Yemek Listesi" breadcrumb={breadcrumb}>
         <div className="p-6 max-w-xl">
           <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--state)]">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--state)]">
-              Hata
-            </span>
+            <span className="text-xs font-medium text-[var(--state)]">Hata</span>
             <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
             <Button variant="secondary" size="sm" onClick={handleRefresh} loading={isRefreshing}>
               Tekrar Dene
@@ -285,9 +279,7 @@ export default function MealListPage() {
           <Card>
             <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center gap-2">
               <Upload size={12} />
-              <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
-                Yeni Yemek Listesi Yükle
-              </span>
+              <span className="text-xs font-medium">Yeni Yemek Listesi Yükle</span>
             </div>
             <form onSubmit={handleFileUpload} className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
               <Field label="Ay" htmlFor="meal-upload-month">
@@ -349,9 +341,7 @@ export default function MealListPage() {
             <div className="flex items-center gap-3 flex-wrap">
               <label className="flex items-center gap-2">
                 <Calendar size={12} className="text-[var(--ink-dim)]" />
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                  Ay
-                </span>
+                <span className="text-xs font-medium text-[var(--ink-dim)]">Ay</span>
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
@@ -367,9 +357,7 @@ export default function MealListPage() {
                 </select>
               </label>
               <label className="flex items-center gap-2">
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                  Yıl
-                </span>
+                <span className="text-xs font-medium text-[var(--ink-dim)]">Yıl</span>
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}

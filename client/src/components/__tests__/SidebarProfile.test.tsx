@@ -54,11 +54,13 @@ describe('SidebarProfile', () => {
     expect(screen.getByText('AV')).toBeInTheDocument();
   });
 
-  it('uses the Devlet "Sicil" mono uppercase preceeding the userId', () => {
+  it('renders a clean "Sicil" label preceding the userId', () => {
     render(<SidebarProfile name="X" userId="2024001" role="admin" />);
     const sicil = screen.getByText('Sicil');
-    expect(sicil.className).toContain('font-mono');
-    expect(sicil.className).toContain('uppercase');
+    // De-bureaucratized: plain small label, no mono/uppercase ministerial styling.
+    expect(sicil.className).toContain('text-xs');
+    expect(sicil.className).not.toContain('font-mono');
+    expect(sicil.className).not.toContain('uppercase');
   });
 
   it('renders the role chip in the black ink tone', () => {

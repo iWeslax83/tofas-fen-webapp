@@ -151,7 +151,7 @@ export default function AdminRegistrationsPage() {
         accessorKey: 'targetClass',
         header: 'Sınıf',
         cell: (info) => (
-          <span className="font-mono text-xs text-[var(--ink-dim)] uppercase tracking-wider">
+          <span className="text-xs text-[var(--ink-dim)] uppercase tracking-wider">
             {info.getValue<string>()}. Sınıf
           </span>
         ),
@@ -202,9 +202,7 @@ export default function AdminRegistrationsPage() {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Yeni Kayıt Başvuruları" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -232,7 +230,7 @@ export default function AdminRegistrationsPage() {
                     type="button"
                     onClick={() => setFilter(f.key)}
                     className={cn(
-                      'h-8 px-3 text-xs font-mono uppercase tracking-wider border transition-colors',
+                      'h-8 px-3 text-xs uppercase tracking-wider border transition-colors',
                       active
                         ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
                         : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
@@ -274,9 +272,7 @@ function StatsBar({ stats }: { stats: Stats }) {
     <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-[var(--rule)] border border-[var(--rule)]">
       {items.map((s) => (
         <div key={s.label} className="bg-[var(--paper)] p-4">
-          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-            {s.label}
-          </div>
+          <div className="text-xs font-medium text-[var(--ink-dim)]">{s.label}</div>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="font-serif text-2xl text-[var(--ink)]">{s.value}</span>
             <Chip tone={s.tone}>{s.label}</Chip>
@@ -317,7 +313,7 @@ function RegistrationDetailModal({
       >
         <div onClick={(e) => e.stopPropagation()}>
           <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
+            <span className="text-xs font-medium">
               Başvuru Detayı · No. {reg._id.slice(-6).toUpperCase()}
             </span>
             <button
@@ -333,7 +329,7 @@ function RegistrationDetailModal({
           <div className="p-6 space-y-5">
             <div className="flex items-center gap-3">
               <Chip tone={STATUS_TONES[reg.status]}>{STATUS_LABELS[reg.status]}</Chip>
-              <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">
+              <span className="text-xs font-medium text-[var(--ink-dim)]">
                 {formatDate(reg.createdAt)}
               </span>
             </div>
@@ -376,7 +372,7 @@ function RegistrationDetailModal({
             {canDecide && (
               <div className="pt-3 border-t border-[var(--rule)] space-y-3">
                 <label className="flex flex-col gap-1">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
+                  <span className="text-xs font-medium text-[var(--ink-dim)]">
                     Ret Sebebi (opsiyonel)
                   </span>
                   <textarea
@@ -440,7 +436,7 @@ function RegistrationDetailModal({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1">
+      <div className="text-xs font-medium text-[var(--ink-dim)] border-b border-[var(--rule)] pb-1">
         {title}
       </div>
       <div className="space-y-1.5">{children}</div>
@@ -451,9 +447,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="grid grid-cols-[140px_1fr] gap-3 text-sm">
-      <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)] pt-0.5">
-        {label}
-      </span>
+      <span className="text-xs font-medium text-[var(--ink-dim)] pt-0.5">{label}</span>
       <span className={cn('text-[var(--ink)]', mono ? 'font-mono text-xs' : 'font-serif')}>
         {value}
       </span>

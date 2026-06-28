@@ -152,7 +152,7 @@ export function StudentsList({
   return (
     <Card className="flex flex-col" contentClassName="flex flex-col h-[28rem]">
       <div className="border-b border-[var(--rule)] p-3 space-y-2">
-        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+        <div className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
           <UserPlus size={12} />
           Öğrenciler
           <span className="font-serif text-[var(--ink-2)] text-xs">{filteredStudents.length}</span>
@@ -182,7 +182,7 @@ export function StudentsList({
             aria-pressed={showUnmatchedStudents}
             title="Sadece eşleşmemiş öğrencileri göster"
             className={cn(
-              'h-8 px-2 text-[10px] font-mono uppercase tracking-wider border transition-colors',
+              'h-8 px-2 text-[10px] uppercase tracking-wider border transition-colors',
               showUnmatchedStudents
                 ? 'bg-[var(--state)] text-white border-[var(--state)]'
                 : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',

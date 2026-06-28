@@ -53,9 +53,7 @@ interface FieldProps {
 }
 const Field = ({ label, htmlFor, children }: FieldProps) => (
   <label htmlFor={htmlFor} className="flex flex-col gap-1">
-    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-      {label}
-    </span>
+    <span className="text-xs font-medium text-[var(--ink-dim)]">{label}</span>
     {children}
   </label>
 );
@@ -247,9 +245,7 @@ export default function SupervisorListPage() {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Belletmen Listesi" breadcrumb={breadcrumb}>
-        <div className="p-6 font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
-          Yükleniyor…
-        </div>
+        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
       </ModernDashboardLayout>
     );
   }
@@ -274,9 +270,7 @@ export default function SupervisorListPage() {
           <Card>
             <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center gap-2">
               <Upload size={12} />
-              <span className="font-mono text-[10px] uppercase tracking-[0.25em]">
-                Yeni Belletmen Listesi Yükle
-              </span>
+              <span className="text-xs font-medium">Yeni Belletmen Listesi Yükle</span>
             </div>
             <form onSubmit={handleFileUpload} className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
               <Field label="Ay" htmlFor="supervisor-upload-month">
@@ -338,9 +332,7 @@ export default function SupervisorListPage() {
             <div className="flex items-center gap-3 flex-wrap">
               <label className="flex items-center gap-2">
                 <Calendar size={12} className="text-[var(--ink-dim)]" />
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                  Ay
-                </span>
+                <span className="text-xs font-medium text-[var(--ink-dim)]">Ay</span>
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
@@ -356,9 +348,7 @@ export default function SupervisorListPage() {
                 </select>
               </label>
               <label className="flex items-center gap-2">
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                  Yıl
-                </span>
+                <span className="text-xs font-medium text-[var(--ink-dim)]">Yıl</span>
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}

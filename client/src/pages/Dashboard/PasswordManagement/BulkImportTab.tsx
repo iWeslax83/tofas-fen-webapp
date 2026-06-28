@@ -43,7 +43,7 @@ export default function BulkImportTab() {
   return (
     <div className="space-y-6">
       <Card accentBar contentClassName="p-4">
-        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] mb-3">
+        <div className="text-xs font-medium text-[var(--ink-dim)] mb-3">
           Tofaş Sınıf Listesi Yükle
         </div>
         <div className="flex items-center gap-3 mb-3">
@@ -82,9 +82,7 @@ export default function BulkImportTab() {
 
       {preview && (
         <Card contentClassName="p-4">
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] mb-2">
-            Önizleme
-          </div>
+          <div className="text-xs font-medium text-[var(--ink-dim)] mb-2">Önizleme</div>
           <p className="text-sm text-[var(--ink-dim)]">
             Toplam: <span className="font-medium text-[var(--ink)]">{preview.total}</span>, Mevcut
             ID: <span className="font-medium text-[var(--ink)]">{preview.existingIds.length}</span>,
@@ -100,7 +98,7 @@ export default function BulkImportTab() {
           </div>
           {preview.warnings.length > 0 && (
             <details className="mt-3">
-              <summary className="font-mono text-xs uppercase tracking-wider text-[var(--warn)] cursor-pointer">
+              <summary className="text-xs uppercase tracking-wider text-[var(--warn)] cursor-pointer">
                 Uyarıları göster
               </summary>
               <ul className="text-xs mt-2 list-disc list-inside text-[var(--ink-dim)]">
@@ -114,7 +112,7 @@ export default function BulkImportTab() {
       )}
 
       <Card contentClassName="p-4">
-        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)] mb-3">
+        <div className="text-xs font-medium text-[var(--ink-dim)] mb-3">
           Bekleyen Batch&apos;ler
         </div>
         <PendingBatchesList />
