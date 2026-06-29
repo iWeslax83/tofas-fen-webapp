@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Home, Settings, Menu, X, Bell, CheckCheck, Search } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useInitialized } from '../stores/authStore';
@@ -33,6 +33,8 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
     useNotifications(user?.id, initialized && !!user);
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const navClass = (to: string) => `nav-item${pathname === to ? ' active' : ''}`;
 
   // Dışarı tıklayınca dropdown'ı kapat
   useEffect(() => {
@@ -103,7 +105,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
               <h3>Ana Menü</h3>
               <Link
                 to={`/${user?.rol || 'student'}`}
-                className="nav-item"
+                className={navClass(`/${user?.rol || 'student'}`)}
                 onClick={closeSidebarOnMobile}
               >
                 <Home className="nav-icon" />
@@ -117,7 +119,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
                 <Link
                   key={button.key}
                   to={button.route}
-                  className="nav-item"
+                  className={navClass(button.route)}
                   onClick={closeSidebarOnMobile}
                 >
                   {button.icon && <button.icon className="nav-icon" />}
@@ -128,7 +130,11 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
 
             <div className="nav-section">
               <h3>Sistem</h3>
-              <Link to={`/${user.rol}/ayarlar`} className="nav-item" onClick={closeSidebarOnMobile}>
+              <Link
+                to={`/${user.rol}/ayarlar`}
+                className={navClass(`/${user.rol}/ayarlar`)}
+                onClick={closeSidebarOnMobile}
+              >
                 <Settings className="nav-icon" />
                 <span>Ayarlar</span>
               </Link>

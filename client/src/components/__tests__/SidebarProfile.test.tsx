@@ -63,15 +63,17 @@ describe('SidebarProfile', () => {
     expect(sicil.className).not.toContain('uppercase');
   });
 
-  it('renders the role chip in the black ink tone', () => {
+  it('renders the role badge styled for the dark sidebar', () => {
     render(<SidebarProfile name="X" userId="1" role="admin" />);
-    expect(screen.getByText('Yönetici').className).toContain('bg-[var(--ink)]');
+    const badge = screen.getByText('Yönetici');
+    expect(badge.className).toContain('text-white');
+    expect(badge.className).toContain('bg-white/10');
   });
 
-  it('renders the pansiyon chip in the outline tone', () => {
+  it('renders the pansiyon badge with a light border', () => {
     render(<SidebarProfile name="X" userId="1" role="student" pansiyon />);
-    const chip = screen.getByText('Pansiyon');
-    expect(chip.className).toContain('bg-transparent');
-    expect(chip.className).toContain('border-[var(--ink)]');
+    const badge = screen.getByText('Pansiyon');
+    expect(badge.className).toContain('border-white/15');
+    expect(badge.className).toContain('text-white/70');
   });
 });
