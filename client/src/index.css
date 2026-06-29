@@ -76,18 +76,7 @@
 /* Note: BackButton, Modal, and Button styles are now in their respective component CSS files or theme.css */
 
 /* StudentPanel Styles */
-.student-panel {
-  min-height: 100vh;
-  width: 100%;
-  background: #f8fafc;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
 
-.student-panel::before {
-  display: none;
-}
 
 .panel-header {
   position: relative;
@@ -309,18 +298,7 @@
 /* slideDown moved to theme.css */
 
 /* Admin Panel Styles */
-.admin-panel {
-  min-height: 100vh;
-  width: 100%;
-  background: #f8fafc;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
 
-.admin-panel::before {
-  display: none;
-}
 
 .admin-header {
   position: relative;
@@ -678,21 +656,7 @@
     display: none;
   }
 
-  .user-menu-dropdown {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    margin: 0;
-    border-radius: 0;
-    min-width: 100%;
-    z-index: 9999;
-  }
 
-  .user-menu-header {
-    padding: 1.5rem;
-  }
 
   .user-header-content {
     flex-direction: column;
@@ -712,9 +676,6 @@
     margin-bottom: 0.5rem;
   }
 
-  .user-menu-item {
-    padding: 1rem;
-  }
 }
 
 @media (max-width: 480px) {
@@ -852,38 +813,9 @@
 /* Loader styles moved to theme.css */
 
 /* UserMenu Styles */
-.user-menu {
-  position: relative;
-  display: inline-block;
-  z-index: 10000;
-}
 
-.user-menu-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.75rem;
-  background: var(--primary-red-50);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.875rem;
-  position: relative;
-  z-index: 10001;
-}
 
-.user-menu-button:hover {
-  background: var(--primary-red-lighter);
-  border-color: rgba(0, 0, 0, 0.2);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
 
-.user-menu-button:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--primary-red-10);
-}
 
 .user-avatar {
   width: 2rem;
@@ -937,29 +869,7 @@
   transform: rotate(180deg);
 }
 
-.user-menu-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.5rem;
-  background: var(--primary-red-lighter);
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  min-width: 280px;
-  z-index: 10002;
-  overflow: hidden;
-  animation: slideDown 0.2s ease-out;
-  opacity: 1;
-  visibility: visible;
-  display: block;
-}
 
-.user-menu-header {
-  padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
-}
 
 .user-header-content {
   display: flex;
@@ -1025,35 +935,9 @@
   margin-bottom: 0;
 }
 
-.user-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  color: #374151;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  border-radius: 0.5rem;
-}
 
-.user-menu-item:hover {
-  background: #f3f4f6;
-  color: #111827;
-}
 
-.user-menu-item.logout {
-  color: #dc2626;
-}
 
-.user-menu-item.logout:hover {
-  background: #fef2f2;
-  color: #b91c1c;
-}
 
 .menu-item-icon {
   width: 2rem;
@@ -1076,36 +960,24 @@
   color: #2563eb;
 }
 
-.user-menu-item:hover .settings-icon {
-  background: #bfdbfe;
-}
 
 .help-icon {
   background: #dcfce7;
   color: #16a34a;
 }
 
-.user-menu-item:hover .help-icon {
-  background: #bbf7d0;
-}
 
 .security-icon {
   background: #fee2e2;
   color: #dc2626;
 }
 
-.user-menu-item:hover .security-icon {
-  background: #fecaca;
-}
 
 .logout-icon {
   background: #fee2e2;
   color: #dc2626;
 }
 
-.user-menu-item:hover .logout-icon {
-  background: #fecaca;
-}
 
 .menu-item-content {
   flex: 1;
@@ -1317,146 +1189,31 @@
 }
 
 /* Student Card Styles */
-.student-card {
-  background: var(--primary-red-lighter);
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--primary-red-20);
-  width: 100%;
-  max-width: 600px;
-  margin-bottom: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
 
-.student-card-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: var(--gradient-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 2rem;
-  font-weight: 700;
-  box-shadow: 0 4px 16px var(--primary-red-30);
-  flex-shrink: 0;
-}
 
-.student-card-info {
-  flex: 1;
-  min-width: 0;
-}
 
-.student-card-name {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 0.5rem 0;
-  line-height: 1.2;
-}
 
-.student-card-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
 
-.student-card-detail {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  color: #6B7280;
-}
 
-.student-card-detail-label {
-  font-weight: 600;
-  color: #374151;
-  min-width: 80px;
-}
 
-.student-card-detail-value {
-  color: var(--primary-red);
-  font-weight: 500;
-}
 
-.student-card-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-top: 0.5rem;
-}
 
-.student-card-status.pansiyon {
-  background: #fef3c7;
-  color: #d97706;
-}
 
-.student-card-status.gunduzlu {
-  background: #dbeafe;
-  color: #2563eb;
-}
 
 /* Animations handled by theme.css */
 
 /* ===== ADMINPANEL STYLES ===== */
 /* AdminPanel Styles - Hybrid Design: Modern + Minimalist + Material Design 3 */
-.admin-panel {
-  min-height: 100vh;
-  background: var(--gradient-primary-animated, var(--gradient-primary));
-  padding: 0;
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  animation: gradientShift 15s ease-in-out infinite;
-}
 
 /* gradientShift handled by theme.css */
 
 /* Header */
-.admin-panel .panel-header {
-  background: var(--primary-red-lighter);
-  box-shadow: 0 4px 20px rgba(55, 65, 81, 0.1);
-  border-bottom: 1px solid rgba(55, 65, 81, 0.08);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  animation: slideDown 0.6s ease-out;
-}
 
 /* slideDown handled by theme.css */
 
-.admin-panel .panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 30px;
-}
 
-.admin-panel .header-left {
-  display: flex;
-  align-items: center;
-}
 
-.admin-panel .panel-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
 
-.admin-panel .panel-logo-icon {
-  height: 32px;
-  width: 32px;
-  color: var(--primary-red);
-  animation: logoGlow 2s ease-in-out infinite alternate;
-}
 
 @keyframes logoGlow {
   from {
@@ -1468,19 +1225,7 @@
   }
 }
 
-.admin-panel .panel-logo-text {
-  font-size: 20px;
-  font-weight: 800;
-  margin: 0;
-  color: var(--primary-red);
-}
 
-.admin-panel .header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  animation: fadeInRight 0.8s ease-out 0.4s both;
-}
 
 @keyframes fadeInRight {
   from {
@@ -1495,105 +1240,16 @@
 }
 
 /* Custom UserMenu Design for AdminPanel */
-.admin-panel .header-right .user-menu-container {
-  position: relative;
-  z-index: 1001;
-}
 
-.admin-panel .header-right .user-menu-trigger {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--gray-100);
-  border: 1px solid rgba(55, 65, 81, 0.2);
-  border-radius: 20px;
-  color: var(--primary-red-dark);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
 
-.admin-panel .header-right .user-menu-trigger:hover {
-  background: var(--gray-200);
-  border-color: rgba(55, 65, 81, 0.3);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(55, 65, 81, 0.15);
-}
 
-.admin-panel .header-right .user-menu-trigger .user-avatar {
-  width: 28px;
-  height: 28px;
-  background: var(--gradient-primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  border: 2px solid var(--primary-red-20);
-}
 
-.admin-panel .header-right .user-menu-trigger .user-name {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
-.admin-panel .header-right .user-menu-trigger .dropdown-arrow {
-  width: 16px;
-  height: 16px;
-  color: var(--primary-red-dark);
-  transition: transform 0.3s ease;
-}
 
-.admin-panel .header-right .user-menu-trigger:hover .dropdown-arrow {
-  transform: rotate(180deg);
-}
 
 /* Responsive adjustments for smaller header */
-@media (max-width: 768px) {
-  .admin-panel .panel-header {
-    padding: 10px 20px;
-  }
-
-  .admin-panel .panel-logo-text {
-    font-size: 18px;
-  }
-
-  .admin-panel .panel-logo-icon {
-    height: 28px;
-    width: 28px;
-  }
-
-  .admin-panel .header-right .user-menu-trigger {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-
-  .admin-panel .header-right .user-menu-trigger .user-avatar {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-  }
-
-  .admin-panel .header-right .user-menu-trigger .user-name {
-    max-width: 80px;
-  }
-
-}
 
 /* Main Content */
-.admin-panel .main-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  animation: fadeIn 1s ease-out 0.6s both;
-  background: transparent;
-}
 
 @keyframes fadeIn {
   from {
@@ -1605,21 +1261,8 @@
   }
 }
 
-.admin-panel .container {
-  width: 100%;
-}
 
 /* Welcome Section */
-.admin-panel .welcome-section {
-  background: var(--white);
-  border-radius: 24px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-  border: 2px solid var(--gray-200);
-  padding: 40px;
-  margin-bottom: 40px;
-  text-align: center;
-  animation: slideUp 0.8s ease-out 0.8s both;
-}
 
 @keyframes slideUp {
   from {
@@ -1633,80 +1276,19 @@
   }
 }
 
-.admin-panel .welcome-section h2 {
-  font-size: 32px;
-  font-weight: 800;
-  margin: 0 0 16px 0;
-  color: var(--primary-red);
-}
 
-.admin-panel .welcome-section .last-login {
-  font-size: 18px;
-  color: #718096;
-  margin: 0;
-  line-height: 1.6;
-}
 
 /* Dashboard Grid - Modern Card Grid Layout */
-.admin-panel .dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  animation: fadeIn 1s ease-out 1.2s both;
-}
 
-.admin-panel .dashboard-card-container {
-  perspective: 1000px;
-}
 
-.admin-panel .dashboard-card {
-  background: #FFFFFF;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
-  padding: 28px;
-  text-decoration: none;
-  color: #0f172a;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  min-height: 140px;
-  display: flex;
-  align-items: center;
-  animation: fadeInUp 0.6s ease-out both;
-}
 
-.admin-panel .dashboard-card:nth-child(1) {
-  animation-delay: 1.4s;
-}
 
-.admin-panel .dashboard-card:nth-child(2) {
-  animation-delay: 1.5s;
-}
 
-.admin-panel .dashboard-card:nth-child(3) {
-  animation-delay: 1.6s;
-}
 
-.admin-panel .dashboard-card:nth-child(4) {
-  animation-delay: 1.7s;
-}
 
-.admin-panel .dashboard-card:nth-child(5) {
-  animation-delay: 1.8s;
-}
 
-.admin-panel .dashboard-card:nth-child(6) {
-  animation-delay: 1.9s;
-}
 
-.admin-panel .dashboard-card:nth-child(7) {
-  animation-delay: 2.0s;
-}
 
-.admin-panel .dashboard-card:nth-child(8) {
-  animation-delay: 2.1s;
-}
 
 @keyframes fadeInUp {
   from {
@@ -1721,944 +1303,115 @@
 }
 
 /* Hover */
-.admin-panel .dashboard-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #cbd5e1;
-}
 
-.admin-panel .dashboard-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: #0f766e;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
 
-.admin-panel .dashboard-card:hover::before {
-  opacity: 1;
-}
 
 /* Panel Card Styles handled by centralized patterns in theme.css */
 
 /* AdminPanel Responsive Design */
-@media (max-width: 1200px) {
-  .admin-panel .dashboard-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-  }
-}
 
-@media (max-width: 768px) {
-  .admin-panel .panel-header {
-    padding: 16px 20px;
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
-  }
 
-  .admin-panel .panel-logo-text {
-    font-size: 20px;
-  }
-
-  .admin-panel .main-content {
-    padding: 20px 16px;
-  }
-
-  .admin-panel .welcome-section {
-    padding: 30px 20px;
-  }
-
-  .admin-panel .welcome-section h2 {
-    font-size: 28px;
-  }
-
-  .admin-panel .welcome-section .last-login {
-    font-size: 16px;
-  }
-
-  .admin-panel .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .admin-panel .dashboard-card {
-    padding: 24px;
-    min-height: 120px;
-  }
-
-  .admin-panel .card-header {
-    gap: 16px;
-  }
-
-  .admin-panel .card-icon {
-    width: 48px;
-    height: 48px;
-  }
-
-  .admin-panel .card-icon.icon {
-    height: 24px;
-    width: 24px;
-  }
-
-  .admin-panel .card-content h3 {
-    font-size: 18px;
-  }
-
-  .admin-panel .card-content p {
-    font-size: 13px;
-  }
-}
-
-@media (max-width: 480px) {
-  .admin-panel .dashboard-card {
-    padding: 20px;
-    min-height: 100px;
-  }
-
-  .admin-panel .card-header {
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
-  }
-
-  .admin-panel .card-content {
-    text-align: center;
-  }
-
-  .admin-panel .card-content h3 {
-    font-size: 16px;
-  }
-
-  .admin-panel .card-content p {
-    font-size: 12px;
-  }
-
-  .admin-panel .card-arrow {
-    align-self: center;
-    margin-top: 8px;
-  }
-}
 
 /* ===== TEACHERPANEL STYLES ===== */
 /* TeacherPanel Styles - Same Modern Design as AdminPanel */
-.teacher-panel {
-  min-height: 100vh;
-  background: var(--gradient-primary-animated);
-  padding: 0;
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  animation: gradientShift 15s ease-in-out infinite;
-}
 
 /* Header */
-.teacher-panel .panel-header {
-  animation: slideDown 0.6s ease-out;
-}
 
-.teacher-panel .panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 30px;
-}
 
-.teacher-panel .header-left {
-  display: flex;
-  align-items: center;
-}
 
-.teacher-panel .panel-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
 
-.teacher-panel .panel-logo-icon {
-  height: 32px;
-  width: 32px;
-  color: var(--primary-red-dark);
-  animation: logoGlow 2s ease-in-out infinite alternate;
-}
 
-.teacher-panel .panel-logo-text {
-  font-size: 20px;
-  font-weight: 800;
-  margin: 0;
-  color: var(--primary-red);
-}
 
-.teacher-panel .header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  animation: fadeInRight 0.8s ease-out 0.4s both;
-}
 
 /* Custom UserMenu Design for TeacherPanel */
-.teacher-panel .header-right .user-menu-container {
-  position: relative;
-}
 
-.teacher-panel .header-right .user-menu-trigger {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--gray-100);
-  border: 1px solid rgba(55, 65, 81, 0.2);
-  border-radius: 20px;
-  color: var(--primary-red-dark);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
 
-.teacher-panel .header-right .user-menu-trigger:hover {
-  background: var(--gray-200);
-  border-color: rgba(55, 65, 81, 0.3);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(55, 65, 81, 0.15);
-}
 
-.teacher-panel .header-right .user-menu-trigger .user-avatar {
-  width: 28px;
-  height: 28px;
-  background: var(--gradient-primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  border: 2px solid var(--primary-red-20);
-}
 
-.teacher-panel .header-right .user-menu-trigger .user-name {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
-.teacher-panel .header-right .user-menu-trigger .dropdown-arrow {
-  width: 16px;
-  height: 16px;
-  color: var(--primary-red-dark);
-  transition: transform 0.3s ease;
-}
 
-.teacher-panel .header-right .user-menu-trigger:hover .dropdown-arrow {
-  transform: rotate(180deg);
-}
 
 /* Main Content */
-.teacher-panel .main-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  animation: fadeIn 1s ease-out 0.6s both;
-  background: transparent;
-}
 
-.teacher-panel .container {
-  width: 100%;
-}
 
 /* Welcome Section */
-.teacher-panel .welcome-section {
-  background: var(--white);
-  border-radius: 24px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-  border: 2px solid var(--gray-200);
-  padding: 40px;
-  margin-bottom: 40px;
-  text-align: center;
-  animation: slideUp 0.8s ease-out 0.8s both;
-}
 
-.teacher-panel .welcome-section h2 {
-  font-size: 32px;
-  font-weight: 800;
-  margin: 0 0 16px 0;
-  color: var(--primary-red);
-}
 
-.teacher-panel .welcome-section .last-login {
-  font-size: 18px;
-  color: #718096;
-  margin: 0;
-  line-height: 1.6;
-}
 
 /* Dashboard Grid - Same as AdminPanel */
-.teacher-panel .dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  animation: fadeIn 1s ease-out 1.2s both;
-}
 
-.teacher-panel .dashboard-card-container {
-  perspective: 1000px;
-}
 
 /* Panel Card Styles handled by centralized patterns in theme.css */
 
 /* TeacherPanel Responsive Design */
-@media (max-width: 1200px) {
-  .teacher-panel .dashboard-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-  }
-}
 
-@media (max-width: 768px) {
-  .teacher-panel .panel-header {
-    padding: 10px 20px;
-  }
 
-  .teacher-panel .panel-logo-text {
-    font-size: 18px;
-  }
-
-  .teacher-panel .panel-logo-icon {
-    height: 28px;
-    width: 28px;
-  }
-
-  .teacher-panel .header-right .user-menu-trigger {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-
-  .teacher-panel .header-right .user-menu-trigger .user-avatar {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-  }
-
-  .teacher-panel .header-right .user-menu-trigger .user-name {
-    max-width: 80px;
-  }
-
-  .teacher-panel .main-content {
-    padding: 20px 16px;
-  }
-
-  .teacher-panel .welcome-section {
-    padding: 30px 20px;
-  }
-
-  .teacher-panel .welcome-section h2 {
-    font-size: 28px;
-  }
-
-  .teacher-panel .welcome-section .last-login {
-    font-size: 16px;
-  }
-
-  .teacher-panel .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .teacher-panel .dashboard-card {
-    padding: 24px;
-    min-height: 120px;
-  }
-
-  .teacher-panel .card-header {
-    gap: 16px;
-  }
-
-  .teacher-panel .card-icon {
-    width: 48px;
-    height: 48px;
-  }
-
-  .teacher-panel .card-icon.icon {
-    height: 24px;
-    width: 24px;
-  }
-
-  .teacher-panel .card-content h3 {
-    font-size: 18px;
-  }
-
-  .teacher-panel .card-content p {
-    font-size: 13px;
-  }
-}
-
-@media (max-width: 480px) {
-  .teacher-panel .dashboard-card {
-    padding: 20px;
-    min-height: 100px;
-  }
-
-  .teacher-panel .card-header {
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
-  }
-
-  .teacher-panel .card-content {
-    text-align: center;
-  }
-
-  .teacher-panel .card-content h3 {
-    font-size: 16px;
-  }
-
-  .teacher-panel .card-content p {
-    font-size: 12px;
-  }
-
-  .teacher-panel .card-arrow {
-    align-self: center;
-    margin-top: 8px;
-  }
-}
 
 /* ===== PARENTPANEL STYLES ===== */
 /* ParentPanel Styles - Same Modern Design as AdminPanel and TeacherPanel */
-.parent-panel {
-  min-height: 100vh;
-  background: var(--gradient-primary-animated, var(--gradient-primary));
-  padding: 0;
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  animation: gradientShift 15s ease-in-out infinite;
-}
 
 /* Header */
-.parent-panel .panel-header {
-  animation: slideDown 0.6s ease-out;
-}
 
-.parent-panel .panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 30px;
-}
 
-.parent-panel .header-left {
-  display: flex;
-  align-items: center;
-}
 
-.parent-panel .panel-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
 
-.parent-panel .panel-logo-icon {
-  height: 32px;
-  width: 32px;
-  color: var(--primary-red);
-  animation: logoGlow 2s ease-in-out infinite alternate;
-}
 
-.parent-panel .panel-logo-text {
-  font-size: 20px;
-  font-weight: 800;
-  margin: 0;
-  color: var(--primary-red);
-}
 
-.parent-panel .header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  animation: fadeInRight 0.8s ease-out 0.4s both;
-}
 
 /* Custom UserMenu Design for ParentPanel */
-.parent-panel .header-right .user-menu-container {
-  position: relative;
-}
 
-.parent-panel .header-right .user-menu-trigger {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--gray-100);
-  border: 1px solid rgba(55, 65, 81, 0.2);
-  border-radius: 20px;
-  color: var(--primary-red-dark);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
 
-.parent-panel .header-right .user-menu-trigger:hover {
-  background: var(--gray-200);
-  border-color: rgba(55, 65, 81, 0.3);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(55, 65, 81, 0.15);
-}
 
-.parent-panel .header-right .user-menu-trigger .user-avatar {
-  width: 28px;
-  height: 28px;
-  background: var(--gradient-primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  border: 2px solid var(--primary-red-30);
-}
 
-.parent-panel .header-right .user-menu-trigger .user-name {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
-.parent-panel .header-right .user-menu-trigger .dropdown-arrow {
-  width: 16px;
-  height: 16px;
-  color: var(--primary-red-dark);
-  transition: transform 0.3s ease;
-}
 
-.parent-panel .header-right .user-menu-trigger:hover .dropdown-arrow {
-  transform: rotate(180deg);
-}
 
 /* Main Content */
-.parent-panel .main-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  animation: fadeIn 1s ease-out 0.6s both;
-  background: transparent;
-}
 
-.parent-panel .container {
-  width: 100%;
-}
 
 /* Welcome Section */
-.parent-panel .welcome-section {
-  background: var(--white);
-  border-radius: 24px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-  border: 2px solid var(--gray-200);
-  padding: 40px;
-  margin-bottom: 40px;
-  text-align: center;
-  animation: slideUp 0.8s ease-out 0.8s both;
-}
 
-.parent-panel .welcome-section h2 {
-  font-size: 32px;
-  font-weight: 800;
-  margin: 0 0 16px 0;
-  color: var(--primary-red);
-}
 
-.parent-panel .welcome-section .last-login {
-  font-size: 18px;
-  color: #718096;
-  margin: 0;
-  line-height: 1.6;
-}
 
 /* Children Info Section */
-.parent-panel .children-info-section {
-  background: var(--white);
-  border-radius: 24px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-  border: 2px solid var(--gray-200);
-  padding: 32px;
-  margin-bottom: 40px;
-  animation: slideUp 0.8s ease-out 1s both;
-}
 
-.parent-panel .children-info-section h3 {
-  font-size: 24px;
-  font-weight: 700;
-  margin: 0 0 24px 0;
-  text-align: center;
-  color: var(--primary-red);
-}
 
-.parent-panel .children-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-}
 
-.parent-panel .child-card {
-  background: var(--primary-red-20);
-  border-radius: 16px;
-  padding: 24px;
-  border: 2px solid rgba(55, 65, 81, 0.08);
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
 
-.parent-panel .child-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(55, 65, 81, 0.15);
-  border-color: rgba(55, 65, 81, 0.2);
-}
 
-.parent-panel .child-avatar {
-  width: 48px;
-  height: 48px;
-  background: var(--gradient-primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 18px;
-  font-weight: 700;
-  border: 3px solid var(--primary-red-30);
-  flex-shrink: 0;
-}
 
-.parent-panel .child-info {
-  flex: 1;
-  min-width: 0;
-}
 
-.parent-panel .child-info h4 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1a202c;
-  margin: 0 0 8px 0;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
 
-.parent-panel .child-info p {
-  font-size: 14px;
-  color: #718096;
-  margin: 0 0 4px 0;
-  line-height: 1.4;
-}
 
-.parent-panel .pansiyon-badge {
-  display: inline-block;
-  background: var(--gradient-primary);
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 12px;
-  margin-top: 8px;
-  border: 1px solid var(--primary-red-20);
-}
 
 /* Dashboard Grid - Same as AdminPanel and TeacherPanel */
-.parent-panel .dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  animation: fadeIn 1s ease-out 1.2s both;
-}
 
-.parent-panel .dashboard-card-container {
-  perspective: 1000px;
-}
 
-.parent-panel .dashboard-card {
-  background: #FFFFFF;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
-  padding: 28px;
-  text-decoration: none;
-  color: #0f172a;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  min-height: 140px;
-  display: flex;
-  align-items: center;
-  animation: fadeInUp 0.6s ease-out both;
-}
 
-.parent-panel .dashboard-card:nth-child(1) {
-  animation-delay: 1.4s;
-}
 
-.parent-panel .dashboard-card:nth-child(2) {
-  animation-delay: 1.5s;
-}
 
-.parent-panel .dashboard-card:nth-child(3) {
-  animation-delay: 1.6s;
-}
 
-.parent-panel .dashboard-card:nth-child(4) {
-  animation-delay: 1.7s;
-}
 
-.parent-panel .dashboard-card:nth-child(5) {
-  animation-delay: 1.8s;
-}
 
 /* Hover */
-.parent-panel .dashboard-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #cbd5e1;
-}
 
-.parent-panel .dashboard-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: #0f766e;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
 
-.parent-panel .dashboard-card:hover::before {
-  opacity: 1;
-}
 
 /* Card Layout */
-.parent-panel .card-header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  width: 100%;
-  position: relative;
-  z-index: 1;
-}
 
-.parent-panel .card-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background: var(--primary-red);
-  color: #ffffff;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(55, 65, 81, 0.3);
-}
 
-.parent-panel .dashboard-card:hover .card-icon {
-  transform: scale(1.1) rotate(5deg);
-  background: var(--gradient-primary);
-  box-shadow: 0 6px 16px rgba(55, 65, 81, 0.5);
-}
 
-.parent-panel .card-icon.icon {
-  height: 28px;
-  width: 28px;
-  color: #ffffff;
-  transition: all 0.3s ease;
-}
 
-.parent-panel .dashboard-card:hover .card-icon.icon {
-  color: #ffffff;
-}
 
 /* Color Variants for Different Categories */
-.parent-panel .card-icon.green {
-  background: var(--color-success-dark);
-}
 
-.parent-panel .card-icon.blue {
-  background: var(--color-info-dark);
-}
 
-.parent-panel .card-icon.purple {
-  background: var(--primary-red);
-}
 
 /* Panel Card Variants handled by centralized patterns in theme.css */
 
 /* ParentPanel Responsive Design */
-@media (max-width: 1200px) {
-  .parent-panel .dashboard-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-  }
 
-  .parent-panel .children-grid {
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 18px;
-  }
-}
 
-@media (max-width: 768px) {
-  .parent-panel .panel-header {
-    padding: 10px 20px;
-  }
-
-  .parent-panel .panel-logo-text {
-    font-size: 18px;
-  }
-
-  .parent-panel .panel-logo-icon {
-    height: 28px;
-    width: 28px;
-  }
-
-  .parent-panel .header-right .user-menu-trigger {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-
-  .parent-panel .header-right .user-menu-trigger .user-avatar {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-  }
-
-  .parent-panel .header-right .user-menu-trigger .user-name {
-    max-width: 80px;
-  }
-
-  .parent-panel .main-content {
-    padding: 20px 16px;
-  }
-
-  .parent-panel .welcome-section {
-    padding: 30px 20px;
-  }
-
-  .parent-panel .welcome-section h2 {
-    font-size: 28px;
-  }
-
-  .parent-panel .welcome-section .last-login {
-    font-size: 16px;
-  }
-
-  .parent-panel .children-info-section {
-    padding: 24px 20px;
-  }
-
-  .parent-panel .children-info-section h3 {
-    font-size: 22px;
-  }
-
-  .parent-panel .children-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .parent-panel .child-card {
-    padding: 20px;
-  }
-
-  .parent-panel .child-avatar {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-  }
-
-  .parent-panel .child-info h4 {
-    font-size: 16px;
-  }
-
-  .parent-panel .child-info p {
-    font-size: 13px;
-  }
-
-  .parent-panel .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .parent-panel .dashboard-card {
-    padding: 24px;
-    min-height: 120px;
-  }
-
-  .parent-panel .card-header {
-    gap: 16px;
-  }
-
-  .parent-panel .card-icon {
-    width: 48px;
-    height: 48px;
-  }
-
-  .parent-panel .card-icon.icon {
-    height: 24px;
-    width: 24px;
-  }
-
-  .parent-panel .card-content h3 {
-    font-size: 18px;
-  }
-
-  .parent-panel .card-content p {
-    font-size: 13px;
-  }
-}
-
-@media (max-width: 480px) {
-  .parent-panel .dashboard-card {
-    padding: 20px;
-    min-height: 100px;
-  }
-
-  .parent-panel .card-header {
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
-  }
-
-  .parent-panel .card-content {
-    text-align: center;
-  }
-
-  .parent-panel .card-content h3 {
-    font-size: 16px;
-  }
-
-  .parent-panel .card-content p {
-    font-size: 12px;
-  }
-
-  .parent-panel .card-arrow {
-    align-self: center;
-    margin-top: 8px;
-  }
-
-  .parent-panel .child-card {
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
-  }
-
-  .parent-panel .child-info {
-    text-align: center;
-  }
-}
 
 /* ===== HIZMETLIPANEL STYLES ===== */
 /* Header */
@@ -2667,14 +1420,8 @@
 /* Dashboard Grid - Same as AdminPanel */
 /* Panel Card Styles handled by centralized patterns in theme.css */
 
-@media (max-width: 1200px) {
-  }
 
-@media (max-width: 768px) {
-  }
 
-@media (max-width: 480px) {
-  }
 
 /* NotFoundPage Styles */
 .not-found-container {
@@ -3073,1196 +1820,199 @@
 }
 
 /* SchedulePage Styles */
-.schedule-container {
-  min-height: 100vh;
-  background-color: #f9fafb;
-  padding: 1.5rem;
-}
-
-.schedule-content {
-  max-width: 80rem;
-  margin: 0 auto;
-}
-
-.schedule-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.schedule-title {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.schedule-subtitle {
-  color: #6b7280;
-  margin-top: 0.5rem;
-}
-
-.schedule-add-button {
-  background-color: #2563eb;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-}
-
-.schedule-add-button:hover {
-  background-color: #1d4ed8;
-}
-
-.schedule-filters {
-  background-color: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  border: 1px solid #e5e7eb;
-  margin-bottom: 2rem;
-}
-
-.schedule-filters-grid {
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 1rem;
-}
-
-@media (min-width: 768px) {
-  .schedule-filters-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .schedule-filters-grid {
-    grid-template-columns: repeat(6, 1fr);
-  }
-}
-
-.schedule-filters-search {
-  position: relative;
-}
-
-@media (min-width: 1024px) {
-  .schedule-filters-search {
-    grid-column: span 2;
-  }
-}
-
-.schedule-filters-search-icon {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1rem;
-  height: 1rem;
-  color: #9ca3af;
-}
-
-.schedule-filters-input {
-  width: 100%;
-  padding-left: 2.5rem;
-  padding-right: 1rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.schedule-filters-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.schedule-filters-select {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.schedule-filters-select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.schedule-loading {
-  min-height: 100vh;
-  background-color: #f9fafb;
-  padding: 1.5rem;
-}
-
-.schedule-loading-content {
-  max-width: 80rem;
-  margin: 0 auto;
-}
-
-.schedule-loading-skeleton {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.schedule-loading-title {
-  height: 2rem;
-  background-color: #e5e7eb;
-  border-radius: 0.25rem;
-  width: 25%;
-  margin-bottom: 1.5rem;
-}
-
-.schedule-loading-grid {
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 1.5rem;
-}
-
-@media (min-width: 768px) {
-  .schedule-loading-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .schedule-loading-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.schedule-loading-card {
-  height: 8rem;
-  background-color: #e5e7eb;
-  border-radius: 0.25rem;
-}
-
-.schedule-error {
-  min-height: 100vh;
-  background-color: #f9fafb;
-  padding: 1.5rem;
-}
-
-.schedule-error-content {
-  max-width: 80rem;
-  margin: 0 auto;
-}
-
-.schedule-error-card {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  text-align: center;
-}
-
-.schedule-error-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #991b1b;
-  margin-bottom: 0.5rem;
-}
-
-.schedule-error-message {
-  color: #dc2626;
-  margin-bottom: 1rem;
-}
-
-.schedule-error-button {
-  background-color: #dc2626;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  font-weight: 500;
-}
-
-.schedule-error-button:hover {
-  background-color: #b91c1c;
-}
-
-.schedule-empty {
-  text-align: center;
-  padding: 3rem 0;
-}
-
-.schedule-empty-icon {
-  width: 4rem;
-  height: 4rem;
-  color: #9ca3af;
-  margin: 0 auto 1rem auto;
-}
-
-.schedule-empty-title {
-  font-size: 1.125rem;
-  font-weight: 500;
-  color: #111827;
-  margin-bottom: 0.5rem;
-}
-
-.schedule-empty-description {
-  color: #6b7280;
-}
-
-.schedule-day-card {
-  background-color: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  overflow: hidden;
-}
-
-.schedule-day-header {
-  background-color: #f9fafb;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.schedule-day-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-}
-
-.schedule-day-content {
-  padding: 1.5rem;
-}
-
-.schedule-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-  transition: background-color 0.2s;
-}
-
-.schedule-item:hover {
-  background-color: #f3f4f6;
-}
-
-.schedule-item-time {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.schedule-item-time-divider {
-  width: 1px;
-  height: 4rem;
-  background-color: #d1d5db;
-}
-
-.schedule-item-time-start {
-  text-align: center;
-}
-
-.schedule-item-time-start-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6b7280;
-}
-
-.schedule-item-time-start-value {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.schedule-item-time-end {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.schedule-item-content {
-  flex: 1;
-}
-
-.schedule-item-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.schedule-item-type {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.schedule-item-type-class {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-.schedule-item-type-exam {
-  background-color: var(--gray-200);
-  color: var(--gray-700);
-}
-
-.schedule-item-type-activity {
-  background-color: #dcfce7;
-  color: #166534;
-}
-
-.schedule-item-type-meeting {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.schedule-item-subject {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.schedule-item-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 0.25rem;
-}
-
-.schedule-item-description {
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
-}
-
-.schedule-item-meta {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.schedule-item-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.schedule-item-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.schedule-item-action-button {
-  padding: 0.5rem;
-  color: #9ca3af;
-  background: none;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.schedule-item-action-button:hover {
-  color: #2563eb;
-  background-color: #eff6ff;
-}
-
-.schedule-item-action-button-delete:hover {
-  color: #dc2626;
-  background-color: #fef2f2;
-}
-
-.schedule-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-}
-
-.schedule-modal {
-  background-color: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  width: 100%;
-  max-width: 42rem;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.schedule-modal-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 1.5rem;
-}
-
-.schedule-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.schedule-modal-button {
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.schedule-modal-button-cancel {
-  color: #6b7280;
-  border: 1px solid #d1d5db;
-  background-color: white;
-}
-
-.schedule-modal-button-cancel:hover {
-  background-color: #f9fafb;
-}
-
-.schedule-modal-button-save {
-  background-color: #2563eb;
-  color: white;
-}
-
-.schedule-modal-button-save:hover {
-  background-color: #1d4ed8;
-}
-
-.schedule-days {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* ClubDetailPage Styles */
-.club-detail-skeleton-item {
-  background-color: #e5e7eb;
-  border-radius: 0.25rem;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.club-detail-skeleton-h-8 {
-  height: 2rem;
-}
-
-.club-detail-skeleton-w-3-4 {
-  width: 75%;
-}
-
-.club-detail-skeleton-w-1-2 {
-  width: 50%;
-}
-
-.club-detail-skeleton-w-full {
-  width: 100%;
-}
-
-.club-detail-skeleton-w-5-6 {
-  width: 83.333333%;
-}
-
-.club-detail-skeleton-w-4-5 {
-  width: 80%;
-}
-
-.club-detail-loading {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-.club-detail-loading-title {
-  font-size: 1.5rem;
-}
-
-.club-detail-error {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-.club-detail-error-title {
-  font-size: 1.5rem;
-}
-
-.club-detail-not-found {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-.club-detail-not-found-title {
-  font-size: 1.5rem;
-}
-
-.club-detail-blob {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.3;
-  z-index: -1;
-}
-
-.club-detail-blob-1 {
-  width: 300px;
-  height: 300px;
-  background: var(--gray-400);
-  top: -150px;
-  right: -150px;
-}
-
-.club-detail-blob-2 {
-  width: 200px;
-  height: 200px;
-  background: var(--gray-100);
-  bottom: -100px;
-  left: -100px;
-}
-
-.club-detail-social-media {
-  margin-top: 2rem;
-}
-
-.club-detail-social-media-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.75rem;
-}
-
-.club-detail-social-media-grid {
-  display: flex;
-  gap: 1rem;
-}
-
-.club-detail-social-media-link {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  transition: all 0.2s;
-  font-weight: 500;
-}
-
-.club-detail-social-media-link-blue {
-  background-color: #2563eb;
-  color: white;
-}
-
-.club-detail-social-media-link-blue:hover {
-  background-color: #1d4ed8;
-}
-
-.club-detail-social-media-link-pink {
-  background-color: #db2777;
-  color: white;
-}
-
-.club-detail-social-media-link-pink:hover {
-  background-color: #be185d;
-}
-
-.club-detail-social-media-link-light-blue {
-  background-color: #60a5fa;
-  color: white;
-}
-
-.club-detail-social-media-link-light-blue:hover {
-  background-color: #3b82f6;
-}
-
-.club-detail-social-media-link-indigo {
-  background-color: #0f766e;
-  color: white;
-}
-
-.club-detail-social-media-link-indigo:hover {
-  background-color: #0f766e;
-}
-
-.club-detail-chat {
-  margin-top: 2rem;
-}
-
-.club-detail-chat-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.club-detail-chat-messages {
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  background-color: #f9fafb;
-}
-
-.club-detail-chat-message {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-}
-
-.club-detail-chat-avatar {
-  width: 2rem;
-  height: 2rem;
-  background-color: #3b82f6;
-  color: white;
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 500;
-  margin-right: 0.75rem;
-}
-
-.club-detail-chat-content {
-  flex: 1;
-}
-
-.club-detail-chat-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.25rem;
-}
-
-.club-detail-chat-sender {
-  font-weight: 500;
-  font-size: 0.875rem;
-  margin-right: 0.5rem;
-}
-
-.club-detail-chat-time {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.club-detail-chat-text {
-  color: #1f2937;
-  background-color: white;
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-}
-
-.club-detail-chat-empty {
-  text-align: center;
-  color: #6b7280;
-  padding: 2rem 0;
-}
-
-.club-detail-chat-empty-icon {
-  width: 3rem;
-  height: 3rem;
-  margin: 0 auto 0.5rem auto;
-  color: #d1d5db;
-}
-
-.club-detail-chat-input {
-  display: flex;
-  margin-top: 1rem;
-}
-
-.club-detail-chat-input-field {
-  flex: 1;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  outline: none;
-}
-
-.club-detail-chat-input-field:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.club-detail-chat-input-button {
-  margin-left: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.club-detail-chat-input-button:hover {
-  background-color: #2563eb;
-}
-
-.club-detail-members {
-  margin-top: 2rem;
-}
-
-.club-detail-members-header {
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-}
-
-.club-detail-members-search {
-  position: relative;
-  max-width: 24rem;
-}
-
-.club-detail-members-search-icon {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
-}
-
-.club-detail-members-search-input {
-  width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding-left: 2rem;
-  padding-right: 0.75rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  outline: none;
-}
-
-.club-detail-members-search-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.club-detail-members-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.club-detail-member-card {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.75rem;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-}
-
-.club-detail-member-info {
-  display: flex;
-  align-items: center;
-}
-
-.club-detail-member-avatar {
-  width: 2.25rem;
-  height: 2.25rem;
-  background-color: #3b82f6;
-  color: white;
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  margin-right: 0.75rem;
-}
-
-.club-detail-member-details h4 {
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.club-detail-member-email {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.club-detail-member-role {
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.club-detail-member-role-admin {
-  background-color: var(--gray-200);
-  color: var(--gray-700);
-}
-
-.club-detail-member-role-moderator {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.club-detail-member-role-member {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-.club-detail-events {
-  margin-top: 2rem;
-}
-
-.club-detail-events-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-@media (min-width: 768px) {
-  .club-detail-events-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-}
-
-.club-detail-events-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.club-detail-events-search {
-  display: flex;
-  align-items: center;
-}
-
-.club-detail-events-search-input {
-  width: 14rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding-left: 2rem;
-  padding-right: 0.75rem;
-  padding-top: 0.375rem;
-  padding-bottom: 0.375rem;
-  outline: none;
-}
-
-.club-detail-events-search-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.club-detail-events-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.club-detail-event-card {
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-}
-
-.club-detail-event-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.club-detail-event-icon {
-  width: 1rem;
-  height: 1rem;
-  color: #3b82f6;
-  margin-right: 0.5rem;
-}
-
-.club-detail-event-date {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.club-detail-event-title {
-  font-weight: 600;
-  font-size: 1.125rem;
-  margin-bottom: 0.5rem;
-}
-
-.club-detail-event-description {
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin-bottom: 0.75rem;
-}
-
-.club-detail-event-meta {
-  display: flex;
-  align-items: center;
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.club-detail-event-location {
-  margin-right: 1rem;
-}
-
-.club-detail-event-location-icon {
-  width: 1rem;
-  height: 1rem;
-  margin-right: 0.25rem;
-}
-
-.club-detail-event-join {
-  font-size: 0.875rem;
-  padding: 0.25rem 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  background: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.club-detail-event-join:hover {
-  background-color: #f9fafb;
-}
-
-.club-detail-events-empty {
-  text-align: center;
-  color: #6b7280;
-  padding: 2rem 0;
-}
-
-.club-detail-events-empty-icon {
-  width: 3rem;
-  height: 3rem;
-  margin: 0 auto 0.5rem auto;
-  color: #d1d5db;
-}
-
-.club-detail-announcements {
-  margin-top: 2rem;
-}
-
-.club-detail-announcements-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-@media (min-width: 768px) {
-  .club-detail-announcements-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-}
-
-.club-detail-announcements-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.club-detail-announcements-search {
-  display: flex;
-  align-items: center;
-}
-
-.club-detail-announcements-search-input {
-  width: 14rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding-left: 2rem;
-  padding-right: 0.75rem;
-  padding-top: 0.375rem;
-  padding-bottom: 0.375rem;
-  outline: none;
-}
-
-.club-detail-announcements-search-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.club-detail-announcements-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.club-detail-announcement-item {
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-}
-
-.club-detail-announcement-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.club-detail-announcement-icon {
-  width: 1rem;
-  height: 1rem;
-  color: #f97316;
-}
-
-.club-detail-announcement-date {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.club-detail-announcement-title {
-  font-weight: 600;
-  font-size: 1.125rem;
-  margin-bottom: 0.5rem;
-}
-
-.club-detail-announcement-content {
-  color: #374151;
-  margin-bottom: 0.5rem;
-}
-
-.club-detail-announcement-meta {
-  margin-top: 0.5rem;
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.club-detail-announcements-empty {
-  text-align: center;
-  color: #6b7280;
-  padding: 2rem 0;
-}
-
-.club-detail-announcements-empty-icon {
-  width: 3rem;
-  height: 3rem;
-  margin: 0 auto 0.5rem auto;
-  color: #d1d5db;
-}
-
-.club-detail-announcements-list>*+* {
-  margin-top: 1rem;
-}
-
-.club-detail-gallery {
-  margin-top: 2rem;
-}
-
-.club-detail-gallery-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.club-detail-gallery-social {
-  margin-top: 1rem;
-}
-
-.club-detail-gallery-social-title {
-  font-size: 1rem;
-  font-weight: 500;
-  margin-bottom: 0.75rem;
-}
-
-.club-detail-gallery-social-grid {
-  display: flex;
-  gap: 1rem;
-}
-
-.club-detail-form {
-  margin-top: 2rem;
-}
-
-.club-detail-form-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.club-detail-form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-}
-
-.club-detail-form-group {
-  margin-bottom: 1rem;
-}
-
-.club-detail-form-label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 0.25rem;
-}
-
-.club-detail-form-input {
-  width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  outline: none;
-}
-
-.club-detail-form-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.club-detail-form-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.club-detail-form-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.club-detail-form-button-primary {
-  background-color: #3b82f6;
-  color: white;
-}
-
-.club-detail-form-button-primary:hover {
-  background-color: #2563eb;
-}
-
-.club-detail-form-button-secondary {
-  background-color: #6b7280;
-  color: white;
-}
-
-.club-detail-form-button-secondary:hover {
-  background-color: #4b5563;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Monitoring Dashboard Styles */
 .monitoring-metrics-list>*+* {
@@ -4277,9 +2027,6 @@
   margin-top: 1rem;
 }
 
-.schedule-day-events-list>*+* {
-  margin-top: 1rem;
-}
 
 .monitoring-warnings-list>*+* {
   margin-top: 0.5rem;
@@ -4524,256 +2271,56 @@
 }
 
 /* Club Detail Page - Additional Spacing */
-.club-detail-skeleton-list>*+* {
-  margin-top: 0.5rem;
-}
 
 .members-list>*+* {
   margin-top: 0.5rem;
 }
 
-.club-detail-form-spacing>*+* {
-  margin-top: 0.75rem;
-}
 
-.club-detail-admin-sections>*+* {
-  margin-top: 1.5rem;
-}
 
-.club-detail-admin-section-spacing>*+* {
-  margin-top: 0.75rem;
-}
 
-.club-detail-form-grid-2 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-}
 
-.club-detail-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
 
-.club-detail-flex-gap-2 {
-  display: flex;
-  gap: 0.5rem;
-}
 
-.club-detail-flex-gap-3 {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
 
-.club-detail-flex-items-gap-2 {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
 
-.club-detail-flex-between-center {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 
-.club-detail-flex-center-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
 /* Club Detail Page - Text Styles */
-.club-detail-form-label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 0.25rem;
-}
 
-.club-detail-empty-text {
-  text-align: center;
-  color: #6b7280;
-  padding: 2rem 0;
-}
 
-.club-detail-empty-icon {
-  width: 3rem;
-  height: 3rem;
-  margin: 0 auto 0.5rem auto;
-  color: #d1d5db;
-}
 
-.club-detail-member-email {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
 
-.club-detail-role-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-}
 
-.club-detail-role-badge-admin {
-  background-color: var(--gray-100);
-  color: var(--gray-700);
-}
 
-.club-detail-role-badge-member {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
 
-.club-detail-stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
 
-.club-detail-stat-value-blue {
-  color: #2563eb;
-}
 
-.club-detail-stat-value-green {
-  color: #16a34a;
-}
 
-.club-detail-stat-value-purple {
-  color: #0f766e;
-}
 
-.club-detail-stat-value-orange {
-  color: #ea580c;
-}
 
-.club-detail-stat-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
 
-.club-detail-success-message {
-  color: #16a34a;
-  font-size: 0.875rem;
-}
 
 /* Club Detail Page - Background Styles */
-.club-detail-button-blue {
-  padding: 0.5rem 1rem;
-  background-color: #2563eb;
-  color: white;
-  border-radius: 0.25rem;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
 
-.club-detail-button-blue:hover {
-  background-color: #1d4ed8;
-}
 
-.club-detail-button-blue:disabled {
-  opacity: 0.5;
-}
 
-.club-detail-button-gray {
-  padding: 0.5rem 1rem;
-  background-color: #6b7280;
-  color: white;
-  border-radius: 0.25rem;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
 
-.club-detail-button-gray:hover {
-  background-color: #4b5563;
-}
 
-.club-detail-button-yellow {
-  padding: 0.25rem 0.5rem;
-  background-color: #eab308;
-  color: white;
-  border-radius: 0.25rem;
-  border: none;
-  cursor: pointer;
-  font-size: 0.75rem;
-  transition: background-color 0.2s;
-}
 
-.club-detail-button-yellow:hover {
-  background-color: #ca8a04;
-}
 
-.club-detail-button-indigo {
-  padding: 0.5rem 1rem;
-  background-color: #0f766e;
-  color: white;
-  border-radius: 0.25rem;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
 
-.club-detail-button-indigo:hover {
-  background-color: #1E40AF;
-}
 
-.club-detail-member-bg {
-  background-color: #f9fafb;
-}
 
-.club-detail-member-avatar {
-  width: 2rem;
-  height: 2rem;
-  background-color: #3b82f6;
-  color: white;
-  border-radius: 9999px;
-}
 
-.club-detail-stat-bg-blue {
-  background-color: #eff6ff;
-}
 
-.club-detail-stat-bg-green {
-  background-color: #f0fdf4;
-}
 
-.club-detail-stat-bg-purple {
-  background-color: #faf5ff;
-}
 
-.club-detail-stat-bg-orange {
-  background-color: #fff7ed;
-}
 
 /* Club Detail Page - Border Styles */
-.club-detail-input-field {
-  width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  outline: none;
-}
 
-.club-detail-input-field:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
 
-.club-detail-empty-border {
-  border: 2px dashed #d1d5db;
-  border-radius: 0.5rem;
-}
 
-.club-detail-admin-section {
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-}
 
 .monitoring-card {
   background-color: white;
@@ -4960,63 +2507,14 @@
 }
 
 /* Club Detail Page - Additional Classes */
-.club-detail-gallery-title {
-  font-size: 1rem;
-  font-weight: 500;
-  margin-bottom: 0.75rem;
-}
 
-.club-detail-admin-panel-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
 
-.club-detail-mb-8 {
-  margin-bottom: 2rem;
-}
 
-.club-detail-section-title {
-  font-weight: 500;
-  margin-bottom: 0.75rem;
-}
 
-.club-detail-member-name {
-  font-weight: 500;
-}
 
-.club-detail-member-padding {
-  padding: 0.5rem;
-}
 
-.club-detail-stat-padding {
-  padding: 0.75rem;
-}
 
-.club-detail-text-sm {
-  font-size: 0.875rem;
-}
 
-.club-detail-text-center {
-  text-align: center;
-}
 
-.club-detail-rounded {
-  border-radius: 0.25rem;
-}
 
-.club-detail-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
 
-.club-detail-mt-3 {
-  margin-top: 0.75rem;
-}
