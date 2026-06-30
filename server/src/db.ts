@@ -28,7 +28,11 @@ const dbConfig: mongoose.ConnectOptions = {
   minPoolSize: process.env.NODE_ENV === 'production' ? 10 : 5, // Higher for production
   serverSelectionTimeoutMS: 30000,
   socketTimeoutMS: 60000,
-  bufferCommands: true,
+  // In production, fail fast instead of buffering: if the connection drops,
+  // queued commands would otherwise hang until socketTimeoutMS (60s) rather
+  // than surfacing an error to the caller. Dev/test keep buffering for
+  // convenience (operations issued before connectDB resolves still work).
+  bufferCommands: process.env.NODE_ENV !== 'production',
   maxIdleTimeMS: 60000,
   connectTimeoutMS: 30000,
   heartbeatFrequencyMS: 15000,
