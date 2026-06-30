@@ -47,6 +47,7 @@
   "dependencies": {
     "@apollo/server": "^4.13.0",
     "@graphql-tools/utils": "^10.11.0",
+    "@sentry/node": "^9.43.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/sharp": "^0.31.1",
     "@types/swagger-jsdoc": "^6.0.4",
