@@ -257,7 +257,7 @@ export default function AdminEvciListPage() {
   const handleExport = async (format: 'excel' | 'pdf') => {
     setShowExportMenu(false);
     try {
-      const response = await EvciService.exportEvciRequests(format);
+      const response = (await EvciService.exportEvciRequests(format)) as { data: BlobPart };
       const blob = new Blob([response.data], {
         type:
           format === 'pdf'

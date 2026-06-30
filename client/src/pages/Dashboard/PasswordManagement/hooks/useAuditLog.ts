@@ -6,8 +6,8 @@ export interface AuditLogFilters {
   limit?: number;
   userId?: string;
   adminId?: string;
-  action?: string;
-  reason?: string;
+  action?: string | undefined;
+  reason?: string | undefined;
   from?: string;
   to?: string;
 }

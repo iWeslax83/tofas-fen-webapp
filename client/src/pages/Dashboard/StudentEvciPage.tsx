@@ -25,7 +25,7 @@ import { cn } from '../../utils/cn';
 import { safeConsoleError } from '../../utils/safeLogger';
 
 interface EvciTalep {
-  _id?: string;
+  _id?: string | undefined;
   studentId: string;
   studentName: string;
   startDate: string;
@@ -35,7 +35,7 @@ interface EvciTalep {
   createdAt: string;
   parentApproval?: 'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
-  weekOf?: string;
+  weekOf?: string | undefined;
 }
 
 interface SubmissionWindow {
@@ -95,7 +95,7 @@ function formatCountdown(ms: number): string {
 interface FieldProps {
   label: string;
   children: React.ReactNode;
-  error?: string;
+  error?: string | undefined;
 }
 
 const Field = ({ label, children, error }: FieldProps) => (
