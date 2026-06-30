@@ -57,7 +57,7 @@ export default function UsersTab() {
     if (!pendingUser || !pendingMode) return;
     const mut = pendingMode === 'reset' ? resetMut : genMut;
     mut.mutate(
-      { userId: pendingUser.id, reason, reasonNote },
+      { userId: pendingUser.id, reason, ...(reasonNote !== undefined && { reasonNote }) },
       {
         onSuccess: (res) => {
           setRevealed({

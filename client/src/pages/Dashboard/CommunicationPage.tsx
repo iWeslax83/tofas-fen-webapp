@@ -27,7 +27,6 @@ import type {
 import { cn } from '../../utils/cn';
 
 const VALID_CONVERSATION_TYPES = ['direct', 'group', 'broadcast', 'announcement'] as const;
-type ConversationType = (typeof VALID_CONVERSATION_TYPES)[number];
 
 const CommunicationPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('messages');

@@ -154,7 +154,9 @@ export default function AddUserModal({ onUserAdded, onClose }: AddUserModalProps
                   .map((s) => s.trim())
                   .filter(Boolean);
               }
-              const { data, error } = await UserService.createUser(payload);
+              const { data, error } = await UserService.createUser(
+                payload as unknown as Record<string, unknown>,
+              );
               if (error) {
                 setAddError(error);
               } else {

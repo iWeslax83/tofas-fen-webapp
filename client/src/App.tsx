@@ -31,6 +31,7 @@ function App() {
       return () => mq.removeEventListener('change', handler);
     } else {
       root.setAttribute('data-theme', theme);
+      return undefined;
     }
   }, [theme]);
 

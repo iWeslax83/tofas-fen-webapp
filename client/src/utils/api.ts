@@ -134,7 +134,9 @@ const createSecureApiClient = (): AxiosInstance => {
         // Axios errors
         if (axios.isAxiosError(err)) {
           normalized.message = err.message || 'API isteği başarısız';
-          normalized.code = err.code || undefined;
+          if (err.code) {
+            normalized.code = err.code;
+          }
           if (err.response) {
             normalized.response = {
               status: err.response.status,
@@ -158,6 +160,7 @@ const createSecureApiClient = (): AxiosInstance => {
 
       // Handle 401 errors (unauthorized) with mutex to prevent concurrent refreshes
       if (apiError.response?.status === 401 && !originalRequest?._retry) {
+        if (!originalRequest) return Promise.reject(apiError);
         // Don't retry if specific endpoints fail to avoid infinite loops
         const url = originalRequest.url || '';
         const isLoginRequest = url.includes('/auth/login');
@@ -230,6 +233,7 @@ const createSecureApiClient = (): AxiosInstance => {
 
       // Handle 429 Too Many Requests with exponential backoff
       if (apiError.response?.status === 429) {
+        if (!originalRequest) return Promise.reject(apiError);
         const retryCount = originalRequest._retryCount || 0;
         const maxRetries = 3;
         const serverRetryAfter = error.response?.data?.retryAfter;

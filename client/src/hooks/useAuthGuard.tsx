@@ -15,6 +15,7 @@ interface User {
   sube?: string;
   pansiyon?: boolean;
   childId?: string | string[];
+  childrenSiniflar?: { sinif: string; sube: string; adSoyad?: string }[];
   // For additional dynamic properties
 }
 

@@ -1,5 +1,12 @@
 import { ErrorType, ErrorSeverity, AppError } from './errorHandling';
 
+// Typed shape for unknown errors received from fetch/axios
+interface NormalizedHttpError {
+  code?: unknown;
+  message?: string;
+  response?: { status?: number; data?: { error?: string; message?: string } };
+}
+
 // Error handling wrapper for API calls
 export class ErrorHandlerWrapper {
   /**
@@ -53,7 +60,7 @@ export class ErrorHandlerWrapper {
 
     // Network errors
     if (typeof error === 'object' && error !== null) {
-      const err = error as Record<string, unknown>;
+      const err = error as NormalizedHttpError;
       if (err.code === 'NETWORK_ERROR' || err.message?.includes('Network Error')) {
         return ErrorType.NETWORK;
       }
@@ -105,7 +112,7 @@ export class ErrorHandlerWrapper {
    */
   private static getErrorMessage(error: unknown): string {
     if (typeof error === 'object' && error !== null) {
-      const err = error as Record<string, unknown>;
+      const err = error as NormalizedHttpError;
       if (err.response?.data?.error) {
         return err.response.data.error;
       }

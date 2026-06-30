@@ -4,9 +4,9 @@ export interface KpiItem {
   label: string;
   value: string;
   /** Optional outline chip rendered next to the value (delta, status). */
-  badge?: string;
+  badge?: string | undefined;
   /** Optional series — renders a hairline sparkline under the value. */
-  trend?: number[];
+  trend?: number[] | undefined;
 }
 
 /** Minimal dependency-free sparkline in the Devlet hairline style. */
