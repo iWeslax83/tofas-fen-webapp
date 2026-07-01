@@ -154,12 +154,12 @@ export const Table = <T extends Record<string, unknown>>({
     setCurrentPage(page);
   };
 
-  const getCellValue = (column: TableColumn<T>, row: T) => {
+  const getCellValue = (column: TableColumn<T>, row: T): ReactNode => {
     if (column.render) {
       const value = column.accessor ? column.accessor(row) : row[column.key];
       return column.render(value, row);
     }
-    return column.accessor ? column.accessor(row) : row[column.key];
+    return (column.accessor ? column.accessor(row) : row[column.key]) as ReactNode;
   };
 
   if (loading) {

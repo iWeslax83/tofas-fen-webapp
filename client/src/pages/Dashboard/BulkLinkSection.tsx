@@ -64,7 +64,7 @@ export default function BulkLinkSection({
       if (error) {
         setLinkError(error);
       } else {
-        setLinkPreview(data);
+        setLinkPreview(data as BulkLinkPreview);
       }
     } catch {
       setLinkError('Önizleme sırasında hata oluştu');
@@ -84,7 +84,7 @@ export default function BulkLinkSection({
       if (error) {
         setLinkError(error);
       } else {
-        setLinkResult(data);
+        setLinkResult(data as BulkLinkResult);
         onLinkComplete();
       }
     } catch {

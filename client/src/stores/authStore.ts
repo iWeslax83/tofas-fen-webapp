@@ -108,15 +108,15 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
         id: String(userData.id || ''),
         adSoyad: String(userData.adSoyad || ''),
         rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'ziyaretci',
-        ...(userData.email && { email: String(userData.email) }),
+        ...(userData.email ? { email: String(userData.email) } : {}),
         emailVerified: Boolean(userData.emailVerified),
         twoFactorEnabled: Boolean(userData.twoFactorEnabled),
-        ...(userData.sinif && { sinif: String(userData.sinif) }),
-        ...(userData.sube && { sube: String(userData.sube) }),
-        ...(userData.oda && { oda: String(userData.oda) }),
+        ...(userData.sinif ? { sinif: String(userData.sinif) } : {}),
+        ...(userData.sube ? { sube: String(userData.sube) } : {}),
+        ...(userData.oda ? { oda: String(userData.oda) } : {}),
         pansiyon: Boolean(userData.pansiyon),
-        ...(userData.childrenSiniflar && { childrenSiniflar: userData.childrenSiniflar }),
-        ...(userData.childId && { childId: userData.childId }),
+        ...(userData.childrenSiniflar ? { childrenSiniflar: userData.childrenSiniflar } : {}),
+        ...(userData.childId ? { childId: userData.childId } : {}),
       };
 
       // Tokens are handled by SecureAPI.login internally if present
@@ -231,22 +231,34 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     try {
       set({ isLoading: true, error: null });
 
-      const buildUser = (userData: Record<string, unknown>): User => ({
-        id: String(userData.id || ''),
-        adSoyad: String(userData.adSoyad || ''),
-        rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'ziyaretci',
-        ...(userData.email && { email: String(userData.email) }),
-        emailVerified: userData.emailVerified === true,
-        twoFactorEnabled: Boolean(userData.twoFactorEnabled),
-        ...(userData.sinif && { sinif: String(userData.sinif) }),
-        ...(userData.sube && { sube: String(userData.sube) }),
-        ...(userData.oda && { oda: String(userData.oda) }),
-        pansiyon: Boolean(userData.pansiyon),
-        ...(userData.childrenSiniflar && {
-          childrenSiniflar: userData.childrenSiniflar as string[],
-        }),
-        ...(userData.childId && { childId: userData.childId as string[] }),
-      });
+      const buildUser = (userData: Record<string, unknown>): User => {
+        const user: User = {
+          id: String(userData.id || ''),
+          adSoyad: String(userData.adSoyad || ''),
+          rol: String(userData.rol || '') as
+            | 'admin'
+            | 'teacher'
+            | 'student'
+            | 'parent'
+            | 'ziyaretci',
+        };
+        if (userData.email) user.email = String(userData.email);
+        user.emailVerified = userData.emailVerified === true;
+        user.twoFactorEnabled = Boolean(userData.twoFactorEnabled);
+        if (userData.sinif) user.sinif = String(userData.sinif);
+        if (userData.sube) user.sube = String(userData.sube);
+        if (userData.oda) user.oda = String(userData.oda);
+        user.pansiyon = Boolean(userData.pansiyon);
+        if (userData.childrenSiniflar) {
+          user.childrenSiniflar = userData.childrenSiniflar as {
+            sinif: string;
+            sube: string;
+            adSoyad?: string;
+          }[];
+        }
+        if (userData.childId) user.childId = userData.childId as string[];
+        return user;
+      };
 
       // httpOnly cookie ile kullanıcı bilgisini al
       try {
@@ -327,7 +339,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
         string,
         unknown
       >;
-      const userData = respData.user;
+      const userData = respData.user as Record<string, unknown> | undefined;
 
       if (!userData || !userData.rol) {
         throw AppError.server('Geçersiz kullanıcı verisi alındı');
@@ -339,12 +351,12 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
         id: String(userData.id || ''),
         adSoyad: String(userData.adSoyad || ''),
         rol: String(userData.rol || '') as 'admin' | 'teacher' | 'student' | 'parent' | 'ziyaretci',
-        ...(userData.email && { email: String(userData.email) }),
+        ...(userData.email ? { email: String(userData.email) } : {}),
         emailVerified: Boolean(userData.emailVerified),
         twoFactorEnabled: Boolean(userData.twoFactorEnabled),
-        ...(userData.sinif && { sinif: String(userData.sinif) }),
-        ...(userData.sube && { sube: String(userData.sube) }),
-        ...(userData.oda && { oda: String(userData.oda) }),
+        ...(userData.sinif ? { sinif: String(userData.sinif) } : {}),
+        ...(userData.sube ? { sube: String(userData.sube) } : {}),
+        ...(userData.oda ? { oda: String(userData.oda) } : {}),
         pansiyon: Boolean(userData.pansiyon),
       };
 
@@ -378,7 +390,7 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
           unknown
         >;
         set({
-          twoFactorExpiresAt: respData.twoFactorExpiresAt || null,
+          twoFactorExpiresAt: (respData.twoFactorExpiresAt as number | undefined) || null,
         });
       } finally {
         resend2FAInFlight = null;

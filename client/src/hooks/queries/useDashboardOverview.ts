@@ -100,7 +100,11 @@ export function useDashboardOverview() {
       // requires an ApiResponse envelope (it throws unless `success` is
       // truthy), so wrap it here — otherwise the query always errors and
       // no dashboard KPIs ever render.
-      const res = await SecureAPI.get<DashboardOverviewResponse>('/api/dashboard/overview');
+      // SecureAPI.get resolves to the full axios response at runtime even
+      // though its generic types it as the body; reach through to .data/.status.
+      const res = (await SecureAPI.get<DashboardOverviewResponse>(
+        '/api/dashboard/overview',
+      )) as unknown as { data: DashboardOverviewResponse; status: number };
       return { success: true, data: res.data, statusCode: res.status };
     },
     { staleTime: 60_000 },

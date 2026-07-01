@@ -22,11 +22,8 @@ export function initializeSentry() {
   if (import.meta.env.PROD) {
     Sentry.init({
       dsn: import.meta.env.VITE_SENTRY_DSN || '',
-      integrations: [
-        Sentry.browserTracingIntegration({
-          tracePropagationTargets: ['localhost', 'your-domain.com'],
-        }),
-      ],
+      integrations: [Sentry.browserTracingIntegration({})],
+      tracePropagationTargets: ['localhost', 'your-domain.com'],
       tracesSampleRate: 0.1,
       environment: import.meta.env.MODE,
       beforeSend(event) {
@@ -132,12 +129,12 @@ export class PerformanceMonitor {
         });
 
         // Log to console in development
-        if (process.env.NODE_ENV === 'development') {
-          safeConsoleLog('Page Load Time:', pageLoadTime, 'ms');
+        if (import.meta.env.DEV) {
+          safeConsoleLog('Page Load Time:', `${pageLoadTime}ms`);
         }
 
         // Send to monitoring service in production
-        if (process.env.NODE_ENV === 'production') {
+        if (import.meta.env.PROD) {
           this.sendMetricsToService({
             type: 'page_load',
             value: pageLoadTime,
@@ -155,7 +152,7 @@ export class PerformanceMonitor {
         for (const entry of list.getEntries()) {
           if (entry.name === 'first-contentful-paint') {
             const fcp = entry.startTime;
-            if (process.env.NODE_ENV === 'production') {
+            if (import.meta.env.PROD) {
               this.sendMetricsToService({
                 type: 'fcp',
                 value: fcp,
@@ -174,7 +171,7 @@ export class PerformanceMonitor {
       const lcpObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           const lcp = entry.startTime;
-          if (process.env.NODE_ENV === 'production') {
+          if (import.meta.env.PROD) {
             this.sendMetricsToService({
               type: 'lcp',
               value: lcp,
@@ -203,7 +200,7 @@ export class PerformanceMonitor {
 
       // Report CLS after page unload
       window.addEventListener('beforeunload', () => {
-        if (process.env.NODE_ENV === 'production') {
+        if (import.meta.env.PROD) {
           this.sendMetricsToService({
             type: 'cls',
             value: clsValue,
@@ -252,12 +249,12 @@ export class Analytics {
     this.events.push(userEvent);
 
     // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       safeConsoleLog('Analytics Event:', userEvent);
     }
 
     // Send to analytics service in production
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.PROD) {
       this.sendEventToService(userEvent);
     }
   }
@@ -278,7 +275,7 @@ export class Analytics {
     });
 
     // Also send to Sentry
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.PROD) {
       Sentry.captureException(error, {
         extra: context || {},
       });
@@ -313,7 +310,7 @@ export class MemoryMonitor {
 
       // Warning if memory usage is high
       if (usedMB > limitMB * 0.8) {
-        if (process.env.NODE_ENV === 'production') {
+        if (import.meta.env.PROD) {
           Sentry.captureMessage('High memory usage detected', 'warning');
         }
       }
@@ -340,7 +337,7 @@ export class NetworkMonitor {
 
           // Log slow requests
           if (resourceEntry.duration > 3000) {
-            if (process.env.NODE_ENV === 'production') {
+            if (import.meta.env.PROD) {
               Sentry.captureMessage('Slow network request detected', 'warning');
             }
           }
