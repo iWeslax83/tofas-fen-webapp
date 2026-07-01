@@ -4,7 +4,7 @@ export interface PortraitProps {
   /** Display name; first two initials render as the fallback overlay. */
   name: string;
   /** Optional photo URL. When undefined, the SVG silhouette renders. */
-  src?: string;
+  src?: string | undefined;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }

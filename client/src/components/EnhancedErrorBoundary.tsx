@@ -211,7 +211,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
                 )}
               </div>
 
-              {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
+              {import.meta.env.DEV && this.state.errorInfo && (
                 <details className="error-stack">
                   <summary>Geliştirici Bilgileri</summary>
                   <div className="error-stack-content">

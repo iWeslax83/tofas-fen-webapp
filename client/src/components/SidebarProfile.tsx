@@ -13,8 +13,8 @@ export interface SidebarProfileProps {
   name: string;
   userId: string;
   role: string;
-  pansiyon?: boolean;
-  photoSrc?: string;
+  pansiyon?: boolean | undefined;
+  photoSrc?: string | undefined;
 }
 
 /**

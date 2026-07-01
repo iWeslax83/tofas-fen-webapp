@@ -15,7 +15,7 @@ export interface CommandPaletteProps {
   /** Active user's role; controls which entries appear. */
   role: UserRole;
   /** Whether the user has pansiyon access; gates dorm-only items. */
-  pansiyon?: boolean;
+  pansiyon?: boolean | undefined;
 }
 
 /**

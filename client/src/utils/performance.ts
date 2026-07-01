@@ -68,12 +68,13 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1] as PerformanceEntry & Record<string, unknown>;
         const value = (lastEntry['renderTime'] as number) || (lastEntry['loadTime'] as number) || 0;
+        const navType = lastEntry['navigationType'] as string | undefined;
         const metric: PerformanceMetric = {
           name: 'LCP',
           value,
           rating: getRating(value, THRESHOLDS.lcp),
           id: (lastEntry['id'] as string) || '',
-          navigationType: lastEntry['navigationType'] as string | undefined,
+          ...(navType !== undefined && { navigationType: navType }),
         };
         onPerfEntry(metric);
       });
@@ -86,14 +87,16 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
     try {
       const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: PerformanceEntry & Record<string, unknown>) => {
-          const value = (entry['processingStart'] as number) - (entry['startTime'] as number);
+        entries.forEach((entry: PerformanceEntry) => {
+          const e = entry as unknown as Record<string, unknown>;
+          const value = (e['processingStart'] as number) - entry.startTime;
+          const fidNavType = e['navigationType'] as string | undefined;
           const metric: PerformanceMetric = {
             name: 'FID',
             value,
             rating: getRating(value, THRESHOLDS.fid),
-            id: (entry['id'] as string) || '',
-            navigationType: entry['navigationType'] as string | undefined,
+            id: (e['id'] as string) || '',
+            ...(fidNavType !== undefined && { navigationType: fidNavType }),
           };
           onPerfEntry(metric);
         });
@@ -108,9 +111,10 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
       let clsValue = 0;
       const clsObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: PerformanceEntry & Record<string, unknown>) => {
-          if (!(entry['hadRecentInput'] as boolean)) {
-            clsValue += (entry['value'] as number) || 0;
+        entries.forEach((entry: PerformanceEntry) => {
+          const e = entry as unknown as Record<string, unknown>;
+          if (!(e['hadRecentInput'] as boolean)) {
+            clsValue += (e['value'] as number) || 0;
           }
         });
         const metric: PerformanceMetric = {
@@ -130,14 +134,15 @@ export function trackWebVitals(onPerfEntry?: (metric: PerformanceMetric) => void
     try {
       const fcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: PerformanceEntry & Record<string, unknown>) => {
+        entries.forEach((entry: PerformanceEntry) => {
           if (entry.name === 'first-contentful-paint') {
             const start = entry.startTime || 0;
+            const e = entry as unknown as Record<string, unknown>;
             const metric: PerformanceMetric = {
               name: 'FCP',
               value: start,
               rating: getRating(start, THRESHOLDS.fcp),
-              id: (entry['id'] as string) || '',
+              id: (e['id'] as string) || '',
             };
             onPerfEntry(metric);
           }

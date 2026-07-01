@@ -14,7 +14,7 @@ export class AppError extends Error {
     type: string = ErrorType.UNKNOWN,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     context: Partial<ErrorContext> = {},
-    originalError?: Error
+    originalError?: Error,
   ) {
     super(message);
 
@@ -23,19 +23,27 @@ export class AppError extends Error {
     this.severity = severity;
     this.context = {
       timestamp: Date.now(),
-      ...context
+      ...context,
     } as ErrorContext;
     this.originalError = originalError;
     this.timestamp = new Date().toISOString();
 
-    // Capture stack trace
-    Error.captureStackTrace(this, this.constructor);
+    // Capture stack trace (V8-only API — guard for non-V8 environments)
+    if ('captureStackTrace' in Error) {
+      (Error as { captureStackTrace?: (t: object, c: unknown) => void }).captureStackTrace?.(
+        this,
+        this.constructor,
+      );
+    }
   }
 
   /**
    * Create a network error
    */
-  static network(message: string = 'Ağ bağlantısı hatası', context?: Partial<ErrorContext>): AppError {
+  static network(
+    message: string = 'Ağ bağlantısı hatası',
+    context?: Partial<ErrorContext>,
+  ): AppError {
     return new AppError(message, ErrorType.NETWORK, ErrorSeverity.MEDIUM, context);
   }
 
@@ -49,21 +57,30 @@ export class AppError extends Error {
   /**
    * Create an authentication error
    */
-  static unauthorized(message: string = 'Yetkisiz erişim', context?: Partial<ErrorContext>): AppError {
+  static unauthorized(
+    message: string = 'Yetkisiz erişim',
+    context?: Partial<ErrorContext>,
+  ): AppError {
     return new AppError(message, ErrorType.AUTHENTICATION, ErrorSeverity.HIGH, context);
   }
 
   /**
    * Create an authorization error
    */
-  static forbidden(message: string = 'Erişim engellendi', context?: Partial<ErrorContext>): AppError {
+  static forbidden(
+    message: string = 'Erişim engellendi',
+    context?: Partial<ErrorContext>,
+  ): AppError {
     return new AppError(message, ErrorType.AUTHORIZATION, ErrorSeverity.HIGH, context);
   }
 
   /**
    * Create a not found error
    */
-  static notFound(message: string = 'Kaynak bulunamadı', context?: Partial<ErrorContext>): AppError {
+  static notFound(
+    message: string = 'Kaynak bulunamadı',
+    context?: Partial<ErrorContext>,
+  ): AppError {
     return new AppError(message, ErrorType.NOT_FOUND, ErrorSeverity.MEDIUM, context);
   }
 
@@ -77,28 +94,40 @@ export class AppError extends Error {
   /**
    * Create a rate limit error
    */
-  static rateLimit(message: string = 'Çok fazla istek gönderildi', context?: Partial<ErrorContext>): AppError {
+  static rateLimit(
+    message: string = 'Çok fazla istek gönderildi',
+    context?: Partial<ErrorContext>,
+  ): AppError {
     return new AppError(message, ErrorType.RATE_LIMIT, ErrorSeverity.MEDIUM, context);
   }
 
   /**
    * Create a server error
    */
-  static server(message: string = 'Sunucu hatası oluştu', context?: Partial<ErrorContext>): AppError {
+  static server(
+    message: string = 'Sunucu hatası oluştu',
+    context?: Partial<ErrorContext>,
+  ): AppError {
     return new AppError(message, ErrorType.SERVER, ErrorSeverity.HIGH, context);
   }
 
   /**
    * Create a parsing error
    */
-  static parsing(message: string = 'Veri ayrıştırma hatası', context?: Partial<ErrorContext>): AppError {
+  static parsing(
+    message: string = 'Veri ayrıştırma hatası',
+    context?: Partial<ErrorContext>,
+  ): AppError {
     return new AppError(message, ErrorType.PARSING, ErrorSeverity.MEDIUM, context);
   }
 
   /**
    * Create a storage error
    */
-  static storage(message: string = 'Veri saklama hatası', context?: Partial<ErrorContext>): AppError {
+  static storage(
+    message: string = 'Veri saklama hatası',
+    context?: Partial<ErrorContext>,
+  ): AppError {
     return new AppError(message, ErrorType.STORAGE, ErrorSeverity.HIGH, context);
   }
 
@@ -143,7 +172,7 @@ export class AppError extends Error {
       severity: this.severity,
       timestamp: this.timestamp,
       context: this.context,
-      stack: process.env.NODE_ENV === 'development' ? this.stack : undefined
+      stack: import.meta.env.DEV ? this.stack : undefined,
     };
   }
 }
@@ -163,7 +192,7 @@ export enum ErrorType {
   CLIENT = 'CLIENT_ERROR',
   PARSING = 'PARSING_ERROR',
   STORAGE = 'STORAGE_ERROR',
-  UNKNOWN = 'UNKNOWN_ERROR'
+  UNKNOWN = 'UNKNOWN_ERROR',
 }
 
 /**
@@ -173,7 +202,7 @@ export enum ErrorSeverity {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 /**

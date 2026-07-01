@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Production overrides for docker-compose.yml
 services:
   # Backend with production optimizations
@@ -91,6 +89,18 @@ services:
 
   # Redis with production optimizations
   redis:
+    # Compose replaces `command:` wholesale, so the base flags (appendonly +
+    # requirepass) MUST be repeated here. Adds an eviction policy: the 256M
+    # container cap below would otherwise let Redis hit default `noeviction`
+    # and reject new writes/sessions (OOM) instead of dropping old keys.
+    # maxmemory is set under the container limit to leave headroom for AOF
+    # rewrite / fork copy-on-write overhead so Redis evicts before the cgroup
+    # OOM-kills the container.
+    command: >-
+      redis-server --appendonly yes
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD environment variable is required}
+      --maxmemory 200mb
+      --maxmemory-policy allkeys-lru
     deploy:
       resources:
         limits:
