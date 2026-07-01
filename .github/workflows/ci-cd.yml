@@ -216,6 +216,15 @@ jobs:
       - name: Run dependency review
         uses: actions/dependency-review-action@v5
         if: github.event_name == 'pull_request'
+        with:
+          # @sentry/node's OpenTelemetry instrumentation tree transitively pins
+          # @opentelemetry/core 1.30.1 (GHSA-8988-4f7v-96qf — moderate: unbounded
+          # memory allocation in W3C Baggage propagation). We run Sentry
+          # error-only (tracesSampleRate 0 + skipOpenTelemetrySetup, see
+          # server/src/instrument.ts), so the baggage-propagation code path is
+          # never exercised. Allow this one advisory; every other severity and
+          # advisory still fails the gate.
+          allow-ghsas: GHSA-8988-4f7v-96qf
 
       # I-H8: Snyk was previously `continue-on-error: true`, turning the whole
       # scan into a warning. Keep it advisory only when no token is set, but

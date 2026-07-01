@@ -1,17 +1,26 @@
 // Load environment variables first
 import './config/environment';
 
+// Initialize Sentry before anything else (after env so SENTRY_DSN is loaded).
+// No-op when SENTRY_DSN is unset. See ./instrument for why it's error-only.
+import './instrument';
+import * as Sentry from '@sentry/node';
+
 // Bulletproof early uncaughtException trap — writes directly to stderr so
 // the actual stack trace is visible even when winston/logger is in a bad
-// state. Installed BEFORE any other module so nothing can mask it.
+// state. Installed BEFORE any other module so nothing can mask it. Also
+// reports to Sentry (no-op if SENTRY_DSN is unset).
 process.on('uncaughtException', (err: Error) => {
   process.stderr.write(
     `\n[FATAL uncaughtException] ${err?.stack || err?.message || String(err)}\n`,
   );
+  Sentry.captureException(err);
+  void Sentry.flush(2000);
 });
 process.on('unhandledRejection', (reason: unknown) => {
   const r = reason instanceof Error ? reason.stack || reason.message : String(reason);
   process.stderr.write(`\n[FATAL unhandledRejection] ${r}\n`);
+  Sentry.captureException(reason);
 });
 
 // Initialize OpenTelemetry before other imports
@@ -252,6 +261,12 @@ if (process.env.ENABLE_GRAPHQL === 'true' || process.env.NODE_ENV !== 'productio
 app.use('*', (_req: express.Request, res: express.Response) => {
   res.status(404).json({ error: 'Endpoint bulunamadi' });
 });
+
+// Sentry must capture request errors before our handler formats the response.
+// Registered after all routes, before the global handler. No-op without a DSN.
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
 
 // Global error handler
 app.use(globalErrorHandler);
