@@ -1,18 +1,15 @@
 import * as Sentry from '@sentry/node';
 
-// Server-side Sentry error tracking. Imported first in index.ts (right after
-// ./config/environment, so SENTRY_DSN is loaded) and before any other module.
+// Must be imported after ./config/environment (so SENTRY_DSN is loaded) and
+// before any module that might throw.
 //
-// Error-only configuration: `tracesSampleRate: 0` + `skipOpenTelemetrySetup:
-// true` keep Sentry from taking over OpenTelemetry. This app runs its own
-// OpenTelemetry NodeSDK (see ./utils/telemetry.ts); letting Sentry also set up
-// OTel would register a conflicting global tracer provider. If distributed
-// tracing is wanted later, wire @sentry/opentelemetry's SentrySpanProcessor /
-// SentrySampler / SentryPropagator / SentryContextManager into that NodeSDK
-// instead of removing these flags.
-//
-// No DSN → Sentry.init is skipped and every Sentry call is a safe no-op, so
-// local/dev (where SENTRY_DSN is unset) behaves exactly as before.
+// `tracesSampleRate: 0` + `skipOpenTelemetrySetup: true` keep Sentry from
+// taking over OpenTelemetry: this app runs its own NodeSDK (see
+// ./utils/telemetry.ts) and letting Sentry set up OTel too would register a
+// conflicting global tracer provider. To add distributed tracing later, wire
+// @sentry/opentelemetry's SentrySpanProcessor / SentrySampler /
+// SentryPropagator / SentryContextManager into that NodeSDK rather than
+// dropping these flags.
 const dsn = process.env.SENTRY_DSN;
 
 if (dsn) {

@@ -1,9 +1,9 @@
 // Load environment variables first
 import './config/environment';
 
-// Initialize Sentry before anything else (after env so SENTRY_DSN is loaded).
-// No-op when SENTRY_DSN is unset. See ./instrument for why it's error-only.
-import './instrument';
+// Initializes Sentry on import, so this must stay above every other module.
+// Without a DSN, isSentryEnabled is false and Sentry calls are no-ops.
+import { isSentryEnabled } from './instrument';
 import * as Sentry from '@sentry/node';
 
 // Bulletproof early uncaughtException trap — writes directly to stderr so
@@ -263,8 +263,7 @@ app.use('*', (_req: express.Request, res: express.Response) => {
 });
 
 // Sentry must capture request errors before our handler formats the response.
-// Registered after all routes, before the global handler. No-op without a DSN.
-if (process.env.SENTRY_DSN) {
+if (isSentryEnabled) {
   Sentry.setupExpressErrorHandler(app);
 }
 
