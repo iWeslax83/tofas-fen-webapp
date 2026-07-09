@@ -1,4 +1,4 @@
-# Tofas Fen Webapp
+# Tofaş Fen Webapp
 
 Modern, güvenli ve ölçeklenebilir web uygulaması. React, Node.js, MongoDB ve Docker teknolojileri kullanılarak geliştirilmiştir.
 
@@ -304,8 +304,8 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosy
 
 ## 📞 İletişim
 
-- **Email**: weslax83@gmail.com
-- **GitHub**: [@your-username](https://github.com/iWeslax83)
+- **Email**: emirsakarya00@gmail.com
+- **GitHub**: [@iWeslax83](https://github.com/iWeslax83)
 
 ## 🙏 Teşekkürler
 
