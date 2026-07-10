@@ -216,35 +216,3 @@ export const handleValidationError = (error: {
   const message = `Validation Error: ${errors.join(', ')}`;
   return AppError.validation(message);
 };
-
-/**
- * JWT error handler
- */
-export const handleJWTError = (): AppError => {
-  return AppError.unauthorized('Invalid token. Please log in again.');
-};
-
-/**
- * JWT expired error handler
- */
-export const handleJWTExpiredError = (): AppError => {
-  return AppError.unauthorized('Your token has expired. Please log in again.');
-};
-
-/**
- * MongoDB duplicate key error handler
- */
-export const handleDuplicateKeyError = (error: { keyValue: Record<string, unknown> }): AppError => {
-  const field = Object.keys(error.keyValue)[0];
-  const value = error.keyValue[field];
-  const message = `${field} '${value}' already exists`;
-  return AppError.conflict(message);
-};
-
-/**
- * MongoDB cast error handler
- */
-export const handleCastError = (error: { path: string; value: unknown }): AppError => {
-  const message = `Invalid ${error.path}: ${error.value}`;
-  return AppError.validation(message);
-};
