@@ -14,7 +14,15 @@ NC='\033[0m' # No Color
 
 # Configuration
 SSL_DIR="./nginx/ssl"
-DOMAIN=${1:-"localhost"}
+# Args in any order: a bare hostname sets the domain, --force regenerates.
+DOMAIN="localhost"
+FORCE=0
+for arg in "$@"; do
+    case "$arg" in
+        --force) FORCE=1 ;;
+        *) DOMAIN="$arg" ;;
+    esac
+done
 
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -55,25 +63,31 @@ generate_private_key() {
     log_success "Private key generated"
 }
 
-# Generate certificate signing request
-generate_csr() {
-    log_info "Generating certificate signing request..."
-    openssl req -new -key "$SSL_DIR/key.pem" -out "$SSL_DIR/cert.csr" -subj "/C=TR/ST=Istanbul/L=Istanbul/O=TOFAS FEN LISESI/OU=IT Department/CN=$DOMAIN"
-    log_success "Certificate signing request generated"
-}
-
-# Generate self-signed certificate
+# Generate self-signed certificate directly from the key.
+# One-shot `req -x509` (no separate CSR) so we can attach a subjectAltName in a
+# single command that works on OpenSSL 1.1.1+ — browsers and many clients reject
+# a cert whose hostname is only in the CN with no SAN.
 generate_certificate() {
     log_info "Generating self-signed certificate..."
-    openssl x509 -req -days 365 -in "$SSL_DIR/cert.csr" -signkey "$SSL_DIR/key.pem" -out "$SSL_DIR/cert.pem"
+    # Always cover localhost + loopback; add the requested domain only when it
+    # is something else, so the SAN has no duplicate entry.
+    local san="DNS:localhost,IP:127.0.0.1"
+    if [ "$DOMAIN" != "localhost" ]; then
+        san="DNS:$DOMAIN,$san"
+    fi
+    openssl req -x509 -new -key "$SSL_DIR/key.pem" -days 365 \
+        -out "$SSL_DIR/cert.pem" \
+        -subj "/C=TR/ST=Istanbul/L=Istanbul/O=TOFAS FEN LISESI/OU=IT Department/CN=$DOMAIN" \
+        -addext "subjectAltName=$san"
     log_success "Self-signed certificate generated"
 }
 
-# Clean up CSR file
-cleanup_csr() {
-    log_info "Cleaning up temporary files..."
-    rm -f "$SSL_DIR/cert.csr"
-    log_success "Cleanup completed"
+# Generate Diffie-Hellman parameters. nginx.conf references ssl_dhparam and will
+# refuse to start without this file, so it must be produced alongside the cert.
+generate_dhparam() {
+    log_info "Generating DH parameters (2048-bit; this can take a minute)..."
+    openssl dhparam -out "$SSL_DIR/dhparam.pem" 2048
+    log_success "DH parameters generated"
 }
 
 # Set proper permissions
@@ -108,19 +122,28 @@ show_certificate_info() {
 
 # Main execution
 main() {
-    log_info "Generating SSL certificates for domain: $DOMAIN"
-    echo ""
-    
     check_openssl
     create_ssl_directory
+
+    # Idempotent: these files are gitignored and generated locally, so a plain
+    # re-run (e.g. from a setup step) must not clobber a cert you're already
+    # serving. Pass --force to regenerate.
+    if [ "$FORCE" -eq 0 ] &&
+       [ -f "$SSL_DIR/key.pem" ] && [ -f "$SSL_DIR/cert.pem" ] && [ -f "$SSL_DIR/dhparam.pem" ]; then
+        log_success "SSL material already present in $SSL_DIR (pass --force to regenerate)"
+        return 0
+    fi
+
+    log_info "Generating SSL certificates for domain: $DOMAIN"
+    echo ""
+
     generate_private_key
-    generate_csr
     generate_certificate
-    cleanup_csr
+    generate_dhparam
     set_permissions
     verify_certificate
     show_certificate_info
-    
+
     echo ""
     log_success "SSL certificate generation completed successfully!"
     log_warning "Note: This is a self-signed certificate for development/testing purposes."
