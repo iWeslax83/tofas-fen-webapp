@@ -91,7 +91,11 @@ db.createCollection('notes', {
         studentId: { bsonType: 'string' },
         lesson: { bsonType: 'string' },
         semester: { bsonType: ['string', 'null'] },
-        academicYear: { bsonType: ['int', 'long', 'double', 'number', 'null'] },
+        // String, not a number: Note.academicYear is `type: String` with a
+        // `new Date().getFullYear().toString()` default. A numeric bsonType
+        // here rejects every write the Mongoose model makes, so a fresh
+        // database initialised by this script cannot record a single grade.
+        academicYear: { bsonType: ['string', 'null'] },
       },
     },
   },
@@ -150,7 +154,13 @@ db.createCollection('club_events');
 db.createCollection('club_chat');
 
 // Create indexes for better performance
-db.users.createIndex({ "email": 1 }, { unique: true });
+// `sparse` is required, and must match User.ts (`unique: true, sparse: true`).
+// Email is optional on a user: without sparse, the *second* account created
+// without one collides on `{ email: null }` and the whole insert fails with
+// E11000. That takes out bulk password import, which creates students that
+// have no email address. This index is created before Mongoose starts, so a
+// mismatch here silently wins over the model's declaration.
+db.users.createIndex({ "email": 1 }, { unique: true, sparse: true });
 db.users.createIndex({ "studentNumber": 1 }, { unique: true, sparse: true });
 db.users.createIndex({ "role": 1 });
 db.users.createIndex({ "createdAt": 1 });
