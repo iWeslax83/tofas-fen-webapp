@@ -72,6 +72,18 @@ import { migrateEvciRequests } from './models/EvciRequest';
 
 const app = express();
 
+// Behind a reverse proxy, Express must be told how many hops to trust or
+// `req.ip` resolves to the proxy's address — every client then shares one
+// rate-limit bucket, so a single attacker can lock everyone out of login.
+// express-rate-limit also refuses to run (ERR_ERL_UNEXPECTED_X_FORWARDED_FOR)
+// when it sees an X-Forwarded-For it cannot attribute.
+//
+// Default 0 (no proxy). Never set this above the number of proxies you
+// actually control: each trusted hop lets a client forge one more
+// X-Forwarded-For entry and spoof its source IP.
+const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS ?? '0', 10);
+app.set('trust proxy', Number.isNaN(trustProxyHops) ? 0 : trustProxyHops);
+
 // Configuration validation (catch errors at startup)
 validateConfig();
 
