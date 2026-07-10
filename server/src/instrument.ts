@@ -22,3 +22,16 @@ if (dsn) {
 }
 
 export const isSentryEnabled = Boolean(dsn);
+
+// Sentry's transport is async, so a captured event is lost if the process
+// exits before it ships. Any code path that calls process.exit after
+// capturing a fatal error must await this first. A flush failure must never
+// block the exit, so timeouts and transport errors are swallowed.
+export async function flushSentry(timeoutMs = 2000): Promise<void> {
+  if (!isSentryEnabled) return;
+  try {
+    await Sentry.flush(timeoutMs);
+  } catch {
+    // Nothing useful left to do — we are already on the way down.
+  }
+}
