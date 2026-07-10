@@ -12,7 +12,10 @@ services:
       - mongodb_data:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     ports:
-      - '27017:27017'
+      # Overridable: a host mongod on the default port would make this bind
+      # fail. Only needed so host-side tooling (seeds, mongosh) can reach it;
+      # the backend talks to `mongodb:27017` over the compose network.
+      - '${MONGO_HOST_PORT:-27017}:27017'
     networks:
       - tofas-network
     healthcheck:
@@ -49,7 +52,18 @@ services:
       # databases don't need it; skip it to avoid connection-readiness races.
       SKIP_EVCI_MIGRATION: 'true'
       PORT: 3001
+      # One hop: the `nginx` service. Only correct when clients cannot reach
+      # the backend directly — the published :3001 port below is for local
+      # debugging and must not be exposed publicly, or callers could forge
+      # X-Forwarded-For and defeat per-IP rate limiting.
+      TRUST_PROXY_HOPS: 1
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      # Distinct from CORS_ORIGIN and NOT optional: the CSRF origin allowlist
+      # (middleware/auth.ts), the CSP connect-src, and the password-reset email
+      # links all read FRONTEND_URL. Left unset it silently falls back to
+      # http://localhost:5173, which 403s every state-changing request from the
+      # deployed frontend and mails users a dev-server reset link.
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -90,6 +104,20 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+      # Vite inlines `import.meta.env.VITE_*` at BUILD time. These must be
+      # build args — a runtime `environment:` block on this service is a
+      # no-op, since the container only runs nginx over a bundle that was
+      # already compiled. Shipping without VITE_API_URL makes the bundle
+      # throw at module load (see client/src/utils/api.ts).
+      #
+      # The values are origins, not API prefixes: API_ENDPOINTS already
+      # carry the leading `/api`. Serving the client from the same origin
+      # it calls means no CORS preflight and no cross-site cookie rules.
+      # https is mandatory — the prod bundle rejects a plaintext base URL —
+      # so the frontend is only reachable through the `nginx` service.
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://localhost}
+        VITE_WS_URL: ${VITE_WS_URL:-wss://localhost}
     container_name: tofas-frontend
     restart: unless-stopped
     ports:
@@ -101,22 +129,29 @@ services:
         condition: service_healthy
     networks:
       - tofas-network
-    environment:
-      - VITE_API_URL=http://localhost:3001
-      - VITE_WS_URL=ws://localhost:3001
     # I-H16: read-only root FS. Nginx needs writable /tmp (pid), cache, and
     # runtime dirs — mounted as tmpfs so they live in memory and vanish with
     # the container.
+    #
+    # uid/gid 101 is the `nginx` user. A tmpfs mounts as root:root 0755 and
+    # SHADOWS whatever the image chowned underneath it, so without these the
+    # unprivileged master cannot mkdir /var/cache/nginx/client_temp and the
+    # container crash-loops on `[emerg] ... Permission denied`.
     read_only: true
     tmpfs:
-      - /tmp:rw,noexec,nosuid,size=32m
-      - /var/cache/nginx:rw,noexec,nosuid,size=64m
-      - /var/run:rw,noexec,nosuid,size=8m
+      - /tmp:rw,noexec,nosuid,size=32m,uid=101,gid=101
+      - /var/cache/nginx:rw,noexec,nosuid,size=64m,uid=101,gid=101
+      - /var/run:rw,noexec,nosuid,size=8m,uid=101,gid=101
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      # nginx:alpine ships BusyBox wget, not curl
-      test: ['CMD', 'wget', '-qO-', 'http://localhost:8080/health']
+      # nginx:alpine ships BusyBox wget, not curl.
+      # 127.0.0.1, not localhost: nginx listens on 0.0.0.0:8080 only, and the
+      # entrypoint script that would normally add an IPv6 listener can't write
+      # to the read-only conf.d. `localhost` resolves to ::1 first and BusyBox
+      # wget does not fall back to IPv4, so the check fails against a container
+      # that is serving traffic perfectly well.
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:8080/health']
       interval: 30s
       timeout: 10s
       retries: 3

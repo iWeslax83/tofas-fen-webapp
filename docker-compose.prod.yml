@@ -16,7 +16,12 @@ services:
       MONGODB_TLS: ${MONGODB_TLS:-false}
       SKIP_EVCI_MIGRATION: 'true'
       PORT: 3001
+      # One hop: the `nginx` service in front of this container. See the base file.
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
       CORS_ORIGIN: ${FRONTEND_URL:?FRONTEND_URL environment variable is required}
+      # Read directly by the CSRF origin allowlist, the CSP connect-src, and the
+      # password-reset email links — passing it only as CORS_ORIGIN is not enough.
+      FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL environment variable is required}
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD environment variable is required}@redis:6379
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -44,9 +49,12 @@ services:
 
   # Frontend with production optimizations
   frontend:
-    environment:
-      - VITE_API_URL=${BACKEND_URL}
-      - VITE_WS_URL=${WS_URL}
+    build:
+      # Runtime `environment:` cannot reach a Vite bundle that was compiled
+      # in the image. These have to be build args; see the base file.
+      args:
+        VITE_API_URL: ${BACKEND_URL:?BACKEND_URL environment variable is required}
+        VITE_WS_URL: ${WS_URL:?WS_URL environment variable is required}
     deploy:
       resources:
         limits:
