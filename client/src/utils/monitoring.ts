@@ -211,15 +211,13 @@ export class PerformanceMonitor {
     }
   }
 
-  private sendMetricsToService(metric: unknown): void {
-    // Send to your analytics service
-    fetch('/api/metrics', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(metric),
-    }).catch(console.error);
+  private sendMetricsToService(_metric: unknown): void {
+    // No backend sink exists. There is no POST /api/metrics route, and this
+    // raw fetch carried no CSRF token, so once a user was logged in it 403'd
+    // before routing and 404'd otherwise — one doomed request per web-vital,
+    // in production only. Metrics stay in memory (getMetrics()); errors already
+    // reach Sentry via Analytics.trackError. Wire this up only alongside a real
+    // POST /api/metrics route that includes the CSRF header.
   }
 
   getMetrics(): PerformanceMetrics[] {
@@ -282,15 +280,9 @@ export class Analytics {
     }
   }
 
-  private sendEventToService(event: UserEvent): void {
-    // Send to your analytics service
-    fetch('/api/analytics', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(event),
-    }).catch(console.error);
+  private sendEventToService(_event: UserEvent): void {
+    // No backend sink exists — see sendMetricsToService. Events stay in memory
+    // (getEvents()); errors also flow to Sentry via trackError.
   }
 
   getEvents(): UserEvent[] {
