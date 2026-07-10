@@ -16,6 +16,10 @@ export default defineConfig({
   ],
   use: {
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:5173',
+    // Opt-in only. Set when pointing at a local deploy whose TLS cert is
+    // self-signed; never set it against a real environment, where a cert
+    // error is a finding rather than noise.
+    ignoreHTTPSErrors: process.env.E2E_IGNORE_HTTPS_ERRORS === 'true',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
