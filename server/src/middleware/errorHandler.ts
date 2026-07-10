@@ -191,38 +191,6 @@ function sendErrorResponse(res: Response, appError: AppError, req: Request): voi
 }
 
 /**
- * Handle unhandled promise rejections
- */
-export const handleUnhandledRejection = (reason: unknown, promise: Promise<unknown>): void => {
-  logger.error('Unhandled Promise Rejection', {
-    reason,
-    promise,
-    timestamp: new Date().toISOString(),
-  });
-
-  // In production, you might want to exit the process
-  if (process.env.NODE_ENV === 'production') {
-    process.exit(1);
-  }
-};
-
-/**
- * Handle uncaught exceptions
- */
-export const handleUncaughtException = (error: Error): void => {
-  logger.error('Uncaught Exception', {
-    error: error.message,
-    stack: error.stack,
-    timestamp: new Date().toISOString(),
-  });
-
-  // In production, you might want to exit the process
-  if (process.env.NODE_ENV === 'production') {
-    process.exit(1);
-  }
-};
-
-/**
  * Async error wrapper for route handlers.
  *
  * The return type is `Promise<unknown>` (not `Promise<void>`) so that
