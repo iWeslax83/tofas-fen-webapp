@@ -73,63 +73,38 @@ export default defineConfig({
     cssMinify: true,
     rollupOptions: {
       output: {
+        // Exactly two vendor chunks, and the split is chosen so the chunk
+        // graph cannot contain a cycle: `react-vendor` is a leaf (everything
+        // imports it, it imports nothing) and `vendor` only ever points at
+        // `react-vendor`.
+        //
+        // The previous config assigned a chunk per vendor package (chart-,
+        // radix-, monitoring-, ... , plus a catch-all `vendor`). Package-level
+        // splitting cuts the module graph where it has edges going both ways —
+        // `@sentry-internal/*` fell into `vendor` yet imports `@sentry/core`;
+        // `victory-vendor` fell into `vendor` yet imports `d3-shape`. That
+        // produced vendor<->monitoring-vendor, vendor<->chart-vendor and
+        // vendor<->radix-vendor cycles. Circular ESM chunks are legal, but a
+        // `const` read across the cycle throws "Cannot access 'X' before
+        // initialization" and the app never mounts.
+        //
+        // `scheduler` must travel with React — react-dom depends on it at
+        // runtime, and separating them killed the bundle with
+        // "Cannot set properties of undefined (setting 'unstable_now')".
+        //
+        // Don't reintroduce per-package chunks without checking the emitted
+        // chunk graph for cycles; a passing `vite build` does not catch this.
         manualChunks: (id) => {
-          // Vendor chunks - more granular splitting
           if (id.includes('node_modules')) {
-            // React ecosystem
-            if (id.includes('react') || id.includes('react-dom')) {
+            const pkg = id.split('node_modules/').pop()?.split('/')[0];
+
+            if (
+              pkg === 'react' ||
+              pkg === 'react-dom' ||
+              pkg === 'scheduler' ||
+              pkg === 'react-is'
+            ) {
               return 'react-vendor';
-            }
-            if (id.includes('react-router')) {
-              return 'router-vendor';
-            }
-            if (id.includes('@tanstack/react-query')) {
-              return 'query-vendor';
-            }
-
-            // UI libraries
-            if (id.includes('lucide-react')) {
-              return 'icons-vendor';
-            }
-            if (id.includes('@radix-ui')) {
-              return 'radix-vendor';
-            }
-            if (id.includes('@headlessui')) {
-              return 'headless-vendor';
-            }
-
-            // HTTP and data
-            if (id.includes('axios')) {
-              return 'http-vendor';
-            }
-            if (id.includes('yup') || id.includes('formik')) {
-              return 'form-vendor';
-            }
-
-            // Utilities
-            if (id.includes('lodash')) {
-              return 'lodash-vendor';
-            }
-            if (id.includes('date-fns')) {
-              return 'date-vendor';
-            }
-            if (id.includes('dompurify')) {
-              return 'security-vendor';
-            }
-
-            // Chart libraries
-            if (id.includes('recharts') || id.includes('d3-')) {
-              return 'chart-vendor';
-            }
-
-            // Large libraries - separate chunks
-            if (id.includes('framer-motion')) {
-              return 'animation-vendor';
-            }
-
-            // Monitoring - lazy load
-            if (id.includes('@sentry')) {
-              return 'monitoring-vendor';
             }
 
             return 'vendor';
