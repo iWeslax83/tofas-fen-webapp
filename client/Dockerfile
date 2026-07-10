@@ -68,9 +68,11 @@ RUN sed -i '/^user  *nginx;/d' /etc/nginx/nginx.conf \
 
 USER nginx
 
-# Health check (wget ships with nginx:alpine's BusyBox)
+# Health check (wget ships with nginx:alpine's BusyBox).
+# 127.0.0.1 rather than localhost — see the compose healthcheck: nginx binds
+# IPv4 only here, and BusyBox wget won't retry v4 after ::1 is refused.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost:8080/health || exit 1
+  CMD wget -qO- http://127.0.0.1:8080/health || exit 1
 
 # Expose the unprivileged port
 EXPOSE 8080
