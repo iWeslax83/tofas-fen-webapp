@@ -7,7 +7,7 @@
 .modern-dashboard {
   min-height: 100vh;
   background: var(--gray-50);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
   /* Column so the T.C. StateBar sits as a full-width band on top; the
      sidebar (fixed) + main-content (margin-left) form the row below it.
      Previously this was flex-row, which made StateBar a row sibling that
