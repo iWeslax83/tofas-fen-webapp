@@ -10,12 +10,15 @@ import * as Sentry from '@sentry/node';
 // the actual stack trace is visible even when winston/logger is in a bad
 // state. Installed BEFORE any other module so nothing can mask it. Also
 // reports to Sentry (no-op if SENTRY_DSN is unset).
+//
+// These only capture. ./db registers its own handlers, which run after these
+// and own the process.exit — and so own awaiting flushSentry(). Flushing here
+// would be fire-and-forget and lose the race against that exit.
 process.on('uncaughtException', (err: Error) => {
   process.stderr.write(
     `\n[FATAL uncaughtException] ${err?.stack || err?.message || String(err)}\n`,
   );
   Sentry.captureException(err);
-  void Sentry.flush(2000);
 });
 process.on('unhandledRejection', (reason: unknown) => {
   const r = reason instanceof Error ? reason.stack || reason.message : String(reason);

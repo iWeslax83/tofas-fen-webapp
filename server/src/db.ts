@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import logger from './utils/logger';
+import { flushSentry } from './instrument';
 import type { ConnectionPoolInfo } from './types';
 
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/tofas-fen';
@@ -295,6 +296,9 @@ process.on('uncaughtException', async (error) => {
     });
   }
 
+  // index.ts already captured this error; ship it before we exit.
+  await flushSentry();
+
   // Don't exit in test environment
   if (process.env.NODE_ENV !== 'test') {
     process.exit(1);
@@ -319,6 +323,9 @@ process.on('unhandledRejection', async (reason, promise) => {
       error: closeError instanceof Error ? closeError.message : closeError,
     });
   }
+
+  // index.ts already captured this rejection; ship it before we exit.
+  await flushSentry();
 
   // Don't exit in test environment
   if (process.env.NODE_ENV !== 'test') {
