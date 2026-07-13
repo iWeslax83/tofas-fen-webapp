@@ -10,6 +10,7 @@ import {
   useTwoFactorUser,
   useTwoFactorExpiresAt,
 } from '../stores/authStore';
+import { VideoBackdrop } from '../components/VideoBackdrop';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Chip } from '../components/ui/Chip';
@@ -157,35 +158,33 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--paper)] flex flex-col">
-      <div className="h-1.5 bg-[var(--state)]" aria-hidden="true" />
+    <div className="relative min-h-screen flex flex-col">
+      <VideoBackdrop
+        src="/video/hero.mp4"
+        poster="/images/hero-poster.webp"
+        label="Tofaş Fen Lisesi kampüsü"
+      />
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[5fr_7fr]">
-        <aside className="bg-[#0d0d0d] text-white p-8 lg:p-12 flex flex-col min-h-[36vh] lg:min-h-screen">
-          <div className="flex items-center gap-3">
+      <div className="relative z-10 h-1.5 bg-[var(--state)]" aria-hidden="true" />
+
+      <main className="relative z-10 flex-1 flex items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-md bg-[var(--paper)] border border-[var(--rule)] p-8 lg:p-10">
+          <div className="flex items-center gap-3 pb-6 border-b border-[var(--rule)]">
             <img
               src="/tofaslogo.png"
               alt="Tofaş Fen Lisesi logosu"
-              className="w-12 h-12 rounded-lg bg-white p-1.5"
+              className="w-11 h-11 rounded-lg bg-white p-1.5"
             />
-            <span className="text-sm font-medium text-white/70">Bilgi Sistemi</span>
+            <div>
+              <span className="block font-serif text-base text-[var(--ink)] leading-tight">
+                Tofaş Fen Lisesi
+              </span>
+              <span className="block text-xs text-[var(--ink-dim)]">Bilgi Sistemi</span>
+            </div>
           </div>
 
-          <div className="flex-1 flex flex-col justify-center py-10 max-w-sm">
-            <h1 className="font-serif text-4xl text-white leading-tight">Tofaş Fen Lisesi</h1>
-            <p className="mt-4 text-base text-white/60 leading-relaxed">
-              Notlar, ödevler, ders programı, duyurular ve pansiyon işlemleri tek bir yerde.
-            </p>
-          </div>
-
-          <p className="text-xs text-white/40">
-            © {new Date().getFullYear()} Tofaş Fen Lisesi. Tüm hakları saklıdır.
-          </p>
-        </aside>
-
-        <main className="p-8 lg:p-12 flex flex-col justify-center min-h-[60vh] lg:min-h-screen">
-          <div className="w-full max-w-md mx-auto">
-            <header className="mb-8">
+          <div className="w-full">
+            <header className="mt-6 mb-8">
               <h2 className="font-serif text-2xl text-[var(--ink)]">
                 {requires2FA ? 'İki Adımlı Doğrulama' : 'Sisteme Giriş'}
               </h2>
@@ -417,8 +416,14 @@ export default function LoginPage() {
               </form>
             )}
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
+
+      <footer className="relative z-10 flex justify-center p-6">
+        <p className="bg-black/70 px-3 py-1.5 text-xs text-white/90">
+          © {new Date().getFullYear()} Tofaş Fen Lisesi. Tüm hakları saklıdır.
+        </p>
+      </footer>
     </div>
   );
 }
