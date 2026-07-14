@@ -6,7 +6,8 @@ import type { TestingLibraryMatchers } from '@testing-library/jest-dom/matchers'
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Vi {
-    interface JestAssertion<T = any> extends jest.Matchers<void, T>, TestingLibraryMatchers<T, void> { }
+    interface JestAssertion<T = any>
+      extends jest.Matchers<void, T>, TestingLibraryMatchers<T, void> {}
   }
 }
 
@@ -32,6 +33,15 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+// jsdom implements neither of these; cmdk (the command palette) needs both --
+// a ResizeObserver on mount, and scrollIntoView to keep the active item in view.
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+Element.prototype.scrollIntoView ??= vi.fn();
+
 // Mock the SecureAPI
 vi.mock('../../utils/api', () => ({
   SecureAPI: {
@@ -53,9 +63,15 @@ const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: vi.fn((key: string) => store[key] || null),
-    setItem: vi.fn((key: string, value: string) => { store[key] = value.toString(); }),
-    removeItem: vi.fn((key: string) => { delete store[key]; }),
-    clear: vi.fn(() => { store = {}; }),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value.toString();
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: vi.fn(() => {
+      store = {};
+    }),
     length: 0,
     key: vi.fn((index: number) => Object.keys(store)[index] || null),
   };
@@ -71,9 +87,15 @@ const sessionStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: vi.fn((key: string) => store[key] || null),
-    setItem: vi.fn((key: string, value: string) => { store[key] = value.toString(); }),
-    removeItem: vi.fn((key: string) => { delete store[key]; }),
-    clear: vi.fn(() => { store = {}; }),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value.toString();
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: vi.fn(() => {
+      store = {};
+    }),
     length: 0,
     key: vi.fn((index: number) => Object.keys(store)[index] || null),
   };
