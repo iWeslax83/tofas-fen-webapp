@@ -16,6 +16,8 @@ const SIZE_CLASSES: Record<NonNullable<PortraitProps['size']>, string> = {
   lg: 'w-24 h-30',
 };
 
+// toUpperCase() is locale-blind: it turns 'i' into 'I', so "irem" would show
+// an "I" where Turkish wants a dotted "İ".
 const initialsOf = (name: string): string =>
   name
     .trim()
@@ -23,7 +25,7 @@ const initialsOf = (name: string): string =>
     .map((part) => part[0] ?? '')
     .slice(0, 2)
     .join('')
-    .toUpperCase();
+    .toLocaleUpperCase('tr');
 
 /**
  * Devlet vesikalık portresi. Renders an actual photo when provided,

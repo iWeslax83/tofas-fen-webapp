@@ -35,6 +35,17 @@ describe('Portrait', () => {
     expect(screen.getByText('AG')).toBeInTheDocument();
   });
 
+  it('uses the Turkish dotted İ for a name starting with i', () => {
+    // A locale-blind toUpperCase() renders "IŞ" here, which is not a Turkish İ.
+    render(<Portrait name="irem şahin" />);
+    expect(screen.getByText('İŞ')).toBeInTheDocument();
+  });
+
+  it('capitalises the dotless ı as a plain I', () => {
+    render(<Portrait name="ışıl kaya" />);
+    expect(screen.getByText('IK')).toBeInTheDocument();
+  });
+
   it('handles a single-word name by taking just one initial', () => {
     render(<Portrait name="Mehmet" />);
     expect(screen.getByText('M')).toBeInTheDocument();
