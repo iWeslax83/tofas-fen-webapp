@@ -169,14 +169,19 @@ export default function LoginPage() {
 
       <main className="relative z-10 flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md bg-[var(--paper)] border border-[var(--rule)] p-8 lg:p-10">
-          <div className="flex items-center gap-3 pb-6 border-b border-[var(--rule)]">
+          {/* The crest carries a lot of fine detail -- a text band and a thin
+              atom outline -- that turns to mush below ~80px. It gets room here
+              rather than being shrunk into an icon beside the wordmark. */}
+          <div className="flex flex-col items-center gap-4 pb-6 border-b border-[var(--rule)]">
             <img
               src="/tofaslogo.png"
               alt="Tofaş Fen Lisesi logosu"
-              className="w-11 h-11 rounded-lg bg-white p-1.5"
+              width={250}
+              height={298}
+              className="h-24 w-auto"
             />
-            <div>
-              <span className="block font-serif text-base text-[var(--ink)] leading-tight">
+            <div className="text-center">
+              <span className="block font-serif text-lg text-[var(--ink)] leading-tight">
                 Tofaş Fen Lisesi
               </span>
               <span className="block text-xs text-[var(--ink-dim)]">Bilgi Sistemi</span>
