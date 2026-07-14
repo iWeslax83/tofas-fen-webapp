@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Chip } from '../components/ui/Chip';
 import { Input } from '../components/ui/Input';
+import { VideoBackdrop } from '../components/VideoBackdrop';
 import { apiClient } from '../utils/api';
 import { cn } from '../utils/cn';
 
@@ -137,8 +138,18 @@ export default function RegistrationFormPage() {
       <div className="h-1.5 bg-[var(--state)]" aria-hidden="true" />
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[5fr_7fr]">
-        <aside className="bg-[var(--ink)] text-[var(--paper)] p-8 lg:p-12 flex flex-col justify-between min-h-[30vh] lg:min-h-screen">
-          <div className="space-y-6">
+        {/* Same campus backdrop as the login page. This used to be bg-[var(--ink)],
+            which is the *text* colour token: in the dark theme it inverts to near
+            white, and the white-on-dark copy below disappeared into a blank
+            white panel. */}
+        <aside className="relative overflow-hidden p-8 lg:p-12 flex flex-col justify-between min-h-[30vh] lg:min-h-screen">
+          <VideoBackdrop
+            src="/video/hero.mp4"
+            poster="/images/hero-poster.webp"
+            label="Tofaş Fen Lisesi kampüsü"
+          />
+
+          <div className="relative z-10 space-y-6">
             <div className="text-xs font-medium text-white/60">
               Türkiye Cumhuriyeti · Resmî Belge
             </div>
@@ -157,7 +168,7 @@ export default function RegistrationFormPage() {
             </div>
           </div>
 
-          <div className="space-y-3 border-t border-white/15 pt-6">
+          <div className="relative z-10 space-y-3 border-t border-white/15 pt-6">
             <p className="font-serif text-sm text-white/85 leading-relaxed">
               Başvuru formundaki tüm bilgiler doğru ve eksiksiz doldurulmalıdır. Yönetim, sağlanan
               iletişim adresi üzerinden geri dönüş yapacaktır.
