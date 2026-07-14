@@ -528,7 +528,6 @@ export default function SettingsPage() {
             <LogOut size={18} />
             Oturumu Kapat
           </button>
-          <p className="app-version">Tofaş Fen Lisesi Bilgi Sistemi v1.0</p>
         </section>
       </div>
     </ModernDashboardLayout>
