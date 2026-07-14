@@ -20,7 +20,7 @@ const ORIGIN = process.env.E2E_BASE_URL ?? 'http://localhost:5173';
 /**
  * Delete every pending password-import batch via the API. The test mutates a
  * shared database, so without this it is not isolated: leftover batches from a
- * prior (or failed) run break the "Bekleyen batch yok." assertion. Run it both
+ * prior (or failed) run break the "Bekleyen yükleme yok." assertion. Run it both
  * before (clear pollution) and after (clean up our own batch) the test.
  *
  * Uses page.request so the browser context's auth cookie is reused; adds the
@@ -97,8 +97,8 @@ test.describe('Password Management — bulk import', () => {
     ]);
     expect(download.suggestedFilename()).toMatch(/credentials-\d{8}-[0-9a-f-]+\.xlsx/);
 
-    await expect(page.getByText(/Bekleyen Batch/)).toBeVisible();
+    await expect(page.getByText(/Bekleyen Yükleme/)).toBeVisible();
     await page.getByRole('button', { name: 'Aktif Et' }).first().click();
-    await expect(page.getByText('Bekleyen batch yok.')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('Bekleyen yükleme yok.')).toBeVisible({ timeout: 15_000 });
   });
 });
