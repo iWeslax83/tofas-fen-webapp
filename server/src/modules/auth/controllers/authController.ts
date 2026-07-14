@@ -7,6 +7,7 @@ import { asyncHandler } from '../../../middleware/errorHandler';
 import bcrypt from 'bcryptjs';
 import { RefreshToken } from '../../../models/RefreshToken';
 import crypto from 'crypto';
+import { cookieSameSite, cookieSecure } from '../../../utils/cookies';
 
 /** Extract request metadata for security logging */
 function extractMeta(req: Request) {
@@ -28,11 +29,10 @@ function extractMeta(req: Request) {
  */
 function issueCsrfToken(res: Response, lifetimeMs: number): void {
   const token = crypto.randomBytes(32).toString('hex');
-  const isProduction = process.env.NODE_ENV === 'production';
   res.cookie('csrfToken', token, {
     httpOnly: false, // must be readable by the SPA
-    secure: isProduction,
-    sameSite: 'strict',
+    secure: cookieSecure(),
+    sameSite: cookieSameSite(),
     maxAge: lifetimeMs,
     path: '/',
   });
@@ -71,13 +71,11 @@ export class AuthController {
 
     // If 2FA is required, return early with 2FA session token in httpOnly cookie
     if (result.requires2FA) {
-      const isProduction = process.env.NODE_ENV === 'production';
-
       // #10: Set 2FA session token as httpOnly cookie (not in response body)
       res.cookie('twoFactorSession', result.twoFactorSessionToken, {
         httpOnly: true,
-        secure: isProduction,
-        sameSite: 'strict',
+        secure: cookieSecure(),
+        sameSite: cookieSameSite(),
         maxAge: 5 * 60 * 1000, // 5 minutes
         path: '/',
       });
@@ -98,20 +96,19 @@ export class AuthController {
     const { user, tokens } = result;
 
     // Set httpOnly cookies for secure token storage
-    const isProduction = process.env.NODE_ENV === 'production';
 
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
+      secure: cookieSecure(),
+      sameSite: cookieSameSite(),
       maxAge: tokens.expiresIn * 1000,
       path: '/',
     });
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
+      secure: cookieSecure(),
+      sameSite: cookieSameSite(),
       maxAge: tokens.refreshExpiresIn * 1000,
       path: '/',
     });
@@ -180,11 +177,10 @@ export class AuthController {
       await logoutUser(finalAccessToken, finalRefreshToken);
     }
 
-    const isProduction = process.env.NODE_ENV === 'production';
     const cookieOpts = {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict' as const,
+      secure: cookieSecure(),
+      sameSite: cookieSameSite(),
       path: '/',
     };
 
@@ -199,8 +195,8 @@ export class AuthController {
     // minus httpOnly flag)
     res.clearCookie('csrfToken', {
       httpOnly: false,
-      secure: isProduction,
-      sameSite: 'strict' as const,
+      secure: cookieSecure(),
+      sameSite: cookieSameSite(),
       path: '/',
     });
 
@@ -238,20 +234,19 @@ export class AuthController {
     // Use refresh token rotation with family detection
     const result = await AuthService.rotateRefreshToken(refreshToken, extractMeta(req));
     const tokens = result.tokens;
-    const isProduction = process.env.NODE_ENV === 'production';
 
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
+      secure: cookieSecure(),
+      sameSite: cookieSameSite(),
       maxAge: tokens.expiresIn * 1000,
       path: '/',
     });
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
+      secure: cookieSecure(),
+      sameSite: cookieSameSite(),
       maxAge: tokens.refreshExpiresIn * 1000,
       path: '/',
     });
@@ -362,21 +357,19 @@ export class AuthController {
         extractMeta(req),
       );
 
-      const isProduction = process.env.NODE_ENV === 'production';
-
       // Set auth cookies
       res.cookie('accessToken', result.tokens.accessToken, {
         httpOnly: true,
-        secure: isProduction,
-        sameSite: 'strict',
+        secure: cookieSecure(),
+        sameSite: cookieSameSite(),
         maxAge: result.tokens.expiresIn * 1000,
         path: '/',
       });
 
       res.cookie('refreshToken', result.tokens.refreshToken, {
         httpOnly: true,
-        secure: isProduction,
-        sameSite: 'strict',
+        secure: cookieSecure(),
+        sameSite: cookieSameSite(),
         maxAge: result.tokens.refreshExpiresIn * 1000,
         path: '/',
       });
@@ -387,8 +380,8 @@ export class AuthController {
       // Clear 2FA session cookie after successful verification
       res.clearCookie('twoFactorSession', {
         httpOnly: true,
-        secure: isProduction,
-        sameSite: 'strict',
+        secure: cookieSecure(),
+        sameSite: cookieSameSite(),
         path: '/',
       });
 
@@ -396,8 +389,8 @@ export class AuthController {
       if (result.trustedDeviceToken) {
         res.cookie('trustedDevice', result.trustedDeviceToken, {
           httpOnly: true,
-          secure: isProduction,
-          sameSite: 'strict',
+          secure: cookieSecure(),
+          sameSite: cookieSameSite(),
           maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
           path: '/',
         });
@@ -435,13 +428,11 @@ export class AuthController {
       // #19: Pass meta to service
       const result = await AuthService.resendTwoFactorCode(sessionToken, extractMeta(req));
 
-      const isProduction = process.env.NODE_ENV === 'production';
-
       // Update 2FA session cookie with new token
       res.cookie('twoFactorSession', result.twoFactorSessionToken, {
         httpOnly: true,
-        secure: isProduction,
-        sameSite: 'strict',
+        secure: cookieSecure(),
+        sameSite: cookieSameSite(),
         maxAge: 5 * 60 * 1000,
         path: '/',
       });

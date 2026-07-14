@@ -5,7 +5,7 @@
   "buildCommand": "npm run build:client",
   "outputDirectory": "client/dist",
 
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [{ "source": "/((?!assets/).*)", "destination": "/index.html" }],
 
   "headers": [
     {

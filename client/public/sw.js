@@ -5,7 +5,11 @@
  * Sensitive endpoints cache'den hariç tutulmalı.
  */
 
-const CACHE_VERSION = 'v1.0.0';
+// Bumping this evicts every previous cache on activate. It had been pinned at
+// v1.0.0 since the SW was written, which meant the static cache -- including
+// the precached index.html -- survived every deploy and kept pointing clients
+// at asset hashes that no longer existed on the server.
+const CACHE_VERSION = 'v1.1.0';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
 
@@ -211,17 +215,36 @@ async function handleApiRequest(request) {
 }
 
 /**
+ * True when a response is an HTML page being passed off as a script or
+ * stylesheet.
+ *
+ * A missing /assets/* file used to be rewritten to index.html and returned as
+ * 200 OK. Because this handler is cache-first and only checked `response.ok`,
+ * it would store that HTML page under the .js URL and serve it forever -- the
+ * browser then refuses to execute it ("disallowed MIME type") on every load,
+ * with no way to recover short of clearing site data. The rewrite no longer
+ * swallows asset 404s, but old clients still carry the poisoned entries, so
+ * refuse to read or write them here too.
+ */
+function isHtmlMasqueradingAsAsset(request, response) {
+  if (!/\.(js|mjs|css)(\?|$)/.test(new URL(request.url).pathname)) {
+    return false;
+  }
+  return (response.headers.get('content-type') || '').includes('text/html');
+}
+
+/**
  * Handle static asset requests - cache first
  */
 async function handleStaticRequest(request) {
   const cached = await caches.match(request);
-  if (cached) {
+  if (cached && !isHtmlMasqueradingAsAsset(request, cached)) {
     return cached;
   }
-  
+
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    if (response.ok && !isHtmlMasqueradingAsAsset(request, response)) {
       const cache = await caches.open(STATIC_CACHE);
       cache.put(request, response.clone());
     }

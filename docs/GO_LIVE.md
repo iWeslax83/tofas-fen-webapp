@@ -94,7 +94,30 @@ If you mistype the password, re-run the same command with `ADMIN_RESET=true` to
 overwrite it. The script never deletes anything, and it refuses to silently
 overwrite an existing user without that flag.
 
-## Step 4 — Log in
+## Step 4 — Allow cross-site cookies
+
+Your frontend (`*.vercel.app`) and API (`*.onrender.com`) are on **different
+sites**, so every API call the browser makes is a cross-site request. Browsers
+never attach a `SameSite=Strict` cookie to one — the login response's
+`Set-Cookie` headers get dropped on the floor, and the next request is a 401.
+
+In the Render dashboard, add:
+
+```
+COOKIE_SAMESITE=none
+```
+
+and redeploy. Nothing else will work until you do; the symptom in the browser
+console is:
+
+> Cookie “accessToken” has been rejected because it is in a cross-site context
+> and its “SameSite” is “Lax” or “Strict”.
+
+This is only needed because the two halves live on different domains. Put them
+behind one domain later (`app.example.com` + `api.example.com`) and you can
+drop back to the safer `strict`.
+
+## Step 5 — Log in
 
 Go to **https://tofas-fen-webapp.vercel.app/login** and sign in with the
 `ADMIN_ID` and password from step 3.
@@ -103,7 +126,7 @@ If the backend has been idle, the first request takes 30–60 seconds while Rend
 wakes the instance up. It will look like the login button is hanging. Wait it
 out; the second attempt is instant.
 
-## Step 5 — Add real users
+## Step 6 — Add real users
 
 Once you're signed in as admin, create teachers and students through the admin
 UI, or use the bulk import (Excel) feature for a whole class at once.
