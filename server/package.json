@@ -29,6 +29,7 @@
     "seed": "ts-node src/seed/seed.ts",
     "seed:users": "ts-node src/seed/testUsers.ts",
     "create-indexes": "ts-node src/scripts/createIndexes.ts",
+    "create-admin": "ts-node src/scripts/createAdmin.ts",
     "migrate": "ts-node src/scripts/runMigrations.ts",
     "migrate:up": "ts-node src/scripts/runMigrations.ts up",
     "migrate:down": "ts-node src/scripts/runMigrations.ts down",

@@ -83,8 +83,8 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
                 src="/tofaslogo.png"
                 alt="Tofaş Fen Lisesi"
                 className="logo-image"
-                width="36"
-                height="36"
+                width="250"
+                height="298"
               />
               <div className="logo-text">
                 <h2>Tofaş Fen Lisesi</h2>

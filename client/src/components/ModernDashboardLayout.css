@@ -81,12 +81,9 @@
 }
 
 .modern-sidebar .logo-image {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-  border-radius: 0.5rem;
-  background: #ffffff;
-  padding: 4px;
+  width: auto;
+  /* The crest's text band and atom outline stop resolving below ~50px. */
+  height: 52px;
   flex-shrink: 0;
 }
 

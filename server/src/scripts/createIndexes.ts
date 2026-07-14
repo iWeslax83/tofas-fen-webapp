@@ -1,3 +1,7 @@
+// Load environment variables first (mirrors src/index.ts bootstrap order).
+// Without this, ../db reads process.env.MONGODB_URI before dotenv runs and
+// falls back to localhost -- indexes would be created on the wrong database.
+import '../config/environment';
 import mongoose from 'mongoose';
 import { connectDB } from '../db';
 import { User } from '../models/User';
@@ -27,18 +31,17 @@ async function createIndexes() {
 
     const userIndexes = await User.collection.listIndexes().toArray();
     console.log(`👤 User collection: ${userIndexes.length} indexes`);
-    userIndexes.forEach(index => {
+    userIndexes.forEach((index) => {
       console.log(`  - ${index.name}: ${JSON.stringify(index.key)}`);
     });
 
     const evciIndexes = await EvciRequest.collection.listIndexes().toArray();
     console.log(`📝 EvciRequest collection: ${evciIndexes.length} indexes`);
-    evciIndexes.forEach(index => {
+    evciIndexes.forEach((index) => {
       console.log(`  - ${index.name}: ${JSON.stringify(index.key)}`);
     });
 
     console.log('\n✅ All indexes created successfully!');
-
   } catch (error) {
     console.error('❌ Error creating indexes:', error);
     process.exit(1);
@@ -54,4 +57,3 @@ if (require.main === module) {
 }
 
 export { createIndexes };
-
