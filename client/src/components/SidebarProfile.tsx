@@ -18,8 +18,7 @@ export interface SidebarProfileProps {
 }
 
 /**
- * Devlet kullanıcı kartı — vesikalık + sicil no + ad + rol/pansiyon
- * çipleri. Mockup'taki KAYITLI satırı + adSoyad bloğunun bileşeni.
+ * Kullanıcı kartı — vesikalık + okul no + ad + rol/pansiyon çipleri.
  */
 export function SidebarProfile({ name, userId, role, pansiyon, photoSrc }: SidebarProfileProps) {
   const roleLabel = ROLE_LABELS[role] ?? role;
@@ -27,8 +26,7 @@ export function SidebarProfile({ name, userId, role, pansiyon, photoSrc }: Sideb
     <div className="p-4 border-b border-white/10 flex gap-3">
       <Portrait name={name} src={photoSrc} size="md" />
       <div className="flex-1 min-w-0">
-        <div className="text-xs font-medium text-white/50">Sicil</div>
-        <div className="font-mono text-xs text-white/70 truncate">{userId}</div>
+        <div className="text-xs text-white/70 truncate">{userId}</div>
         <div className="mt-1.5 font-serif text-sm text-white leading-snug truncate">{name}</div>
         <div className="mt-1.5 flex flex-wrap gap-1">
           <span className="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-white/10 text-white border border-white/15">

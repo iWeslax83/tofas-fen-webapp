@@ -65,7 +65,7 @@ export function ParentsList({
             aria-label={`${parent.adSoyad}${childCount > 0 ? `, ${childCount} çocuk` : ''}`}
           >
             <div className="flex items-center justify-center w-9 h-9 bg-[var(--ink)] text-[var(--paper)] font-serif text-sm uppercase shrink-0">
-              {parent.adSoyad.charAt(0).toUpperCase()}
+              {parent.adSoyad.charAt(0).toLocaleUpperCase('tr')}
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-serif text-sm text-[var(--ink)] truncate">{parent.adSoyad}</div>

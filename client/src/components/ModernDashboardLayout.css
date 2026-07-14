@@ -8,10 +8,6 @@
   min-height: 100vh;
   background: var(--gray-50);
   font-family: var(--font-sans);
-  /* Column so the T.C. StateBar sits as a full-width band on top; the
-     sidebar (fixed) + main-content (margin-left) form the row below it.
-     Previously this was flex-row, which made StateBar a row sibling that
-     ate the width and crushed .main-content to ~200px. */
   display: flex;
   flex-direction: column;
   position: relative;
@@ -52,10 +48,9 @@
   display: flex;
   flex-direction: column;
   position: fixed;
-  /* Sits below the 30px T.C. StateBar. */
-  top: 30px;
+  top: 0;
   left: 0;
-  height: calc(100vh - 30px);
+  height: 100vh;
   z-index: 1002;
   transition: transform 0.3s ease;
   box-shadow: var(--shadow-lg);
@@ -199,8 +194,7 @@
   align-items: center;
   justify-content: space-between;
   position: fixed;
-  /* Sits below the 30px T.C. StateBar. */
-  top: 30px;
+  top: 0;
   left: 280px;
   right: 0;
   z-index: 1000;
