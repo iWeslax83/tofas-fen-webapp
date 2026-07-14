@@ -1,12 +1,12 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 
 import { KpiTable } from '../KpiTable';
-import { QuickActions } from '../QuickActions';
+import { RecentActivity, relativeTime, type ActivityEntry } from '../RecentActivity';
 import { AnnouncementCard } from '../AnnouncementCard';
 import { HomeworkQueue } from '../HomeworkQueue';
 
@@ -47,34 +47,75 @@ describe('KpiTable', () => {
   });
 });
 
-describe('QuickActions', () => {
-  const sampleActions = [
-    { key: 'new', shortcut: 'N', label: 'Yeni Kayıt', onSelect: vi.fn() },
-    { key: 'edit', shortcut: 'E', label: 'Düzenle', onSelect: vi.fn() },
+describe('RecentActivity', () => {
+  const entries: ActivityEntry[] = [
+    {
+      id: 'note-1',
+      kind: 'note',
+      title: 'Matematik notu girildi',
+      detail: 'Ortalama 85',
+      date: new Date('2026-07-14T09:00:00Z').toISOString(),
+      url: '/student/notlar',
+    },
+    {
+      id: 'ann-1',
+      kind: 'announcement',
+      title: 'Veli toplantısı',
+      detail: 'Duyuru · Müdürlük',
+      date: new Date('2026-07-13T09:00:00Z').toISOString(),
+      url: '/student/duyurular',
+    },
   ];
 
-  it('renders nothing when actions is empty', () => {
-    const { container } = render(<QuickActions actions={[]} />);
-    expect(container).toBeEmptyDOMElement();
+  const renderFeed = (list: ActivityEntry[]) =>
+    render(
+      <MemoryRouter>
+        <RecentActivity entries={list} />
+      </MemoryRouter>,
+    );
+
+  it('says so plainly when there is nothing to show', () => {
+    renderFeed([]);
+    expect(screen.getByText('Henüz bir hareket yok.')).toBeInTheDocument();
   });
 
-  it('renders one button per action with shortcut + label', () => {
-    render(<QuickActions actions={sampleActions} />);
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(2);
-    expect(screen.getByText('Yeni Kayıt')).toBeInTheDocument();
-    expect(screen.getByText('Düzenle')).toBeInTheDocument();
-    expect(screen.getByText('N')).toBeInTheDocument();
-    expect(screen.getByText('E')).toBeInTheDocument();
+  it('renders one row per entry, each linking to its record', () => {
+    renderFeed(entries);
+    expect(screen.getByText('Matematik notu girildi')).toBeInTheDocument();
+    expect(screen.getByText('Ortalama 85')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Matematik notu/ })).toHaveAttribute(
+      'href',
+      '/student/notlar',
+    );
+    expect(screen.getByRole('link', { name: /Veli toplantısı/ })).toHaveAttribute(
+      'href',
+      '/student/duyurular',
+    );
   });
 
-  it('fires onSelect when the button is clicked', async () => {
-    const onSelect = vi.fn();
-    const actions = [{ key: 'a', shortcut: 'A', label: 'Aksiyon', onSelect }];
-    const user = userEvent.setup();
-    render(<QuickActions actions={actions} />);
-    await user.click(screen.getByRole('button', { name: /Aksiyon/ }));
-    expect(onSelect).toHaveBeenCalledTimes(1);
+  it('emits the section heading "Son Hareketler"', () => {
+    renderFeed(entries);
+    expect(screen.getByText('Son Hareketler')).toBeInTheDocument();
+  });
+});
+
+describe('relativeTime', () => {
+  const now = new Date('2026-07-14T12:00:00Z');
+
+  it('counts minutes, hours and days in Turkish', () => {
+    expect(relativeTime(new Date('2026-07-14T11:30:00Z').toISOString(), now)).toBe(
+      '30 dakika önce',
+    );
+    expect(relativeTime(new Date('2026-07-14T09:00:00Z').toISOString(), now)).toBe('3 saat önce');
+    expect(relativeTime(new Date('2026-07-12T12:00:00Z').toISOString(), now)).toBe('2 gün önce');
+  });
+
+  it('falls back to a plain date once a week has passed', () => {
+    expect(relativeTime(new Date('2026-06-02T12:00:00Z').toISOString(), now)).toBe('2 Haziran');
+  });
+
+  it('says "az önce" for something that just happened', () => {
+    expect(relativeTime(new Date('2026-07-14T11:59:50Z').toISOString(), now)).toBe('az önce');
   });
 });
 
