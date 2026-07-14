@@ -6,11 +6,10 @@ import { render, screen } from '@testing-library/react';
 import { SidebarProfile } from '../SidebarProfile';
 
 describe('SidebarProfile', () => {
-  it('renders the user name + id mono Sicil block', () => {
+  it('renders the user name and id', () => {
     render(<SidebarProfile name="Ali Veli" userId="2024001" role="student" />);
     expect(screen.getByText('Ali Veli')).toBeInTheDocument();
     expect(screen.getByText('2024001')).toBeInTheDocument();
-    expect(screen.getByText('Sicil')).toBeInTheDocument();
   });
 
   it('translates the canonical roles into Turkish labels', () => {
@@ -54,13 +53,10 @@ describe('SidebarProfile', () => {
     expect(screen.getByText('AV')).toBeInTheDocument();
   });
 
-  it('renders a clean "Sicil" label preceding the userId', () => {
+  it('shows the bare userId with no "Sicil" caption above it', () => {
     render(<SidebarProfile name="X" userId="2024001" role="admin" />);
-    const sicil = screen.getByText('Sicil');
-    // De-bureaucratized: plain small label, no mono/uppercase ministerial styling.
-    expect(sicil.className).toContain('text-xs');
-    expect(sicil.className).not.toContain('font-mono');
-    expect(sicil.className).not.toContain('uppercase');
+    expect(screen.queryByText('Sicil')).toBeNull();
+    expect(screen.getByText('2024001')).toBeInTheDocument();
   });
 
   it('renders the role badge styled for the dark sidebar', () => {
