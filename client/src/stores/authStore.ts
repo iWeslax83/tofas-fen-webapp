@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { SecureAPI } from '../utils/api';
+import { API_ENDPOINTS } from '../utils/apiEndpoints';
 import { AppError, ErrorType, ErrorSeverity, ErrorContext } from '../utils/AppError';
 import { User } from '../types/user';
 import { TokenManager } from '../utils/security';
@@ -216,10 +217,13 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
     });
 
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
+      // Must go through SecureAPI, not a bare relative fetch. A relative URL
+      // resolves against the page origin, which is the SPA's host — on a
+      // split deployment (SPA on Vercel, API on Render) that never reaches
+      // the API at all, so the server-side session was never revoked and the
+      // failure was invisible. SecureAPI carries the API base URL, the
+      // credentials, and the X-CSRF-Token header.
+      await SecureAPI.post(API_ENDPOINTS.AUTH.LOGOUT);
     } catch (error) {
       if (import.meta.env.DEV) {
         safeConsoleError('Logout API call failed:', error);
