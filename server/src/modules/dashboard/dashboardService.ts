@@ -19,6 +19,7 @@ export interface AdminOverview {
   pendingDilekce: number;
   pendingEvci: number;
   unreadNotifications: number;
+  recentActivity: ActivityEntry[];
 }
 
 export interface TeacherOverview {
@@ -26,6 +27,7 @@ export interface TeacherOverview {
   studentCount: number;
   pendingDilekce: number;
   unreadNotifications: number;
+  recentActivity: ActivityEntry[];
 }
 
 export interface ParentChildSummary {
@@ -39,6 +41,7 @@ export interface ParentOverview {
   children: ParentChildSummary[];
   pendingHomework: number;
   unreadNotifications: number;
+  recentActivity: ActivityEntry[];
 }
 
 export interface ScheduleEntry {
@@ -65,6 +68,16 @@ export interface AnnouncementSummary {
   date: string;
 }
 
+export interface ActivityEntry {
+  id: string;
+  kind: 'note' | 'homework' | 'announcement' | 'dilekce' | 'registration';
+  title: string;
+  detail: string;
+  /** ISO timestamp; the client formats it. */
+  date: string;
+  url: string;
+}
+
 export interface StudentOverview {
   averageGrade: { value: number; deltaMonthly: number; trend: number[] };
   pendingHomework: { total: number; dueToday: number; completed: number };
@@ -82,6 +95,7 @@ export interface StudentOverview {
   todaySchedule: ScheduleEntry[];
   homeworkQueue: HomeworkEntry[];
   announcement: AnnouncementSummary | null;
+  recentActivity: ActivityEntry[];
 }
 
 // JS getDay() (0=Sun) → Turkish school weekday. Weekend → null (no lessons).
@@ -117,6 +131,196 @@ const endOfDay = (d = new Date()) =>
   new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
+
+const ACTIVITY_LIMIT = 6;
+
+const iso = (d?: Date | string | null): string =>
+  d ? new Date(d).toISOString() : new Date(0).toISOString();
+
+/** Newest first, capped. Entries with no usable date sink to the bottom. */
+const mergeActivity = (entries: ActivityEntry[]): ActivityEntry[] =>
+  entries
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, ACTIVITY_LIMIT);
+
+/** Announcements aimed at this role, or at everyone. */
+async function announcementActivity(role: string, url: string): Promise<ActivityEntry[]> {
+  const anns = await Announcement.find({
+    $or: [
+      { targetRoles: role },
+      { targetRoles: { $size: 0 } },
+      { targetRoles: { $exists: false } },
+    ],
+  })
+    .sort({ createdAt: -1 })
+    .limit(ACTIVITY_LIMIT)
+    .lean<Array<{ _id: unknown; title: string; author?: string; createdAt: Date }>>();
+
+  return anns.map((a) => ({
+    id: `ann-${String(a._id)}`,
+    kind: 'announcement' as const,
+    title: a.title,
+    detail: a.author ? `Duyuru · ${a.author}` : 'Duyuru',
+    date: iso(a.createdAt),
+    url,
+  }));
+}
+
+/**
+ * The student's own recent history: grades that landed, homework that was
+ * set for their class, announcements addressed to them.
+ */
+async function getStudentActivity(userId: string, classLevel?: string): Promise<ActivityEntry[]> {
+  const [notes, homeworks, anns] = await Promise.all([
+    Note.find({ studentId: userId })
+      .sort({ lastUpdated: -1 })
+      .limit(ACTIVITY_LIMIT)
+      .lean<Array<{ _id: unknown; lesson: string; average?: number; lastUpdated: Date }>>(),
+    classLevel
+      ? Homework.find({ classLevel, isPublished: true })
+          .sort({ assignedDate: -1 })
+          .limit(ACTIVITY_LIMIT)
+          .lean<
+            Array<{
+              id?: string;
+              title: string;
+              subject: string;
+              assignedDate: Date;
+              dueDate: Date;
+            }>
+          >()
+      : Promise.resolve([]),
+    announcementActivity('student', '/student/duyurular'),
+  ]);
+
+  return mergeActivity([
+    ...notes.map((n) => ({
+      id: `note-${String(n._id)}`,
+      kind: 'note' as const,
+      title: `${n.lesson} notu girildi`,
+      detail: typeof n.average === 'number' ? `Ortalama ${round1(n.average)}` : 'Not güncellendi',
+      date: iso(n.lastUpdated),
+      url: '/student/notlar',
+    })),
+    ...homeworks.map((h, i) => ({
+      id: `hw-${h.id ?? i}`,
+      kind: 'homework' as const,
+      title: `Yeni ödev: ${h.title}`,
+      detail: `${h.subject} · ${dueLabelFor(new Date(h.dueDate)).label}`,
+      date: iso(h.assignedDate),
+      url: '/student/odevler',
+    })),
+    ...anns,
+  ]);
+}
+
+/** What the teacher has set, and what is waiting on them. */
+async function getTeacherActivity(userId: string): Promise<ActivityEntry[]> {
+  const [homeworks, dilekceler, anns] = await Promise.all([
+    Homework.find({ teacherId: userId }).sort({ assignedDate: -1 }).limit(ACTIVITY_LIMIT).lean<
+      Array<{
+        id?: string;
+        title: string;
+        subject: string;
+        classLevel: string;
+        assignedDate: Date;
+      }>
+    >(),
+    Dilekce.find({ reviewedBy: userId })
+      .sort({ createdAt: -1 })
+      .limit(ACTIVITY_LIMIT)
+      .lean<Array<{ _id: unknown; subject: string; userName: string; createdAt: Date }>>(),
+    announcementActivity('teacher', '/teacher/duyurular'),
+  ]);
+
+  return mergeActivity([
+    ...homeworks.map((h, i) => ({
+      id: `hw-${h.id ?? i}`,
+      kind: 'homework' as const,
+      title: `Ödev verildi: ${h.title}`,
+      detail: `${h.subject} · ${h.classLevel}. sınıf`,
+      date: iso(h.assignedDate),
+      url: '/teacher/odevler',
+    })),
+    ...dilekceler.map((d) => ({
+      id: `dlk-${String(d._id)}`,
+      kind: 'dilekce' as const,
+      title: `Dilekçe: ${d.subject}`,
+      detail: d.userName,
+      date: iso(d.createdAt),
+      url: '/teacher/dilekce',
+    })),
+    ...anns,
+  ]);
+}
+
+/** The administrator's inbox: what arrived and needs a decision. */
+async function getAdminActivity(): Promise<ActivityEntry[]> {
+  const [registrations, dilekceler, anns] = await Promise.all([
+    Registration.find()
+      .sort({ createdAt: -1 })
+      .limit(ACTIVITY_LIMIT)
+      .lean<Array<{ _id: unknown; studentName: string; status: string; createdAt: Date }>>(),
+    Dilekce.find()
+      .sort({ createdAt: -1 })
+      .limit(ACTIVITY_LIMIT)
+      .lean<Array<{ _id: unknown; subject: string; userName: string; createdAt: Date }>>(),
+    announcementActivity('admin', '/admin/duyurular'),
+  ]);
+
+  return mergeActivity([
+    ...registrations.map((r) => ({
+      id: `reg-${String(r._id)}`,
+      kind: 'registration' as const,
+      title: `Kayıt başvurusu: ${r.studentName}`,
+      detail: r.status === 'pending' ? 'İnceleme bekliyor' : `Durum: ${r.status}`,
+      date: iso(r.createdAt),
+      url: '/admin/kayit-basvurulari',
+    })),
+    ...dilekceler.map((d) => ({
+      id: `dlk-${String(d._id)}`,
+      kind: 'dilekce' as const,
+      title: `Dilekçe: ${d.subject}`,
+      detail: d.userName,
+      date: iso(d.createdAt),
+      url: '/admin/dilekce',
+    })),
+    ...anns,
+  ]);
+}
+
+/** The parent sees their children's grades and the announcements for them. */
+async function getParentActivity(childIds: string[]): Promise<ActivityEntry[]> {
+  const [notes, anns] = await Promise.all([
+    childIds.length
+      ? Note.find({ studentId: { $in: childIds } })
+          .sort({ lastUpdated: -1 })
+          .limit(ACTIVITY_LIMIT)
+          .lean<
+            Array<{
+              _id: unknown;
+              lesson: string;
+              studentName: string;
+              average?: number;
+              lastUpdated: Date;
+            }>
+          >()
+      : Promise.resolve([]),
+    announcementActivity('parent', '/parent/duyurular'),
+  ]);
+
+  return mergeActivity([
+    ...notes.map((n) => ({
+      id: `note-${String(n._id)}`,
+      kind: 'note' as const,
+      title: `${n.studentName} · ${n.lesson} notu`,
+      detail: typeof n.average === 'number' ? `Ortalama ${round1(n.average)}` : 'Not güncellendi',
+      date: iso(n.lastUpdated),
+      url: '/parent/notlar',
+    })),
+    ...anns,
+  ]);
+}
 
 /**
  * Aggregate the dashboard hero numbers for a single student in one
@@ -245,6 +449,7 @@ export async function getStudentOverview(userId: string, sinif?: string): Promis
     todaySchedule,
     homeworkQueue,
     announcement,
+    recentActivity: await getStudentActivity(userId, student?.sinif),
   };
 }
 
@@ -283,6 +488,7 @@ export async function getAdminOverview(userId: string): Promise<AdminOverview> {
     pendingDilekce,
     pendingEvci,
     unreadNotifications,
+    recentActivity: await getAdminActivity(),
   };
 }
 
@@ -298,7 +504,13 @@ export async function getTeacherOverview(userId: string): Promise<TeacherOvervie
     Notification.countDocuments({ userId, read: false }),
   ]);
 
-  return { activeHomework, studentCount, pendingDilekce, unreadNotifications };
+  return {
+    activeHomework,
+    studentCount,
+    pendingDilekce,
+    unreadNotifications,
+    recentActivity: await getTeacherActivity(userId),
+  };
 }
 
 /**
@@ -336,5 +548,10 @@ export async function getParentOverview(userId: string): Promise<ParentOverview>
 
   const unreadNotifications = await Notification.countDocuments({ userId, read: false });
 
-  return { children: summaries, pendingHomework, unreadNotifications };
+  return {
+    children: summaries,
+    pendingHomework,
+    unreadNotifications,
+    recentActivity: await getParentActivity(childIds),
+  };
 }
