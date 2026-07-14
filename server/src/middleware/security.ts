@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { validationResult } from 'express-validator';
 import DOMPurify from 'isomorphic-dompurify';
 import logger from '../utils/logger';
+import { cookieSameSite, cookieSecure } from '../utils/cookies';
 
 // Enhanced security middleware for comprehensive protection
 
@@ -434,9 +435,9 @@ export const sessionSecurity = (req: Request, _res: Response, next: NextFunction
 
   // Set secure session options
   if (req.session) {
-    req.session.cookie.secure = process.env.NODE_ENV === 'production';
+    req.session.cookie.secure = cookieSecure();
     req.session.cookie.httpOnly = true;
-    req.session.cookie.sameSite = 'strict';
+    req.session.cookie.sameSite = cookieSameSite();
     req.session.cookie.maxAge = 24 * 60 * 60 * 1000; // 24 hours
   }
 
