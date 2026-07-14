@@ -577,21 +577,27 @@ function UserCard({ u, selected, onEdit, onSelectParent, onDelete }: UserCardPro
       </div>
 
       {/* Card body */}
-      <div className="px-4 py-3 flex-1 space-y-3">
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-px bg-[var(--rule)] border border-[var(--rule)]">
-          <StatCell label="Sınıf" value={u.sinif || '—'} />
-          <StatCell label="Şube" value={u.sube || '—'} />
-          {u.rol === 'student' && u.pansiyon && <StatCell label="Oda" value={u.oda || '—'} />}
-          {u.rol === 'parent' && u.childId && u.childId.length > 0 && (
-            <div className="col-span-2 bg-[var(--paper)] p-2 text-center">
-              <div className="font-serif text-lg text-[var(--ink)]">{u.childId.length}</div>
-              <div className="text-xs font-medium text-[var(--ink-dim)]">Çocuk Sayısı</div>
-            </div>
-          )}
-        </div>
+      <div className="px-4 py-3 flex-1 flex flex-col gap-3">
+        {/* Stats — only the ones this role actually has, so admin/teacher
+            cards don't render two empty "—" boxes and look broken. */}
+        {u.rol === 'student' && (
+          <div className="grid grid-cols-2 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+            <StatCell label="Sınıf" value={u.sinif || '—'} />
+            <StatCell label="Şube" value={u.sube || '—'} />
+            {u.pansiyon && <StatCell label="Oda" value={u.oda || '—'} />}
+          </div>
+        )}
+        {u.rol === 'parent' && u.childId && u.childId.length > 0 && (
+          <div className="border border-[var(--rule)] bg-[var(--paper)] p-2 text-center">
+            <div className="font-serif text-lg text-[var(--ink)]">{u.childId.length}</div>
+            <div className="text-xs font-medium text-[var(--ink-dim)]">Çocuk sayısı</div>
+          </div>
+        )}
 
-        {/* Actions */}
+        {/* Actions stay right under the content. Cards in a ruled row stretch
+            to equal height; keeping the buttons here (not mt-auto'd to the
+            floor) stops a tall student card from leaving a short admin card's
+            buttons stranded in a band far below its header. */}
         <div className="flex flex-wrap gap-1.5">
           <Button variant="ghost" size="sm" onClick={onEdit}>
             Düzenle
