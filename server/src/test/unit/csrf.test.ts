@@ -79,7 +79,7 @@ describe('csrfProtection middleware (B-H2)', () => {
     });
   });
 
-  describe('exempt bootstrap paths', () => {
+  describe('bootstrap paths', () => {
     const exemptPaths = [
       '/api/auth/login',
       '/api/auth/refresh',
@@ -92,19 +92,47 @@ describe('csrfProtection middleware (B-H2)', () => {
       '/api/registration',
     ];
 
-    it.each(exemptPaths)('should skip check for %s even with auth cookie', (path) => {
+    // These endpoints run before any csrfToken cookie has been issued, and the
+    // SPA calls refresh/logout without the X-CSRF-Token header, so they are
+    // exempt from the double-submit check — but only from that check.
+    it.each(exemptPaths)(
+      'should skip the double-submit check for %s when the origin is allowed',
+      (path) => {
+        const req = createReq({
+          path,
+          originalUrl: path,
+          cookies: { accessToken: 'some-jwt-goes-here', csrfToken: 'issued-token' },
+          headers: { origin: ALLOWED_ORIGIN },
+        } as Partial<Request>);
+        const { res } = createRes();
+        const next = vi.fn();
+
+        csrfProtection(req as Request, res as Response, next);
+
+        expect(next).toHaveBeenCalledOnce();
+        expect(res.status).not.toHaveBeenCalled();
+      },
+    );
+
+    // Regression: these paths used to bypass the origin check entirely. That
+    // was only safe while auth cookies were SameSite=strict. Under
+    // COOKIE_SAMESITE=none a credentialed cross-site POST reaches the server
+    // and executes — burning the victim's refresh-token family (which trips
+    // reuse detection and kills the session) or force-logging them out.
+    it.each(exemptPaths)('should still reject %s from a foreign origin', (path) => {
       const req = createReq({
         path,
         originalUrl: path,
         cookies: { accessToken: 'some-jwt-goes-here' },
-      });
-      const { res } = createRes();
+        headers: { origin: 'https://evil.example.com' },
+      } as Partial<Request>);
+      const { res, state } = createRes();
       const next = vi.fn();
 
       csrfProtection(req as Request, res as Response, next);
 
-      expect(next).toHaveBeenCalledOnce();
-      expect(res.status).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+      expect(state.statusCode).toBe(403);
     });
   });
 
