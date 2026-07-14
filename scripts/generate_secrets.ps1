@@ -30,4 +30,4 @@ foreach ($k in $secrets.Keys) {
     "{0}={1}" -f $k, $secrets[$k] | Out-File -FilePath $outFile -Append -Encoding utf8
 }
 
-Write-Host "Generated secrets written. Next: run scripts\clean_git_history.ps1 to purge old values from Git history (dry-run first)."
+Write-Host "Generated secrets written. Next: run scripts\clean-git-history.ps1 to purge old values from Git history (dry-run first)."
