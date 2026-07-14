@@ -148,7 +148,7 @@ export default function RegistrationFormPage() {
                 alt="Tofaş Fen Lisesi logosu"
                 width={250}
                 height={298}
-                className="h-16 w-auto"
+                className="h-24 w-auto"
               />
               <div>
                 <div className="text-xs font-medium text-white/60">Yeni Kayıt</div>
