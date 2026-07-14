@@ -1,81 +1,51 @@
-// src/pages/NotFoundPage.tsx/*
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle, Home } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { UserRole } from '../../@types';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+
+const HOME_BY_ROLE: Record<string, string> = {
+  admin: '/admin',
+  student: '/student',
+  teacher: '/teacher',
+  parent: '/parent',
+};
 
 export default function NotFoundPage() {
   const navigate = useNavigate();
   const { user } = useAuthContext();
 
-  const getBackRoute = () => {
-    const role = user?.rol;
-    switch (role as UserRole) {
-      case 'admin':
-        return '/admin';
-      case 'student':
-        return '/student';
-      case 'teacher':
-        return '/teacher';
-      case 'parent':
-        return '/parent';
-
-      default:
-        return '/';
-    }
-  };
-
-  const breadcrumb = [{ label: 'Ana Sayfa', path: getBackRoute() }, { label: 'Sayfa Bulunamadı' }];
+  const home = HOME_BY_ROLE[(user?.rol as UserRole) ?? ''] ?? '/';
+  const breadcrumb = [{ label: 'Ana Sayfa', path: home }, { label: 'Sayfa Bulunamadı' }];
 
   return (
     <ModernDashboardLayout pageTitle="Sayfa Bulunamadı" breadcrumb={breadcrumb}>
-      <div className="not-found-page">
-        <main className="main-content">
-          <div className="content-card error-card">
-            <div className="error-content">
-              <AlertTriangle size={64} className="error-icon" />
-              <h2>404 - Sayfa Bulunamadı</h2>
-              <p className="error-message">
-                Aradığınız sayfa taşınmış, silinmiş veya hiç var olmamış olabilir.
-              </p>
-              <div className="button-group">
-                <button
-                  onClick={() => {
-                    // Navigate to user's role-based main page
-                    const role = user?.rol;
-                    switch (role as UserRole) {
-                      case 'admin':
-                        navigate('/admin');
-                        break;
-                      case 'student':
-                        navigate('/student');
-                        break;
-                      case 'teacher':
-                        navigate('/teacher');
-                        break;
-                      case 'parent':
-                        navigate('/parent');
-                        break;
+      <div className="p-6 max-w-xl">
+        <Card contentClassName="p-8 border-l-4 border-[var(--state)]">
+          <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--ink-dim)]">
+            Hata 404
+          </p>
+          <h1 className="mt-2 font-serif text-2xl text-[var(--ink)]">Sayfa bulunamadı</h1>
+          <p className="mt-3 font-serif text-sm leading-relaxed text-[var(--ink-2)]">
+            Aradığınız sayfa taşınmış, silinmiş ya da hiç var olmamış olabilir. Adresi kontrol edin
+            veya panele dönün.
+          </p>
 
-                      default:
-                        navigate('/');
-                        break;
-                    }
-                  }}
-                  className="button button--secondary"
-                >
-                  <ArrowLeft size={18} className="button-icon" />
-                  Ana Sayfaya Dön
-                </button>
-                <button onClick={() => navigate('/')} className="button button--primary">
-                  <Home size={18} className="button-icon" />
-                  Anasayfaya Dön
-                </button>
-              </div>
-            </div>
+          <div className="mt-6 flex items-center gap-4">
+            <Button onClick={() => navigate(home)}>
+              <ArrowLeft size={16} />
+              Panele dön
+            </Button>
+            <Link
+              to="/"
+              className="text-sm text-[var(--ink-dim)] underline underline-offset-4 hover:text-[var(--state)] transition-colors"
+            >
+              Giriş sayfası
+            </Link>
           </div>
-        </main>
+        </Card>
       </div>
     </ModernDashboardLayout>
   );
