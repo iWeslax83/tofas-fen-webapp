@@ -5,7 +5,6 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { useInitialized } from '../stores/authStore';
 import { dashboardButtons, type UserRole } from '../pages/Dashboard/dashboardButtonConfig';
 import { useNotifications } from '../hooks/useNotifications';
-import { ThemeToggle } from './ThemeToggle';
 import { SidebarProfile } from './SidebarProfile';
 import { CommandPalette } from './CommandPalette';
 import './ModernDashboardLayout.css';
@@ -187,7 +186,6 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
             >
               <Search size={20} />
             </button>
-            <ThemeToggle />
             {/* Notification Bell */}
             <div className="notif-container" ref={notifRef}>
               <button

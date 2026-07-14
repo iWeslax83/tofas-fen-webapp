@@ -112,7 +112,7 @@ export function StudentsList({
               </div>
             )}
             <div className="flex items-center justify-center w-9 h-9 bg-[var(--ink-2)] text-[var(--paper)] font-serif text-sm uppercase shrink-0">
-              {student.adSoyad.charAt(0).toUpperCase()}
+              {student.adSoyad.charAt(0).toLocaleUpperCase('tr')}
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-serif text-sm text-[var(--ink)] truncate">{student.adSoyad}</div>

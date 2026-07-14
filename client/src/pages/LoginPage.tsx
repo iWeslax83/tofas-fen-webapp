@@ -212,7 +212,7 @@ export default function LoginPage() {
                       setId(e.target.value);
                       if (error) setError('');
                     }}
-                    placeholder="Kullanıcı ID'nizi girin"
+                    placeholder="Okul No'nuzu girin"
                     required
                     disabled={isSubmitting}
                     autoComplete="username"

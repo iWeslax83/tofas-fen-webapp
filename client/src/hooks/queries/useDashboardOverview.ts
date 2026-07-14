@@ -35,7 +35,15 @@ export interface AnnouncementSummary {
   date: string;
 }
 
-export interface StudentOverview {
+export type { ActivityEntry } from '../../components/dashboard/RecentActivity';
+import type { ActivityEntry } from '../../components/dashboard/RecentActivity';
+
+/** Every role's overview carries the dashboard's Son Hareketler feed. */
+interface WithActivity {
+  recentActivity: ActivityEntry[];
+}
+
+export interface StudentOverview extends WithActivity {
   averageGrade: { value: number; deltaMonthly: number; trend: number[] };
   pendingHomework: { total: number; dueToday: number; completed: number };
   attendance: { percent: number; last30Days: boolean[] };
@@ -54,7 +62,7 @@ export interface StudentOverview {
   announcement: AnnouncementSummary | null;
 }
 
-export interface AdminOverview {
+export interface AdminOverview extends WithActivity {
   totalStudents: number;
   totalTeachers: number;
   totalParents: number;
@@ -65,7 +73,7 @@ export interface AdminOverview {
   unreadNotifications: number;
 }
 
-export interface TeacherOverview {
+export interface TeacherOverview extends WithActivity {
   activeHomework: number;
   studentCount: number;
   pendingDilekce: number;
@@ -79,7 +87,7 @@ export interface ParentChildSummary {
   averageGrade: number;
 }
 
-export interface ParentOverview {
+export interface ParentOverview extends WithActivity {
   children: ParentChildSummary[];
   pendingHomework: number;
   unreadNotifications: number;

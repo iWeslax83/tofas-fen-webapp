@@ -8,7 +8,7 @@ import { WelcomeHero } from './dashboard/WelcomeHero';
 import { KpiTable, type KpiItem } from './dashboard/KpiTable';
 import { TodaySchedule, type ScheduleRow } from './dashboard/TodaySchedule';
 import { HomeworkQueue, type HomeworkRow } from './dashboard/HomeworkQueue';
-import { QuickActions, type QuickAction } from './dashboard/QuickActions';
+import { RecentActivity, type ActivityEntry } from './dashboard/RecentActivity';
 import { AnnouncementCard } from './dashboard/AnnouncementCard';
 import {
   useDashboardOverview,
@@ -132,32 +132,8 @@ const ModernDashboard: React.FC = () => {
   const homeworkRows: HomeworkRow[] = studentOv?.homeworkQueue ?? [];
   const announcement = studentOv?.announcement ?? null;
 
-  // Hızlı İşlem — role-aware.
-  const quickActions: QuickAction[] = [];
-  if (authUser.rol === 'admin' || authUser.rol === 'teacher') {
-    quickActions.push({
-      key: 'enter-grade',
-      shortcut: 'N',
-      label: 'Not gir',
-      onSelect: () => navigate('/notlar'),
-    });
-  }
-  if (authUser.rol === 'admin') {
-    quickActions.push({
-      key: 'add-user',
-      shortcut: 'K',
-      label: 'Yeni kullanıcı',
-      onSelect: () => navigate('/admin/sifre-yonetimi'),
-    });
-  }
-  if (authUser.rol === 'student' || authUser.rol === 'parent') {
-    quickActions.push({
-      key: 'write-petition',
-      shortcut: 'D',
-      label: 'Dilekçe yaz',
-      onSelect: () => navigate(`/${authUser.rol}/dilekce`),
-    });
-  }
+  // Son Hareketler — the server builds this per role from real records.
+  const recentActivity: ActivityEntry[] = overview?.recentActivity ?? [];
 
   return (
     <ModernDashboardLayout pageTitle="Panel">
@@ -174,7 +150,7 @@ const ModernDashboard: React.FC = () => {
             date={announcement.date}
           />
         )}
-        <QuickActions actions={quickActions} />
+        <RecentActivity entries={recentActivity} />
       </div>
     </ModernDashboardLayout>
   );

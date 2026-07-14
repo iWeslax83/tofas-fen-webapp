@@ -552,7 +552,7 @@ interface UserCardProps {
 }
 
 function UserCard({ u, selected, onEdit, onSelectParent, onDelete }: UserCardProps) {
-  const initials = u.adSoyad.charAt(0).toUpperCase();
+  const initials = u.adSoyad.charAt(0).toLocaleUpperCase('tr');
 
   return (
     <div

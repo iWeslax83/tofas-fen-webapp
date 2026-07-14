@@ -2,6 +2,7 @@ import { SecureAPI } from './api';
 import { handleResponse, handleResponseArray } from './apiResponseHandler';
 import { API_ENDPOINTS } from './apiEndpoints';
 import { User } from '../types/user';
+import type { ClassSchedule } from '../types/schedule';
 // Removed unused import
 
 // Standard API service class
@@ -324,8 +325,18 @@ export class AnnouncementService {
 
 // Schedule service
 export class ScheduleService {
-  static async getSchedule() {
-    return ApiService.getArray(API_ENDPOINTS.SCHEDULE.BASE);
+  /**
+   * The server answers with { schedules, pagination } and filters by role:
+   * a student gets their own class, a parent their children's, staff get all.
+   * getArray() cannot read that envelope -- it only unwraps bare arrays -- so
+   * reach for the field directly.
+   */
+  static async getSchedules(): Promise<{ data: ClassSchedule[]; error: string | null }> {
+    const { data, error } = await ApiService.get<{ schedules: ClassSchedule[] }>(
+      API_ENDPOINTS.SCHEDULE.BASE,
+      { params: { isActive: 'true' } },
+    );
+    return { data: data?.schedules ?? [], error };
   }
 
   static async createSchedule(scheduleData: Record<string, unknown>) {

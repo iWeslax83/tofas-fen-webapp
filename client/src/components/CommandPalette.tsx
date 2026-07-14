@@ -1,6 +1,7 @@
 import { Command } from 'cmdk';
 import * as RadixDialog from '@radix-ui/react-dialog';
 import { useEffect } from 'react';
+import { X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   dashboardButtons,
@@ -78,9 +79,24 @@ export function CommandPalette({ open, onOpenChange, role, pansiyon }: CommandPa
           <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
             Komut Paleti
           </span>
-          <kbd className="font-mono text-[10px] text-[var(--ink-dim)] border border-[var(--rule)] px-1.5 py-0.5">
-            ESC
-          </kbd>
+          <div className="flex items-center gap-2">
+            <kbd className="font-mono text-[10px] text-[var(--ink-dim)] border border-[var(--rule)] px-1.5 py-0.5">
+              ESC
+            </kbd>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              aria-label="Kapat"
+              className={cn(
+                'flex items-center justify-center p-1 -mr-1 rounded',
+                'text-[var(--ink-dim)] hover:text-[var(--ink)]',
+                'hover:bg-[var(--surface-2)] transition-colors',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--state)]',
+              )}
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
         <Command.Input
