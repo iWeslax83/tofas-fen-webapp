@@ -81,12 +81,8 @@
 }
 
 .modern-sidebar .logo-image {
-  width: 40px;
+  width: auto;
   height: 40px;
-  object-fit: contain;
-  border-radius: 0.5rem;
-  background: #ffffff;
-  padding: 4px;
   flex-shrink: 0;
 }
 

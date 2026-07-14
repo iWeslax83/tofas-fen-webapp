@@ -3,6 +3,11 @@
  * Executes database migrations in order
  */
 
+// Load environment variables first (mirrors src/index.ts bootstrap order).
+// Without this, ../db reads process.env.MONGODB_URI before dotenv runs and
+// falls back to localhost -- migrations would report success while leaving
+// the configured database untouched.
+import '../config/environment';
 import mongoose from 'mongoose';
 import fs from 'fs';
 import path from 'path';
@@ -24,7 +29,7 @@ async function getMigrationHistory(): Promise<string[]> {
     if (!db) {
       return [];
     }
-    
+
     const collection = db.collection(MIGRATIONS_COLLECTION);
     const records = await collection.find({}).sort({ executedAt: 1 }).toArray();
     return records.map((r) => (r as unknown as MigrationRecord).name);
@@ -42,11 +47,11 @@ async function markMigrationExecuted(name: string) {
   if (!db) {
     throw new Error('Database connection not available');
   }
-  
+
   const collection = db.collection(MIGRATIONS_COLLECTION);
   await collection.insertOne({
     name,
-    executedAt: new Date()
+    executedAt: new Date(),
   });
 }
 
@@ -55,11 +60,11 @@ async function markMigrationExecuted(name: string) {
  */
 async function loadMigration(migrationName: string) {
   const migrationPath = path.join(__dirname, '../migrations', `${migrationName}.ts`);
-  
+
   if (!fs.existsSync(migrationPath)) {
     throw new Error(`Migration file not found: ${migrationPath}`);
   }
-  
+
   // Dynamic import
   const migration = await import(migrationPath);
   return migration.default || migration;
@@ -72,26 +77,27 @@ export async function runMigrations(direction: 'up' | 'down' = 'up') {
   try {
     console.log('Connecting to database...');
     await connectDB();
-    
+
     const migrationsDir = path.join(__dirname, '../migrations');
-    const files = fs.readdirSync(migrationsDir)
-      .filter(file => file.endsWith('.ts') && file !== 'index.ts')
+    const files = fs
+      .readdirSync(migrationsDir)
+      .filter((file) => file.endsWith('.ts') && file !== 'index.ts')
       .sort();
-    
+
     console.log(`Found ${files.length} migration(s)`);
-    
+
     const executedMigrations = await getMigrationHistory();
-    
+
     for (const file of files) {
       const migrationName = path.basename(file, '.ts');
-      
+
       if (direction === 'up') {
         // Skip if already executed
         if (executedMigrations.includes(migrationName)) {
           console.log(`⏭️  Skipping ${migrationName} (already executed)`);
           continue;
         }
-        
+
         console.log(`🔄 Running migration: ${migrationName}`);
         const migration = await loadMigration(migrationName);
         await migration.up();
@@ -103,22 +109,22 @@ export async function runMigrations(direction: 'up' | 'down' = 'up') {
           console.log(`⏭️  Skipping ${migrationName} (not executed)`);
           continue;
         }
-        
+
         console.log(`🔄 Rolling back migration: ${migrationName}`);
         const migration = await loadMigration(migrationName);
         await migration.down();
-        
+
         // Remove from history
         const db = mongoose.connection.db;
         if (db) {
           const collection = db.collection(MIGRATIONS_COLLECTION);
           await collection.deleteOne({ name: migrationName });
         }
-        
+
         console.log(`✅ Migration ${migrationName} rolled back`);
       }
     }
-    
+
     console.log('✅ All migrations completed');
   } catch (error) {
     console.error('❌ Migration error:', error);
@@ -129,7 +135,7 @@ export async function runMigrations(direction: 'up' | 'down' = 'up') {
 // Run if called directly
 if (require.main === module) {
   const direction = process.argv[2] === 'down' ? 'down' : 'up';
-  
+
   runMigrations(direction)
     .then(() => {
       console.log('Migration process completed');
@@ -142,4 +148,3 @@ if (require.main === module) {
 }
 
 export default runMigrations;
-

@@ -173,7 +173,9 @@ export default function LoginPage() {
             <img
               src="/tofaslogo.png"
               alt="Tofaş Fen Lisesi logosu"
-              className="w-11 h-11 rounded-lg bg-white p-1.5"
+              width={250}
+              height={298}
+              className="h-12 w-auto"
             />
             <div>
               <span className="block font-serif text-base text-[var(--ink)] leading-tight">
