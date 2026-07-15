@@ -177,6 +177,16 @@ export function createRedisRateLimitStore(): RedisStore | undefined {
       `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || '6379'}`;
     if (!redisStoreClient) {
       redisStoreClient = createClient({ url: redisUrl });
+      // A node-redis client with no 'error' listener re-emits a dropped socket
+      // ("Socket closed unexpectedly") as an unhandled EventEmitter 'error',
+      // which Node turns into an uncaughtException — and that crashed the whole
+      // server on a transient Redis blip. node-redis reconnects on its own, so
+      // log the blip and stay up.
+      redisStoreClient.on('error', (err: Error) => {
+        logger.warn('Redis rate-limit store error (auto-reconnecting)', {
+          error: err instanceof Error ? err.message : err,
+        });
+      });
       redisStoreClient.connect().catch(() => {
         logger.warn('Redis not available for rate limiting, using in-memory store');
         redisStoreClient = null;

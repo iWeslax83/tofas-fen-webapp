@@ -260,7 +260,17 @@ const TRANSIENT_ERROR_NAMES = new Set([
   'MongooseServerSelectionError',
   'PoolClearedError',
   'MongoTopologyClosedError',
+  // node-redis (@redis/client) dropped-socket / reconnect errors. A Redis blip
+  // is as operational as a Mongo one; the client auto-reconnects.
+  'SocketClosedUnexpectedlyError',
+  'ClientClosedError',
+  'ConnectionTimeoutError',
+  'ReconnectStrategyError',
 ]);
+
+// Redis socket drops surface as a generic `Error` (name 'Error', no code) whose
+// message is the only tell, so match it by substring too.
+const TRANSIENT_ERROR_MESSAGES = ['Socket closed unexpectedly'];
 
 function isTransientNetworkError(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
@@ -268,7 +278,9 @@ function isTransientNetworkError(err: unknown): boolean {
   if (typeof e.code === 'string' && TRANSIENT_ERROR_CODES.has(e.code)) return true;
   if (typeof e.name === 'string' && TRANSIENT_ERROR_NAMES.has(e.name)) return true;
   if (typeof e.message === 'string') {
-    return [...TRANSIENT_ERROR_CODES].some((c) => (e.message as string).includes(c));
+    const message = e.message;
+    if ([...TRANSIENT_ERROR_CODES].some((c) => message.includes(c))) return true;
+    if (TRANSIENT_ERROR_MESSAGES.some((m) => message.includes(m))) return true;
   }
   return false;
 }
