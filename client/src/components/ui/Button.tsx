@@ -62,7 +62,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         />
       )}
       {loading && <span className="sr-only">Yükleniyor</span>}
-      <span>{children}</span>
+      {/* The button's own flex row only ever sees this one wrapper, so the
+          wrapper has to be the row: without it an icon + label stacked
+          vertically instead of sitting side by side. */}
+      <span className="inline-flex items-center gap-2">{children}</span>
     </button>
   ),
 );

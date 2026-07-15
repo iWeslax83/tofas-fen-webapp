@@ -112,9 +112,7 @@ export default function BulkImportTab() {
       )}
 
       <Card contentClassName="p-4">
-        <div className="text-xs font-medium text-[var(--ink-dim)] mb-3">
-          Bekleyen Batch&apos;ler
-        </div>
+        <div className="text-xs font-medium text-[var(--ink-dim)] mb-3">Bekleyen Yüklemeler</div>
         <PendingBatchesList />
       </Card>
     </div>
