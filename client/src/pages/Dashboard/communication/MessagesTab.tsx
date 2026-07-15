@@ -1,21 +1,18 @@
 import React, { useRef } from 'react';
-import { motion } from 'framer-motion';
 import {
   MessageSquare,
   Plus,
-  Phone,
-  Video,
-  MoreVertical,
   Paperclip,
-  Smile,
   Send,
   Trash2,
   Download,
   Image,
   Video as VideoIcon,
   Music,
-  File,
+  File as FileIcon,
 } from 'lucide-react';
+import { Portrait } from '../../../components/Portrait';
+import { cn } from '../../../utils/cn';
 import { Message, Conversation } from './types';
 
 interface MessagesTabProps {
@@ -36,19 +33,22 @@ interface MessagesTabProps {
 }
 
 const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return '0 Bayt';
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ['Bayt', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
 const getFileIcon = (mimeType: string) => {
   if (mimeType.startsWith('image/')) return <Image size={16} />;
   if (mimeType.startsWith('video/')) return <VideoIcon size={16} />;
   if (mimeType.startsWith('audio/')) return <Music size={16} />;
-  return <File size={16} />;
+  return <FileIcon size={16} />;
 };
+
+const iconButton =
+  'inline-flex items-center justify-center h-8 w-8 border border-[var(--rule)] text-[var(--ink-dim)] hover:text-[var(--ink)] hover:border-[var(--ink)] transition-colors disabled:opacity-40 disabled:hover:border-[var(--rule)]';
 
 const MessagesTab: React.FC<MessagesTabProps> = ({
   conversations,
@@ -67,220 +67,242 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
   formatDate,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canSend = newMessage.trim().length > 0 || selectedFiles.length > 0;
 
   return (
-    <div className="messages-layout">
-      {/* Conversations List */}
-      <div className="conversations-sidebar">
-        <div className="sidebar-header">
-          <h3>Konuşmalar</h3>
-          <button className="btn btn-icon" onClick={onCreateClick}>
+    // The conversation list and the thread are two columns of one grid. They
+    // used to be styled by .messages-layout / .conversations-sidebar, whose CSS
+    // no longer exists, so both blocks collapsed into a single stacked column --
+    // the page told you to "pick a conversation from the left panel" while
+    // having no left panel.
+    <div className="grid h-full grid-cols-1 md:grid-cols-[20rem_1fr] divide-x divide-[var(--rule)] overflow-hidden">
+      <aside className="flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--rule)]">
+          <h3 className="font-serif text-base text-[var(--ink)]">Konuşmalar</h3>
+          <button type="button" className={iconButton} onClick={onCreateClick} title="Yeni konuşma">
             <Plus size={16} />
+            <span className="sr-only">Yeni konuşma</span>
           </button>
         </div>
 
         {loading ? (
-          <div className="loading">Yükleniyor...</div>
+          <p className="px-4 py-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</p>
+        ) : conversations.length === 0 ? (
+          <p className="px-4 py-6 font-serif text-sm text-[var(--ink-2)]">Henüz konuşma yok.</p>
         ) : (
-          <div className="conversations-list">
-            {conversations.map((conversation) => (
-              <motion.div
-                key={conversation.id}
-                className={`conversation-item ${selectedConversation?.id === conversation.id ? 'active' : ''}`}
-                onClick={() => onConversationSelect(conversation)}
-                whileHover={{ backgroundColor: 'var(--hover-bg)' }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="conversation-avatar">
-                  {conversation.type === 'direct' ? (
-                    <div className="avatar">👤</div>
-                  ) : (
-                    <div className="avatar">👥</div>
-                  )}
-                </div>
-                <div className="conversation-info">
-                  <div className="conversation-title">
-                    {conversation.title || `${conversation.participants.length} kişi`}
-                  </div>
-                  <div className="conversation-last-message">
-                    {conversation.lastMessage ? (
-                      <>
-                        <span className="sender">{conversation.lastMessage.senderName}:</span>
-                        <span className="message">{conversation.lastMessage.content}</span>
-                      </>
-                    ) : (
-                      'Henüz mesaj yok'
-                    )}
-                  </div>
-                </div>
-                <div className="conversation-meta">
-                  {conversation.unreadCount[conversation.id] > 0 && (
-                    <span className="unread-badge">
-                      {conversation.unreadCount[conversation.id]}
-                    </span>
-                  )}
-                  <span className="time">
-                    {conversation.lastMessage ? formatDate(conversation.lastMessage.timestamp) : ''}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
+          <ul className="flex-1 overflow-y-auto divide-y divide-[var(--rule)]">
+            {conversations.map((conversation) => {
+              const isActive = selectedConversation?.id === conversation.id;
+              const title = conversation.title || `${conversation.participants.length} kişi`;
+              const unread = conversation.unreadCount[conversation.id] ?? 0;
 
-      {/* Messages Area */}
-      <div className="messages-area">
+              return (
+                <li key={conversation.id}>
+                  <button
+                    type="button"
+                    onClick={() => onConversationSelect(conversation)}
+                    aria-current={isActive || undefined}
+                    className={cn(
+                      'w-full flex items-start gap-3 px-4 py-3 text-left transition-colors',
+                      isActive
+                        ? 'bg-[var(--surface)] border-l-2 border-[var(--state)]'
+                        : 'border-l-2 border-transparent hover:bg-[var(--surface-2)]',
+                    )}
+                  >
+                    <Portrait name={title} size="sm" />
+                    <span className="flex-1 min-w-0">
+                      <span className="block font-serif text-sm text-[var(--ink)] truncate">
+                        {title}
+                      </span>
+                      <span className="block text-xs text-[var(--ink-dim)] truncate">
+                        {conversation.lastMessage
+                          ? `${conversation.lastMessage.senderName}: ${conversation.lastMessage.content}`
+                          : 'Henüz mesaj yok'}
+                      </span>
+                    </span>
+                    <span className="flex flex-col items-end gap-1 shrink-0">
+                      {conversation.lastMessage && (
+                        <span className="text-xs text-[var(--ink-dim)] whitespace-nowrap">
+                          {formatDate(conversation.lastMessage.timestamp)}
+                        </span>
+                      )}
+                      {unread > 0 && (
+                        <span className="inline-flex items-center justify-center min-w-5 h-5 px-1 bg-[var(--state)] text-white text-[10px] font-semibold">
+                          {unread}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </aside>
+
+      <section className="flex flex-col overflow-hidden">
         {selectedConversation ? (
           <>
-            {/* Conversation Header */}
-            <div className="conversation-header">
-              <div className="conversation-info">
-                <h3>
-                  {selectedConversation.title || `${selectedConversation.participants.length} kişi`}
-                </h3>
-                <p>{selectedConversation.description}</p>
-              </div>
-              <div className="conversation-actions">
-                <button className="btn btn-icon">
-                  <Phone size={16} />
-                </button>
-                <button className="btn btn-icon">
-                  <Video size={16} />
-                </button>
-                <button className="btn btn-icon">
-                  <MoreVertical size={16} />
-                </button>
-              </div>
-            </div>
+            <header className="px-6 py-3 border-b border-[var(--rule)]">
+              <h3 className="font-serif text-base text-[var(--ink)]">
+                {selectedConversation.title || `${selectedConversation.participants.length} kişi`}
+              </h3>
+              {selectedConversation.description && (
+                <p className="text-xs text-[var(--ink-dim)]">{selectedConversation.description}</p>
+              )}
+            </header>
 
-            {/* Messages List */}
-            <div className="messages-list">
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+              {messages.length === 0 && (
+                <p className="font-serif text-sm text-[var(--ink-2)]">
+                  Bu konuşmada henüz mesaj yok.
+                </p>
+              )}
+
               {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  className={`message ${message.senderId === 'current-user' ? 'own' : 'other'}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <div className="message-avatar">
-                    <div className="avatar">{message.senderName.charAt(0)}</div>
-                  </div>
-                  <div className="message-content">
-                    <div className="message-header">
-                      <span className="sender-name">{message.senderName}</span>
-                      <span className="message-time">{formatDate(message.createdAt)}</span>
+                <article key={message.id} className="flex gap-3">
+                  <Portrait name={message.senderName} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-serif text-sm text-[var(--ink)]">
+                        {message.senderName}
+                      </span>
+                      <span className="text-xs text-[var(--ink-dim)]">
+                        {formatDate(message.createdAt)}
+                      </span>
+                      {message.edited && (
+                        <span className="text-xs text-[var(--ink-dim)]">(düzenlendi)</span>
+                      )}
                     </div>
 
                     {message.replyTo && (
-                      <div className="reply-to">
-                        <span>Yanıtla:</span>
-                        <span className="reply-content">{message.replyTo}</span>
-                      </div>
+                      <p className="mt-1 border-l-2 border-[var(--rule)] pl-2 text-xs text-[var(--ink-dim)] truncate">
+                        {message.replyTo}
+                      </p>
                     )}
 
-                    <div className="message-text">
+                    <p className="mt-1 font-serif text-sm leading-relaxed text-[var(--ink-2)] whitespace-pre-wrap break-words">
                       {message.content}
-                      {message.edited && <span className="edited">(düzenlendi)</span>}
-                    </div>
+                    </p>
 
                     {message.attachments && message.attachments.length > 0 && (
-                      <div className="message-attachments">
+                      <ul className="mt-2 space-y-1">
                         {message.attachments.map((attachment, index) => (
-                          <div key={index} className="attachment">
+                          <li
+                            key={index}
+                            className="flex items-center gap-2 border border-[var(--rule)] px-2 py-1 text-xs text-[var(--ink-2)]"
+                          >
                             {getFileIcon(attachment.mimeType)}
-                            <span className="attachment-name">{attachment.originalName}</span>
-                            <span className="attachment-size">
+                            <span className="flex-1 truncate">{attachment.originalName}</span>
+                            <span className="text-[var(--ink-dim)] shrink-0">
                               {formatFileSize(attachment.size)}
                             </span>
-                            <button className="btn btn-icon">
+                            <button
+                              type="button"
+                              className="text-[var(--ink-dim)] hover:text-[var(--state)] transition-colors"
+                              title="İndir"
+                            >
                               <Download size={12} />
+                              <span className="sr-only">İndir</span>
                             </button>
-                          </div>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     )}
 
                     {message.reactions.length > 0 && (
-                      <div className="message-reactions">
+                      <p className="mt-1 flex gap-1 text-sm">
                         {message.reactions.map((reaction, index) => (
-                          <span key={index} className="reaction">
-                            {reaction.emoji}
-                          </span>
+                          <span key={index}>{reaction.emoji}</span>
                         ))}
-                      </div>
+                      </p>
                     )}
                   </div>
-                </motion.div>
+                </article>
               ))}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Message Input */}
-            <div className="message-input">
-              <div className="input-actions">
-                <button className="btn btn-icon" onClick={() => fileInputRef.current?.click()}>
-                  <Paperclip size={16} />
-                </button>
-                <button className="btn btn-icon">
-                  <Smile size={16} />
-                </button>
-              </div>
+            <footer className="border-t border-[var(--rule)] px-6 py-3">
+              {selectedFiles.length > 0 && (
+                <ul className="mb-2 space-y-1">
+                  {selectedFiles.map((file, index) => (
+                    <li
+                      key={index}
+                      className="flex items-center gap-2 border border-[var(--rule)] px-2 py-1 text-xs text-[var(--ink-2)]"
+                    >
+                      <span className="flex-1 truncate">{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => onRemoveFile(index)}
+                        className="text-[var(--ink-dim)] hover:text-[var(--state)] transition-colors"
+                        title="Kaldır"
+                      >
+                        <Trash2 size={12} />
+                        <span className="sr-only">Kaldır</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
-              <div className="input-container">
+              <div className="flex items-end gap-2">
+                <button
+                  type="button"
+                  className={iconButton}
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Dosya ekle"
+                >
+                  <Paperclip size={16} />
+                  <span className="sr-only">Dosya ekle</span>
+                </button>
+
                 <textarea
                   value={newMessage}
                   onChange={(e) => onNewMessage(e.target.value)}
-                  placeholder="Mesajınızı yazın..."
-                  onKeyPress={(e) => {
+                  placeholder="Mesajınızı yazın…"
+                  rows={1}
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       onSendMessage();
                     }
                   }}
+                  className="flex-1 resize-none border border-[var(--rule)] bg-transparent px-3 py-2 font-serif text-sm leading-relaxed text-[var(--ink)] placeholder:text-[var(--ink-dim)] focus:outline-none focus:border-[var(--ink)]"
                 />
 
-                {selectedFiles.length > 0 && (
-                  <div className="selected-files">
-                    {selectedFiles.map((file, index) => (
-                      <div key={index} className="selected-file">
-                        <span>{file.name}</span>
-                        <button className="btn btn-icon" onClick={() => onRemoveFile(index)}>
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={onSendMessage}
+                  disabled={!canSend}
+                  className="inline-flex items-center justify-center h-8 w-8 bg-[var(--ink)] text-[var(--paper)] hover:bg-[var(--state)] transition-colors disabled:opacity-40 disabled:hover:bg-[var(--ink)]"
+                  title="Gönder"
+                >
+                  <Send size={16} />
+                  <span className="sr-only">Gönder</span>
+                </button>
               </div>
+            </footer>
 
-              <button
-                className="btn btn-primary send-btn"
-                onClick={onSendMessage}
-                disabled={!newMessage.trim() && selectedFiles.length === 0}
-              >
-                <Send size={16} />
-              </button>
-            </div>
-
-            {/* Hidden file input */}
             <input
               ref={fileInputRef}
               type="file"
               multiple
               onChange={onFileSelect}
-              style={{ display: 'none' }}
+              className="hidden"
               accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
             />
           </>
         ) : (
-          <div className="no-conversation">
-            <MessageSquare size={48} />
-            <h3>Bir konuşma seçin</h3>
-            <p>Mesajlaşmaya başlamak için sol panelden bir konuşma seçin</p>
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 p-10 text-center">
+            <MessageSquare size={32} className="text-[var(--ink-dim)]" />
+            <h3 className="font-serif text-lg text-[var(--ink)]">Bir konuşma seçin</h3>
+            <p className="font-serif text-sm text-[var(--ink-2)]">
+              Mesajlaşmaya başlamak için soldaki listeden bir konuşma seçin.
+            </p>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 };
