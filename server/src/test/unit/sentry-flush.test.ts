@@ -95,4 +95,17 @@ describe('fatal error handlers flush Sentry before exiting', () => {
     expect(order).toEqual([]);
     expect(exitSpy).not.toHaveBeenCalled();
   });
+
+  it('stays up on a node-redis dropped socket (the crash we actually hit)', async () => {
+    const handler = await loadDbHandler('uncaughtException');
+    registered.push(handler);
+
+    // A handler-less node-redis client re-emits this as an uncaughtException.
+    // It is a plain Error — name 'Error', no code — so only the message tells
+    // us it is transient. Before the fix this fell through to process.exit(1).
+    await handler(new Error('Socket closed unexpectedly'));
+
+    expect(order).toEqual([]);
+    expect(exitSpy).not.toHaveBeenCalled();
+  });
 });
