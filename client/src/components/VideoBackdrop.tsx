@@ -26,7 +26,9 @@ const prefersLessData = () =>
  */
 export function VideoBackdrop({ src, poster, label }: VideoBackdropProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [settled, setSettled] = useState(false);
+  // The video fades in only once it is actually rendering frames. Until then
+  // (and while the 4MB clip buffers) the poster is what shows.
+  const [videoPlaying, setVideoPlaying] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
   );
@@ -46,18 +48,21 @@ export function VideoBackdrop({ src, poster, label }: VideoBackdropProps) {
     if (posterOnly) return;
     const video = videoRef.current;
     if (!video) return;
-    // Autoplay can be refused (iOS low-power mode, permissions); fall through
-    // to the poster rather than leaving a frozen first frame on screen.
-    video.play()?.catch(() => setSettled(true));
+    // Autoplay can be refused (iOS low-power mode, permissions); the poster is
+    // already the base layer, so a refusal just means we stay on it.
+    video.play()?.catch(() => setVideoPlaying(false));
   }, [posterOnly]);
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#0d0d0d]" aria-hidden="true">
+      {/* The poster is the reliable base layer: 400KB, paints as soon as it
+          loads, and is the video's own final frame. It stays visible underneath
+          the video the whole time, so there is never a blank dark panel while
+          the clip buffers or if autoplay is refused. */}
       <div
         role={label ? 'img' : undefined}
         aria-label={label}
-        className="absolute inset-0 bg-cover bg-center opacity-0 transition-opacity duration-[1500ms] ease-out data-[visible=true]:opacity-100"
-        data-visible={posterOnly || settled}
+        className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${poster})` }}
       />
       {!posterOnly && (
@@ -67,10 +72,11 @@ export function VideoBackdrop({ src, poster, label }: VideoBackdropProps) {
           muted
           playsInline
           preload="metadata"
-          onEnded={() => setSettled(true)}
-          onError={() => setSettled(true)}
-          data-settled={settled}
-          className="absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-[1500ms] ease-out data-[settled=true]:opacity-0"
+          onPlaying={() => setVideoPlaying(true)}
+          onEnded={() => setVideoPlaying(false)}
+          onError={() => setVideoPlaying(false)}
+          data-playing={videoPlaying}
+          className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-[1500ms] ease-out data-[playing=true]:opacity-100"
         />
       )}
       <div className="absolute inset-0 bg-black/60" />
