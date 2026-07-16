@@ -7,6 +7,13 @@ import bcrypt from 'bcryptjs';
 
 // Test database setup handled by setup.ts
 
+// csrfProtection (middleware/auth.ts) rejects any state-changing request that
+// rides an auth cookie unless it also carries an allowlisted Origin. A real
+// browser always sets that header; supertest never does. So every request below
+// that replays login cookies has to say where it came from, or it is
+// indistinguishable from a forged cross-site POST and comes back 403.
+const TEST_ORIGIN = 'http://localhost:5173';
+
 /**
  * Helper: create an admin user and login to get auth cookies/tokens.
  */
@@ -114,7 +121,10 @@ describe('Authentication Integration Tests', () => {
         sifre: 'Password123',
       };
 
-      const req = request(app).post('/api/auth/register').set('Cookie', cookieHeader);
+      const req = request(app)
+        .post('/api/auth/register')
+        .set('Cookie', cookieHeader)
+        .set('Origin', TEST_ORIGIN);
 
       if (accessToken) {
         req.set('Authorization', `Bearer ${accessToken}`);
@@ -138,7 +148,10 @@ describe('Authentication Integration Tests', () => {
       };
 
       const makeReq = () => {
-        const req = request(app).post('/api/auth/register').set('Cookie', cookieHeader);
+        const req = request(app)
+          .post('/api/auth/register')
+          .set('Cookie', cookieHeader)
+          .set('Origin', TEST_ORIGIN);
         if (accessToken) req.set('Authorization', `Bearer ${accessToken}`);
         return req;
       };
@@ -170,7 +183,10 @@ describe('Authentication Integration Tests', () => {
         // Missing required fields: id, rol, sifre
       };
 
-      const req = request(app).post('/api/auth/register').set('Cookie', cookieHeader);
+      const req = request(app)
+        .post('/api/auth/register')
+        .set('Cookie', cookieHeader)
+        .set('Origin', TEST_ORIGIN);
       if (accessToken) req.set('Authorization', `Bearer ${accessToken}`);
 
       const response = await req.send(invalidData).expect(400);
@@ -215,6 +231,7 @@ describe('Authentication Integration Tests', () => {
       const refreshResponse = await request(app)
         .post('/api/auth/refresh-token')
         .set('Cookie', cookieHeader)
+        .set('Origin', TEST_ORIGIN)
         .send(refreshToken ? { refreshToken } : {});
 
       // Accept 200 (success) or 500 (if rotation infra not fully set up in test env)
@@ -273,6 +290,7 @@ describe('Authentication Integration Tests', () => {
       const logoutResponse = await request(app)
         .post('/api/auth/logout')
         .set('Cookie', cookieHeader) // Send cookies
+        .set('Origin', TEST_ORIGIN)
         .set('Authorization', accessToken ? `Bearer ${accessToken}` : '') // Backward compatibility
         .send(accessToken && refreshToken ? { accessToken, refreshToken } : {}) // Backward compatibility
         .expect(200);
