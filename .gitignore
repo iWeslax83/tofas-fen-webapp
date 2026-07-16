@@ -161,3 +161,11 @@ local-data/
 # artifacts. The directory is kept via nginx/ssl/.gitkeep so the compose bind
 # mount has a mount point on a fresh clone.
 nginx/ssl/*.pem
+.vercel
+
+# Catch-all for env files. The negations matter: `.env*` has no slash, so it
+# matches at any depth and would otherwise swallow the tracked
+# server/.env.example and client/.env.example templates.
+.env*
+!.env.example
+!*.env.example

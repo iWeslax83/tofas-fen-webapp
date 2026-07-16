@@ -120,6 +120,12 @@ app.use(
       },
     },
     crossOriginEmbedderPolicy: false,
+    // Helmet defaults this to same-origin, which makes the browser discard the
+    // response before the page ever sees it whenever the SPA is served from a
+    // different site than the API (Vercel + Render). The CORS allowlist, not
+    // CORP, is what decides who may actually read these responses -- CORP
+    // same-origin just breaks the legitimate caller too.
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
     frameguard: { action: 'deny' },
     noSniff: true,
     xssFilter: true,

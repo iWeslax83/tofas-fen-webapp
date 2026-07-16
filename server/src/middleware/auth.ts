@@ -56,17 +56,29 @@ export const requireVisitor = requireRole(['ziyaretci']);
 // New rule (state-changing methods only):
 //   1. Skip entirely if the request carries no auth cookie — there's no
 //      session to ride, so there's nothing to forge. This keeps bootstrap
-//      endpoints (login, register, refresh) and bearer-token API clients
-//      unaffected.
+//      endpoints (login, register) and bearer-token API clients unaffected.
 //   2. Otherwise require a valid Origin (or Referer fallback) matching the
 //      allowlist. Browsers set Origin on cross-origin fetches and scripts
-//      cannot override it.
+//      cannot override it. This applies to EVERY path — see below.
 //   3. If a csrfToken cookie is set, the matching X-CSRF-Token header is
 //      mandatory (defense in depth against sub-domain takeover).
 //
-// The per-route allowlist below is also applied so login/register/etc. never
-// trigger the check even if they somehow present a stale auth cookie.
-const CSRF_EXEMPT_PATHS = new Set<string>([
+// The origin check (2) deliberately has no path exemptions. It used to skip
+// /api/auth/logout and /api/auth/refresh-token, which was harmless only while
+// cookies were SameSite=strict — the browser never attached them cross-site.
+// Under COOKIE_SAMESITE=none (see utils/cookies.ts) it stops being harmless:
+// a credentialed POST from any page is a *simple* request, so it reaches the
+// server with the victim's cookies attached and executes before CORS gets a
+// say. CORS only blocks the attacker from reading the response — and it also
+// makes the browser drop the rotated Set-Cookie, leaving the victim holding a
+// refresh token the server has already rotated away. The next genuine refresh
+// then looks like token reuse and family detection kills the whole session.
+// Same shape on logout: forced sign-out from any page the victim visits.
+//
+// Only the double-submit token check (3) is path-exempt, for endpoints that
+// legitimately run before any csrfToken cookie has been issued. The origin
+// check alone fully mitigates the cross-site case; the token is depth.
+const CSRF_TOKEN_EXEMPT_PATHS = new Set<string>([
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/refresh',
@@ -85,14 +97,12 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
     return next();
   }
 
-  // Bootstrap/auth endpoints predate any session.
   const reqPath = req.path || req.originalUrl?.split('?')[0] || '';
-  if (CSRF_EXEMPT_PATHS.has(reqPath)) {
-    return next();
-  }
 
   // CSRF only matters when the browser attaches ambient credentials. If the
   // caller has no auth cookie, they must be using a bearer token — skip.
+  // This is what keeps genuine bootstrap traffic (login, register, a
+  // password reset) out of the check: those requests carry no session yet.
   const hasAuthCookie =
     Boolean(req.cookies?.accessToken) ||
     Boolean(req.cookies?.refreshToken) ||
@@ -130,7 +140,13 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
   }
 
   // Double-submit cookie: if a csrfToken cookie is set, the matching header
-  // must be present.
+  // must be present. Skipped on the bootstrap paths, which the SPA calls
+  // without the header (the refresh call is a bare axios.post outside the
+  // interceptor). The origin check above has already run for them.
+  if (CSRF_TOKEN_EXEMPT_PATHS.has(reqPath)) {
+    return next();
+  }
+
   const cookieToken = req.cookies?.csrfToken;
   if (cookieToken) {
     const headerToken = req.get('X-CSRF-Token');
