@@ -24,7 +24,7 @@ Notlar, Performans, Ödevler, İletişim, Evci İzin Talepleri, Takvim, Duyurula
 
 ## Roller
 
-Beş rol ve rol bazlı erişim denetimi: **Öğrenci**, **Öğretmen**, **Veli**, **Yönetici**, **Hizmetli**. Erişim, sunucu tarafında `auth.ts` middleware'i ile birlikte `ownershipCheck` ve `parentChildAccess` kontrolleriyle uygulanır.
+Dört rol ve rol bazlı erişim denetimi: **Öğrenci**, **Öğretmen**, **Veli**, **Yönetici**. Erişim, sunucu tarafında `auth.ts` middleware'i ile birlikte `ownershipCheck` ve `parentChildAccess` kontrolleriyle uygulanır.
 
 ## Depo yapısı
 
