@@ -40,29 +40,26 @@ describe('DersProgramiPage', () => {
     getSchedules.mockResolvedValue({ data: [SCHEDULE], error: null });
   });
 
-  it('opens only the day that was clicked', async () => {
+  it('shows every day open by default, not collapsed', async () => {
     render(<DersProgramiPage />);
-    await waitFor(() => expect(screen.getByText('Pazartesi')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText('Pazartesi', { exact: false })).toBeInTheDocument(),
+    );
 
-    await userEvent.click(screen.getByText('Pazartesi'));
     expect(screen.getByText(/Matematik/)).toBeInTheDocument();
-    expect(screen.queryByText(/Fizik/)).toBeNull();
-
-    // Switching days closes the previous one rather than stacking.
-    await userEvent.click(screen.getByText('Salı'));
     expect(screen.getByText(/Fizik/)).toBeInTheDocument();
-    expect(screen.queryByText(/Matematik/)).toBeNull();
   });
 
-  it('closes the open day when it is clicked again', async () => {
+  it('closes a day when it is clicked, independently of the others', async () => {
     render(<DersProgramiPage />);
-    await waitFor(() => expect(screen.getByText('Pazartesi')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Matematik/)).toBeInTheDocument());
 
-    await userEvent.click(screen.getByText('Pazartesi'));
-    expect(screen.getByText(/Matematik/)).toBeInTheDocument();
-
-    await userEvent.click(screen.getByText('Pazartesi'));
+    await userEvent.click(screen.getByText('Pazartesi', { exact: false }));
     expect(screen.queryByText(/Matematik/)).toBeNull();
+    expect(screen.getByText(/Fizik/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('Pazartesi', { exact: false }));
+    expect(screen.getByText(/Matematik/)).toBeInTheDocument();
   });
 
   it('shows no "Son güncelleme" stamp', async () => {
