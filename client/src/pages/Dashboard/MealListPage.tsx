@@ -7,6 +7,7 @@ import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { DataTable } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { FilePickerButton } from '../../components/ui/FilePickerButton';
 import { DormitoryService } from '../../utils/apiService';
 import { cn } from '../../utils/cn';
 import { safeConsoleError } from '../../utils/safeLogger';
@@ -315,14 +316,12 @@ export default function MealListPage() {
                   ))}
                 </select>
               </Field>
-              <Field label="Dosya" htmlFor="meal-file-upload">
-                <input
-                  id="meal-file-upload"
-                  type="file"
-                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+              <Field label="Dosya">
+                <FilePickerButton
+                  file={selectedFile}
+                  onFileSelected={setSelectedFile}
                   accept=".pdf,.doc,.docx"
-                  required
-                  className="font-serif text-sm text-[var(--ink-2)] file:mr-3 file:px-3 file:py-1 file:border file:border-[var(--ink)] file:bg-transparent file:text-[var(--ink)] file:font-medium file:cursor-pointer"
+                  hint=".pdf · .doc · .docx"
                 />
               </Field>
               <div className="md:col-span-3 flex justify-end">

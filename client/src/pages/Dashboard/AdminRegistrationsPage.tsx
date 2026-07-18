@@ -9,6 +9,7 @@ import { Card } from '../../components/ui/Card';
 import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { apiClient } from '../../utils/api';
 import { cn } from '../../utils/cn';
+import { formatDate } from '../../utils/formatDate';
 
 interface Registration {
   _id: string;
@@ -63,13 +64,6 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'interview', label: 'Mülakat' },
   { key: 'rejected', label: 'Reddedildi' },
 ];
-
-const formatDate = (raw: string | undefined): string => {
-  if (!raw) return '—';
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
-};
 
 export default function AdminRegistrationsPage() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);

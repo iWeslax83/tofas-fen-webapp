@@ -10,6 +10,7 @@ import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { Chip } from '../../components/ui/Chip';
 import { cn } from '../../utils/cn';
+import { formatDate } from '../../utils/formatDate';
 
 interface Homework {
   _id?: string;
@@ -45,19 +46,15 @@ const SUBJECTS = [
   'Din Kültürü',
 ];
 
-const formatDate = (raw: string | Date | undefined): string => {
-  if (!raw) return '—';
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
-};
-
 const dueChip = (raw: string | Date | undefined): { label: string; urgent: boolean } => {
   if (!raw) return { label: '—', urgent: false };
   const d = new Date(raw);
   if (isNaN(d.getTime())) return { label: '—', urgent: false };
   const days = Math.floor((d.getTime() - Date.now()) / 86_400_000);
-  if (days < 0) return { label: 'Geçti', urgent: true };
+  // "Geçti" reads like the course was passed rather than the deadline being
+  // missed — align with the student dashboard's homework queue, which
+  // already uses "Gecikmiş" for the same overdue state.
+  if (days < 0) return { label: 'Gecikmiş', urgent: true };
   if (days === 0) return { label: 'Bugün', urgent: true };
   if (days === 1) return { label: 'Yarın', urgent: true };
   return { label: `${days} gün`, urgent: false };
