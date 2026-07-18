@@ -18,7 +18,7 @@ export default function PendingBatchesList({
 
   if (isLoading) return <p className="text-xs font-medium text-[var(--ink-dim)]">Yükleniyor...</p>;
   if (batches.length === 0)
-    return <p className="font-mono text-xs text-[var(--ink-dim)]">Bekleyen yükleme yok.</p>;
+    return <p className="font-serif text-xs text-[var(--ink-dim)]">Bekleyen yükleme yok.</p>;
 
   return (
     <div className="space-y-3">

@@ -405,19 +405,18 @@ function StatsBar({
   unmatchedParents,
   unmatchedStudents,
 }: StatsBarProps) {
+  // Two separate counts, not a fraction of each other — a parent and a
+  // student are unrelated denominators, so "0 / 444" used to read like
+  // "0 out of 444" rather than "0 unmatched parents, 444 unmatched students".
   const items = [
     { label: 'Veli', value: parents, icon: Users },
     { label: 'Öğrenci', value: students, icon: UserPlus },
     { label: 'Aktif Bağlantı', value: linked, icon: Link2 },
-    {
-      label: 'Eşleşmemiş',
-      value: `${unmatchedParents} / ${unmatchedStudents}`,
-      icon: AlertTriangle,
-      hint: 'Veli / Öğrenci',
-    },
+    { label: 'Eşleşmemiş Veli', value: unmatchedParents, icon: AlertTriangle },
+    { label: 'Eşleşmemiş Öğrenci', value: unmatchedStudents, icon: AlertTriangle },
   ];
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-px bg-[var(--rule)] border border-[var(--rule)]">
       {items.map(({ label, value, icon: Icon, hint }) => (
         <div key={label} className="bg-[var(--paper)] p-4">
           <div className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
