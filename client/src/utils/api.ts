@@ -112,10 +112,16 @@ const createSecureApiClient = (): AxiosInstance => {
   // Response interceptor for token refresh and error handling
   client.interceptors.response.use(
     (response: AxiosResponse) => {
-      // Extract CSRF token from response headers
-      const csrfToken = response.headers['x-csrf-token'];
-      if (csrfToken) {
-        CSRFProtection.setToken(csrfToken);
+      // Extract CSRF token from response body (cross-origin deployments)
+      // or from response header (same-origin deployments).
+      const bodyCsrf = (response.data as Record<string, unknown>)?.csrfToken;
+      if (typeof bodyCsrf === 'string') {
+        CSRFProtection.setToken(bodyCsrf);
+      } else {
+        const headerCsrf = response.headers['x-csrf-token'];
+        if (headerCsrf) {
+          CSRFProtection.setToken(headerCsrf);
+        }
       }
 
       return response;
@@ -201,13 +207,19 @@ const createSecureApiClient = (): AxiosInstance => {
 
         try {
           // httpOnly cookie'deki refresh token ile yenileme yap
-          await axios.post(
+          const refreshResponse = await axios.post(
             `${API_BASE_URL}/api/auth/refresh-token`,
             {},
             {
               withCredentials: true,
             },
           );
+
+          // Extract CSRF token from refresh response body (cross-origin fix)
+          const refreshCsrf = (refreshResponse.data as Record<string, unknown>)?.csrfToken;
+          if (typeof refreshCsrf === 'string') {
+            CSRFProtection.setToken(refreshCsrf);
+          }
 
           isRefreshing = false;
           onRefreshComplete(true);
