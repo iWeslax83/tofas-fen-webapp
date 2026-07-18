@@ -88,6 +88,15 @@ export class UserService {
     return ApiService.getArray(API_ENDPOINTS.USER.BASE);
   }
 
+  /** Paginated, optionally role- and search-filtered — backs the admin
+   * Senkronizasyon table so it doesn't fetch/render every user at once. */
+  static async listUsers(params: { role?: string; search?: string; page: number; limit: number }) {
+    return ApiService.get<{
+      users: User[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(API_ENDPOINTS.USER.LIST(params));
+  }
+
   static async getUserById(id: string) {
     return ApiService.get(API_ENDPOINTS.USER.GET_BY_ID(id));
   }
