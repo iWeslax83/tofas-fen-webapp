@@ -214,10 +214,11 @@ export default function RegistrationFormPage() {
                     placeholder="Örn. Ali Veli"
                   />
                 </Field>
-                <Field label="Doğum Tarihi" htmlFor="reg-studentBirthDate">
+                <Field label="Doğum Tarihi (GG.AA.YYYY)" htmlFor="reg-studentBirthDate">
                   <Input
                     id="reg-studentBirthDate"
                     type="date"
+                    lang="tr"
                     value={form.studentBirthDate}
                     onChange={(e) => update('studentBirthDate', e.target.value)}
                   />
