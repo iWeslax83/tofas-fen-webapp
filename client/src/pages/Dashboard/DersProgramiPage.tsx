@@ -22,8 +22,9 @@ export default function DersProgramiPage() {
   const [schedules, setSchedules] = useState<ClassSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // One open day per class card; clicking the open day closes it again.
-  const [openDays, setOpenDays] = useState<Record<string, string | undefined>>({});
+  // Every day starts open per class card so the page shows the full week at
+  // a glance; clicking a day toggles just that one closed/open again.
+  const [openDays, setOpenDays] = useState<Record<string, Set<string>>>({});
 
   const fetchSchedules = useCallback(async () => {
     try {
@@ -49,8 +50,33 @@ export default function DersProgramiPage() {
     if (user) fetchSchedules();
   }, [user, fetchSchedules]);
 
+  // Default every class card's days to open the first time it's seen; leave
+  // any days the user has already toggled alone on refetch.
+  useEffect(() => {
+    setOpenDays((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const schedule of schedules) {
+        const classKey = `${schedule.classLevel}-${schedule.classSection}`;
+        if (next[classKey]) continue;
+        const days = DAY_NAMES.filter((day) => periodsFor(schedule, day).length > 0);
+        next[classKey] = new Set(days);
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [schedules]);
+
   const toggleDay = (classKey: string, day: string) => {
-    setOpenDays((prev) => ({ ...prev, [classKey]: prev[classKey] === day ? undefined : day }));
+    setOpenDays((prev) => {
+      const current = new Set(prev[classKey] ?? []);
+      if (current.has(day)) {
+        current.delete(day);
+      } else {
+        current.add(day);
+      }
+      return { ...prev, [classKey]: current };
+    });
   };
 
   const breadcrumb = [
@@ -99,8 +125,7 @@ export default function DersProgramiPage() {
             {schedules.map((schedule) => {
               const classKey = `${schedule.classLevel}-${schedule.classSection}`;
               const days = DAY_NAMES.filter((day) => periodsFor(schedule, day).length > 0);
-              const openDay = openDays[classKey];
-              const openPeriods = openDay ? periodsFor(schedule, openDay) : [];
+              const openSet = openDays[classKey] ?? new Set(days);
 
               return (
                 <Card key={schedule.id || classKey} contentClassName="p-0">
@@ -116,66 +141,63 @@ export default function DersProgramiPage() {
                     </div>
                   </div>
 
-                  {/* The day buttons stay a single row; the lessons open in one
-                      full-width section below it. Putting the lessons inside the
-                      grid made every cell in the row grow to match the open one,
-                      so the other days looked like they had opened too. */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-px bg-[var(--rule)]">
+                  <div className="divide-y divide-[var(--rule)]">
                     {days.map((day) => {
-                      const isOpen = openDay === day;
+                      const isOpen = openSet.has(day);
+                      const periods = periodsFor(schedule, day);
                       return (
-                        <button
-                          key={day}
-                          type="button"
-                          onClick={() => toggleDay(classKey, day)}
-                          className={cn(
-                            'w-full px-3 py-2 flex items-center justify-between gap-2 transition-colors',
-                            isOpen
-                              ? 'bg-[var(--surface)]'
-                              : 'bg-[var(--paper)] hover:bg-[var(--surface)]',
-                          )}
-                          aria-expanded={isOpen}
-                        >
-                          <div className="flex flex-col items-start">
-                            <span className="text-xs font-medium text-[var(--ink-dim)]">{day}</span>
-                            <span className="font-serif text-sm text-[var(--ink)]">
-                              {periodsFor(schedule, day).length} ders
-                            </span>
-                          </div>
-                          <ChevronDown
-                            size={14}
+                        <div key={day}>
+                          <button
+                            type="button"
+                            onClick={() => toggleDay(classKey, day)}
                             className={cn(
-                              'text-[var(--ink-dim)] transition-transform',
-                              isOpen && 'rotate-180',
+                              'w-full px-4 py-2 flex items-center justify-between gap-2 transition-colors',
+                              'bg-[var(--paper)] hover:bg-[var(--surface)]',
                             )}
-                          />
-                        </button>
+                            aria-expanded={isOpen}
+                          >
+                            <span className="font-serif text-sm text-[var(--ink)]">
+                              {day}{' '}
+                              <span className="text-xs font-medium text-[var(--ink-dim)]">
+                                · {periods.length} ders
+                              </span>
+                            </span>
+                            <ChevronDown
+                              size={14}
+                              className={cn(
+                                'text-[var(--ink-dim)] transition-transform',
+                                isOpen && 'rotate-180',
+                              )}
+                            />
+                          </button>
+
+                          {isOpen && (
+                            <ol className="divide-y divide-[var(--rule)] border-t border-[var(--rule)]">
+                              {periods.map((p) => (
+                                <li
+                                  key={p.period}
+                                  className="px-4 py-2 flex items-center gap-3 text-sm"
+                                >
+                                  <span className="inline-flex items-center justify-center w-6 h-6 border border-[var(--rule)] font-mono text-[10px] text-[var(--ink-dim)] shrink-0">
+                                    {p.period}
+                                  </span>
+                                  <span className="font-serif text-[var(--ink)] truncate">
+                                    {lessonLabel(p)}
+                                  </span>
+                                  {p.startTime && (
+                                    <span className="ml-auto font-mono text-[10px] text-[var(--ink-dim)] shrink-0">
+                                      {p.startTime}
+                                      {p.endTime ? `–${p.endTime}` : ''}
+                                    </span>
+                                  )}
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
-
-                  {openDay && (
-                    <div className="border-t border-[var(--rule)]">
-                      <ol className="divide-y divide-[var(--rule)]">
-                        {openPeriods.map((p) => (
-                          <li key={p.period} className="px-3 py-2 flex items-center gap-3 text-sm">
-                            <span className="inline-flex items-center justify-center w-6 h-6 border border-[var(--rule)] font-mono text-[10px] text-[var(--ink-dim)] shrink-0">
-                              {p.period}
-                            </span>
-                            <span className="font-serif text-[var(--ink)] truncate">
-                              {lessonLabel(p)}
-                            </span>
-                            {p.startTime && (
-                              <span className="ml-auto font-mono text-[10px] text-[var(--ink-dim)] shrink-0">
-                                {p.startTime}
-                                {p.endTime ? `–${p.endTime}` : ''}
-                              </span>
-                            )}
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-                  )}
                 </Card>
               );
             })}
