@@ -9,6 +9,7 @@ import { Card } from '../../components/ui/Card';
 import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { apiClient } from '../../utils/api';
 import { cn } from '../../utils/cn';
+import { formatDate } from '../../utils/formatDate';
 
 interface Appointment {
   _id: string;
@@ -51,13 +52,6 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'rejected', label: 'Reddedildi' },
   { key: 'cancelled', label: 'İptal Edildi' },
 ];
-
-const formatDate = (raw: string | undefined): string => {
-  if (!raw) return '—';
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
-};
 
 export default function AdminAppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
