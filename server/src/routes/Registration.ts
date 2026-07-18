@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { validateObjectId } from '../middleware/validateObjectId';
 import { Registration } from '../models/Registration';
 import { User } from '../models/User';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
@@ -10,6 +11,9 @@ import logger from '../utils/logger';
 import { logSecurityEvent, SecurityEvent } from '../utils/securityLogger';
 
 const router = Router();
+
+// Reject malformed ObjectIds (400) before findById() can throw a CastError (500)
+router.param('id', validateObjectId);
 
 // Rate limiter for public registration endpoint
 const registrationLimiter = rateLimit({
