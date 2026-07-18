@@ -1,4 +1,5 @@
 import { Router, Request } from 'express';
+import { validateObjectId } from '../middleware/validateObjectId';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -16,6 +17,9 @@ const mealsCache = new Map<string, { data: IMealList[]; timestamp: number }>();
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes cache TTL (increased from 5 minutes)
 
 const router = Router();
+
+// Reject malformed ObjectIds (400) before findById() can throw a CastError (500)
+router.param('id', validateObjectId);
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({

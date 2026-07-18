@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { validateObjectId } from '../middleware/validateObjectId';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
@@ -13,6 +14,9 @@ import { createEndpointLimiter } from '../config/rateLimiters';
 import { verifyUploadedFiles } from '../config/upload';
 
 const router = Router();
+
+// Reject malformed ObjectIds (400) before findById() can throw a CastError (500)
+router.param('id', validateObjectId);
 
 const uploadLimiter = createEndpointLimiter({
   windowMs: 60 * 60 * 1000,

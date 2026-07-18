@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { Request, Response } from 'express';
+import { validateObjectId } from '../middleware/validateObjectId';
 import Announcement from '../models/Announcement';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import { validateAnnouncement } from '../middleware/validation';
@@ -8,6 +9,9 @@ import logger from '../utils/logger';
 import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
+
+// Reject malformed ObjectIds (400) before findById() can throw a CastError (500)
+router.param('id', validateObjectId);
 
 /**
  * @swagger

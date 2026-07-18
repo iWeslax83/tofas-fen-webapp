@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { validateObjectId } from '../middleware/validateObjectId';
 import { MealList, IMealList } from '../models/MealList';
 import { FilterQuery } from 'mongoose';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
@@ -7,6 +8,9 @@ import logger from '../utils/logger';
 import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
+
+// Reject malformed ObjectIds (400) before findById() can throw a CastError (500)
+router.param('id', validateObjectId);
 
 // Tüm yemek listelerini getir
 router.get(
