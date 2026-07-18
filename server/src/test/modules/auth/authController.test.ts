@@ -103,4 +103,49 @@ describe('AuthController', () => {
       });
     });
   });
+
+  describe('getMe', () => {
+    // B-H2: /me is the SPA bootstrap endpoint; it must supply the CSRF token so
+    // a reloaded cross-origin tab (which lost its in-memory token) can send the
+    // X-CSRF-Token header on the next state-changing request.
+    it('should mint and return a CSRF token when none is present on the request', async () => {
+      const mockUser = { id: 'user123', adSoyad: 'John Doe', rol: 'student' };
+      (User.findOne as any).mockResolvedValue(mockUser);
+      mockRequest.user = { userId: 'user123', role: 'student' };
+      mockRequest.cookies = {};
+
+      await AuthController.getMe(mockRequest as Request, mockResponse as Response, mockNext);
+
+      // A fresh csrfToken cookie is set...
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'csrfToken',
+        expect.any(String),
+        expect.objectContaining({ httpOnly: false }),
+      );
+      // ...and the same value is echoed in the body for the SPA to store.
+      const body = (mockResponse.json as any).mock.calls[0][0];
+      const cookieValue = (mockResponse.cookie as any).mock.calls.find(
+        (c: unknown[]) => c[0] === 'csrfToken',
+      )[1];
+      expect(body.csrfToken).toBe(cookieValue);
+      expect(body).toMatchObject({ id: 'user123' });
+    });
+
+    it('should reuse the existing csrfToken cookie without churning it', async () => {
+      const mockUser = { id: 'user123', adSoyad: 'John Doe', rol: 'student' };
+      (User.findOne as any).mockResolvedValue(mockUser);
+      mockRequest.user = { userId: 'user123', role: 'student' };
+      mockRequest.cookies = { csrfToken: 'existing-token-value' };
+
+      await AuthController.getMe(mockRequest as Request, mockResponse as Response, mockNext);
+
+      // The existing token is returned as-is; no new csrfToken cookie is issued.
+      const body = (mockResponse.json as any).mock.calls[0][0];
+      expect(body.csrfToken).toBe('existing-token-value');
+      const issuedCsrfCookie = (mockResponse.cookie as any).mock.calls.some(
+        (c: unknown[]) => c[0] === 'csrfToken',
+      );
+      expect(issuedCsrfCookie).toBe(false);
+    });
+  });
 });

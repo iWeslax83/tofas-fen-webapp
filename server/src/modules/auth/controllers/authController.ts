@@ -27,15 +27,16 @@ function extractMeta(req: Request) {
  * an auth cookie. Without this issuance step, the double-submit branch never
  * fires and the guard collapses to Origin-allowlist only.
  */
-function issueCsrfToken(res: Response, lifetimeMs: number): void {
+function issueCsrfToken(res: Response, lifetimeMs: number): string {
   const token = crypto.randomBytes(32).toString('hex');
   res.cookie('csrfToken', token, {
-    httpOnly: false, // must be readable by the SPA
+    httpOnly: false,
     secure: cookieSecure(),
     sameSite: cookieSameSite(),
     maxAge: lifetimeMs,
     path: '/',
   });
+  return token;
 }
 
 /**
@@ -113,12 +114,14 @@ export class AuthController {
       path: '/',
     });
 
-    // Issue CSRF double-submit token (B-H2)
-    issueCsrfToken(res, tokens.refreshExpiresIn * 1000);
+    // Issue CSRF double-submit token (B-H2) — returned in body so the
+    // cross-origin SPA can read it (document.cookie can't see cross-domain cookies).
+    const csrfToken = issueCsrfToken(res, tokens.refreshExpiresIn * 1000);
 
     res.json({
       success: true,
       message: 'Giriş başarılı',
+      csrfToken,
       user: {
         id: user.id,
         adSoyad: user.adSoyad,
@@ -252,11 +255,12 @@ export class AuthController {
     });
 
     // Rotate CSRF double-submit token alongside refresh (B-H2)
-    issueCsrfToken(res, tokens.refreshExpiresIn * 1000);
+    const csrfToken = issueCsrfToken(res, tokens.refreshExpiresIn * 1000);
 
     res.json({
       success: true,
       message: 'Token yenilendi',
+      csrfToken,
       expiresIn: tokens.expiresIn,
       refreshExpiresIn: tokens.refreshExpiresIn,
     });
@@ -311,7 +315,18 @@ export class AuthController {
       throw AppError.notFound('Kullanıcı bulunamadı');
     }
 
+    // B-H2: /me is the SPA's session-bootstrap endpoint (called on every app
+    // load). Cross-origin clients keep the CSRF token only in memory — it is
+    // lost on reload, and the cross-domain csrfToken cookie can't be read via
+    // document.cookie. Without re-supplying it here, a reloaded tab with a
+    // still-valid accessToken never triggers a refresh and so has no way to
+    // repopulate the X-CSRF-Token header, producing a 403 on the next POST.
+    // Return the existing cookie's value when present (so multiple tabs stay in
+    // sync and we don't churn the token); otherwise mint a fresh one.
+    const csrfToken = req.cookies?.csrfToken ?? issueCsrfToken(res, 3 * 24 * 60 * 60 * 1000);
+
     res.json({
+      csrfToken,
       id: user.id,
       adSoyad: user.adSoyad,
       rol: user.rol,
@@ -375,7 +390,7 @@ export class AuthController {
       });
 
       // Issue CSRF double-submit token after successful 2FA (B-H2)
-      issueCsrfToken(res, result.tokens.refreshExpiresIn * 1000);
+      const csrfToken = issueCsrfToken(res, result.tokens.refreshExpiresIn * 1000);
 
       // Clear 2FA session cookie after successful verification
       res.clearCookie('twoFactorSession', {
@@ -399,6 +414,7 @@ export class AuthController {
       res.json({
         success: true,
         message: 'Giriş başarılı',
+        csrfToken,
         user: result.user,
         expiresIn: result.tokens.expiresIn,
         refreshExpiresIn: result.tokens.refreshExpiresIn,

@@ -174,19 +174,30 @@ export class XSSProtection {
 
 // CSRF Protection
 //
-// B-H2: the backend now issues a non-httpOnly `csrfToken` cookie on every
-// login/refresh/verify-2fa response. We read it from `document.cookie` and
-// echo it in the `X-CSRF-Token` header for every state-changing request.
-// The server middleware then compares header === cookie (double-submit).
-//
-// This used to read from sessionStorage, which meant the token was never
-// populated (nothing wrote to it on login) and the double-submit branch on
-// the server was effectively a no-op.
+// B-H2: the backend issues a `csrfToken` cookie on every login/refresh/verify-2fa
+// response. For cross-origin deployments the SPA cannot read this cookie via
+// document.cookie, so the server also returns the token in the response body.
+// We store it in memory and echo it back as the X-CSRF-Token header on every
+// state-changing request. The server middleware compares header === cookie
+// (double-submit pattern).
 export class CSRFProtection {
   private static readonly CSRF_COOKIE_NAME = 'csrfToken';
+  /** In-memory token received from the server response body.
+   *  Cross-origin SPAs cannot read httpOnly or cross-domain cookies via
+   *  document.cookie, so the server returns the CSRF token in the response
+   *  body and we store it here for the request interceptor to send back as
+   *  the X-CSRF-Token header. */
+  private static _token: string | null = null;
 
-  /** Read the csrfToken cookie set by the server at login/refresh time. */
+  /** Store the CSRF token received from a server response body. */
+  static setToken(token: string) {
+    this._token = token;
+  }
+
+  /** Return the CSRF token. Prefers the in-memory copy (from the response
+   *  body); falls back to document.cookie for same-origin deployments. */
   static getToken(): string | null {
+    if (this._token) return this._token;
     if (typeof document === 'undefined') return null;
     const match = document.cookie
       .split(';')
@@ -195,17 +206,9 @@ export class CSRFProtection {
     return match ? decodeURIComponent(match.slice(this.CSRF_COOKIE_NAME.length + 1)) : null;
   }
 
-  /**
-   * @deprecated The server is the source of truth for the CSRF token now.
-   * Kept for backward compatibility with any caller still importing it.
-   */
-  static setToken(_token: string) {
-    /* no-op: server issues via Set-Cookie */
-  }
-
-  /** Clear the local copy of the token (server clears the cookie on logout). */
+  /** Clear the in-memory token (e.g. on logout). */
   static clearToken() {
-    /* no-op: server clears the cookie via Set-Cookie on logout */
+    this._token = null;
   }
 
   /** @deprecated Server issues tokens now. */
