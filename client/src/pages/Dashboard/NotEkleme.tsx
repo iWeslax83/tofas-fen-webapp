@@ -1,16 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NotesService } from '../../utils/apiService';
 import { toast } from 'sonner';
-import {
-  Upload,
-  Plus,
-  Download,
-  FileSpreadsheet,
-  AlertTriangle,
-  CheckCircle,
-  Info,
-} from 'lucide-react';
+import { Upload, Plus, Download, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { UserRole } from '../../@types';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
@@ -18,6 +10,7 @@ import { safeConsoleError } from '../../utils/safeLogger';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
+import { FilePickerButton } from '../../components/ui/FilePickerButton';
 import { cn } from '../../utils/cn';
 
 interface ImportResult {
@@ -74,8 +67,6 @@ const NotEkleme: React.FC = () => {
   const { user } = useAuthContext();
   const userRole = user?.rol as UserRole;
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
@@ -116,8 +107,7 @@ const NotEkleme: React.FC = () => {
     setLoading(false);
   }, [userRole, navigate]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
+  const handleFileChange = (selectedFile: File | null) => {
     if (selectedFile) {
       setFile(selectedFile);
       setImportResult(null);
@@ -278,10 +268,10 @@ const NotEkleme: React.FC = () => {
   if (loading) {
     return (
       <ModernDashboardLayout
-        pageTitle="Not Ekleme"
+        pageTitle="Toplu Not İçe Aktarma"
         breadcrumb={[
           { label: 'Ana Sayfa', path: `/${user?.rol || 'student'}` },
-          { label: 'Not Ekleme' },
+          { label: 'Toplu Not İçe Aktarma' },
         ]}
       >
         <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
@@ -291,11 +281,11 @@ const NotEkleme: React.FC = () => {
 
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${user?.rol || 'student'}` },
-    { label: 'Not Ekleme' },
+    { label: 'Toplu Not İçe Aktarma' },
   ];
 
   return (
-    <ModernDashboardLayout pageTitle="Not Ekleme" breadcrumb={breadcrumb}>
+    <ModernDashboardLayout pageTitle="Toplu Not İçe Aktarma" breadcrumb={breadcrumb}>
       <div className="p-6 space-y-6">
         {/* ── Page header ── */}
         <header>
@@ -373,36 +363,12 @@ const NotEkleme: React.FC = () => {
             <Card contentClassName="p-5">
               <SectionLabel>Dosya Yükle</SectionLabel>
 
-              {/* Hidden native input + styled trigger */}
-              <input
-                ref={fileInputRef}
-                type="file"
+              <FilePickerButton
+                file={file}
+                onFileSelected={handleFileChange}
                 accept={supportedFormats.join(',')}
-                onChange={handleFileChange}
-                className="sr-only"
-                id="file-upload"
-                aria-label="Dosya seç"
+                hint={supportedFormats.join(' · ')}
               />
-
-              <div className="flex items-center gap-3 flex-wrap">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  type="button"
-                >
-                  <FileSpreadsheet size={14} />
-                  Dosya Seç
-                </Button>
-
-                {file ? (
-                  <span className="font-mono text-xs text-[var(--ink-2)]">{file.name}</span>
-                ) : (
-                  <span className="font-mono text-[10px] text-[var(--ink-dim)]">
-                    {supportedFormats.join(' · ')}
-                  </span>
-                )}
-              </div>
 
               {/* Invalid format warning */}
               {file && !isValidFile(file) && (
@@ -425,7 +391,7 @@ const NotEkleme: React.FC = () => {
                   loading={isUploading}
                 >
                   <Upload size={14} />
-                  {isUploading ? 'Yükleniyor…' : 'Import Et'}
+                  {isUploading ? 'Yükleniyor…' : 'İçe Aktar'}
                 </Button>
               </div>
             </Card>
