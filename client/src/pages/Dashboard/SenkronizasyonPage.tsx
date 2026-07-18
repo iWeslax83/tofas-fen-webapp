@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, X, Save, Link2 } from 'lucide-react';
+import { Users, Plus, X, Save, Link2, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { UserService } from '../../utils/apiService';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
@@ -10,8 +11,14 @@ import EditUserModal from './EditUserModal';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip } from '../../components/ui/Chip';
+import { DataTable } from '../../components/ui/DataTable';
 import { cn } from '../../utils/cn';
 import { safeConsoleError, safeConsoleWarn } from '../../utils/safeLogger';
+
+const TABLE_PAGE_SIZE = 20;
+/** Debounce the name search before it hits the server, same idea as the
+ * other admin list pages — avoids a request per keystroke. */
+const SEARCH_DEBOUNCE_MS = 350;
 
 interface UserType {
   id: string;
@@ -66,12 +73,25 @@ export default function SenkronizasyonPage() {
   const navigate = useNavigate();
 
   // State management
-  const [users, setUsers] = useState<UserType[]>([]);
+  // The full roster, unpaginated — used only by the parent-child matching
+  // panel below (it needs every student to search/filter across, not just
+  // one page) and to resolve id → name when rendering "selected children".
+  const [allUsers, setAllUsers] = useState<UserType[]>([]);
   const [filter, setFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // The visible table, server-paginated — this is what used to render every
+  // user (hundreds) as one giant unpaginated card grid (B2.1).
+  const [tableUsers, setTableUsers] = useState<UserType[]>([]);
+  const [tablePage, setTablePage] = useState(1);
+  const [tableTotalPages, setTableTotalPages] = useState(1);
+  const [tableTotalCount, setTableTotalCount] = useState(0);
+  const [tableLoading, setTableLoading] = useState(true);
+  const [tableError, setTableError] = useState('');
+
   const [selectedParent, setSelectedParent] = useState<UserType | null>(null);
   const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [manualAssignId, setManualAssignId] = useState('');
@@ -106,47 +126,84 @@ export default function SenkronizasyonPage() {
     }
   }, [user, authLoading, navigate]);
 
-  // Fetch users (F-M7: guard setState against unmount).
+  // Fetch the full roster once (F-M7: guard setState against unmount).
   // UserService.getUsers() doesn't accept an AbortSignal today, so we use a
   // ref-backed mounted flag instead of AbortController. Same effect, no
   // "setState on unmounted component" warnings.
   const isMountedRef = useRef(true);
-  const fetchUsers = useCallback(async () => {
+  const fetchAllUsers = useCallback(async () => {
     try {
-      setLoading(true);
       const { data, error } = await UserService.getUsers();
       if (!isMountedRef.current) return;
-      if (error) {
-        setError(error);
-      } else {
-        setUsers(Array.isArray(data) ? (data as UserType[]) : []);
+      if (!error) {
+        setAllUsers(Array.isArray(data) ? (data as UserType[]) : []);
       }
     } catch (error) {
       if (!isMountedRef.current) return;
       safeConsoleError('Error fetching users:', error);
-      setError('Kullanıcılar yüklenirken bir hata oluştu');
-    } finally {
-      if (isMountedRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     isMountedRef.current = true;
-    fetchUsers();
+    fetchAllUsers();
     return () => {
       isMountedRef.current = false;
     };
-  }, [fetchUsers]);
+  }, [fetchAllUsers]);
 
-  // Filtered and searched users
-  const filteredUsers = users.filter(
-    (u) =>
-      (!filter || u.rol === filter) &&
-      (!search || u.adSoyad.toLowerCase().includes(search.toLowerCase())),
-  );
+  // Debounce the search box before it drives a server request.
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [search]);
 
-  // Filter students for parent-child matching
-  const filteredStudents = users
+  // Role filter or search changing means the current page number no longer
+  // means anything for the new result set.
+  useEffect(() => {
+    setTablePage(1);
+  }, [filter, debouncedSearch]);
+
+  const fetchTablePage = useCallback(async () => {
+    try {
+      setTableLoading(true);
+      const { data, error } = await UserService.listUsers({
+        role: filter || undefined,
+        search: debouncedSearch || undefined,
+        page: tablePage,
+        limit: TABLE_PAGE_SIZE,
+      });
+      if (!isMountedRef.current) return;
+      if (error) {
+        setTableError(error);
+      } else {
+        setTableUsers(data?.users || []);
+        setTableTotalPages(data?.pagination?.totalPages ?? 1);
+        setTableTotalCount(data?.pagination?.total ?? 0);
+        setTableError('');
+      }
+    } catch (error) {
+      if (!isMountedRef.current) return;
+      safeConsoleError('Error fetching users page:', error);
+      setTableError('Kullanıcılar yüklenirken bir hata oluştu');
+    } finally {
+      if (isMountedRef.current) setTableLoading(false);
+    }
+  }, [filter, debouncedSearch, tablePage]);
+
+  useEffect(() => {
+    fetchTablePage();
+  }, [fetchTablePage]);
+
+  const refetchAll = useCallback(() => {
+    fetchAllUsers();
+    fetchTablePage();
+  }, [fetchAllUsers, fetchTablePage]);
+
+  // Filter students for parent-child matching — sourced from the full
+  // roster since this panel needs to search/filter across every student,
+  // not just the current table page.
+  const filteredStudents = allUsers
     .filter((u) => u.rol === 'student')
     .filter((student) => {
       const matchesSearch =
@@ -164,10 +221,8 @@ export default function SenkronizasyonPage() {
     setError('');
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    const userToDelete = users.find((u) => u.id === userId);
-    if (!userToDelete) return;
-
+  const handleDeleteUser = async (userToDelete: UserType) => {
+    const userId = userToDelete.id;
     const confirmMessage = `"${userToDelete.adSoyad}" kullanıcısını silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz!`;
     if (!window.confirm(confirmMessage)) return;
 
@@ -177,7 +232,8 @@ export default function SenkronizasyonPage() {
         safeConsoleError('Kullanıcı silinirken hata oluştu:', error);
         alert('Kullanıcı silinirken hata oluştu: ' + error);
       } else {
-        setUsers((users) => users.filter((u) => u.id !== userId));
+        setAllUsers((users) => users.filter((u) => u.id !== userId));
+        setTableUsers((users) => users.filter((u) => u.id !== userId));
         if (selectedParent?.id === userId) {
           setSelectedParent(null);
           setSelectedChildren([]);
@@ -186,6 +242,7 @@ export default function SenkronizasyonPage() {
           setEditUser(null);
         }
         alert('Kullanıcı başarıyla silindi.');
+        fetchTablePage();
       }
     } catch (error) {
       safeConsoleError('Kullanıcı silinirken hata oluştu:', error);
@@ -195,7 +252,7 @@ export default function SenkronizasyonPage() {
 
   // Manual assignment by ID
   const handleManualAssign = () => {
-    const student = users.find((u) => u.id === manualAssignId && u.rol === 'student');
+    const student = allUsers.find((u) => u.id === manualAssignId && u.rol === 'student');
     if (!student) {
       setManualAssignError('Geçersiz öğrenci ID!');
       return;
@@ -227,9 +284,10 @@ export default function SenkronizasyonPage() {
       if (error) {
         setError(error);
       } else {
-        setUsers((users) =>
-          users.map((u) => (u.id === selectedParent.id ? { ...u, childId: selectedChildren } : u)),
-        );
+        const applyChildId = (u: UserType) =>
+          u.id === selectedParent.id ? { ...u, childId: selectedChildren } : u;
+        setAllUsers((users) => users.map(applyChildId));
+        setTableUsers((users) => users.map(applyChildId));
         setSelectedParent(null);
         setSelectedChildren([]);
         setError('');
@@ -243,6 +301,70 @@ export default function SenkronizasyonPage() {
   const breadcrumb = [
     { label: 'Ana Sayfa', path: `/${user?.rol || 'admin'}` },
     { label: 'Senkronizasyon Yönetimi' },
+  ];
+
+  const columns: ColumnDef<UserType>[] = [
+    {
+      accessorKey: 'adSoyad',
+      header: 'Ad Soyad',
+      cell: (info) => {
+        const u = info.row.original;
+        return (
+          <div className="flex flex-col gap-0.5">
+            <span className="font-serif text-sm text-[var(--ink)]">{u.adSoyad}</span>
+            <span className="font-mono text-[10px] text-[var(--ink-dim)]">ID: {u.id}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'rol',
+      header: 'Rol',
+      cell: (info) => <Chip tone="default">{getRolLabel(info.row.original)}</Chip>,
+    },
+    {
+      id: 'sinifSube',
+      header: 'Sınıf/Şube',
+      cell: (info) => {
+        const u = info.row.original;
+        return (
+          <span className="font-mono text-xs text-[var(--ink-2)]">
+            {u.sinif ? `${u.sinif}/${u.sube || '—'}` : '—'}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: 'oda',
+      header: 'Oda',
+      cell: (info) => (
+        <span className="font-mono text-xs text-[var(--ink-2)]">
+          {info.row.original.oda || '—'}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Aksiyonlar',
+      cell: (info) => {
+        const u = info.row.original;
+        return (
+          <div className="flex flex-wrap gap-1.5">
+            <Button variant="ghost" size="sm" onClick={() => setEditUser(u)}>
+              Düzenle
+            </Button>
+            {u.rol === 'parent' && (
+              <Button variant="secondary" size="sm" onClick={() => handleSelectParent(u)}>
+                Çocuk Eşleştir
+              </Button>
+            )}
+            <Button variant="danger" size="sm" onClick={() => handleDeleteUser(u)}>
+              Sil
+            </Button>
+          </div>
+        );
+      },
+    },
   ];
 
   const inputBase = cn(
@@ -315,33 +437,56 @@ export default function SenkronizasyonPage() {
             setLinkResult={setLinkResult}
             linkError={linkError}
             setLinkError={setLinkError}
-            onLinkComplete={fetchUsers}
+            onLinkComplete={refetchAll}
             onClose={() => setShowBulkLink(false)}
           />
         )}
 
-        {/* User grid */}
-        {loading ? (
+        {/* User table — server-paginated so the page doesn't render every
+            user (hundreds, in a real school) into the DOM at once. */}
+        {tableError && (
+          <p className="text-sm text-[var(--state)] border border-[var(--state)] bg-[var(--surface)] px-3 py-2">
+            {tableError}
+          </p>
+        )}
+        {tableLoading ? (
           <div className="p-16 text-center text-xs font-medium text-[var(--ink-dim)]">
             Yükleniyor…
           </div>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-px bg-[var(--rule)]">
-            {filteredUsers.map((u) => (
-              <UserCard
-                key={u.id}
-                u={u}
-                selected={selectedParent?.id === u.id}
-                onEdit={() => setEditUser(u)}
-                onSelectParent={() => handleSelectParent(u)}
-                onDelete={() => handleDeleteUser(u.id)}
-              />
-            ))}
-            {filteredUsers.length === 0 && (
-              <div className="col-span-full bg-[var(--paper)] p-12 text-center text-xs font-medium text-[var(--ink-dim)]">
-                Arama kriterlerine uygun kullanıcı bulunamadı.
-              </div>
-            )}
+          <DataTable
+            columns={columns}
+            data={tableUsers}
+            paginated={false}
+            emptyState="Arama kriterlerine uygun kullanıcı bulunamadı."
+          />
+        )}
+
+        {tableTotalPages > 1 && (
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <span className="text-xs font-medium text-[var(--ink-dim)]">
+              Sayfa {tablePage} / {tableTotalPages} · Toplam {tableTotalCount} kullanıcı
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setTablePage((p) => Math.max(1, p - 1))}
+                disabled={tablePage <= 1}
+              >
+                <ChevronLeft size={14} />
+                Önceki
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setTablePage((p) => Math.min(tableTotalPages, p + 1))}
+                disabled={tablePage >= tableTotalPages}
+              >
+                Sonraki
+                <ChevronRight size={14} />
+              </Button>
+            </div>
           </div>
         )}
 
@@ -460,7 +605,7 @@ export default function SenkronizasyonPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {selectedChildren.map((childId) => {
-                    const child = users.find((u) => u.id === childId);
+                    const child = allUsers.find((u) => u.id === childId);
                     return child ? (
                       <div
                         key={childId}
@@ -520,7 +665,10 @@ export default function SenkronizasyonPage() {
       {showAddModal && (
         <AddUserModal
           onUserAdded={(newUser) => {
-            setUsers((users) => [newUser, ...users]);
+            setAllUsers((users) => [newUser, ...users]);
+            // The new user may or may not land on the currently viewed table
+            // page (it's sorted by name, not newest-first) — refetch it.
+            fetchTablePage();
           }}
           onClose={() => setShowAddModal(false)}
         />
@@ -530,97 +678,13 @@ export default function SenkronizasyonPage() {
         <EditUserModal
           user={editUser}
           onUserUpdated={(userId, updatedFields) => {
-            setUsers((users) =>
-              users.map((u) => (u.id === userId ? { ...u, ...updatedFields } : u)),
-            );
+            const applyUpdate = (u: UserType) => (u.id === userId ? { ...u, ...updatedFields } : u);
+            setAllUsers((users) => users.map(applyUpdate));
+            setTableUsers((users) => users.map(applyUpdate));
           }}
           onClose={() => setEditUser(null)}
         />
       )}
     </ModernDashboardLayout>
-  );
-}
-
-// ── User card sub-component ──────────────────────────────────────────────────
-
-interface UserCardProps {
-  u: UserType;
-  selected: boolean;
-  onEdit: () => void;
-  onSelectParent: () => void;
-  onDelete: () => void;
-}
-
-function UserCard({ u, selected, onEdit, onSelectParent, onDelete }: UserCardProps) {
-  const initials = u.adSoyad.charAt(0).toLocaleUpperCase('tr');
-
-  return (
-    <div
-      className={cn(
-        'bg-[var(--paper)] flex flex-col',
-        selected && 'border-l-4 border-l-[var(--state)]',
-      )}
-    >
-      {/* Card header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--rule)] bg-[var(--surface)]">
-        {/* Flat initial avatar */}
-        <div className="w-9 h-9 flex-shrink-0 bg-[var(--surface-2)] border border-[var(--rule)] flex items-center justify-center font-mono text-xs font-medium text-[var(--ink)]">
-          {initials}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="font-serif text-sm text-[var(--ink)] truncate">{u.adSoyad}</div>
-          <div className="font-mono text-[10px] text-[var(--ink-dim)] truncate">ID: {u.id}</div>
-          <Chip tone="default" className="mt-1">
-            {getRolLabel(u)}
-          </Chip>
-        </div>
-      </div>
-
-      {/* Card body */}
-      <div className="px-4 py-3 flex-1 flex flex-col gap-3">
-        {/* Stats — only the ones this role actually has, so admin/teacher
-            cards don't render two empty "—" boxes and look broken. */}
-        {u.rol === 'student' && (
-          <div className="grid grid-cols-2 gap-px bg-[var(--rule)] border border-[var(--rule)]">
-            <StatCell label="Sınıf" value={u.sinif || '—'} />
-            <StatCell label="Şube" value={u.sube || '—'} />
-            {u.pansiyon && <StatCell label="Oda" value={u.oda || '—'} />}
-          </div>
-        )}
-        {u.rol === 'parent' && u.childId && u.childId.length > 0 && (
-          <div className="border border-[var(--rule)] bg-[var(--paper)] p-2 text-center">
-            <div className="font-serif text-lg text-[var(--ink)]">{u.childId.length}</div>
-            <div className="text-xs font-medium text-[var(--ink-dim)]">Çocuk sayısı</div>
-          </div>
-        )}
-
-        {/* Actions stay right under the content. Cards in a ruled row stretch
-            to equal height; keeping the buttons here (not mt-auto'd to the
-            floor) stops a tall student card from leaving a short admin card's
-            buttons stranded in a band far below its header. */}
-        <div className="flex flex-wrap gap-1.5">
-          <Button variant="ghost" size="sm" onClick={onEdit}>
-            Düzenle
-          </Button>
-          {u.rol === 'parent' && (
-            <Button variant="secondary" size="sm" onClick={onSelectParent}>
-              Çocuk Eşleştir
-            </Button>
-          )}
-          <Button variant="danger" size="sm" onClick={onDelete}>
-            Sil
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-[var(--paper)] p-2 text-center">
-      <div className="font-serif text-base text-[var(--ink)]">{value}</div>
-      <div className="text-xs font-medium text-[var(--ink-dim)]">{label}</div>
-    </div>
   );
 }

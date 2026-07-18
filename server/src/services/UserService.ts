@@ -31,6 +31,16 @@ export interface ListUsersByRoleResult {
   };
 }
 
+export interface ListUsersPaginatedParams {
+  /** Omit for every role — used by the admin Senkronizasyon table's "Tümü" filter. */
+  role?: string;
+  search?: string;
+  page: number;
+  limit: number;
+}
+
+export type ListUsersPaginatedResult = ListUsersByRoleResult;
+
 export interface CreateUserParams {
   id: string;
   adSoyad: string;
@@ -157,6 +167,44 @@ export async function listUsersByRole(
   const total = await User.countDocuments(filter);
   const users = (await User.find(filter)
     .select('-sifre -tckn')
+    .skip((page - 1) * limit)
+    .limit(limit)) as unknown as IUser[];
+
+  return {
+    data: users,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+/**
+ * GET /api/users/list — paginated across all roles (or one role), with
+ * search. Backs the admin Senkronizasyon table, which used to render every
+ * user (hundreds) as an unpaginated card grid.
+ */
+export async function listUsersPaginated(
+  params: ListUsersPaginatedParams,
+): Promise<ListUsersPaginatedResult> {
+  const { role, search, page, limit } = params;
+  const filter: Record<string, unknown> = {};
+  if (role) filter.rol = role;
+
+  if (search) {
+    const re = safeSearchRegex(search);
+    if (re === null) {
+      return { badSearch: true };
+    }
+    filter.$or = [{ adSoyad: re }, { id: re }];
+  }
+
+  const total = await User.countDocuments(filter);
+  const users = (await User.find(filter)
+    .select('-sifre -tckn')
+    .sort({ adSoyad: 1 })
     .skip((page - 1) * limit)
     .limit(limit)) as unknown as IUser[];
 
