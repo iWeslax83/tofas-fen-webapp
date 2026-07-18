@@ -315,7 +315,18 @@ export class AuthController {
       throw AppError.notFound('Kullanıcı bulunamadı');
     }
 
+    // B-H2: /me is the SPA's session-bootstrap endpoint (called on every app
+    // load). Cross-origin clients keep the CSRF token only in memory — it is
+    // lost on reload, and the cross-domain csrfToken cookie can't be read via
+    // document.cookie. Without re-supplying it here, a reloaded tab with a
+    // still-valid accessToken never triggers a refresh and so has no way to
+    // repopulate the X-CSRF-Token header, producing a 403 on the next POST.
+    // Return the existing cookie's value when present (so multiple tabs stay in
+    // sync and we don't churn the token); otherwise mint a fresh one.
+    const csrfToken = req.cookies?.csrfToken ?? issueCsrfToken(res, 3 * 24 * 60 * 60 * 1000);
+
     res.json({
+      csrfToken,
       id: user.id,
       adSoyad: user.adSoyad,
       rol: user.rol,
