@@ -7,6 +7,7 @@ import logger from '../utils/logger';
 import {
   listUsers,
   listUsersByRole,
+  listUsersPaginated,
   getUserById,
   getUserByIdForView,
   createUser,
@@ -76,6 +77,82 @@ router.get(
 
 /**
  * @swagger
+ * /api/users/list:
+ *   get:
+ *     summary: Get paginated users across all roles, with optional role and search filters
+ *     description: Returns paginated users, optionally filtered by role and a name/ID search term. Backs the admin Senkronizasyon table so it doesn't have to render every user at once. Requires admin or teacher role.
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *         description: Optional role filter; omit to include every role
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term to filter by name or ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Paginated list of users
+ *       400:
+ *         description: Search term invalid
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - requires admin or teacher role
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  '/list',
+  authenticateJWT,
+  authorizeRoles(['admin', 'teacher']),
+  async (req: Request, res: Response) => {
+    try {
+      const { role, search } = req.query;
+      const page = Math.max(parseInt(String(req.query.page ?? '1'), 10) || 1, 1);
+      const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '20'), 10) || 20, 1), 100);
+
+      const result = await listUsersPaginated({
+        role: role ? String(role) : undefined,
+        search: search ? String(search) : undefined,
+        page,
+        limit,
+      });
+
+      if (result.badSearch) {
+        return res.status(400).json({ error: 'Arama terimi çok uzun (en fazla 100 karakter)' });
+      }
+
+      // Named "users", not "data" — the client's generic response unwrapper
+      // treats a top-level "data" key as an envelope and strips everything
+      // else (including "pagination") when unwrapping it.
+      res.json({ users: result.data, pagination: result.pagination });
+    } catch (error) {
+      logger.error('Error listing paginated users', {
+        error: error instanceof Error ? error.message : error,
+      });
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+/**
+ * @swagger
  * /api/users/role/{role}:
  *   get:
  *     summary: Get users by role with optional search
@@ -104,7 +181,7 @@ router.get(
  *             schema:
  *               type: object
  *               properties:
- *                 data:
+ *                 users:
  *                   type: array
  *                   items:
  *                     type: object

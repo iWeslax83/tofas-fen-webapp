@@ -21,6 +21,14 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/api/user/${id}`,
     GET_BY_ID: (id: string) => `/api/user/${id}`,
     GET_BY_ROLE: (role: string) => `/api/user?role=${role}`,
+    LIST: (params: { role?: string; search?: string; page: number; limit: number }) => {
+      const qs = new URLSearchParams();
+      if (params.role) qs.set('role', params.role);
+      if (params.search) qs.set('search', params.search);
+      qs.set('page', String(params.page));
+      qs.set('limit', String(params.limit));
+      return `/api/user/list?${qs.toString()}`;
+    },
     GET_CHILDREN: (parentId: string) => `/api/user/parent/${parentId}/children`,
     PARENT_CHILD: {
       LINK: '/api/user/parent-child-link',
