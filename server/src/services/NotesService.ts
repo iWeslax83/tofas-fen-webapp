@@ -155,7 +155,24 @@ export async function listNotes(params: ListNotesParams): Promise<ListNotesResul
     if (childIds.length === 0) {
       return { earlyEmpty: true };
     }
-    filter.studentId = { $in: childIds };
+    // A parent may narrow to one child; only honor it if that child is
+    // actually theirs, otherwise fall back to all linked children.
+    if (studentId && childIds.includes(studentId)) {
+      filter.studentId = studentId;
+    } else {
+      filter.studentId = { $in: childIds };
+    }
+  } else if (role === 'teacher') {
+    // Teachers have no direct class assignment on the User record, and Note
+    // has no teacherId — the only reliable link back to "notes this teacher
+    // entered" is the free-text teacherName captured at creation time.
+    const teacher = (await User.findOne({ id: userId }).select('adSoyad').lean()) as {
+      adSoyad?: string;
+    } | null;
+    if (!teacher?.adSoyad) {
+      return { earlyEmpty: true };
+    }
+    filter.teacherName = teacher.adSoyad;
   } else {
     if (studentId) filter.studentId = studentId;
   }

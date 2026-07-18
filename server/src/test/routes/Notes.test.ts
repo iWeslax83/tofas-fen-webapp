@@ -3,6 +3,7 @@ import request from 'supertest';
 import { app } from '../../index';
 import { connectDB, closeDB } from '../../db';
 import Note from '../../models/Note';
+import { User } from '../../models';
 import type { Request, Response, NextFunction } from 'express';
 
 // -----------------------------------------------------------------------
@@ -87,6 +88,7 @@ beforeEach(async () => {
   await connectDB();
   try {
     await Note.deleteMany({});
+    await User.deleteMany({});
   } catch (err) {
     console.warn('Test DB cleanup error', err);
   }
@@ -182,6 +184,70 @@ describe('GET /api/notes', () => {
 
     expect(res.body.success).toBe(true);
     expect(res.body.data.length).toBe(0);
+  });
+
+  it('teacher sees only notes they entered (matched by teacherName), not every student', async () => {
+    await User.create({ id: 'teacher1', adSoyad: 'Ayşe Yılmaz', rol: 'teacher' });
+    await seedNote({ studentId: 'student1', teacherName: 'Ayşe Yılmaz' });
+    await seedNote({
+      studentId: 'student2',
+      studentName: 'Fatma Nur',
+      teacherName: 'Başka Öğretmen',
+    });
+
+    asTeacher('teacher1');
+    const res = await request(app).get('/api/notes').expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.length).toBe(1);
+    expect(res.body.data[0].studentId).toBe('student1');
+  });
+
+  it('teacher with no matching User record gets an empty list', async () => {
+    await seedNote({ teacherName: 'Ayşe Yılmaz' });
+
+    asTeacher('teacher-ghost');
+    const res = await request(app).get('/api/notes').expect(200);
+
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBe(0);
+  });
+
+  it('parent can narrow to one linked child via studentId', async () => {
+    await User.create({
+      id: 'parent1',
+      adSoyad: 'Veli Bey',
+      rol: 'parent',
+      childId: ['student1', 'student2'],
+    });
+    await seedNote({ studentId: 'student1' });
+    await seedNote({ studentId: 'student2', studentName: 'Fatma Nur' });
+
+    asParent('parent1');
+    const res = await request(app).get('/api/notes?studentId=student1').expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.length).toBe(1);
+    expect(res.body.data[0].studentId).toBe('student1');
+  });
+
+  it('parent cannot use studentId to see a child that is not theirs', async () => {
+    await User.create({
+      id: 'parent1',
+      adSoyad: 'Veli Bey',
+      rol: 'parent',
+      childId: ['student1'],
+    });
+    await seedNote({ studentId: 'student1' });
+    await seedNote({ studentId: 'student2', studentName: 'Fatma Nur' });
+
+    asParent('parent1');
+    const res = await request(app).get('/api/notes?studentId=student2').expect(200);
+
+    expect(res.body.success).toBe(true);
+    // Falls back to all linked children rather than honoring the foreign id.
+    expect(res.body.data.length).toBe(1);
+    expect(res.body.data[0].studentId).toBe('student1');
   });
 });
 

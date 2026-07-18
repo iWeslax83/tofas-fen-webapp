@@ -119,8 +119,16 @@ router.get('/', authenticateJWT, async (req, res) => {
       if (levels.length > 0) {
         filter.classLevel = { $in: [...new Set(levels)] };
       }
+    } else if (role === 'teacher') {
+      if (classLevel) filter.classLevel = classLevel;
+      if (classSection) filter.classSection = classSection;
+      // With no explicit class filter, show only the classes this teacher
+      // actually teaches instead of every class in the school.
+      if (!classLevel && !classSection) {
+        filter['schedule.periods.teacherId'] = userId;
+      }
     } else {
-      // Teacher/Admin - allow query param filtering
+      // Admin - allow query param filtering, defaults to everything
       if (classLevel) filter.classLevel = classLevel;
       if (classSection) filter.classSection = classSection;
     }
