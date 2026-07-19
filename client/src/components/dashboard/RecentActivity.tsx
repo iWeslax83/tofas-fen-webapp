@@ -54,11 +54,11 @@ export function RecentActivity({ entries }: RecentActivityProps) {
       <h2 className="text-sm font-semibold text-[var(--ink-2)] mb-3">Son Hareketler</h2>
 
       {entries.length === 0 ? (
-        <div className="rounded-lg border border-[var(--rule)] px-4 py-6 text-center">
+        <div className="rounded-[var(--radius)] border border-[var(--rule)] px-4 py-6 text-center">
           <p className="font-serif text-sm text-[var(--ink-2)]">Henüz bir hareket yok.</p>
         </div>
       ) : (
-        <ul className="rounded-lg border border-[var(--rule)] divide-y divide-[var(--rule)] overflow-hidden">
+        <ul className="rounded-[var(--radius)] border border-[var(--rule)] divide-y divide-[var(--rule)] overflow-hidden">
           {entries.map((entry) => {
             const Icon = ICONS[entry.kind];
             return (

@@ -1,6 +1,17 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap } from 'lucide-react';
+import {
+  GraduationCap,
+  ClipboardList,
+  TrendingUp,
+  Award,
+  CalendarClock,
+  Bell,
+  Users,
+  UserPlus,
+  FileText,
+  RefreshCw,
+} from 'lucide-react';
 import { useUser, useIsLoading } from '../stores/authStore';
 import { LoadBar } from './SkeletonComponents';
 import ModernDashboardLayout from './ModernDashboardLayout';
@@ -59,6 +70,8 @@ const ModernDashboard: React.FC = () => {
         label: 'Ödev',
         value: String(s.pendingHomework.total),
         badge: s.pendingHomework.dueToday > 0 ? `${s.pendingHomework.dueToday} bugün` : undefined,
+        icon: ClipboardList,
+        tone: 'warn',
       });
     }
     if (s.averageGrade.value > 0) {
@@ -66,12 +79,16 @@ const ModernDashboard: React.FC = () => {
         label: 'Not Ortalaması',
         value: String(s.averageGrade.value),
         trend: s.averageGrade.trend?.length >= 2 ? s.averageGrade.trend : undefined,
+        icon: TrendingUp,
+        tone: 'accent',
       });
     }
     if (s.classRanking && s.classRanking.classSize > 0) {
       kpiItems.push({
         label: 'Sınıf Sıralaması',
         value: `${s.classRanking.rank}/${s.classRanking.classSize}`,
+        icon: Award,
+        tone: 'info',
       });
     }
     if (s.nextExam) {
@@ -79,37 +96,90 @@ const ModernDashboard: React.FC = () => {
         label: 'Sıradaki Sınav',
         value: s.nextExam.subject,
         badge: `${s.nextExam.daysUntil} gün`,
+        icon: CalendarClock,
+        tone: 'warn',
       });
     }
     if (s.unreadNotifications > 0) {
-      kpiItems.push({ label: 'Okunmamış Bildirim', value: String(s.unreadNotifications) });
+      kpiItems.push({
+        label: 'Okunmamış Bildirim',
+        value: String(s.unreadNotifications),
+        icon: Bell,
+        tone: 'ok',
+      });
     }
   }
 
   if (role === 'admin' && overview) {
     const a = overview as AdminOverview;
-    kpiItems.push({ label: 'Öğrenci', value: String(a.totalStudents) });
-    kpiItems.push({ label: 'Öğretmen', value: String(a.totalTeachers) });
-    kpiItems.push({ label: 'Veli', value: String(a.totalParents) });
+    kpiItems.push({ label: 'Öğrenci', value: String(a.totalStudents), icon: Users, tone: 'info' });
+    kpiItems.push({
+      label: 'Öğretmen',
+      value: String(a.totalTeachers),
+      icon: GraduationCap,
+      tone: 'info',
+    });
+    kpiItems.push({ label: 'Veli', value: String(a.totalParents), icon: Users, tone: 'info' });
     if (a.pendingRegistrations > 0)
-      kpiItems.push({ label: 'Bekleyen Kayıt', value: String(a.pendingRegistrations) });
+      kpiItems.push({
+        label: 'Bekleyen Kayıt',
+        value: String(a.pendingRegistrations),
+        icon: UserPlus,
+        tone: 'warn',
+      });
     if (a.pendingAppointments > 0)
-      kpiItems.push({ label: 'Bekleyen Randevu', value: String(a.pendingAppointments) });
+      kpiItems.push({
+        label: 'Bekleyen Randevu',
+        value: String(a.pendingAppointments),
+        icon: CalendarClock,
+        tone: 'warn',
+      });
     if (a.pendingDilekce > 0)
-      kpiItems.push({ label: 'Bekleyen Dilekçe', value: String(a.pendingDilekce) });
-    if (a.pendingEvci > 0) kpiItems.push({ label: 'Bekleyen Evci', value: String(a.pendingEvci) });
+      kpiItems.push({
+        label: 'Bekleyen Dilekçe',
+        value: String(a.pendingDilekce),
+        icon: FileText,
+        tone: 'warn',
+      });
+    if (a.pendingEvci > 0)
+      kpiItems.push({
+        label: 'Bekleyen Evci',
+        value: String(a.pendingEvci),
+        icon: RefreshCw,
+        tone: 'warn',
+      });
     if (a.unreadNotifications > 0)
-      kpiItems.push({ label: 'Okunmamış Bildirim', value: String(a.unreadNotifications) });
+      kpiItems.push({
+        label: 'Okunmamış Bildirim',
+        value: String(a.unreadNotifications),
+        icon: Bell,
+        tone: 'ok',
+      });
   }
 
   if (role === 'teacher' && overview) {
     const t = overview as TeacherOverview;
-    kpiItems.push({ label: 'Aktif Ödev', value: String(t.activeHomework) });
-    kpiItems.push({ label: 'Öğrenci', value: String(t.studentCount) });
+    kpiItems.push({
+      label: 'Aktif Ödev',
+      value: String(t.activeHomework),
+      icon: ClipboardList,
+      tone: 'accent',
+    });
+    kpiItems.push({ label: 'Öğrenci', value: String(t.studentCount), icon: Users, tone: 'info' });
     if (t.pendingDilekce > 0)
-      kpiItems.push({ label: 'Bekleyen Dilekçe', value: String(t.pendingDilekce) });
+      kpiItems.push({
+        label: 'Bekleyen Dilekçe',
+        value: String(t.pendingDilekce),
+        icon: FileText,
+        tone: 'warn',
+      });
     if (t.unreadNotifications > 0)
-      kpiItems.push({ label: 'Okunmamış Bildirim', value: String(t.unreadNotifications) });
+      kpiItems.push({
+        label: 'Okunmamış Bildirim',
+        value: String(t.unreadNotifications),
+        icon: Bell,
+        tone: 'ok',
+      });
   }
 
   if (role === 'parent' && overview) {
@@ -118,12 +188,24 @@ const ModernDashboard: React.FC = () => {
       kpiItems.push({
         label: `${c.adSoyad} (${c.sinif})`,
         value: c.averageGrade > 0 ? `Ort. ${c.averageGrade}` : 'Not yok',
+        icon: GraduationCap,
+        tone: 'accent',
       });
     });
     if (p.pendingHomework > 0)
-      kpiItems.push({ label: 'Bekleyen Ödev', value: String(p.pendingHomework) });
+      kpiItems.push({
+        label: 'Bekleyen Ödev',
+        value: String(p.pendingHomework),
+        icon: ClipboardList,
+        tone: 'warn',
+      });
     if (p.unreadNotifications > 0)
-      kpiItems.push({ label: 'Okunmamış Bildirim', value: String(p.unreadNotifications) });
+      kpiItems.push({
+        label: 'Okunmamış Bildirim',
+        value: String(p.unreadNotifications),
+        icon: Bell,
+        tone: 'ok',
+      });
   }
 
   // TABLO II / III + duyuru — öğrenci overview'undan beslenir. Diğer
@@ -138,20 +220,32 @@ const ModernDashboard: React.FC = () => {
 
   return (
     <ModernDashboardLayout pageTitle="Panel">
-      <div className="space-y-6 p-6">
+      <div className="space-y-[18px] p-6">
         <WelcomeHero adSoyad={authUser.adSoyad} />
         <EmailVerificationBanner />
         <KpiTable items={kpiItems} />
-        <TodaySchedule rows={scheduleRows} />
-        <HomeworkQueue rows={homeworkRows} />
-        {announcement && (
-          <AnnouncementCard
-            title={announcement.title}
-            body={announcement.body}
-            date={announcement.date}
-          />
-        )}
-        <RecentActivity entries={recentActivity} />
+
+        {/* Main column + 340px right rail, matching the mockup's grid-main.
+            Rail = Bugünkü Program + Duyurular; a per-subject chart card is
+            skipped here — this overview payload doesn't carry per-subject
+            grades (that's PerformancePage's data), so a chart would mean
+            wiring a new fetch rather than a re-skin. */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-[18px] items-start">
+          <div className="flex flex-col gap-[18px] min-w-0">
+            <HomeworkQueue rows={homeworkRows} />
+            <RecentActivity entries={recentActivity} />
+          </div>
+          <div className="flex flex-col gap-[18px]">
+            <TodaySchedule rows={scheduleRows} />
+            {announcement && (
+              <AnnouncementCard
+                title={announcement.title}
+                body={announcement.body}
+                date={announcement.date}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </ModernDashboardLayout>
   );

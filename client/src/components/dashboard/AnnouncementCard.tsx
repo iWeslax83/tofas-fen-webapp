@@ -12,7 +12,7 @@ export interface AnnouncementCardProps {
 export function AnnouncementCard({ title, body, date }: AnnouncementCardProps) {
   return (
     <Card>
-      <div className="bg-[var(--state)] text-white px-4 py-2">
+      <div className="bg-[var(--accent)] text-white px-4 py-2">
         <span className="text-xs font-semibold tracking-wide">Duyuru</span>
       </div>
       <div className="p-4">
