@@ -1,4 +1,14 @@
+import type { LucideIcon } from 'lucide-react';
 import { Chip } from '../ui/Chip';
+
+export type KpiTone = 'accent' | 'ok' | 'warn' | 'info';
+
+const TILE_CLASSES: Record<KpiTone, string> = {
+  accent: 'bg-[var(--accent-tint)] text-[var(--accent)]',
+  ok: 'bg-[var(--ok-tint)] text-[var(--ok)]',
+  warn: 'bg-[var(--warn-tint)] text-[var(--warn)]',
+  info: 'bg-[var(--info-tint)] text-[var(--info)]',
+};
 
 export interface KpiItem {
   label: string;
@@ -7,6 +17,10 @@ export interface KpiItem {
   badge?: string | undefined;
   /** Optional series — renders a hairline sparkline under the value. */
   trend?: number[] | undefined;
+  /** Icon tile shown left of the label/value (mockup's .stat-ico). */
+  icon?: LucideIcon | undefined;
+  /** Icon tile + accent color. Defaults to 'accent'. */
+  tone?: KpiTone | undefined;
 }
 
 /** Minimal dependency-free sparkline in the Devlet hairline style. */
@@ -35,7 +49,7 @@ function Sparkline({ data }: { data: number[] }) {
       <polyline
         points={pts}
         fill="none"
-        stroke="var(--state)"
+        stroke="var(--accent)"
         strokeWidth="1.5"
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -58,22 +72,37 @@ export function KpiTable({ items }: KpiTableProps) {
   return (
     <section>
       <h2 className="text-sm font-semibold text-[var(--ink-2)] mb-3">Genel Bakış</h2>
-      <div
-        className="grid rounded-lg border border-[var(--rule)] divide-x divide-[var(--rule)] overflow-hidden"
-        style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
-      >
-        {items.map((item) => (
-          <div key={item.label} className="p-4">
-            <div className="text-xs text-[var(--ink-dim)]">{item.label}</div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="font-serif text-3xl text-[var(--ink)] leading-none">
-                {item.value}
-              </span>
-              {item.badge && <Chip tone="outline">{item.badge}</Chip>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const tone = item.tone ?? 'accent';
+          return (
+            <div
+              key={item.label}
+              className="flex items-start gap-3 rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--surface)] shadow-[var(--shadow)] p-4"
+            >
+              {Icon && (
+                <div
+                  className={`shrink-0 w-9 h-9 rounded-[var(--radius-sm)] flex items-center justify-center ${TILE_CLASSES[tone]}`}
+                >
+                  <Icon size={17} />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-semibold text-[var(--ink-dim)] tracking-wide">
+                  {item.label}
+                </div>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="font-serif text-2xl text-[var(--ink)] leading-none [font-variant-numeric:tabular-nums]">
+                    {item.value}
+                  </span>
+                  {item.badge && <Chip tone="outline">{item.badge}</Chip>}
+                </div>
+                {item.trend && item.trend.length >= 2 && <Sparkline data={item.trend} />}
+              </div>
             </div>
-            {item.trend && item.trend.length >= 2 && <Sparkline data={item.trend} />}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
