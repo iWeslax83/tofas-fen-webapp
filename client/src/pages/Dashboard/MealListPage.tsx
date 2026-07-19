@@ -4,6 +4,7 @@ import { Calendar, Download, Upload, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { DataTable } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -42,8 +43,8 @@ const MONTH_LABEL = MONTHS.reduce<Record<string, string>>((acc, m) => {
 }, {});
 
 const selectClasses = cn(
-  'h-10 bg-transparent border-0 border-b border-[var(--rule)] px-1 text-sm',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2',
+  'h-10 bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 text-sm',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -239,7 +240,9 @@ export default function MealListPage() {
   if (loading && !isRefreshing) {
     return (
       <ModernDashboardLayout pageTitle="Yemek Listesi" breadcrumb={breadcrumb}>
-        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
@@ -248,8 +251,8 @@ export default function MealListPage() {
     return (
       <ModernDashboardLayout pageTitle="Yemek Listesi" breadcrumb={breadcrumb}>
         <div className="p-6 max-w-xl">
-          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--state)]">
-            <span className="text-xs font-medium text-[var(--state)]">Hata</span>
+          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--accent)]">
+            <span className="text-xs font-medium text-[var(--accent)]">Hata</span>
             <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
             <Button variant="secondary" size="sm" onClick={handleRefresh} loading={isRefreshing}>
               Tekrar Dene

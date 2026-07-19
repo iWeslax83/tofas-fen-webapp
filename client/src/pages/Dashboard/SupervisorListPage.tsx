@@ -4,6 +4,7 @@ import { Calendar, Download, Trash2, Upload, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { DataTable } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -42,8 +43,8 @@ const MONTH_LABEL = MONTHS.reduce<Record<string, string>>((acc, m) => {
 }, {});
 
 const selectClasses = cn(
-  'h-10 bg-transparent border-0 border-b border-[var(--rule)] px-1 text-sm',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2',
+  'h-10 bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 text-sm',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -223,7 +224,7 @@ export default function SupervisorListPage() {
                 <button
                   type="button"
                   onClick={() => handleDelete(r._id)}
-                  className="text-[var(--ink-dim)] hover:text-[var(--state)] p-1"
+                  className="text-[var(--ink-dim)] hover:text-[var(--accent)] p-1"
                   aria-label="Sil"
                   title="Sil"
                 >
@@ -246,7 +247,9 @@ export default function SupervisorListPage() {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Belletmen Listesi" breadcrumb={breadcrumb}>
-        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
