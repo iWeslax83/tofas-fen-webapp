@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { apiClient } from '../../utils/api';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { cn } from '../../utils/cn';
@@ -195,8 +196,8 @@ export default function VisitorChatPage() {
             contentClassName="p-0 flex flex-col h-full"
           >
             {loading ? (
-              <div className="flex-1 flex items-center justify-center text-xs font-medium text-[var(--ink-dim)]">
-                Yükleniyor…
+              <div className="flex-1 flex items-center justify-center p-6">
+                <LoadBar className="max-w-[200px]" />
               </div>
             ) : !activeConversationId ? (
               <div className="flex-1 flex items-center justify-center text-xs font-medium text-[var(--ink-dim)]">
@@ -224,9 +225,9 @@ export default function VisitorChatPage() {
                         >
                           <div
                             className={cn(
-                              'max-w-[70%] px-3 py-2 border',
+                              'max-w-[70%] px-3 py-2 rounded-[var(--radius-sm)] border',
                               isMe
-                                ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
+                                ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
                                 : 'bg-[var(--surface)] text-[var(--ink)] border-[var(--rule)]',
                             )}
                           >
@@ -268,9 +269,9 @@ export default function VisitorChatPage() {
                     placeholder="Mesajınızı yazın…"
                     rows={1}
                     className={cn(
-                      'flex-1 bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+                      'flex-1 bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2',
                       'text-[var(--ink)] placeholder:text-[var(--ink-dim)]',
-                      'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+                      'focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
                       'transition-colors resize-none',
                     )}
                   />

@@ -31,7 +31,7 @@ export default function MonthView({
     filteredEvents.filter((e) => new Date(e.startDate).toDateString() === date.toDateString());
 
   return (
-    <div className="border border-[var(--rule)]">
+    <div className="rounded-[var(--radius)] border border-[var(--rule)] overflow-hidden">
       <div className="grid grid-cols-7 bg-[var(--surface)] border-b border-[var(--rule)]">
         {WEEKDAYS.map((day) => (
           <div
@@ -56,13 +56,13 @@ export default function MonthView({
                 'min-h-[88px] bg-[var(--paper)] p-2 text-left flex flex-col gap-1',
                 'hover:bg-[var(--surface)] transition-colors',
                 !isCurrentMonth && 'opacity-50',
-                isToday && 'border-2 border-[var(--state)]',
+                isToday && 'border-2 border-[var(--accent)]',
               )}
             >
               <span
                 className={cn(
                   'font-mono text-xs',
-                  isToday ? 'text-[var(--state)] font-semibold' : 'text-[var(--ink)]',
+                  isToday ? 'text-[var(--accent)] font-semibold' : 'text-[var(--ink)]',
                 )}
               >
                 {date.getDate()}
@@ -75,7 +75,7 @@ export default function MonthView({
                       e.stopPropagation();
                       onEventClick(event);
                     }}
-                    className="block w-full px-1 py-0.5 text-[10px] font-serif truncate text-white cursor-pointer"
+                    className="block w-full px-1 py-0.5 rounded text-[10px] font-serif truncate text-white cursor-pointer"
                     style={{ backgroundColor: event.color }}
                   >
                     {event.title}

@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip } from '../../components/ui/Chip';
 import { Input } from '../../components/ui/Input';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { SecureAPI } from '../../utils/api';
 import { cn } from '../../utils/cn';
 import {
@@ -44,8 +45,8 @@ const PRIORITY_OPTIONS: { value: string; label: string }[] = [
 ];
 
 const selectClasses = cn(
-  'h-10 bg-transparent border-0 border-b border-[var(--rule)] px-1 text-sm',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2',
+  'h-10 bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 text-sm',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -192,7 +193,9 @@ export default function CalendarPage() {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Takvim" breadcrumb={breadcrumb}>
-        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
@@ -201,8 +204,8 @@ export default function CalendarPage() {
     return (
       <ModernDashboardLayout pageTitle="Takvim" breadcrumb={breadcrumb}>
         <div className="p-6 max-w-xl">
-          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--state)]">
-            <Chip tone="state">Hata</Chip>
+          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--accent)] bg-[var(--accent-tint)]">
+            <Chip tone="accent">Hata</Chip>
             <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
             <Button variant="secondary" size="sm" onClick={fetchData}>
               Tekrar Dene
@@ -234,7 +237,7 @@ export default function CalendarPage() {
             <button
               type="button"
               onClick={goToPrevious}
-              className="p-2 text-[var(--ink-dim)] hover:text-[var(--ink)] border border-[var(--rule)] hover:border-[var(--ink)] transition-colors"
+              className="p-2 rounded-[var(--radius-sm)] text-[var(--ink-dim)] hover:text-[var(--ink)] border border-[var(--rule)] hover:border-[var(--accent)] transition-colors"
               aria-label="Önceki"
             >
               <ChevronLeft size={14} />
@@ -245,7 +248,7 @@ export default function CalendarPage() {
             <button
               type="button"
               onClick={goToNext}
-              className="p-2 text-[var(--ink-dim)] hover:text-[var(--ink)] border border-[var(--rule)] hover:border-[var(--ink)] transition-colors"
+              className="p-2 rounded-[var(--radius-sm)] text-[var(--ink-dim)] hover:text-[var(--ink)] border border-[var(--rule)] hover:border-[var(--accent)] transition-colors"
               aria-label="Sonraki"
             >
               <ChevronRight size={14} />
@@ -255,7 +258,7 @@ export default function CalendarPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-1 flex-wrap">
+          <div className="inline-flex items-center gap-0.5 rounded-[var(--radius-sm)] bg-[var(--surface-2)] p-0.5">
             {VIEWS.map((v) => {
               const active = viewType === v.key;
               return (
@@ -264,10 +267,10 @@ export default function CalendarPage() {
                   type="button"
                   onClick={() => setViewType(v.key)}
                   className={cn(
-                    'h-8 px-3 text-xs uppercase tracking-wider border transition-colors',
+                    'h-7 px-3 rounded-[calc(var(--radius-sm)-2px)] text-sm font-semibold transition-colors',
                     active
-                      ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
-                      : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                      ? 'bg-[var(--accent)] text-white'
+                      : 'text-[var(--ink-dim)] hover:text-[var(--ink)]',
                   )}
                   aria-pressed={active}
                 >

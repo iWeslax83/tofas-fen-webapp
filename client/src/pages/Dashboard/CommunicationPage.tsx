@@ -310,10 +310,10 @@ const CommunicationPage: React.FC = () => {
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
                     className={cn(
-                      'inline-flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap',
+                      'inline-flex items-center gap-2 px-3.5 py-2 -mb-px text-sm font-semibold border-b-2 transition-colors whitespace-nowrap',
                       active
-                        ? 'border-[var(--state)] text-[var(--ink)] bg-[var(--surface)]'
-                        : 'border-transparent text-[var(--ink-dim)] hover:text-[var(--ink)] hover:border-[var(--rule-2)]',
+                        ? 'border-[var(--accent)] text-[var(--accent)]'
+                        : 'border-transparent text-[var(--ink-dim)] hover:text-[var(--ink-2)]',
                     )}
                     aria-pressed={active}
                   >
@@ -368,7 +368,7 @@ const CommunicationPage: React.FC = () => {
                 <select
                   value={filters.type}
                   onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value }))}
-                  className="bg-transparent border-0 border-b border-[var(--rule)] px-1 py-1 text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--state)]"
+                  className="bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-1.5 text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]"
                 >
                   <option value="">Tümü</option>
                   <option value="direct">Direkt</option>
@@ -382,7 +382,7 @@ const CommunicationPage: React.FC = () => {
                 <select
                   value={filters.priority}
                   onChange={(e) => setFilters((prev) => ({ ...prev, priority: e.target.value }))}
-                  className="bg-transparent border-0 border-b border-[var(--rule)] px-1 py-1 text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--state)]"
+                  className="bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-1.5 text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]"
                 >
                   <option value="">Tümü</option>
                   <option value="low">Düşük</option>
@@ -398,7 +398,7 @@ const CommunicationPage: React.FC = () => {
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, hasAttachments: e.target.checked }))
                   }
-                  className="accent-[var(--state)]"
+                  className="accent-[var(--accent)]"
                 />
                 <span className="text-xs font-medium text-[var(--ink-dim)]">Dosya Eki Olanlar</span>
               </label>
@@ -409,7 +409,7 @@ const CommunicationPage: React.FC = () => {
                   onChange={(e) =>
                     setFilters((prev) => ({ ...prev, unreadOnly: e.target.checked }))
                   }
-                  className="accent-[var(--state)]"
+                  className="accent-[var(--accent)]"
                 />
                 <span className="text-xs font-medium text-[var(--ink-dim)]">Sadece Okunmamış</span>
               </label>
@@ -419,7 +419,7 @@ const CommunicationPage: React.FC = () => {
 
         {/* Error banner */}
         {error && (
-          <div className="mx-6 mt-3 px-4 py-2 border border-[var(--state)] bg-[var(--surface)] font-mono text-xs text-[var(--state)]">
+          <div className="mx-6 mt-3 px-4 py-2 rounded-[var(--radius-sm)] border border-[var(--accent)] bg-[var(--accent-tint)] font-mono text-xs text-[var(--accent)]">
             {error}
           </div>
         )}
