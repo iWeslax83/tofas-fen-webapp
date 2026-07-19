@@ -23,7 +23,7 @@ export default function NotFoundPage() {
   return (
     <ModernDashboardLayout pageTitle="Sayfa Bulunamadı" breadcrumb={breadcrumb}>
       <div className="p-6 max-w-xl">
-        <Card contentClassName="p-8 border-l-4 border-[var(--state)]">
+        <Card contentClassName="p-8 border-l-4 border-[var(--accent)]">
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--ink-dim)]">
             Hata 404
           </p>
@@ -40,7 +40,7 @@ export default function NotFoundPage() {
             </Button>
             <Link
               to="/"
-              className="text-sm text-[var(--ink-dim)] underline underline-offset-4 hover:text-[var(--state)] transition-colors"
+              className="text-sm text-[var(--ink-dim)] underline underline-offset-4 hover:text-[var(--accent)] transition-colors"
             >
               Giriş sayfası
             </Link>
