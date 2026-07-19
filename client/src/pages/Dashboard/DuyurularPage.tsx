@@ -7,6 +7,7 @@ import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
+import { LoadBar } from '../../components/SkeletonComponents';
 import {
   Dialog,
   DialogContent,
@@ -37,9 +38,9 @@ const formatTrDate = (value?: string): string => {
 
 const fieldLabel = 'text-sm font-medium text-[var(--ink-2)]';
 const textareaClasses = cn(
-  'w-full bg-transparent border border-[var(--rule)] px-2 py-2 text-sm',
+  'w-full bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2 text-sm',
   'text-[var(--ink)] placeholder:text-[var(--ink-dim)] font-serif resize-y',
-  'focus:outline-none focus:border-[var(--state)] transition-colors',
+  'focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)] transition-colors',
 );
 
 export default function DuyurularPage() {
@@ -152,7 +153,9 @@ export default function DuyurularPage() {
   if (isLoading) {
     return (
       <ModernDashboardLayout pageTitle="Duyurular" breadcrumb={breadcrumb}>
-        <div className="p-6 text-sm text-[var(--ink-dim)]">Duyurular yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
@@ -196,7 +199,7 @@ export default function DuyurularPage() {
                     <button
                       type="button"
                       onClick={() => handleDeleteAnnouncement(announcement._id!)}
-                      className="text-[var(--ink-dim)] hover:text-[var(--state)] p-1"
+                      className="text-[var(--ink-dim)] hover:text-[var(--accent)] p-1"
                       aria-label="Duyuruyu sil"
                       title="Duyuruyu Sil"
                     >
