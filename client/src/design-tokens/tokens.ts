@@ -13,8 +13,6 @@ export const lightPalette = {
   inkDim2: '#918a7c',
   rule: '#e7e2d8',
   rule2: '#d9d3c4',
-  state: '#c8102e',
-  stateDeep: '#a60d26',
 } as const;
 
 export const darkPalette = {
@@ -27,14 +25,20 @@ export const darkPalette = {
   inkDim2: '#837c6e',
   rule: '#3a352b',
   rule2: '#4a4536',
-  state: '#ea4a5e',
-  stateDeep: '#f06a7b',
 } as const;
 
 export const fontFamily = {
   sans: ["'Source Sans 3'", 'system-ui', '-apple-system', "'Segoe UI'", 'sans-serif'],
   serif: ["'Source Serif 4'", 'Georgia', "'Times New Roman'", 'serif'],
-  mono: ["'IBM Plex Mono'", 'ui-monospace', "'SF Mono'", 'Menlo', 'monospace'],
+  mono: [
+    'ui-monospace',
+    "'SF Mono'",
+    "'Cascadia Code'",
+    "'Roboto Mono'",
+    'Menlo',
+    'Consolas',
+    'monospace',
+  ],
 } as const;
 
 export const tokens = {

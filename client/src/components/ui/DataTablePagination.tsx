@@ -26,7 +26,7 @@ export function DataTablePagination<TData>({ table }: DataTablePaginationProps<T
         <label className="flex items-center gap-2 text-xs text-[var(--ink-dim)]">
           Sayfa
           <select
-            className="bg-transparent border-0 border-b border-[var(--rule)] px-1 py-1 text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2 transition-colors"
+            className="bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-2 py-1 text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)] transition-colors"
             value={pageSize}
             onChange={(e) => table.setPageSize(Number(e.target.value))}
           >

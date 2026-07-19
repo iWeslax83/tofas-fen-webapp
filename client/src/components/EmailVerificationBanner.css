@@ -1,7 +1,7 @@
 .email-verification-banner {
-  background: var(--color-warning-bg, #fef3cd);
-  border: 1px solid var(--color-warning-border, #ffc107);
-  border-radius: 8px;
+  background: var(--warn-tint);
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-sm);
   padding: 12px 16px;
   display: flex;
   align-items: center;
@@ -23,11 +23,11 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  color: var(--color-warning-text, #856404);
+  color: var(--warn);
 }
 
 .email-verification-banner .banner-text {
-  color: var(--color-warning-text, #856404);
+  color: var(--ink);
   font-size: 14px;
   line-height: 1.4;
 }
@@ -40,10 +40,10 @@
 }
 
 .email-verification-banner .btn-send-code {
-  background: #0f766e;
+  background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 6px 14px;
   font-size: 13px;
   font-weight: 500;
@@ -53,5 +53,5 @@
 }
 
 .email-verification-banner .btn-send-code:hover {
-  background: #0d6b63;
+  background: var(--accent-strong);
 }

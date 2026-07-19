@@ -73,7 +73,7 @@ export function CommandPalette({ open, onOpenChange, role, pansiyon }: CommandPa
         )}
       >
         {/* Devlet kırmızı üst şerit */}
-        <div className="h-1 bg-[var(--state)]" aria-hidden="true" />
+        <div className="h-1 bg-[var(--accent)]" aria-hidden="true" />
 
         <div className="px-4 pt-3 pb-2 flex items-center justify-between">
           <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-[var(--ink-dim)]">
@@ -91,7 +91,7 @@ export function CommandPalette({ open, onOpenChange, role, pansiyon }: CommandPa
                 'flex items-center justify-center p-1 -mr-1 rounded',
                 'text-[var(--ink-dim)] hover:text-[var(--ink)]',
                 'hover:bg-[var(--surface-2)] transition-colors',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--state)]',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]',
               )}
             >
               <X size={16} />

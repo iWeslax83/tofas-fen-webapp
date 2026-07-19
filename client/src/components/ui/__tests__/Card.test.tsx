@@ -18,7 +18,7 @@ describe('Card', () => {
     const { container } = render(<Card accentBar>x</Card>);
     const bar = container.querySelector('[aria-hidden="true"]');
     expect(bar).not.toBeNull();
-    expect(bar?.className).toContain('bg-[var(--state)]');
+    expect(bar?.className).toContain('bg-[var(--accent)]');
   });
 
   it('pads the inner wrapper to clear the accent bar', () => {

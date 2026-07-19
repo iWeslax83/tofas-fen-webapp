@@ -39,12 +39,12 @@ interface EvciStats {
   parentApproval: { approved: number; rejected: number; pending: number };
 }
 
-/** Devlet paletinden grafik renkleri — tema değişince CSS değişkenlerinden okunur. */
+/** Grafik renkleri — tema değişince CSS değişkenlerinden okunur. */
 interface ChartColors {
   ink: string;
   inkDim: string;
   rule: string;
-  state: string;
+  accent: string;
   ok: string;
   warn: string;
   bars: string[];
@@ -53,13 +53,13 @@ interface ChartColors {
 function readChartColors(): ChartColors {
   const s = getComputedStyle(document.documentElement);
   const v = (name: string, fallback: string) => s.getPropertyValue(name).trim() || fallback;
-  const ink = v('--ink', '#0d0d0d');
-  const inkDim = v('--ink-dim', '#555555');
-  const rule = v('--rule', '#c9c6bc');
-  const state = v('--state', '#931a1a');
-  const ok = v('--ok', '#1a6b2f');
-  const warn = v('--warn', '#7a5500');
-  return { ink, inkDim, rule, state, ok, warn, bars: [ink, state, ok, warn, inkDim] };
+  const ink = v('--ink', '#221f1a');
+  const inkDim = v('--ink-dim', '#918a7c');
+  const rule = v('--rule', '#e7e2d8');
+  const accent = v('--accent', '#c8102e');
+  const ok = v('--ok', '#2e7d46');
+  const warn = v('--warn', '#a05e03');
+  return { ink, inkDim, rule, accent, ok, warn, bars: [ink, accent, ok, warn, inkDim] };
 }
 
 function useChartColors(): ChartColors {
@@ -195,12 +195,12 @@ export default function EvciStatsPage() {
 
   const pieData = [
     { name: 'Gidecek', value: stats.summary.going, fill: colors.ok },
-    { name: 'Gitmeyecek', value: stats.summary.notGoing, fill: colors.state },
+    { name: 'Gitmeyecek', value: stats.summary.notGoing, fill: colors.accent },
   ].filter((d) => d.value > 0);
 
   const approvalPieData = [
     { name: 'Onaylanan', value: stats.parentApproval.approved, fill: colors.ok },
-    { name: 'Reddedilen', value: stats.parentApproval.rejected, fill: colors.state },
+    { name: 'Reddedilen', value: stats.parentApproval.rejected, fill: colors.accent },
     { name: 'Bekleyen', value: stats.parentApproval.pending, fill: colors.warn },
   ].filter((d) => d.value > 0);
 
@@ -336,7 +336,7 @@ export default function EvciStatsPage() {
                     type="monotone"
                     dataKey="notGoing"
                     name="Gitmeyecek"
-                    stroke={colors.state}
+                    stroke={colors.accent}
                     strokeWidth={2}
                     dot={{ r: 3 }}
                   />
