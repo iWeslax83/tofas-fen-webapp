@@ -18,9 +18,9 @@ export default function EventModal({ show, selectedEvent, onClose }: EventModalP
       onClick={onClose}
       role="presentation"
     >
-      <Card className="relative w-full max-w-md" contentClassName="p-0">
+      <Card className="relative w-full max-w-md overflow-hidden" contentClassName="p-0">
         <div onClick={(e) => e.stopPropagation()}>
-          <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+          <div className="bg-[var(--accent)] text-white px-4 py-2 flex items-center justify-between">
             <span className="text-xs font-medium">
               {selectedEvent ? 'Etkinlik Detayı' : 'Yeni Etkinlik'}
             </span>
