@@ -39,8 +39,8 @@ function handleKeySelect(e: React.KeyboardEvent, action: () => void) {
 }
 
 const selectClasses = cn(
-  'h-8 bg-transparent border-0 border-b border-[var(--rule)] px-1 text-xs',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2',
+  'h-8 bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 text-xs',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -82,14 +82,14 @@ export function StudentsList({
         <div style={style} className="px-3 py-1">
           <div
             className={cn(
-              'flex items-center gap-3 px-3 py-2 border transition-colors',
+              'flex items-center gap-3 px-3 py-2 rounded-[var(--radius-sm)] border transition-colors',
               alreadyLinked
                 ? 'bg-[var(--surface)] border-[var(--rule)] opacity-70 cursor-default'
                 : suggested
-                  ? 'border-[var(--state)] bg-[var(--paper)] hover:bg-[var(--surface)] cursor-pointer'
+                  ? 'border-[var(--accent)] bg-[var(--accent-tint)] hover:bg-[var(--surface-2)] cursor-pointer'
                   : isChecked
-                    ? 'bg-[var(--surface-2)] border-[var(--ink)] cursor-pointer'
-                    : 'bg-transparent border-[var(--rule)] hover:bg-[var(--surface)] hover:border-[var(--rule-2)] cursor-pointer',
+                    ? 'bg-[var(--accent-tint)] border-[var(--accent)] cursor-pointer'
+                    : 'bg-transparent border-[var(--rule)] hover:bg-[var(--surface-2)] hover:border-[var(--rule-2)] cursor-pointer',
             )}
             onClick={() => {
               if (alreadyLinked || processing) return;
@@ -111,7 +111,7 @@ export function StudentsList({
                 {isChecked ? <CheckSquare size={16} /> : <Square size={16} />}
               </div>
             )}
-            <div className="flex items-center justify-center w-9 h-9 bg-[var(--ink-2)] text-[var(--paper)] font-serif text-sm uppercase shrink-0">
+            <div className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-sm)] bg-[var(--surface-2)] text-[var(--ink-2)] font-serif text-sm uppercase shrink-0">
               {student.adSoyad.charAt(0).toLocaleUpperCase('tr')}
             </div>
             <div className="flex-1 min-w-0">
@@ -124,12 +124,12 @@ export function StudentsList({
                   </span>
                 )}
                 {suggested && (
-                  <Chip tone="state" className="h-5 px-1.5 text-[10px]">
+                  <Chip tone="accent" className="h-5 px-1.5 text-[10px]">
                     Önerilen
                   </Chip>
                 )}
                 {alreadyLinked && (
-                  <Chip tone="black" className="h-5 px-1.5 text-[10px]">
+                  <Chip tone="ok" className="h-5 px-1.5 text-[10px]">
                     Eşleşmiş
                   </Chip>
                 )}
@@ -182,10 +182,10 @@ export function StudentsList({
             aria-pressed={showUnmatchedStudents}
             title="Sadece eşleşmemiş öğrencileri göster"
             className={cn(
-              'h-8 px-2 text-[10px] uppercase tracking-wider border transition-colors',
+              'h-8 px-2.5 rounded-[var(--radius-sm)] text-xs font-semibold border transition-colors',
               showUnmatchedStudents
-                ? 'bg-[var(--state)] text-white border-[var(--state)]'
-                : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                : 'bg-[var(--paper)] text-[var(--ink)] border-[var(--rule)] hover:border-[var(--accent)]',
             )}
           >
             Eşleşmemiş
