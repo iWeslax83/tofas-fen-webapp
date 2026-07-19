@@ -32,11 +32,6 @@ html {
   --accent-strong: #a60d26;
   --accent-tint: #faeaed;
 
-  /* State accent — old name, mapped to --accent so pages still
-     referencing --state/--state-deep don't break mid-migration. */
-  --state: #c8102e;
-  --state-deep: #a60d26;
-
   /* Semantic status */
   --ok: #2e7d46;
   --ok-tint: #e9f3ec;
@@ -53,12 +48,14 @@ html {
     0 1px 2px rgba(34, 31, 26, 0.05),
     0 2px 8px rgba(34, 31, 26, 0.04);
 
-  /* Type families. Intentionally overrides --font-sans / --font-mono
-     defined in theme.css (Inter / Fira Code) — this is the single
-     source of truth from PR-02 onward. */
+  /* Type families. Intentionally overrides --font-sans / --font-serif /
+     --font-mono defined in theme.css — this is the single source of
+     truth. Soft Modern self-hosts two typefaces (Source Sans 3, Source
+     Serif 4); --font-mono is deliberately a system stack rather than a
+     third webfont, per the "one typeface" rule. */
   --font-sans: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Menlo, Consolas, monospace;
 }
 
 [data-theme='dark'] {
@@ -77,9 +74,6 @@ html {
   --accent: #ea4a5e;
   --accent-strong: #f06a7b;
   --accent-tint: #3a2226;
-
-  --state: #ea4a5e;
-  --state-deep: #f06a7b;
 
   /* Semantic status */
   --ok: #5cb87a;

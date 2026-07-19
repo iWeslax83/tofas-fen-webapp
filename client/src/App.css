@@ -14,7 +14,7 @@ html {
 }
 
 body {
-  /* Devlet: IBM Plex Sans is the single source of truth (see tokens.css).
+  /* Soft Modern: Source Sans 3 is the single source of truth (see tokens.css).
      Was a literal 'Inter' stack + animated gradient, which leaked through any
      page that didn't paint its own background (e.g. legacy full-bleed pages). */
   font-family: var(--font-sans);
