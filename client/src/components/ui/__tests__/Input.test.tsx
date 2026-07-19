@@ -11,11 +11,12 @@ describe('Input', () => {
     expect(node.tagName).toBe('INPUT');
   });
 
-  it('applies the var-driven flat-border styling', () => {
+  it('applies the var-driven filled-box styling', () => {
     render(<Input placeholder="x" />);
     const node = screen.getByPlaceholderText('x');
-    expect(node.className).toContain('border-b');
+    expect(node.className).toContain('border');
     expect(node.className).toContain('border-[var(--rule)]');
+    expect(node.className).toContain('bg-[var(--paper)]');
   });
 
   it('forwards arbitrary attributes (type, value, name)', () => {
