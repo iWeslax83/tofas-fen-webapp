@@ -165,10 +165,10 @@ export default function LoginPage() {
         label="Tofaş Fen Lisesi kampüsü"
       />
 
-      <div className="relative z-10 h-1.5 bg-[var(--state)]" aria-hidden="true" />
+      <div className="relative z-10 h-1.5 bg-[var(--accent)]" aria-hidden="true" />
 
       <main className="relative z-10 flex-1 flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-md bg-[var(--paper)] border border-[var(--rule)] p-8 lg:p-10">
+        <div className="w-full max-w-md bg-[var(--paper)] border border-[var(--rule)] rounded-[var(--radius)] shadow-[var(--shadow)] p-8 lg:p-10">
           {/* The crest carries a lot of fine detail -- a text band and a thin
               atom outline -- that turns to mush below ~80px. It gets room here
               rather than being shrunk into an icon beside the wordmark. */}
@@ -256,7 +256,7 @@ export default function LoginPage() {
                     id="login-error"
                     role="alert"
                     aria-live="polite"
-                    className="border-l-4 border-[var(--state)] bg-[var(--surface)] px-3 py-2 flex items-start gap-2"
+                    className="border-l-4 border-[var(--accent)] bg-[var(--accent-tint)] rounded-[var(--radius-sm)] px-3 py-2 flex items-start gap-2"
                   >
                     <Chip tone="state">Hata</Chip>
                     <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
@@ -276,7 +276,7 @@ export default function LoginPage() {
                 <div className="pt-3 border-t border-[var(--rule)] text-center">
                   <Link
                     to="/kayit-basvurusu"
-                    className="text-sm text-[var(--ink-dim)] hover:text-[var(--state)]"
+                    className="text-sm text-[var(--ink-dim)] hover:text-[var(--accent)]"
                   >
                     Yeni kayıt başvurusu
                   </Link>
@@ -312,8 +312,8 @@ export default function LoginPage() {
                 className="space-y-5"
                 aria-label="İki faktörlü doğrulama formu"
               >
-                <div className="border-l-4 border-[var(--state)] bg-[var(--surface)] px-4 py-3 flex items-start gap-3">
-                  <ShieldCheck size={16} className="text-[var(--state)] mt-1 shrink-0" />
+                <div className="border-l-4 border-[var(--accent)] bg-[var(--accent-tint)] rounded-[var(--radius-sm)] px-4 py-3 flex items-start gap-3">
+                  <ShieldCheck size={16} className="text-[var(--accent)] mt-1 shrink-0" />
                   <p className="font-serif text-sm text-[var(--ink)] leading-relaxed">
                     Merhaba <strong>{twoFactorUser?.adSoyad}</strong>. E-posta adresinize gönderilen
                     6 haneli doğrulama kodunu girin.
@@ -329,7 +329,7 @@ export default function LoginPage() {
                   </div>
                 )}
                 {countdown === 0 && twoFactorExpiresAt && (
-                  <div className="text-sm text-[var(--state)]">
+                  <div className="text-sm text-[var(--accent)]">
                     Kodun süresi doldu. Lütfen yeni kod isteyin.
                   </div>
                 )}
@@ -361,7 +361,7 @@ export default function LoginPage() {
                     checked={rememberDevice}
                     onChange={(e) => setRememberDevice(e.target.checked)}
                     disabled={isSubmitting}
-                    className="accent-[var(--state)]"
+                    className="accent-[var(--accent)]"
                   />
                   <span className="font-serif text-sm text-[var(--ink-2)]">
                     Bu cihazı 30 gün hatırla
@@ -372,7 +372,7 @@ export default function LoginPage() {
                   <div
                     role="alert"
                     aria-live="polite"
-                    className="border-l-4 border-[var(--state)] bg-[var(--surface)] px-3 py-2 flex items-start gap-2"
+                    className="border-l-4 border-[var(--accent)] bg-[var(--accent-tint)] rounded-[var(--radius-sm)] px-3 py-2 flex items-start gap-2"
                   >
                     <Chip tone="state">Hata</Chip>
                     <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>

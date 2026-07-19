@@ -199,17 +199,17 @@ export default function HelpPage() {
             <BookOpen size={18} className="text-[var(--ink-dim)]" />
             Kategoriler
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--rule)] border border-[var(--rule)] rounded-[var(--radius)] overflow-hidden">
             <button
               type="button"
               onClick={() => setSelectedCategory('all')}
               className={cn(
                 'text-left bg-[var(--paper)] p-4 flex items-start gap-3 transition-colors hover:bg-[var(--surface)]',
                 selectedCategory === 'all' &&
-                  'bg-[var(--surface)] border-l-4 border-l-[var(--state)]',
+                  'bg-[var(--surface)] border-l-4 border-l-[var(--accent)]',
               )}
             >
-              <HelpCircle size={18} className="text-[var(--state)] shrink-0 mt-0.5" />
+              <HelpCircle size={18} className="text-[var(--accent)] shrink-0 mt-0.5" />
               <div>
                 <div className="font-serif text-sm text-[var(--ink)]">Tüm Kategoriler</div>
                 <div className="text-xs font-medium text-[var(--ink-dim)] mt-0.5">
@@ -227,10 +227,10 @@ export default function HelpPage() {
                   onClick={() => setSelectedCategory(category.key)}
                   className={cn(
                     'text-left bg-[var(--paper)] p-4 flex items-start gap-3 transition-colors hover:bg-[var(--surface)]',
-                    active && 'bg-[var(--surface)] border-l-4 border-l-[var(--state)]',
+                    active && 'bg-[var(--surface)] border-l-4 border-l-[var(--accent)]',
                   )}
                 >
-                  <IconComponent size={18} className="text-[var(--state)] shrink-0 mt-0.5" />
+                  <IconComponent size={18} className="text-[var(--accent)] shrink-0 mt-0.5" />
                   <div>
                     <div className="font-serif text-sm text-[var(--ink)]">{category.label}</div>
                     <div className="text-xs font-medium text-[var(--ink-dim)] mt-0.5">
@@ -298,24 +298,24 @@ export default function HelpPage() {
             <Phone size={18} className="text-[var(--ink-dim)]" />
             İletişim Bilgileri
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--rule)] border border-[var(--rule)] rounded-[var(--radius)] overflow-hidden">
             {contactInfo.map((contact) => (
               <div key={contact.title} className="bg-[var(--paper)] p-4 space-y-2">
                 <div className="flex items-center gap-2">
-                  <Mail size={16} className="text-[var(--state)] shrink-0" />
+                  <Mail size={16} className="text-[var(--accent)] shrink-0" />
                   <span className="font-serif text-sm text-[var(--ink)]">{contact.title}</span>
                 </div>
                 <p className="text-xs font-medium text-[var(--ink-dim)]">{contact.description}</p>
                 <div className="space-y-1 pt-1">
                   <a
                     href={`mailto:${contact.email}`}
-                    className="block text-sm text-[var(--ink-2)] hover:text-[var(--state)] transition-colors"
+                    className="block text-sm text-[var(--ink-2)] hover:text-[var(--accent)] transition-colors"
                   >
                     {contact.email}
                   </a>
                   <a
                     href={`tel:${contact.phone}`}
-                    className="block font-mono text-xs text-[var(--ink-dim)] hover:text-[var(--state)] transition-colors"
+                    className="block font-mono text-xs text-[var(--ink-dim)] hover:text-[var(--accent)] transition-colors"
                   >
                     {contact.phone}
                   </a>
