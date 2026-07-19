@@ -1,4 +1,5 @@
 import { Button } from '../../../components/ui/Button';
+import { LoadBar } from '../../../components/SkeletonComponents';
 import {
   usePendingBatches,
   useActivateBatch,
@@ -16,14 +17,22 @@ export default function PendingBatchesList({
   const regen = useRegenerateBatch();
   const cancel = useCancelBatch();
 
-  if (isLoading) return <p className="text-xs font-medium text-[var(--ink-dim)]">Yükleniyor...</p>;
+  if (isLoading)
+    return (
+      <div className="max-w-xs">
+        <LoadBar />
+      </div>
+    );
   if (batches.length === 0)
     return <p className="font-serif text-xs text-[var(--ink-dim)]">Bekleyen yükleme yok.</p>;
 
   return (
     <div className="space-y-3">
       {batches.map((b) => (
-        <div key={b.batchId} className="border border-[var(--rule)] bg-[var(--surface)] p-3">
+        <div
+          key={b.batchId}
+          className="rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--surface)] shadow-[var(--shadow)] p-3"
+        >
           <div className="flex justify-between items-center mb-3">
             <div>
               <p className="text-xs font-medium text-[var(--ink-dim)]">{b.batchId}</p>

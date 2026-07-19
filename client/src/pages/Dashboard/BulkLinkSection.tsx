@@ -1,6 +1,16 @@
-import { useRef } from 'react';
-import { Link2, X } from 'lucide-react';
+import { Link2, X, Check, AlertCircle } from 'lucide-react';
 import { UserService } from '../../utils/apiService';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { FilePickerButton } from '../../components/ui/FilePickerButton';
+import {
+  DocumentTable,
+  DocumentTableBody,
+  DocumentTableCell,
+  DocumentTableHead,
+  DocumentTableHeader,
+  DocumentTableRow,
+} from '../../components/ui/DocumentTable';
 
 interface BulkLinkEntry {
   parentId: string;
@@ -50,8 +60,6 @@ export default function BulkLinkSection({
   onLinkComplete,
   onClose,
 }: BulkLinkSectionProps) {
-  const linkFileRef = useRef<HTMLInputElement>(null);
-
   const handleBulkLinkPreview = async () => {
     if (!linkFile) return;
     setLinkLoading(true);
@@ -98,83 +106,104 @@ export default function BulkLinkSection({
     setLinkPreview(null);
     setLinkResult(null);
     setLinkError('');
-    if (linkFileRef.current) linkFileRef.current.value = '';
   };
 
   return (
-    <div className="bulk-import-panel">
-      <h3 className="bulk-panel-title">
-        <Link2 size={20} />
-        Toplu Veli-Öğrenci Eşleştirme
-      </h3>
-      <p className="bulk-panel-desc">
-        CSV veya Excel dosyası yükleyin. Beklenen sütunlar: parentId, childId
-      </p>
-
-      <div className="bulk-file-row">
-        <input
-          ref={linkFileRef}
-          type="file"
-          accept=".xlsx,.csv,.xls"
-          onChange={(e) => {
-            setLinkFile(e.target.files?.[0] || null);
-            setLinkPreview(null);
-            setLinkResult(null);
-            setLinkError('');
-          }}
-          className="form-input bulk-file-input"
-        />
+    <Card accentBar contentClassName="p-6 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-serif text-lg text-[var(--ink)] flex items-center gap-2">
+            <Link2 size={18} className="text-[var(--ink-dim)]" />
+            Toplu Veli-Öğrenci Eşleştirme
+          </h3>
+          <p className="mt-1 text-sm text-[var(--ink-dim)]">
+            CSV veya Excel dosyası yükleyin. Beklenen sütunlar: parentId, childId
+          </p>
+        </div>
         <button
-          className="btn btn-secondary"
-          onClick={handleBulkLinkPreview}
-          disabled={!linkFile || linkLoading}
-        >
-          Önizle
-        </button>
-        <button
-          className="btn btn-warning"
-          onClick={handleBulkLink}
-          disabled={!linkFile || linkLoading}
-        >
-          {linkLoading ? 'İşleniyor...' : 'Eşleştir'}
-        </button>
-        <button
-          className="btn btn-secondary"
+          type="button"
           onClick={() => {
             resetBulkLink();
             onClose();
           }}
+          aria-label="Kapat"
+          className="text-[var(--ink-dim)] hover:text-[var(--ink)] p-1 shrink-0"
         >
-          <X size={14} /> Kapat
+          <X size={16} />
         </button>
       </div>
 
-      {linkError && <div className="bulk-error">{linkError}</div>}
+      <div className="flex flex-wrap items-center gap-3">
+        <FilePickerButton
+          file={linkFile}
+          onFileSelected={(file) => {
+            setLinkFile(file);
+            setLinkPreview(null);
+            setLinkResult(null);
+            setLinkError('');
+          }}
+          accept=".xlsx,.csv,.xls"
+          hint="CSV, XLS, XLSX"
+          label="Dosya Seç"
+        />
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleBulkLinkPreview}
+          disabled={!linkFile || linkLoading}
+        >
+          Önizle
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={handleBulkLink}
+          disabled={!linkFile || linkLoading}
+          loading={linkLoading}
+        >
+          Eşleştir
+        </Button>
+      </div>
+
+      {linkError && (
+        <div className="flex items-start gap-2 rounded-[var(--radius-sm)] border-l-4 border-[var(--accent)] bg-[var(--accent-tint)] px-3 py-2 text-sm text-[var(--accent)]">
+          <AlertCircle size={14} className="mt-0.5 shrink-0" />
+          {linkError}
+        </div>
+      )}
 
       {linkPreview && (
-        <div className="result-section">
-          <h4>Önizleme: {linkPreview.total} eşleştirme bulundu</h4>
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold text-[var(--ink-2)]">
+            Önizleme: {linkPreview.total} eşleştirme bulundu
+          </h4>
           {linkPreview.links && linkPreview.links.length > 0 && (
-            <div className="preview-table-wrapper">
-              <table className="preview-table">
-                <thead>
-                  <tr>
-                    <th>Veli ID</th>
-                    <th>Öğrenci ID</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {linkPreview.links.slice(0, 20).map((l: BulkLinkEntry, i: number) => (
-                    <tr key={i}>
-                      <td>{l.parentId}</td>
-                      <td>{l.childId}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="rounded-[var(--radius)] border border-[var(--rule)] overflow-hidden">
+              <div className="max-h-64 overflow-y-auto">
+                <DocumentTable>
+                  <DocumentTableHeader>
+                    <DocumentTableRow>
+                      <DocumentTableHead>Veli ID</DocumentTableHead>
+                      <DocumentTableHead>Öğrenci ID</DocumentTableHead>
+                    </DocumentTableRow>
+                  </DocumentTableHeader>
+                  <DocumentTableBody>
+                    {linkPreview.links.slice(0, 20).map((l: BulkLinkEntry, i: number) => (
+                      <DocumentTableRow key={i}>
+                        <DocumentTableCell className="font-mono text-xs">
+                          {l.parentId}
+                        </DocumentTableCell>
+                        <DocumentTableCell className="font-mono text-xs">
+                          {l.childId}
+                        </DocumentTableCell>
+                      </DocumentTableRow>
+                    ))}
+                  </DocumentTableBody>
+                </DocumentTable>
+              </div>
               {linkPreview.links.length > 20 && (
-                <p className="preview-more">
-                  ...ve {linkPreview.links.length - 20} eşleştirme daha
+                <p className="px-4 py-2 text-xs text-[var(--ink-dim)] border-t border-[var(--rule)]">
+                  …ve {linkPreview.links.length - 20} eşleştirme daha
                 </p>
               )}
             </div>
@@ -183,11 +212,14 @@ export default function BulkLinkSection({
       )}
 
       {linkResult && (
-        <div className="result-section">
-          <h4>Eşleştirme Sonucu</h4>
-          <p className="bulk-success">{linkResult.linked} eşleştirme başarıyla yapıldı.</p>
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold text-[var(--ink-2)]">Eşleştirme Sonucu</h4>
+          <div className="flex items-center gap-2 rounded-[var(--radius-sm)] border-l-4 border-[var(--ok)] bg-[var(--ok-tint)] px-3 py-2 text-sm text-[var(--ok)]">
+            <Check size={14} className="shrink-0" />
+            {linkResult.linked} eşleştirme başarıyla yapıldı.
+          </div>
           {linkResult.errors && linkResult.errors.length > 0 && (
-            <div className="bulk-error">
+            <div className="rounded-[var(--radius-sm)] border-l-4 border-[var(--accent)] bg-[var(--accent-tint)] px-3 py-2 text-sm text-[var(--accent)]">
               {linkResult.errors.length} hata:{' '}
               {linkResult.errors
                 .slice(0, 5)
@@ -197,6 +229,6 @@ export default function BulkLinkSection({
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

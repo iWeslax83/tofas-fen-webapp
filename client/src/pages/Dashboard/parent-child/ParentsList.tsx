@@ -50,10 +50,10 @@ export function ParentsList({
         <div style={style} className="px-3 py-1">
           <div
             className={cn(
-              'flex items-center gap-3 px-3 py-2 border cursor-pointer transition-colors',
+              'flex items-center gap-3 px-3 py-2 rounded-[var(--radius-sm)] border cursor-pointer transition-colors',
               isSelected
-                ? 'bg-[var(--surface-2)] border-[var(--ink)]'
-                : 'bg-transparent border-[var(--rule)] hover:bg-[var(--surface)] hover:border-[var(--rule-2)]',
+                ? 'bg-[var(--accent-tint)] border-[var(--accent)]'
+                : 'bg-transparent border-[var(--rule)] hover:bg-[var(--surface-2)] hover:border-[var(--rule-2)]',
             )}
             onClick={() => onSelectParent(isSelected ? null : parent.id)}
             onKeyDown={(e) =>
@@ -64,7 +64,7 @@ export function ParentsList({
             aria-selected={isSelected}
             aria-label={`${parent.adSoyad}${childCount > 0 ? `, ${childCount} çocuk` : ''}`}
           >
-            <div className="flex items-center justify-center w-9 h-9 bg-[var(--ink)] text-[var(--paper)] font-serif text-sm uppercase shrink-0">
+            <div className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-sm)] bg-[var(--surface-2)] text-[var(--ink-2)] font-serif text-sm uppercase shrink-0">
               {parent.adSoyad.charAt(0).toLocaleUpperCase('tr')}
             </div>
             <div className="flex-1 min-w-0">
@@ -72,7 +72,7 @@ export function ParentsList({
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="font-mono text-[10px] text-[var(--ink-dim)]">{parent.id}</span>
                 {childCount > 0 && (
-                  <Chip tone="black" className="h-5 px-1.5 text-[10px]">
+                  <Chip tone="info" className="h-5 px-1.5 text-[10px]">
                     {childCount} çocuk
                   </Chip>
                 )}
@@ -115,10 +115,10 @@ export function ParentsList({
             aria-pressed={showUnmatchedParents}
             title="Sadece eşleşmemiş velileri göster"
             className={cn(
-              'h-8 px-2 text-[10px] uppercase tracking-wider border transition-colors',
+              'h-8 px-2.5 rounded-[var(--radius-sm)] text-xs font-semibold border transition-colors',
               showUnmatchedParents
-                ? 'bg-[var(--state)] text-white border-[var(--state)]'
-                : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                : 'bg-[var(--paper)] text-[var(--ink)] border-[var(--rule)] hover:border-[var(--accent)]',
             )}
           >
             Eşleşmemiş

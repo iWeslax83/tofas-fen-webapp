@@ -22,7 +22,7 @@ export function LinkedPairsList({
   onRequestUnlink,
 }: LinkedPairsListProps) {
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <div className="border-b border-[var(--rule)] p-3 flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
           <Link2 size={12} />
@@ -85,7 +85,7 @@ export function LinkedPairsList({
                 disabled={processing}
                 aria-label={`${pair.parentName} ve ${pair.childName} bağlantısını kaldır`}
                 title="Bağlantıyı kaldır"
-                className="text-[var(--ink-dim)] hover:text-[var(--state)]"
+                className="text-[var(--ink-dim)] hover:text-[var(--accent)]"
               >
                 <Unlink size={12} />
                 Kaldır

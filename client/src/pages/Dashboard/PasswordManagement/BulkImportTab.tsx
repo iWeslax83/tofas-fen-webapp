@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBulkImportPreview, useBulkImportCommit } from './hooks/useBulkImport';
 import PendingBatchesList from './PendingBatchesList';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { FilePickerButton } from '../../../components/ui/FilePickerButton';
 import type { BulkImportPreviewResponse } from '../../../utils/passwordAdminService';
 
 export default function BulkImportTab() {
@@ -47,20 +47,16 @@ export default function BulkImportTab() {
           Tofaş Sınıf Listesi Yükle
         </div>
         <div className="flex items-center gap-3 mb-3">
-          <label className="inline-flex items-center gap-2 h-8 px-3 text-sm font-medium border border-[var(--rule)] bg-transparent text-[var(--ink)] cursor-pointer hover:border-[var(--ink)] transition-colors">
-            <Upload size={16} />
-            <span>XLS Seç</span>
-            <input
-              type="file"
-              accept=".xls,.xlsx"
-              className="hidden"
-              onChange={(e) => {
-                setFile(e.target.files?.[0] ?? null);
-                setPreview(null);
-              }}
-            />
-          </label>
-          {file && <span className="font-mono text-xs text-[var(--ink-dim)]">{file.name}</span>}
+          <FilePickerButton
+            file={file}
+            onFileSelected={(f) => {
+              setFile(f);
+              setPreview(null);
+            }}
+            accept=".xls,.xlsx"
+            hint="XLS, XLSX"
+            label="XLS Seç"
+          />
         </div>
         <div className="flex gap-2">
           <Button
@@ -88,7 +84,7 @@ export default function BulkImportTab() {
             ID: <span className="font-medium text-[var(--ink)]">{preview.existingIds.length}</span>,
             Uyarı: <span className="font-medium text-[var(--ink)]">{preview.warnings.length}</span>
           </p>
-          <div className="mt-3 grid grid-cols-4 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+          <div className="mt-3 grid grid-cols-4 gap-px bg-[var(--rule)] rounded-[var(--radius)] border border-[var(--rule)] overflow-hidden">
             {Object.entries(preview.classDistribution).map(([k, v]) => (
               <div key={k} className="bg-[var(--surface)] p-2 text-center">
                 <div className="font-serif text-sm font-medium text-[var(--ink)]">{k}</div>
