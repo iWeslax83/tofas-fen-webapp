@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { Input } from '../../components/ui/Input';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { apiClient } from '../../utils/api';
 import { cn } from '../../utils/cn';
 
@@ -28,18 +29,18 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_TONES: Record<string, ChipProps['tone']> = {
-  pending: 'default',
-  approved: 'black',
-  rejected: 'state',
-  completed: 'outline',
+  pending: 'warn',
+  approved: 'ok',
+  rejected: 'accent',
+  completed: 'info',
   cancelled: 'default',
 };
 
 const PURPOSES = ['Okul Tanıtımı', 'Kayıt İşlemi', 'Bilgi Alma', 'Mülakat', 'Diğer'];
 
 const selectClasses = cn(
-  'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+  'w-full bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -54,7 +55,7 @@ const Field = ({ label, htmlFor, required, children }: FieldProps) => (
   <label htmlFor={htmlFor} className="flex flex-col gap-1">
     <span className="text-xs font-medium text-[var(--ink-dim)]">
       {label}
-      {required && <span className="text-[var(--state)] ml-1">*</span>}
+      {required && <span className="text-[var(--accent)] ml-1">*</span>}
     </span>
     {children}
   </label>
@@ -167,8 +168,8 @@ export default function VisitorAppointmentPage() {
         </header>
 
         {successMsg && (
-          <Card contentClassName="px-4 py-2 flex items-center gap-2">
-            <Chip tone="black">Bildirim</Chip>
+          <Card contentClassName="px-4 py-2 flex items-center gap-2 border-l-4 border-[var(--ok)] bg-[var(--ok-tint)]">
+            <Chip tone="ok">Bildirim</Chip>
             <span className="font-serif text-sm text-[var(--ink)] flex-1 inline-flex items-center gap-1">
               <CheckCircle size={12} />
               {successMsg}
@@ -177,8 +178,8 @@ export default function VisitorAppointmentPage() {
         )}
 
         {errorMsg && (
-          <Card contentClassName="px-4 py-2 flex items-center gap-2 border-l-4 border-[var(--state)]">
-            <Chip tone="state">Hata</Chip>
+          <Card contentClassName="px-4 py-2 flex items-center gap-2 border-l-4 border-[var(--accent)] bg-[var(--accent-tint)]">
+            <Chip tone="accent">Hata</Chip>
             <span className="font-serif text-sm text-[var(--ink)] flex-1 inline-flex items-center gap-1">
               <AlertCircle size={12} />
               {errorMsg}
@@ -187,8 +188,8 @@ export default function VisitorAppointmentPage() {
         )}
 
         {showForm && (
-          <Card>
-            <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center gap-2">
+          <Card className="overflow-hidden">
+            <div className="bg-[var(--accent)] text-white px-4 py-2 flex items-center gap-2">
               <CalendarDays size={12} />
               <span className="text-xs font-medium">Yeni Randevu Talebi</span>
             </div>
@@ -230,7 +231,7 @@ export default function VisitorAppointmentPage() {
                     Müsait saatler yükleniyor…
                   </span>
                 ) : availableSlots.length === 0 ? (
-                  <span className="text-xs font-medium text-[var(--state)]">
+                  <span className="text-xs font-medium text-[var(--accent)]">
                     Bu tarihte müsait saat bulunmuyor
                   </span>
                 ) : (
@@ -244,10 +245,10 @@ export default function VisitorAppointmentPage() {
                           onClick={() => setTimeSlot(slot)}
                           aria-pressed={active}
                           className={cn(
-                            'h-8 px-3 text-xs uppercase tracking-wider border transition-colors flex items-center gap-1',
+                            'h-8 px-3 rounded-[var(--radius-sm)] text-xs font-semibold border transition-colors flex items-center gap-1',
                             active
-                              ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
-                              : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                              ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                              : 'bg-[var(--paper)] text-[var(--ink)] border-[var(--rule)] hover:border-[var(--accent)]',
                           )}
                         >
                           <Clock size={10} />
@@ -292,7 +293,9 @@ export default function VisitorAppointmentPage() {
           </div>
 
           {loading ? (
-            <div className="px-4 py-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+            <div className="px-4 py-6 max-w-xs">
+              <LoadBar />
+            </div>
           ) : appointments.length === 0 ? (
             <Card contentClassName="p-10 flex flex-col items-center text-center gap-3">
               <CalendarDays size={32} className="text-[var(--ink-dim)]" />
@@ -326,7 +329,7 @@ export default function VisitorAppointmentPage() {
                           onClick={() => cancelAppointment(apt._id)}
                           disabled={cancelling === apt._id}
                           loading={cancelling === apt._id}
-                          className="text-[var(--state)]"
+                          className="text-[var(--accent)]"
                         >
                           <XCircle size={12} />
                           İptal Et
