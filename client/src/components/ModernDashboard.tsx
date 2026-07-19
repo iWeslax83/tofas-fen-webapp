@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap } from 'lucide-react';
 import { useUser, useIsLoading } from '../stores/authStore';
+import { LoadBar } from './SkeletonComponents';
 import ModernDashboardLayout from './ModernDashboardLayout';
 import EmailVerificationBanner from './EmailVerificationBanner';
 import { WelcomeHero } from './dashboard/WelcomeHero';
@@ -38,7 +39,7 @@ const ModernDashboard: React.FC = () => {
             <GraduationCap className="loading-icon" />
           </div>
           <div className="loading-text">Tofaş Fen Lisesi</div>
-          <div className="loading-spinner" />
+          <LoadBar className="loading-container-bar" />
         </div>
       </div>
     );
