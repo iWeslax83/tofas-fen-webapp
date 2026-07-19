@@ -1,13 +1,45 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Settings, Menu, X, Bell, CheckCheck, Search } from 'lucide-react';
+import {
+  Home,
+  Settings,
+  Menu,
+  X,
+  Bell,
+  CheckCheck,
+  Search,
+  Sun,
+  Moon,
+  Monitor,
+} from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useInitialized } from '../stores/authStore';
 import { dashboardButtons, type UserRole } from '../pages/Dashboard/dashboardButtonConfig';
 import { useNotifications } from '../hooks/useNotifications';
+import { useTheme } from '../hooks/useTheme';
 import { SidebarProfile } from './SidebarProfile';
 import { CommandPalette } from './CommandPalette';
+import { Portrait } from './Portrait';
 import './ModernDashboardLayout.css';
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Yönetici',
+  teacher: 'Öğretmen',
+  student: 'Öğrenci',
+  parent: 'Veli',
+  hizmetli: 'Hizmetli',
+  ziyaretci: 'Ziyaretçi',
+};
+
+const THEME_CYCLE: Array<{
+  value: 'light' | 'dark' | 'system';
+  icon: React.ElementType;
+  label: string;
+}> = [
+  { value: 'light', icon: Sun, label: 'Açık tema' },
+  { value: 'dark', icon: Moon, label: 'Koyu tema' },
+  { value: 'system', icon: Monitor, label: 'Sistem teması' },
+];
 
 interface ModernDashboardLayoutProps {
   children: React.ReactNode;
@@ -30,10 +62,17 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
   const [paletteOpen, setPaletteOpen] = useState(false);
   const { notifications, unreadCount, isOpen, setIsOpen, markAsRead, markAllAsRead } =
     useNotifications(user?.id, initialized && !!user);
+  const { theme, setTheme } = useTheme();
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const navClass = (to: string) => `nav-item${pathname === to ? ' active' : ''}`;
+
+  const cycleTheme = () => {
+    const idx = THEME_CYCLE.findIndex((t) => t.value === theme);
+    setTheme(THEME_CYCLE[(idx + 1) % THEME_CYCLE.length].value);
+  };
+  const ThemeIcon = THEME_CYCLE.find((t) => t.value === theme)?.icon ?? Sun;
 
   // Dışarı tıklayınca dropdown'ı kapat
   useEffect(() => {
@@ -92,13 +131,6 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
             </div>
           </div>
 
-          <SidebarProfile
-            name={user.adSoyad ?? user.id}
-            userId={user.id}
-            role={user.rol ?? 'student'}
-            pansiyon={user.pansiyon}
-          />
-
           <nav className="sidebar-nav">
             <div className="nav-section">
               <h3>Ana Menü</h3>
@@ -139,6 +171,13 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
               </Link>
             </div>
           </nav>
+
+          <SidebarProfile
+            name={user.adSoyad ?? user.id}
+            userId={user.id}
+            role={user.rol ?? 'student'}
+            pansiyon={user.pansiyon}
+          />
         </aside>
       )}
 
@@ -175,16 +214,26 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
               )}
             </div>
           </div>
+          <button
+            type="button"
+            className="global-search"
+            onClick={() => setPaletteOpen(true)}
+            aria-label="Komut paletini aç (Ctrl+K)"
+          >
+            <Search size={16} className="global-search-ico" />
+            <span>Öğrenci, ders, duyuru ara… (⌘K)</span>
+          </button>
+
           <div className="header-right">
             {customHeaderActions}
             <button
               type="button"
               className="notif-bell-btn"
-              onClick={() => setPaletteOpen(true)}
-              aria-label="Komut paletini aç (Ctrl+K)"
-              title="Komut paleti · Ctrl+K"
+              onClick={cycleTheme}
+              aria-label={`Tema: ${THEME_CYCLE.find((t) => t.value === theme)?.label}`}
+              title={THEME_CYCLE.find((t) => t.value === theme)?.label}
             >
-              <Search size={20} />
+              <ThemeIcon size={18} />
             </button>
             {/* Notification Bell */}
             <div className="notif-container" ref={notifRef}>
@@ -245,6 +294,16 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
                   </div>
                 </div>
               )}
+            </div>
+
+            <div className="user-cell">
+              <Portrait name={user.adSoyad ?? user.id} size="sm" />
+              <div>
+                <div className="user-cell-name">{user.adSoyad ?? user.id}</div>
+                <div className="user-cell-role">
+                  {ROLE_LABELS[user.rol ?? 'student'] ?? user.rol}
+                </div>
+              </div>
             </div>
           </div>
         </header>
