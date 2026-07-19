@@ -24,6 +24,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { Input } from '../../components/ui/Input';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { SecureAPI } from '../../utils/api';
 import { cn } from '../../utils/cn';
 
@@ -119,20 +120,20 @@ const TABS: { key: Tab; label: string; icon: React.ComponentType<{ size?: number
 
 const STATUS_TONES: Record<string, ChipProps['tone']> = {
   normal: 'default',
-  warning: 'outline',
-  critical: 'state',
-  optimized: 'black',
-  completed: 'black',
-  running: 'outline',
-  failed: 'state',
+  warning: 'warn',
+  critical: 'accent',
+  optimized: 'ok',
+  completed: 'ok',
+  running: 'warn',
+  failed: 'accent',
   pending: 'default',
 };
 
 const formatDate = (date: string | Date) => new Date(date).toLocaleString('tr-TR');
 
 const selectClasses = cn(
-  'h-10 bg-transparent border-0 border-b border-[var(--rule)] px-1 text-sm',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2',
+  'h-10 bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 text-sm',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -270,7 +271,7 @@ const PerformancePage: React.FC = () => {
           </p>
         </header>
 
-        <div className="flex items-center gap-1 flex-wrap border-b border-[var(--rule)] pb-2">
+        <div className="flex items-center gap-1 flex-wrap border-b border-[var(--rule)]">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = activeTab === t.key;
@@ -280,14 +281,14 @@ const PerformancePage: React.FC = () => {
                 type="button"
                 onClick={() => setActiveTab(t.key)}
                 className={cn(
-                  'h-9 px-3 text-xs uppercase tracking-wider border transition-colors flex items-center gap-2',
+                  'h-9 px-3.5 -mb-px text-sm font-semibold border-b-2 transition-colors flex items-center gap-2',
                   active
-                    ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
-                    : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                    ? 'text-[var(--accent)] border-[var(--accent)]'
+                    : 'text-[var(--ink-dim)] border-transparent hover:text-[var(--ink-2)]',
                 )}
                 aria-pressed={active}
               >
-                <Icon size={12} />
+                <Icon size={14} />
                 {t.label}
               </button>
             );
@@ -295,16 +296,15 @@ const PerformancePage: React.FC = () => {
         </div>
 
         {error && (
-          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--state)]">
-            <Chip tone="state">Hata</Chip>
+          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--accent)] bg-[var(--accent-tint)]">
+            <Chip tone="accent">Hata</Chip>
             <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
           </Card>
         )}
 
         {loading && (
-          <div className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
-            <RefreshCw size={12} className="animate-spin" />
-            Yükleniyor…
+          <div className="max-w-xs">
+            <LoadBar />
           </div>
         )}
 
@@ -383,7 +383,7 @@ function DashboardTab({
       </div>
 
       {systemMetrics ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--rule)] border border-[var(--rule)] rounded-[var(--radius)] overflow-hidden">
           <SystemCard
             icon={MemoryStick}
             label="Bellek (Heap)"
@@ -691,7 +691,7 @@ function OptimizationsTab({ optimizations }: { optimizations: Optimization[] }) 
                     <RefreshCw size={12} className="animate-spin text-[var(--ink-dim)]" />
                   )}
                   {o.status === 'failed' && (
-                    <AlertTriangle size={12} className="text-[var(--state)]" />
+                    <AlertTriangle size={12} className="text-[var(--accent)]" />
                   )}
                   {o.status === 'pending' && <Clock size={12} className="text-[var(--ink-dim)]" />}
                   <span className="text-xs font-medium text-[var(--ink-dim)]">{o.action}</span>
@@ -717,7 +717,7 @@ function OptimizationsTab({ optimizations }: { optimizations: Optimization[] }) 
                 )}
                 {o.status === 'failed' && o.error && (
                   <div className="flex items-start gap-2 pt-2 border-t border-[var(--rule)]">
-                    <AlertTriangle size={12} className="text-[var(--state)] mt-0.5 shrink-0" />
+                    <AlertTriangle size={12} className="text-[var(--accent)] mt-0.5 shrink-0" />
                     <span className="font-serif text-sm text-[var(--ink-2)]">{o.error}</span>
                   </div>
                 )}
@@ -762,7 +762,7 @@ function ConfigsTab({ configs }: { configs: Config[] }) {
                   </button>
                   <button
                     type="button"
-                    className="text-[var(--ink-dim)] hover:text-[var(--state)] p-1"
+                    className="text-[var(--ink-dim)] hover:text-[var(--accent)] p-1"
                     aria-label="Sil"
                     title="Sil"
                   >

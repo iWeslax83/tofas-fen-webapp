@@ -14,7 +14,15 @@ import type { NoteEntry } from '../../pages/Dashboard/NotlarPage';
 
 import './GradeTrendChart.css';
 
-const LINE_COLORS = ['#0f766e', '#2563eb', '#16a34a', '#115e59', '#ea580c', '#db2777', '#0891b2'];
+const LINE_COLORS = [
+  'var(--accent)',
+  'var(--info)',
+  'var(--ok)',
+  'var(--warn)',
+  '#7c5cbf',
+  '#0891b2',
+  '#c2410c',
+];
 
 interface GradeTrendChartProps {
   notes: NoteEntry[];
@@ -77,11 +85,19 @@ export default function GradeTrendChart({ notes }: GradeTrendChartProps) {
       </div>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey="donem" tick={{ fontSize: 12 }} />
-          <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
-          <Tooltip />
-          <Legend />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--rule)" />
+          <XAxis dataKey="donem" tick={{ fontSize: 12, fill: 'var(--ink-dim)' }} />
+          <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: 'var(--ink-dim)' }} />
+          <Tooltip
+            contentStyle={{
+              background: 'var(--surface)',
+              border: '1px solid var(--rule)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--ink)',
+            }}
+            labelStyle={{ color: 'var(--ink)' }}
+          />
+          <Legend wrapperStyle={{ color: 'var(--ink-2)', fontSize: 12 }} />
           {subjects.map((subject, i) => (
             <Line
               key={subject}

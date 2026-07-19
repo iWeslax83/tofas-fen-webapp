@@ -7,6 +7,7 @@ import type { ClassSchedule, SchedulePeriod } from '../../types/schedule';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { Chip } from '../../components/ui/Chip';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { cn } from '../../utils/cn';
 
 const DAY_NAMES = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
@@ -87,7 +88,9 @@ export default function DersProgramiPage() {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Ders Programı" breadcrumb={breadcrumb}>
-        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
@@ -96,7 +99,7 @@ export default function DersProgramiPage() {
     return (
       <ModernDashboardLayout pageTitle="Ders Programı" breadcrumb={breadcrumb}>
         <div className="p-6 max-w-xl">
-          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--state)]">
+          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--accent)]">
             <Chip tone="state">Hata</Chip>
             <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
           </Card>
@@ -178,7 +181,7 @@ export default function DersProgramiPage() {
                                   key={p.period}
                                   className="px-4 py-2 flex items-center gap-3 text-sm"
                                 >
-                                  <span className="inline-flex items-center justify-center w-6 h-6 border border-[var(--rule)] font-mono text-[10px] text-[var(--ink-dim)] shrink-0">
+                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-[var(--radius-sm)] border border-[var(--rule)] font-mono text-[10px] text-[var(--ink-dim)] shrink-0">
                                     {p.period}
                                   </span>
                                   <span className="font-serif text-[var(--ink)] truncate">

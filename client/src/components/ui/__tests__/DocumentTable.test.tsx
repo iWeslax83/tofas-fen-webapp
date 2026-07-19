@@ -46,22 +46,14 @@ describe('DocumentTable primitives', () => {
     expect(screen.getByRole('cell', { name: 'Onaylandı' })).toBeInTheDocument();
   });
 
-  it('applies the clean header styling on <th>', () => {
+  it('applies the Soft Modern header styling on <th> (uppercase, surface-2 bg)', () => {
     renderTable();
     const th = screen.getByRole('columnheader', { name: 'Konu' });
-    expect(th.className).toContain('text-xs');
-    expect(th.className).toContain('font-semibold');
-    // De-bureaucratized: no more mono/uppercase ministerial header styling.
+    expect(th.className).toContain('uppercase');
+    expect(th.className).toContain('font-bold');
+    expect(th.className).toContain('bg-[var(--surface-2)]');
+    // No mono ministerial header styling.
     expect(th.className).not.toContain('font-mono');
-    expect(th.className).not.toContain('uppercase');
-  });
-
-  it('applies the underline rule below the thead block', () => {
-    renderTable();
-    // Use the DOM directly — rowgroup role is shared by thead/tbody/tfoot,
-    // making name-based queries ambiguous.
-    const head = document.querySelector('thead');
-    expect(head?.className).toContain('border-b-2');
   });
 
   it('forwards user className to the table element', () => {
@@ -79,6 +71,6 @@ describe('DocumentTable primitives', () => {
     // First row is in thead, second is the body row
     expect(rows.length).toBeGreaterThanOrEqual(2);
     const bodyRow = rows[rows.length - 1];
-    expect(bodyRow.className).toContain('hover:bg-[var(--surface)]');
+    expect(bodyRow.className).toContain('hover:bg-[var(--surface-2)]');
   });
 });
