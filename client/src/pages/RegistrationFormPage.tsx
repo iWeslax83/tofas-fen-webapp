@@ -17,8 +17,8 @@ const TARGET_CLASSES = [
 ];
 
 const selectClasses = cn(
-  'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+  'w-full bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -34,7 +34,7 @@ const Field = ({ label, htmlFor, required, fullWidth, children }: FieldProps) =>
   <label htmlFor={htmlFor} className={cn('flex flex-col gap-1', fullWidth && 'md:col-span-2')}>
     <span className="text-xs font-medium text-[var(--ink-dim)]">
       {label}
-      {required && <span className="text-[var(--state)] ml-1">*</span>}
+      {required && <span className="text-[var(--accent)] ml-1">*</span>}
     </span>
     {children}
   </label>
@@ -106,15 +106,15 @@ export default function RegistrationFormPage() {
   if (success) {
     return (
       <div className="min-h-screen bg-[var(--paper)] flex flex-col">
-        <div className="h-1.5 bg-[var(--state)]" aria-hidden="true" />
+        <div className="h-1.5 bg-[var(--accent)]" aria-hidden="true" />
         <div className="flex-1 flex items-center justify-center p-6">
-          <Card className="w-full max-w-md" contentClassName="p-0">
-            <div className="bg-[var(--state)] text-white px-4 py-2">
+          <Card className="w-full max-w-md overflow-hidden" contentClassName="p-0">
+            <div className="bg-[var(--accent)] text-white px-4 py-2">
               <span className="text-xs font-medium">Başvuru Alındı</span>
             </div>
             <div className="p-8 flex flex-col items-center text-center gap-4">
-              <div className="w-16 h-16 border-2 border-[var(--ink)] flex items-center justify-center">
-                <Check size={28} className="text-[var(--ink)]" />
+              <div className="w-16 h-16 rounded-[var(--radius)] bg-[var(--ok-tint)] flex items-center justify-center">
+                <Check size={28} className="text-[var(--ok)]" />
               </div>
               <h1 className="font-serif text-xl text-[var(--ink)]">Başvurunuz Alındı</h1>
               <p className="font-serif text-sm text-[var(--ink-2)] leading-relaxed">
@@ -135,7 +135,7 @@ export default function RegistrationFormPage() {
 
   return (
     <div className="min-h-screen bg-[var(--paper)] flex flex-col">
-      <div className="h-1.5 bg-[var(--state)]" aria-hidden="true" />
+      <div className="h-1.5 bg-[var(--accent)]" aria-hidden="true" />
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[5fr_7fr]">
         {/* Same campus backdrop as the login page. This used to be bg-[var(--ink)],
@@ -194,7 +194,7 @@ export default function RegistrationFormPage() {
               <div
                 role="alert"
                 aria-live="polite"
-                className="mb-5 border-l-4 border-[var(--state)] bg-[var(--surface)] px-3 py-2 flex items-start gap-2"
+                className="mb-5 border-l-4 border-[var(--accent)] bg-[var(--accent-tint)] rounded-[var(--radius-sm)] px-3 py-2 flex items-start gap-2"
               >
                 <Chip tone="state">Hata</Chip>
                 <span className="font-serif text-sm text-[var(--ink)] flex-1 inline-flex items-center gap-1">
@@ -325,7 +325,7 @@ export default function RegistrationFormPage() {
             <div className="mt-6 pt-4 border-t border-[var(--rule)] text-center">
               <Link
                 to="/login"
-                className="text-xs font-medium text-[var(--ink-dim)] hover:text-[var(--state)]"
+                className="text-xs font-medium text-[var(--ink-dim)] hover:text-[var(--accent)]"
               >
                 Zaten hesabınız var mı? Giriş yapın
               </Link>
