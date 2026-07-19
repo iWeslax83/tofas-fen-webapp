@@ -32,7 +32,7 @@ describe('Card', () => {
   it('applies the tinted tone background', () => {
     const { container } = render(<Card tone="tinted">x</Card>);
     const outer = container.firstChild as HTMLElement;
-    expect(outer.className).toContain('bg-[var(--surface)]');
+    expect(outer.className).toContain('bg-[var(--surface-2)]');
   });
 
   it('puts user-provided className on the outer shell', () => {

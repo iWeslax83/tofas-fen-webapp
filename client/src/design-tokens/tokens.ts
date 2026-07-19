@@ -1,39 +1,39 @@
 /**
- * Devlet design tokens — single source of truth (TypeScript).
+ * Soft Modern design tokens — single source of truth (TypeScript).
  * Mirrored in src/styles/tokens.css (parity verified by test).
  */
 
 export const lightPalette = {
-  paper: '#ffffff',
-  surface: '#f6f5f1',
-  surface2: '#edeae3',
-  ink: '#0d0d0d',
-  ink2: '#2a2a2a',
-  inkDim: '#555555',
-  inkDim2: '#8a8a85',
-  rule: '#c9c6bc',
-  rule2: '#8a8680',
-  state: '#931a1a',
-  stateDeep: '#6b0e0e',
+  paper: '#faf8f4',
+  surface: '#ffffff',
+  surface2: '#f4f1ea',
+  ink: '#221f1a',
+  ink2: '#5c564b',
+  inkDim: '#918a7c',
+  inkDim2: '#918a7c',
+  rule: '#e7e2d8',
+  rule2: '#d9d3c4',
+  state: '#c8102e',
+  stateDeep: '#a60d26',
 } as const;
 
 export const darkPalette = {
-  paper: '#0a0d12',
-  surface: '#121820',
-  surface2: '#1a2029',
-  ink: '#e7e5df',
-  ink2: '#c5c2b8',
-  inkDim: '#8c8a82',
-  inkDim2: '#5c5a54',
-  rule: 'rgba(231, 229, 223, 0.1)',
-  rule2: 'rgba(231, 229, 223, 0.22)',
-  state: '#c94444',
-  stateDeep: '#8b2323',
+  paper: '#1b1916',
+  surface: '#242119',
+  surface2: '#2c2820',
+  ink: '#f1ede4',
+  ink2: '#b5aea0',
+  inkDim: '#837c6e',
+  inkDim2: '#837c6e',
+  rule: '#3a352b',
+  rule2: '#4a4536',
+  state: '#ea4a5e',
+  stateDeep: '#f06a7b',
 } as const;
 
 export const fontFamily = {
-  sans: ["'IBM Plex Sans'", 'system-ui', '-apple-system', "'Segoe UI'", 'sans-serif'],
-  serif: ["'IBM Plex Serif'", 'Georgia', "'Times New Roman'", 'serif'],
+  sans: ["'Source Sans 3'", 'system-ui', '-apple-system', "'Segoe UI'", 'sans-serif'],
+  serif: ["'Source Serif 4'", 'Georgia', "'Times New Roman'", 'serif'],
   mono: ["'IBM Plex Mono'", 'ui-monospace', "'SF Mono'", 'Menlo', 'monospace'],
 } as const;
 

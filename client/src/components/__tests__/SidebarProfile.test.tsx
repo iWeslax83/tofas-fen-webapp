@@ -59,17 +59,17 @@ describe('SidebarProfile', () => {
     expect(screen.getByText('2024001')).toBeInTheDocument();
   });
 
-  it('renders the role badge styled for the dark sidebar', () => {
+  it('renders the role badge styled for the light sidebar', () => {
     render(<SidebarProfile name="X" userId="1" role="admin" />);
     const badge = screen.getByText('Yönetici');
-    expect(badge.className).toContain('text-white');
-    expect(badge.className).toContain('bg-white/10');
+    expect(badge.className).toContain('text-ink-2');
+    expect(badge.className).toContain('bg-surface-2');
   });
 
-  it('renders the pansiyon badge with a light border', () => {
+  it('renders the pansiyon badge with a rule border', () => {
     render(<SidebarProfile name="X" userId="1" role="student" pansiyon />);
     const badge = screen.getByText('Pansiyon');
-    expect(badge.className).toContain('border-white/15');
-    expect(badge.className).toContain('text-white/70');
+    expect(badge.className).toContain('border-rule');
+    expect(badge.className).toContain('text-ink-dim');
   });
 });

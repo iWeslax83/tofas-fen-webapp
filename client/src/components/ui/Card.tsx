@@ -2,15 +2,18 @@ import { forwardRef, type HTMLAttributes } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../utils/cn';
 
-export const cardVariants = cva('relative bg-[var(--paper)] border border-[var(--rule)]', {
-  variants: {
-    tone: {
-      default: '',
-      tinted: 'bg-[var(--surface)]',
+export const cardVariants = cva(
+  'relative bg-[var(--surface)] border border-[var(--rule)] rounded-[var(--radius)] shadow-[var(--shadow)]',
+  {
+    variants: {
+      tone: {
+        default: '',
+        tinted: 'bg-[var(--surface-2)]',
+      },
     },
+    defaultVariants: { tone: 'default' },
   },
-  defaultVariants: { tone: 'default' },
-});
+);
 
 export interface CardProps
   extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof cardVariants> {

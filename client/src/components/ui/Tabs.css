@@ -21,7 +21,7 @@
 .tabs-list {
   display: flex;
   gap: var(--space-2);
-  border-bottom: 2px solid var(--gray-200);
+  border-bottom: 2px solid var(--rule);
   padding: 0;
   margin: 0;
   list-style: none;
@@ -37,7 +37,7 @@
 .tabs-vertical .tabs-list {
   flex-direction: column;
   border-bottom: none;
-  border-right: 2px solid var(--gray-200);
+  border-right: 2px solid var(--rule);
   padding-right: var(--space-4);
   min-width: 200px;
 }
@@ -52,7 +52,7 @@
 
 /* Tabs List Variants */
 .tabs-list-default {
-  border-bottom: 2px solid var(--gray-200);
+  border-bottom: 2px solid var(--rule);
 }
 
 .tabs-list-pills {
@@ -62,18 +62,18 @@
 
 .tabs-list-pills .tabs-trigger {
   border-radius: var(--radius-full);
-  border: 1px solid var(--gray-300);
-  background: var(--white);
+  border: 1px solid var(--rule);
+  background: var(--surface);
 }
 
 .tabs-list-pills .tabs-trigger-active {
-  background: var(--gradient-primary);
-  color: var(--white);
-  border-color: var(--primary-red);
+  background: var(--accent);
+  color: var(--surface);
+  border-color: var(--accent);
 }
 
 .tabs-list-underline {
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--rule);
   gap: var(--space-6);
 }
 
@@ -84,7 +84,7 @@
 }
 
 .tabs-list-underline .tabs-trigger-active {
-  border-bottom-color: var(--primary-red);
+  border-bottom-color: var(--accent);
   background: transparent;
 }
 
@@ -98,10 +98,10 @@
   padding: var(--space-3) var(--space-6);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  color: var(--gray-600);
+  color: var(--ink-2);
   background: transparent;
   border: none;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: var(--radius) var(--radius) 0 0;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
@@ -110,18 +110,18 @@
 }
 
 .tabs-trigger:hover:not(.tabs-trigger-disabled) {
-  color: var(--primary-red);
-  background: var(--primary-red-lighter);
+  color: var(--accent);
+  background: var(--accent-tint);
 }
 
 .tabs-trigger:focus-visible {
-  outline: 2px solid var(--primary-red);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
 }
 
 .tabs-trigger-active {
-  color: var(--primary-red);
+  color: var(--accent);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -142,7 +142,7 @@
 }
 
 .tabs-trigger-active .tabs-trigger-icon {
-  color: var(--primary-red);
+  color: var(--accent);
 }
 
 /* Tabs Trigger Text */
@@ -161,15 +161,15 @@
   padding: 0 var(--space-1);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  background: var(--gray-300);
-  color: var(--gray-700);
+  background: var(--rule);
+  color: var(--ink-2);
   border-radius: var(--radius-full);
   margin-left: var(--space-1);
 }
 
 .tabs-trigger-active .tabs-trigger-badge {
-  background: var(--primary-red);
-  color: var(--white);
+  background: var(--accent);
+  color: var(--surface);
 }
 
 /* Tabs Trigger Indicator */
@@ -179,7 +179,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--gradient-primary);
+  background: var(--accent);
   border-radius: var(--radius-full) var(--radius-full) 0 0;
 }
 
@@ -231,13 +231,13 @@
 
 .tabs-list-scrollable::before {
   left: 0;
-  background: var(--white);
+  background: var(--surface);
   opacity: 0;
 }
 
 .tabs-list-scrollable::after {
   right: 0;
-  background: var(--white);
+  background: var(--surface);
   opacity: 0;
 }
 
@@ -271,41 +271,8 @@
   }
 }
 
-/* Dark Mode Support */
-[data-theme="dark"] .tabs-list,
-@media (prefers-color-scheme: dark) {
-  .tabs-list {
-    border-color: var(--gray-700);
-  }
-
-  .tabs-trigger {
-    color: var(--gray-400);
-  }
-
-  .tabs-trigger:hover:not(.tabs-trigger-disabled) {
-    background: var(--gray-800);
-    color: var(--primary-red-light);
-  }
-
-  .tabs-trigger-active {
-    color: var(--primary-red-light);
-  }
-
-  .tabs-list-pills .tabs-trigger {
-    background: var(--gray-800);
-    border-color: var(--gray-700);
-  }
-
-  .tabs-trigger-badge {
-    background: var(--gray-700);
-    color: var(--gray-300);
-  }
-
-  .tabs-list-scrollable::before,
-  .tabs-list-scrollable::after {
-    background: var(--gray-100);
-  }
-}
+/* No separate dark-mode block needed — every color above is a Soft Modern
+   token that already flips value under [data-theme='dark']. */
 
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {

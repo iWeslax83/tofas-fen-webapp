@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import { LoadBar } from './SkeletonComponents';
 
 interface ProtectedRouteProps {
   children: React.ReactElement;
@@ -29,7 +30,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   if (!initialized || isLoading) {
     return (
       <div className="loading-container">
-        <div className="loading-spinner"></div>
+        <LoadBar className="loading-container-bar" />
         <p>Yükleniyor...</p>
       </div>
     );
