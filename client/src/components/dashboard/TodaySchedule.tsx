@@ -45,7 +45,7 @@ export function TodaySchedule({ rows }: TodayScheduleProps) {
           {rows.map((row) => (
             <DocumentTableRow
               key={row.id}
-              className={row.isActive ? 'bg-[var(--state)]/10 hover:bg-[var(--state)]/15' : ''}
+              className={row.isActive ? 'bg-[var(--accent)]/10 hover:bg-[var(--accent)]/15' : ''}
             >
               <DocumentTableCell className="font-mono text-[var(--ink)]">
                 {row.time}

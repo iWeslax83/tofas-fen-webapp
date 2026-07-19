@@ -41,11 +41,7 @@ export const DocumentTableHeader = forwardRef<
   HTMLTableSectionElement,
   HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead
-    ref={ref}
-    className={cn('border-b-2 border-[var(--ink)] [&_tr]:border-0', className)}
-    {...props}
-  />
+  <thead ref={ref} className={cn('[&_tr]:border-0', className)} {...props} />
 ));
 DocumentTableHeader.displayName = 'DocumentTableHeader';
 
@@ -64,7 +60,7 @@ export const DocumentTableRow = forwardRef<
   <tr
     ref={ref}
     className={cn(
-      'border-b border-[var(--rule)] hover:bg-[var(--surface)] transition-colors',
+      'border-b border-[var(--rule)] hover:bg-[var(--surface-2)] transition-colors',
       className,
     )}
     {...props}
@@ -79,7 +75,7 @@ export const DocumentTableHead = forwardRef<
   <th
     ref={ref}
     className={cn(
-      'h-11 px-3 text-left align-middle text-xs font-semibold text-[var(--ink-dim)]',
+      'h-9 px-[18px] text-left align-middle text-[11.5px] font-bold uppercase tracking-wide text-[var(--ink-dim)] bg-[var(--surface-2)]',
       className,
     )}
     {...props}
@@ -93,7 +89,7 @@ export const DocumentTableCell = forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn('h-12 px-3 align-middle text-[var(--ink-2)]', className)}
+    className={cn('h-[42px] px-[18px] align-middle text-[var(--ink-2)]', className)}
     {...props}
   />
 ));

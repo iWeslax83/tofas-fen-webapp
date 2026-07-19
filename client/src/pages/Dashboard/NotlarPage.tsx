@@ -15,11 +15,12 @@ import { DataTable } from '../../components/ui/DataTable';
 import { Chip } from '../../components/ui/Chip';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { cn } from '../../utils/cn';
 
 const selectClasses = cn(
-  'h-9 bg-transparent border-0 border-b border-[var(--rule)] px-1 text-sm',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2',
+  'h-9 bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 text-sm',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -38,11 +39,10 @@ export interface NoteEntry {
   classSection?: string;
 }
 
-const averageTone = (avg: number): 'state' | 'black' | 'default' | 'outline' => {
-  if (avg >= 85) return 'black';
-  if (avg >= 70) return 'default';
-  if (avg >= 50) return 'outline';
-  return 'state';
+const averageTone = (avg: number): 'ok' | 'warn' | 'accent' => {
+  if (avg >= 70) return 'ok';
+  if (avg >= 50) return 'warn';
+  return 'accent';
 };
 
 const formatNum = (n: number | undefined): string => (typeof n === 'number' ? n.toFixed(0) : '—');
@@ -155,8 +155,8 @@ export default function NotlarPage() {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle={pageTitle} breadcrumb={breadcrumb}>
-        <div className="p-6">
-          <div className="text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
         </div>
       </ModernDashboardLayout>
     );
@@ -167,7 +167,7 @@ export default function NotlarPage() {
       <ModernDashboardLayout pageTitle={pageTitle} breadcrumb={breadcrumb}>
         <div className="p-6">
           <Card accentBar contentClassName="p-4 flex items-start gap-3">
-            <AlertCircle className="text-[var(--state)] shrink-0 mt-0.5" size={18} />
+            <AlertCircle className="text-[var(--accent)] shrink-0 mt-0.5" size={18} />
             <div className="flex-1">
               <p className="font-serif text-[var(--ink)]">
                 Notlar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.
