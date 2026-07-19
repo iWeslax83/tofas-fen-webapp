@@ -33,8 +33,6 @@ const PALETTE_KEYS = [
   'ink-dim-2',
   'rule',
   'rule-2',
-  'state',
-  'state-deep',
 ] as const;
 
 describe('design tokens parity', () => {

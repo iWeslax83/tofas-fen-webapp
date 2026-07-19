@@ -165,7 +165,7 @@
   --font-sans: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Menlo, Consolas, monospace;
 
   /* Typography - Font Sizes */
   --font-size-xs: 0.75rem;

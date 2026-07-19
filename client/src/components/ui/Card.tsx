@@ -28,7 +28,10 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, tone, accentBar, contentClassName, children, ...props }, ref) => (
     <div ref={ref} className={cn(cardVariants({ tone }), className)} {...props}>
       {accentBar && (
-        <span aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--state)]" />
+        <span
+          aria-hidden="true"
+          className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--accent)]"
+        />
       )}
       <div className={cn(accentBar && 'pl-3', contentClassName)}>{children}</div>
     </div>
