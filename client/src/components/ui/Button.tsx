@@ -1,27 +1,28 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../utils/cn';
+import '../SkeletonComponents.css';
 
 export const buttonVariants = cva(
   [
-    'inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap',
-    'transition-colors',
-    'focus-visible:outline-2 focus-visible:outline-[var(--state)] focus-visible:outline-offset-2',
+    'inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap',
+    'rounded-[var(--radius-sm)] transition-colors',
+    'focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2',
     'disabled:opacity-50 disabled:cursor-not-allowed',
   ].join(' '),
   {
     variants: {
       variant: {
         primary:
-          'bg-[var(--ink)] text-[var(--paper)] border border-[var(--ink)] hover:bg-[var(--state)] hover:border-[var(--state)]',
+          'bg-[var(--accent)] text-white border border-[var(--accent)] hover:bg-[var(--accent-strong)] hover:border-[var(--accent-strong)]',
         secondary:
-          'bg-transparent text-[var(--ink)] border border-[var(--ink)] hover:bg-[var(--ink)] hover:text-[var(--paper)]',
+          'bg-[var(--surface)] text-[var(--ink)] border border-[var(--rule)] hover:bg-[var(--surface-2)]',
         ghost:
           'bg-transparent text-[var(--ink)] border border-transparent hover:bg-[var(--surface-2)]',
         danger:
-          'bg-[var(--state)] text-white border border-[var(--state)] hover:bg-[var(--state-deep)] hover:border-[var(--state-deep)]',
+          'bg-[var(--accent-tint)] text-[var(--accent)] border border-[var(--accent)] hover:bg-[var(--accent)] hover:text-white',
         outline:
-          'bg-transparent text-[var(--ink)] border border-[var(--rule)] hover:border-[var(--ink)]',
+          'bg-transparent text-[var(--ink)] border border-[var(--rule)] hover:border-[var(--accent)]',
       },
       size: {
         sm: 'h-8 px-3 text-sm',
@@ -55,12 +56,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       className={cn(buttonVariants({ variant, size, fullWidth }), className)}
       {...props}
     >
-      {loading && (
-        <span
-          aria-hidden="true"
-          className="inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"
-        />
-      )}
+      {loading && <span aria-hidden="true" className="loadbar" style={{ width: 22, height: 3 }} />}
       {loading && <span className="sr-only">Yükleniyor</span>}
       {/* The button's own flex row only ever sees this one wrapper, so the
           wrapper has to be the row: without it an icon + label stacked

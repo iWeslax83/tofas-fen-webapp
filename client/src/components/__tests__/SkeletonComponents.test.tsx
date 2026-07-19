@@ -14,6 +14,7 @@ import {
   SkeletonCalendar,
   SkeletonChart,
   LoadingState,
+  LoadBar,
 } from '../SkeletonComponents';
 
 describe('Skeleton primitives', () => {
@@ -81,6 +82,19 @@ describe('Skeleton primitives', () => {
   it('SkeletonChart renders 7 bars (one per weekday)', () => {
     const { container } = render(<SkeletonChart />);
     expect(container.querySelectorAll('.skeleton-chart-bar')).toHaveLength(7);
+  });
+});
+
+describe('LoadBar', () => {
+  it('renders the .loadbar element with an accessible loading label', () => {
+    render(<LoadBar />);
+    const bar = screen.getByRole('status', { name: 'Yükleniyor' });
+    expect(bar.className).toContain('loadbar');
+  });
+
+  it('merges a user-provided className', () => {
+    render(<LoadBar className="extra" />);
+    expect(screen.getByRole('status', { name: 'Yükleniyor' }).className).toContain('extra');
   });
 });
 

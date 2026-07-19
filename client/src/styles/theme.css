@@ -153,16 +153,18 @@
   --space-32: 8rem;
 
   /* Typography - Font Families
-     IBM Plex is the one typeface, self-hosted from /fonts via styles/fonts.css.
-     Keep these in sync with styles/tokens.css: main.tsx imports index.css (which
-     pulls in tokens.css) and then theme.css, so whichever loads last wins the
-     :root cascade. They used to disagree — theme.css named Inter/Poppins/Fira
-     Code, none self-hosted, and the CSP blocks the Google Fonts stylesheet that
-     index.css imported, so the app rendered in system fallbacks.
-     Display is the same family as body; weight and size carry the hierarchy. */
-  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-serif: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
+     Source Sans 3 (body/UI) + Source Serif 4 (page titles), self-hosted from
+     /fonts via styles/fonts.css. Keep these in sync with styles/tokens.css:
+     main.tsx imports index.css (which pulls in tokens.css) and then theme.css,
+     so whichever loads last wins the :root cascade. They used to disagree —
+     theme.css named Inter/Poppins/Fira Code, none self-hosted, and the CSP
+     blocks the Google Fonts stylesheet that index.css imported, so the app
+     rendered in system fallbacks.
+     Display uses the serif face (page titles); weight and size carry the rest
+     of the hierarchy. */
+  --font-sans: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* Typography - Font Sizes */
@@ -1182,11 +1184,15 @@
 }
 
 .loading-container p {
-  color: var(--gray-600);
+  color: var(--ink-2);
   font-size: 1rem;
   font-weight: 600;
   margin: var(--space-4) 0 0 0;
-  text-shadow: 0 2px 4px rgba(75, 85, 99, 0.05);
+}
+
+.loading-container-bar {
+  width: 160px;
+  margin: 0 auto;
 }
 
 .loading-spinner {

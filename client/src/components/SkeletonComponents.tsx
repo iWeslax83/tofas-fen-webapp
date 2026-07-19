@@ -14,10 +14,28 @@ export const Skeleton: React.FC<SkeletonProps> = ({ className = '', style, child
   </div>
 );
 
+/**
+ * Thin sliding accent progress bar — Soft Modern's spinner replacement.
+ * No spinners anywhere in this app; loading state is always this bar,
+ * a skeleton bone, or both.
+ */
+export const LoadBar: React.FC<{ className?: string; style?: React.CSSProperties }> = ({
+  className = '',
+  style,
+}) => (
+  <div
+    className={`loadbar ${className}`}
+    style={style}
+    role="status"
+    aria-live="polite"
+    aria-label="Yükleniyor"
+  />
+);
+
 // Text Skeleton Components
-export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({ 
-  lines = 1, 
-  className = '' 
+export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({
+  lines = 1,
+  className = '',
 }) => (
   <div className={`skeleton-text ${className}`}>
     {Array.from({ length: lines }).map((_, index) => (
@@ -67,10 +85,10 @@ export const SkeletonClubCard: React.FC<{ className?: string }> = ({ className =
 );
 
 // Table Skeleton Components
-export const SkeletonTable: React.FC<{ rows?: number; columns?: number; className?: string }> = ({ 
-  rows = 5, 
-  columns = 4, 
-  className = '' 
+export const SkeletonTable: React.FC<{ rows?: number; columns?: number; className?: string }> = ({
+  rows = 5,
+  columns = 4,
+  className = '',
 }) => (
   <div className={`skeleton-table ${className}`}>
     <div className="skeleton-table-header">
@@ -91,9 +109,9 @@ export const SkeletonTable: React.FC<{ rows?: number; columns?: number; classNam
 );
 
 // Form Skeleton Components
-export const SkeletonForm: React.FC<{ fields?: number; className?: string }> = ({ 
-  fields = 4, 
-  className = '' 
+export const SkeletonForm: React.FC<{ fields?: number; className?: string }> = ({
+  fields = 4,
+  className = '',
 }) => (
   <div className={`skeleton-form ${className}`}>
     {Array.from({ length: fields }).map((_, index) => (
@@ -110,9 +128,9 @@ export const SkeletonForm: React.FC<{ fields?: number; className?: string }> = (
 );
 
 // List Skeleton Components
-export const SkeletonList: React.FC<{ items?: number; className?: string }> = ({ 
-  items = 5, 
-  className = '' 
+export const SkeletonList: React.FC<{ items?: number; className?: string }> = ({
+  items = 5,
+  className = '',
 }) => (
   <div className={`skeleton-list ${className}`}>
     {Array.from({ length: items }).map((_, index) => (
@@ -219,9 +237,9 @@ export const SkeletonChart: React.FC<{ className?: string }> = ({ className = ''
 );
 
 // Loading States
-export const LoadingState: React.FC<{ 
-  isLoading: boolean; 
-  error?: string | null; 
+export const LoadingState: React.FC<{
+  isLoading: boolean;
+  error?: string | null;
   onRetry?: () => void;
   children: React.ReactNode;
   skeleton?: React.ReactNode;
