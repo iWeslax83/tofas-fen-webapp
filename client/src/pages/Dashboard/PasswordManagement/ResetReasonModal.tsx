@@ -17,9 +17,9 @@ export interface ResetReasonModalProps {
 }
 
 const inputCls = cn(
-  'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+  'w-full bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2',
   'text-[var(--ink)] placeholder:text-[var(--ink-dim)]',
-  'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+  'focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -33,9 +33,9 @@ export default function ResetReasonModal({
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
-      <div className="bg-[var(--paper)] border border-[var(--rule)] max-w-md w-full">
+      <div className="bg-[var(--paper)] border border-[var(--rule)] rounded-[var(--radius)] shadow-[var(--shadow)] overflow-hidden max-w-md w-full">
         {/* Modal header bar */}
-        <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+        <div className="bg-[var(--accent)] text-white px-4 py-2 flex items-center justify-between">
           <span className="text-xs font-medium">Şifre Sıfırlama Sebebi</span>
           <button
             type="button"
