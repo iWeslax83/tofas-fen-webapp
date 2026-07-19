@@ -1,7 +1,12 @@
 import { useState } from 'react';
+import { X, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { UserService } from '../../utils/apiService';
 import { PasswordAdminService } from '../../utils/passwordAdminService';
 import PasswordRevealModal from './PasswordManagement/PasswordRevealModal';
+import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
+import { cn } from '../../utils/cn';
 
 interface UserType {
   id: string;
@@ -35,6 +40,28 @@ export interface AddUserModalProps {
   onUserAdded: (user: UserType) => void;
   onClose: () => void;
 }
+
+const selectClasses = cn(
+  'w-full bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
+  'transition-colors',
+);
+
+interface FieldProps {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}
+
+const Field = ({ label, required, children }: FieldProps) => (
+  <label className="flex flex-col gap-1">
+    <span className="text-xs font-medium text-[var(--ink-dim)]">
+      {label}
+      {required && <span className="text-[var(--accent)] ml-1">*</span>}
+    </span>
+    {children}
+  </label>
+);
 
 export default function AddUserModal({ onUserAdded, onClose }: AddUserModalProps) {
   const [addForm, setAddForm] = useState({
@@ -78,314 +105,249 @@ export default function AddUserModal({ onUserAdded, onClose }: AddUserModalProps
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'var(--opacity-40)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 'var(--z-modal)',
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={handleClose}
+      role="presentation"
     >
-      <div
-        style={{
-          background: 'var(--white)',
-          borderRadius: 'var(--radius-xl)',
-          padding: 'var(--space-8)',
-          minWidth: 340,
-          maxWidth: 400,
-          width: '90vw',
-          boxShadow: 'var(--shadow-2xl)',
-          position: 'relative',
-        }}
-      >
-        <h2
-          style={{
-            fontSize: 'var(--font-size-2xl)',
-            fontWeight: 'var(--font-weight-bold)',
-            color: 'var(--primary-red)',
-            marginBottom: 'var(--space-4)',
-          }}
-        >
-          Yeni Kullanıcı Ekle
-        </h2>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setAddError('');
-            setAddSuccess('');
-            setAddLoading(true);
-            // Validasyon
-            if (!addForm.id || !addForm.adSoyad || !addForm.rol) {
-              setAddError('ID, Ad Soyad ve Rol zorunludur.');
-              setAddLoading(false);
-              return;
-            }
-            if (!autoGen && !addForm.sifre) {
-              setAddError('Şifre zorunludur (veya otomatik üret seçeneğini işaretleyin).');
-              setAddLoading(false);
-              return;
-            }
-            if (!autoGen && addForm.sifre.length < 4) {
-              setAddError('Şifre en az 4 karakter olmalı.');
-              setAddLoading(false);
-              return;
-            }
-
-            try {
-              const payload: CreateUserPayload = {
-                id: addForm.id,
-                adSoyad: addForm.adSoyad,
-                rol: addForm.rol,
-              };
-              if (!autoGen) {
-                payload.sifre = addForm.sifre;
-              }
-              if (addForm.rol === 'student') {
-                payload.sinif = addForm.sinif;
-                payload.sube = addForm.sube;
-                payload.oda = addForm.oda;
-                payload.pansiyon = addForm.pansiyon;
-              }
-              if (addForm.rol === 'parent') {
-                payload.childId = addForm.childId
-                  .split(',')
-                  .map((s) => s.trim())
-                  .filter(Boolean);
-              }
-              const { data, error } = await UserService.createUser(
-                payload as unknown as Record<string, unknown>,
-              );
-              if (error) {
-                setAddError(error);
-              } else {
-                onUserAdded(data as UserType);
-                if (autoGen) {
-                  try {
-                    const gen = await PasswordAdminService.generatePassword(addForm.id, 'new_user');
-                    setRevealed({
-                      password: gen.password,
-                      label: `${addForm.adSoyad} (${addForm.id})`,
-                    });
-                    setAddSuccess('');
-                  } catch (genErr) {
-                    setAddError(
-                      'Kullanıcı eklendi ancak şifre üretilemedi: ' +
-                        (genErr instanceof Error ? genErr.message : 'Bilinmeyen hata'),
-                    );
-                  }
-                } else {
-                  setAddSuccess('Kullanıcı başarıyla eklendi!');
-                  setTimeout(() => {
-                    handleClose();
-                  }, 1200);
-                }
-              }
-            } catch {
-              setAddError('Kullanıcı eklenemedi.');
-            } finally {
-              setAddLoading(false);
-            }
-          }}
-          style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
-        >
-          <input
-            placeholder="ID"
-            value={addForm.id || ''}
-            onChange={(e) => setAddForm((f) => ({ ...f, id: e.target.value }))}
-            style={{
-              border: '1.5px solid #d1d5db',
-              borderRadius: 8,
-              padding: '8px 12px',
-              fontSize: 15,
-            }}
-            required
-          />
-          <input
-            placeholder="Ad Soyad"
-            value={addForm.adSoyad}
-            onChange={(e) => setAddForm((f) => ({ ...f, adSoyad: e.target.value }))}
-            style={{
-              border: '1.5px solid #d1d5db',
-              borderRadius: 8,
-              padding: '8px 12px',
-              fontSize: 15,
-            }}
-            required
-          />
-          <select
-            value={addForm.rol}
-            onChange={(e) => setAddForm((f) => ({ ...f, rol: e.target.value }))}
-            style={{
-              border: '1.5px solid #d1d5db',
-              borderRadius: 8,
-              padding: '8px 12px',
-              fontSize: 15,
-            }}
-            required
-          >
-            <option value="">Rol Seç</option>
-            <option value="student">Öğrenci</option>
-            <option value="parent">Veli</option>
-            <option value="teacher">Öğretmen</option>
-            <option value="admin">Yönetici</option>
-          </select>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
-            <input
-              type="checkbox"
-              checked={autoGen}
-              onChange={(e) => setAutoGen(e.target.checked)}
-            />
-            Şifreyi otomatik üret
-          </label>
-          {!autoGen && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Şifre"
-                value={addForm.sifre}
-                onChange={(e) => setAddForm((f) => ({ ...f, sifre: e.target.value }))}
-                style={{
-                  border: '1.5px solid #d1d5db',
-                  borderRadius: 8,
-                  padding: '8px 12px',
-                  fontSize: 15,
-                  flex: 1,
-                }}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--primary-red)',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                {showPassword ? 'Gizle' : 'Göster'}
-              </button>
-            </div>
-          )}
-          {addForm.rol === 'student' && (
-            <>
-              <input
-                placeholder="Sınıf (örn: 9)"
-                value={addForm.sinif}
-                onChange={(e) => setAddForm((f) => ({ ...f, sinif: e.target.value }))}
-                style={{
-                  border: '1.5px solid #d1d5db',
-                  borderRadius: 8,
-                  padding: '8px 12px',
-                  fontSize: 15,
-                }}
-                required
-              />
-              <input
-                placeholder="Şube (örn: A)"
-                value={addForm.sube}
-                onChange={(e) => setAddForm((f) => ({ ...f, sube: e.target.value }))}
-                style={{
-                  border: '1.5px solid #d1d5db',
-                  borderRadius: 8,
-                  padding: '8px 12px',
-                  fontSize: 15,
-                }}
-                required
-              />
-              <label
-                style={{
-                  color: 'var(--primary-red)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  fontSize: 15,
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={addForm.pansiyon}
-                  onChange={(e) =>
-                    setAddForm((f) => ({
-                      ...f,
-                      pansiyon: e.target.checked,
-                      oda: e.target.checked ? f.oda : '',
-                    }))
-                  }
-                />{' '}
-                Yatılı mı?
-              </label>
-              {addForm.pansiyon && (
-                <input
-                  placeholder="Oda (zorunlu)"
-                  value={addForm.oda}
-                  onChange={(e) => setAddForm((f) => ({ ...f, oda: e.target.value }))}
-                  style={{
-                    border: '1.5px solid #d1d5db',
-                    borderRadius: 8,
-                    padding: '8px 12px',
-                    fontSize: 15,
-                  }}
-                  required
-                />
-              )}
-            </>
-          )}
-          {addForm.rol === 'parent' && (
-            <input
-              placeholder="Çocuk ID'leri (virgülle ayır)"
-              value={addForm.childId}
-              onChange={(e) => setAddForm((f) => ({ ...f, childId: e.target.value }))}
-              style={{
-                border: '1.5px solid #d1d5db',
-                borderRadius: 8,
-                padding: '8px 12px',
-                fontSize: 15,
-              }}
-            />
-          )}
-          {addError && <div style={{ color: '#b91c1c', fontWeight: 600 }}>{addError}</div>}
-          {addSuccess && <div style={{ color: '#16a34a', fontWeight: 600 }}>{addSuccess}</div>}
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+      <Card className="relative w-full max-w-md overflow-hidden" contentClassName="p-0">
+        <div onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[var(--accent)] text-white px-4 py-2 flex items-center justify-between">
+            <span className="text-xs font-medium">Yeni Kullanıcı Ekle</span>
             <button
               type="button"
               onClick={handleClose}
-              style={{
-                padding: '8px 18px',
-                borderRadius: 8,
-                background: '#eee',
-                color: 'var(--primary-red)',
-                fontWeight: 600,
-                border: 'none',
-                fontSize: 15,
-                cursor: 'pointer',
-              }}
+              className="text-white hover:opacity-80"
+              aria-label="Kapat"
             >
-              İptal
-            </button>
-            <button
-              type="submit"
-              disabled={addLoading}
-              style={{
-                padding: '8px 18px',
-                borderRadius: 8,
-                background: '#16a34a',
-                color: '#fff',
-                fontWeight: 700,
-                border: 'none',
-                fontSize: 15,
-                cursor: 'pointer',
-                opacity: addLoading ? 0.7 : 1,
-              }}
-            >
-              {addLoading ? 'Ekleniyor...' : 'Ekle'}
+              <X size={16} />
             </button>
           </div>
-        </form>
-      </div>
+
+          <form
+            className="p-6 space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setAddError('');
+              setAddSuccess('');
+              setAddLoading(true);
+              if (!addForm.id || !addForm.adSoyad || !addForm.rol) {
+                setAddError('ID, Ad Soyad ve Rol zorunludur.');
+                setAddLoading(false);
+                return;
+              }
+              if (!autoGen && !addForm.sifre) {
+                setAddError('Şifre zorunludur (veya otomatik üret seçeneğini işaretleyin).');
+                setAddLoading(false);
+                return;
+              }
+              if (!autoGen && addForm.sifre.length < 4) {
+                setAddError('Şifre en az 4 karakter olmalı.');
+                setAddLoading(false);
+                return;
+              }
+
+              try {
+                const payload: CreateUserPayload = {
+                  id: addForm.id,
+                  adSoyad: addForm.adSoyad,
+                  rol: addForm.rol,
+                };
+                if (!autoGen) {
+                  payload.sifre = addForm.sifre;
+                }
+                if (addForm.rol === 'student') {
+                  payload.sinif = addForm.sinif;
+                  payload.sube = addForm.sube;
+                  payload.oda = addForm.oda;
+                  payload.pansiyon = addForm.pansiyon;
+                }
+                if (addForm.rol === 'parent') {
+                  payload.childId = addForm.childId
+                    .split(',')
+                    .map((s) => s.trim())
+                    .filter(Boolean);
+                }
+                const { data, error } = await UserService.createUser(
+                  payload as unknown as Record<string, unknown>,
+                );
+                if (error) {
+                  setAddError(error);
+                } else {
+                  onUserAdded(data as UserType);
+                  if (autoGen) {
+                    try {
+                      const gen = await PasswordAdminService.generatePassword(
+                        addForm.id,
+                        'new_user',
+                      );
+                      setRevealed({
+                        password: gen.password,
+                        label: `${addForm.adSoyad} (${addForm.id})`,
+                      });
+                      setAddSuccess('');
+                    } catch (genErr) {
+                      setAddError(
+                        'Kullanıcı eklendi ancak şifre üretilemedi: ' +
+                          (genErr instanceof Error ? genErr.message : 'Bilinmeyen hata'),
+                      );
+                    }
+                  } else {
+                    setAddSuccess('Kullanıcı başarıyla eklendi!');
+                    setTimeout(() => {
+                      handleClose();
+                    }, 1200);
+                  }
+                }
+              } catch {
+                setAddError('Kullanıcı eklenemedi.');
+              } finally {
+                setAddLoading(false);
+              }
+            }}
+          >
+            <Field label="ID" required>
+              <Input
+                value={addForm.id}
+                onChange={(e) => setAddForm((f) => ({ ...f, id: e.target.value }))}
+                required
+              />
+            </Field>
+            <Field label="Ad Soyad" required>
+              <Input
+                value={addForm.adSoyad}
+                onChange={(e) => setAddForm((f) => ({ ...f, adSoyad: e.target.value }))}
+                required
+              />
+            </Field>
+            <Field label="Rol" required>
+              <select
+                value={addForm.rol}
+                onChange={(e) => setAddForm((f) => ({ ...f, rol: e.target.value }))}
+                className={selectClasses}
+                required
+              >
+                <option value="">Rol Seç</option>
+                <option value="student">Öğrenci</option>
+                <option value="parent">Veli</option>
+                <option value="teacher">Öğretmen</option>
+                <option value="admin">Yönetici</option>
+              </select>
+            </Field>
+
+            <label className="flex items-center gap-2 text-sm text-[var(--ink)] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoGen}
+                onChange={(e) => setAutoGen(e.target.checked)}
+                className="accent-[var(--accent)]"
+              />
+              Şifreyi otomatik üret
+            </label>
+
+            {!autoGen && (
+              <Field label="Şifre" required>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    value={addForm.sifre}
+                    onChange={(e) => setAddForm((f) => ({ ...f, sifre: e.target.value }))}
+                    required
+                    className="pr-8"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 text-[var(--ink-dim)] hover:text-[var(--ink)] p-1"
+                    aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                  >
+                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </Field>
+            )}
+
+            {addForm.rol === 'student' && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Sınıf" required>
+                    <Input
+                      placeholder="9"
+                      value={addForm.sinif}
+                      onChange={(e) => setAddForm((f) => ({ ...f, sinif: e.target.value }))}
+                      required
+                    />
+                  </Field>
+                  <Field label="Şube" required>
+                    <Input
+                      placeholder="A"
+                      value={addForm.sube}
+                      onChange={(e) => setAddForm((f) => ({ ...f, sube: e.target.value }))}
+                      required
+                    />
+                  </Field>
+                </div>
+                <label className="flex items-center gap-2 text-sm text-[var(--ink)] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={addForm.pansiyon}
+                    onChange={(e) =>
+                      setAddForm((f) => ({
+                        ...f,
+                        pansiyon: e.target.checked,
+                        oda: e.target.checked ? f.oda : '',
+                      }))
+                    }
+                    className="accent-[var(--accent)]"
+                  />
+                  Yatılı mı?
+                </label>
+                {addForm.pansiyon && (
+                  <Field label="Oda" required>
+                    <Input
+                      value={addForm.oda}
+                      onChange={(e) => setAddForm((f) => ({ ...f, oda: e.target.value }))}
+                      required
+                    />
+                  </Field>
+                )}
+              </>
+            )}
+
+            {addForm.rol === 'parent' && (
+              <Field label="Çocuk ID'leri (virgülle ayırın)">
+                <Input
+                  value={addForm.childId}
+                  onChange={(e) => setAddForm((f) => ({ ...f, childId: e.target.value }))}
+                  placeholder="12345, 67890"
+                />
+              </Field>
+            )}
+
+            {addError && (
+              <div className="flex items-start gap-2 rounded-[var(--radius-sm)] border-l-4 border-[var(--accent)] bg-[var(--accent-tint)] px-3 py-2 text-sm text-[var(--accent)]">
+                <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                {addError}
+              </div>
+            )}
+            {addSuccess && (
+              <div className="flex items-center gap-2 rounded-[var(--radius-sm)] border-l-4 border-[var(--ok)] bg-[var(--ok-tint)] px-3 py-2 text-sm text-[var(--ok)]">
+                <CheckCircle size={14} className="shrink-0" />
+                {addSuccess}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="ghost" size="sm" onClick={handleClose}>
+                İptal
+              </Button>
+              <Button type="submit" variant="primary" size="sm" loading={addLoading}>
+                Ekle
+              </Button>
+            </div>
+          </form>
+        </div>
+      </Card>
+
       {revealed && (
         <PasswordRevealModal
           password={revealed.password}
