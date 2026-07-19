@@ -1,5 +1,6 @@
-/* Devlet design tokens — single source of truth (CSS).
-   Mirrored in src/design-tokens/tokens.ts (parity verified by test). */
+/* Soft Modern design tokens — single source of truth (CSS).
+   Mirrored in src/design-tokens/tokens.ts (parity verified by test).
+   Spec: docs/ui-overhaul-2026-07-plan.md, mockup: docs/ui-mockups/soft-modern.html. */
 
 html {
   /* Smooth palette swap when [data-theme] changes. Limited to color
@@ -12,53 +13,81 @@ html {
 
 :root {
   /* Paper / surface */
-  --paper: #ffffff;
-  --surface: #f6f5f1;
-  --surface-2: #edeae3;
+  --paper: #faf8f4;
+  --surface: #ffffff;
+  --surface-2: #f4f1ea;
 
   /* Ink */
-  --ink: #0d0d0d;
-  --ink-2: #2a2a2a;
-  --ink-dim: #555555;
-  --ink-dim-2: #8a8a85;
+  --ink: #221f1a;
+  --ink-2: #5c564b;
+  --ink-dim: #918a7c;
+  --ink-dim-2: #918a7c;
 
   /* Rules */
-  --rule: #c9c6bc;
-  --rule-2: #8a8680;
+  --rule: #e7e2d8;
+  --rule-2: #d9d3c4;
 
-  /* State accent */
-  --state: #931a1a;
-  --state-deep: #6b0e0e;
+  /* Accent — the one accent color */
+  --accent: #c8102e;
+  --accent-strong: #a60d26;
+  --accent-tint: #faeaed;
+
+  /* State accent — old name, mapped to --accent so pages still
+     referencing --state/--state-deep don't break mid-migration. */
+  --state: #c8102e;
+  --state-deep: #a60d26;
 
   /* Semantic status */
-  --ok: #1a6b2f;
-  --warn: #7a5500;
+  --ok: #2e7d46;
+  --ok-tint: #e9f3ec;
+  --warn: #a05e03;
+  --warn-tint: #f8efe0;
+  --info: #1d5f8a;
+  --info-tint: #e7f0f6;
+
+  /* Shape */
+  --radius: 10px;
+  --radius-sm: 8px;
+  --radius-full: 9999px;
+  --shadow:
+    0 1px 2px rgba(34, 31, 26, 0.05),
+    0 2px 8px rgba(34, 31, 26, 0.04);
 
   /* Type families. Intentionally overrides --font-sans / --font-mono
-     defined in theme.css (Inter / Fira Code) — Devlet is the single
+     defined in theme.css (Inter / Fira Code) — this is the single
      source of truth from PR-02 onward. */
-  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-serif: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
 [data-theme='dark'] {
-  --paper: #0a0d12;
-  --surface: #121820;
-  --surface-2: #1a2029;
+  --paper: #1b1916;
+  --surface: #242119;
+  --surface-2: #2c2820;
 
-  --ink: #e7e5df;
-  --ink-2: #c5c2b8;
-  --ink-dim: #8c8a82;
-  --ink-dim-2: #5c5a54;
+  --ink: #f1ede4;
+  --ink-2: #b5aea0;
+  --ink-dim: #837c6e;
+  --ink-dim-2: #837c6e;
 
-  --rule: rgba(231, 229, 223, 0.1);
-  --rule-2: rgba(231, 229, 223, 0.22);
+  --rule: #3a352b;
+  --rule-2: #4a4536;
 
-  --state: #c94444;
-  --state-deep: #8b2323;
+  --accent: #ea4a5e;
+  --accent-strong: #f06a7b;
+  --accent-tint: #3a2226;
+
+  --state: #ea4a5e;
+  --state-deep: #f06a7b;
 
   /* Semantic status */
-  --ok: #4caf72;
-  --warn: #e6a817;
+  --ok: #5cb87a;
+  --ok-tint: #22301f;
+  --warn: #d99a45;
+  --warn-tint: #362b18;
+  --info: #6aa8cc;
+  --info-tint: #1e2a33;
+
+  --shadow: none;
 }

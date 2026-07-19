@@ -24,6 +24,12 @@ export default {
         'rule-2': 'var(--rule-2)',
         state: 'var(--state)',
         'state-deep': 'var(--state-deep)',
+        accent: 'var(--accent)',
+        'accent-strong': 'var(--accent-strong)',
+        'accent-tint': 'var(--accent-tint)',
+        'ok-tint': 'var(--ok-tint)',
+        'warn-tint': 'var(--warn-tint)',
+        'info-tint': 'var(--info-tint)',
 
         // Legacy Tofaş palette — kept until PR-20 cleanup
         tofas: {
@@ -44,8 +50,8 @@ export default {
         info: '#3b82f6',
       },
       fontFamily: {
-        sans: ['IBM Plex Sans', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
-        serif: ['IBM Plex Serif', 'Georgia', 'Times New Roman', 'serif'],
+        sans: ['Source Sans 3', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        serif: ['Source Serif 4', 'Georgia', 'Times New Roman', 'serif'],
         mono: ['IBM Plex Mono', 'ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
       },
       fontSize: {
