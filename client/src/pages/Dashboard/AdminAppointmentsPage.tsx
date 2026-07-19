@@ -7,6 +7,7 @@ import { DataTable } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip, type ChipProps } from '../../components/ui/Chip';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { apiClient } from '../../utils/api';
 import { cn } from '../../utils/cn';
 import { formatDate } from '../../utils/formatDate';
@@ -37,10 +38,10 @@ const STATUS_LABELS: Record<StatusKey, string> = {
 };
 
 const STATUS_TONES: Record<StatusKey, ChipProps['tone']> = {
-  pending: 'default',
-  approved: 'black',
-  rejected: 'state',
-  completed: 'outline',
+  pending: 'warn',
+  approved: 'ok',
+  rejected: 'accent',
+  completed: 'info',
   cancelled: 'default',
 };
 
@@ -173,7 +174,9 @@ export default function AdminAppointmentsPage() {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Randevu Başvuruları" breadcrumb={breadcrumb}>
-        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
@@ -199,10 +202,10 @@ export default function AdminAppointmentsPage() {
                     type="button"
                     onClick={() => setFilter(f.key)}
                     className={cn(
-                      'h-8 px-3 text-xs uppercase tracking-wider border transition-colors',
+                      'h-8 px-3 rounded-[var(--radius-sm)] text-sm font-semibold border transition-colors',
                       active
-                        ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
-                        : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                        ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                        : 'bg-[var(--paper)] text-[var(--ink)] border-[var(--rule)] hover:border-[var(--accent)]',
                     )}
                     aria-pressed={active}
                   >
@@ -253,11 +256,11 @@ function AppointmentDetailModal({
       role="presentation"
     >
       <Card
-        className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto"
+        className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto overflow-x-hidden"
         contentClassName="p-0"
       >
         <div onClick={(e) => e.stopPropagation()}>
-          <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+          <div className="bg-[var(--accent)] text-white px-4 py-2 flex items-center justify-between">
             <span className="text-xs font-medium">
               Randevu Detayı · No. {apt._id.slice(-6).toUpperCase()}
             </span>
@@ -304,9 +307,9 @@ function AppointmentDetailModal({
                     rows={2}
                     placeholder="Reddedilirse açıklama…"
                     className={cn(
-                      'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+                      'w-full bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2',
                       'text-[var(--ink)] placeholder:text-[var(--ink-dim)]',
-                      'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+                      'focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
                       'transition-colors resize-y min-h-[3rem]',
                     )}
                   />

@@ -25,9 +25,9 @@ export default function CalendarSettingsModal({
       onClick={onClose}
       role="presentation"
     >
-      <Card className="relative w-full max-w-md" contentClassName="p-0">
+      <Card className="relative w-full max-w-md overflow-hidden" contentClassName="p-0">
         <div onClick={(e) => e.stopPropagation()}>
-          <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+          <div className="bg-[var(--accent)] text-white px-4 py-2 flex items-center justify-between">
             <span className="text-xs font-medium">Takvim Ayarları</span>
             <button
               type="button"
@@ -50,7 +50,7 @@ export default function CalendarSettingsModal({
                     <li key={calendar.id} className="flex items-center justify-between gap-3 py-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <span
-                          className="inline-block w-3 h-3 shrink-0 border border-[var(--rule)]"
+                          className="inline-block w-3 h-3 rounded shrink-0 border border-[var(--rule)]"
                           style={{ backgroundColor: calendar.color }}
                           aria-hidden="true"
                         />

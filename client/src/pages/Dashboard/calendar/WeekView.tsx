@@ -24,7 +24,7 @@ export default function WeekView({ currentDate, filteredEvents, onEventClick }: 
       .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-7 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+    <div className="grid grid-cols-1 md:grid-cols-7 gap-px bg-[var(--rule)] border border-[var(--rule)] rounded-[var(--radius)] overflow-hidden">
       {days.map((date) => {
         const dayEvents = eventsForDay(date);
         const isToday = date.toDateString() === new Date().toDateString();
@@ -32,7 +32,7 @@ export default function WeekView({ currentDate, filteredEvents, onEventClick }: 
           <div key={date.toISOString()} className="bg-[var(--paper)] flex flex-col">
             <div
               className={`px-2 py-2 border-b border-[var(--rule)] flex items-baseline justify-between ${
-                isToday ? 'bg-[var(--state)] text-white' : 'bg-[var(--surface)]'
+                isToday ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface)]'
               }`}
             >
               <span
