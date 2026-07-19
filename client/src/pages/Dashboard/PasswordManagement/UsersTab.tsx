@@ -3,6 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { UserService } from '../../../utils/apiService';
 import { Button } from '../../../components/ui/Button';
 import { Chip } from '../../../components/ui/Chip';
+import {
+  DocumentTable,
+  DocumentTableBody,
+  DocumentTableCell,
+  DocumentTableHead,
+  DocumentTableHeader,
+  DocumentTableRow,
+} from '../../../components/ui/DocumentTable';
 import PasswordRevealModal from './PasswordRevealModal';
 import ResetReasonModal from './ResetReasonModal';
 import { useResetPassword, useGeneratePassword } from './hooks/useUserPasswordActions';
@@ -77,7 +85,7 @@ export default function UsersTab() {
   };
 
   const inputCls =
-    'h-8 px-3 text-xs font-mono border border-[var(--rule)] bg-[var(--paper)] text-[var(--ink)] focus:outline-none focus:border-[var(--state)]';
+    'h-8 px-3 rounded-[var(--radius-sm)] text-xs font-mono border border-[var(--rule)] bg-[var(--paper)] dark:bg-[var(--surface-2)] text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]';
 
   return (
     <div className="space-y-4">
@@ -111,68 +119,70 @@ export default function UsersTab() {
         <span className="text-xs font-medium text-[var(--ink-dim)]">{filtered.length} kayıt</span>
       </div>
 
-      <table className="w-full border-collapse text-sm">
-        <thead className="bg-[var(--surface)]">
-          <tr>
-            {['ID', 'Ad Soyad', 'Rol', 'Sınıf', 'Şifre Durumu', 'İşlem'].map((h) => (
-              <th
-                key={h}
-                className="text-left px-3 py-2 border-b border-[var(--rule)] text-xs font-medium text-[var(--ink-dim)]"
-              >
-                {h}
-              </th>
+      <div className="rounded-[var(--radius)] border border-[var(--rule)] overflow-hidden">
+        <DocumentTable>
+          <DocumentTableHeader>
+            <DocumentTableRow>
+              <DocumentTableHead>ID</DocumentTableHead>
+              <DocumentTableHead>Ad Soyad</DocumentTableHead>
+              <DocumentTableHead>Rol</DocumentTableHead>
+              <DocumentTableHead>Sınıf</DocumentTableHead>
+              <DocumentTableHead>Şifre Durumu</DocumentTableHead>
+              <DocumentTableHead>İşlem</DocumentTableHead>
+            </DocumentTableRow>
+          </DocumentTableHeader>
+          <DocumentTableBody>
+            {filtered.slice(0, 500).map((u) => (
+              <DocumentTableRow key={u.id}>
+                <DocumentTableCell className="font-mono text-xs">{u.id}</DocumentTableCell>
+                <DocumentTableCell className="font-serif text-[var(--ink)]">
+                  {u.adSoyad}
+                </DocumentTableCell>
+                <DocumentTableCell>
+                  <Chip tone="default">{u.rol}</Chip>
+                </DocumentTableCell>
+                <DocumentTableCell className="font-mono text-xs">
+                  {u.sinif ? `${u.sinif}${u.sube ?? ''}` : '—'}
+                </DocumentTableCell>
+                <DocumentTableCell>
+                  {u.passwordLastSetAt ? (
+                    <Chip tone="ok">
+                      ✓ {new Date(u.passwordLastSetAt).toLocaleDateString('tr-TR')}
+                    </Chip>
+                  ) : (
+                    <Chip tone="warn">Yok</Chip>
+                  )}
+                </DocumentTableCell>
+                <DocumentTableCell>
+                  {u.passwordLastSetAt ? (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => {
+                        setPendingUser(u);
+                        setPendingMode('reset');
+                      }}
+                    >
+                      Şifre Sıfırla
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setPendingUser(u);
+                        setPendingMode('generate');
+                      }}
+                    >
+                      Yeni Şifre Üret
+                    </Button>
+                  )}
+                </DocumentTableCell>
+              </DocumentTableRow>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.slice(0, 500).map((u) => (
-            <tr key={u.id} className="border-b border-[var(--rule)] hover:bg-[var(--surface)]">
-              <td className="px-3 py-2 font-mono text-xs text-[var(--ink-dim)]">{u.id}</td>
-              <td className="px-3 py-2 font-serif text-[var(--ink)]">{u.adSoyad}</td>
-              <td className="px-3 py-2">
-                <Chip tone="default">{u.rol}</Chip>
-              </td>
-              <td className="px-3 py-2 font-mono text-xs text-[var(--ink-dim)]">
-                {u.sinif ? `${u.sinif}${u.sube ?? ''}` : '—'}
-              </td>
-              <td className="px-3 py-2">
-                {u.passwordLastSetAt ? (
-                  <Chip tone="black">
-                    ✓ {new Date(u.passwordLastSetAt).toLocaleDateString('tr-TR')}
-                  </Chip>
-                ) : (
-                  <Chip tone="state">Yok</Chip>
-                )}
-              </td>
-              <td className="px-3 py-2">
-                {u.passwordLastSetAt ? (
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => {
-                      setPendingUser(u);
-                      setPendingMode('reset');
-                    }}
-                  >
-                    Şifre Sıfırla
-                  </Button>
-                ) : (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      setPendingUser(u);
-                      setPendingMode('generate');
-                    }}
-                  >
-                    Yeni Şifre Üret
-                  </Button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          </DocumentTableBody>
+        </DocumentTable>
+      </div>
       {filtered.length > 500 && (
         <p className="font-mono text-xs text-[var(--ink-dim)]">
           İlk 500 kayıt gösteriliyor — filtreleri daraltın.
