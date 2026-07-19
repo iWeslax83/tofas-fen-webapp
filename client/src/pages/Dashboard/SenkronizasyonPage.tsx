@@ -12,6 +12,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip } from '../../components/ui/Chip';
 import { DataTable } from '../../components/ui/DataTable';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { cn } from '../../utils/cn';
 import { safeConsoleError, safeConsoleWarn } from '../../utils/safeLogger';
 
@@ -368,9 +369,9 @@ export default function SenkronizasyonPage() {
   ];
 
   const inputBase = cn(
-    'bg-transparent border border-[var(--rule)] px-3 py-2 text-sm text-[var(--ink)]',
+    'bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2 text-sm text-[var(--ink)]',
     'placeholder:text-[var(--ink-dim)]',
-    'focus:outline-none focus:border-[var(--state)] focus:border-2',
+    'focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
     'transition-colors',
   );
 
@@ -383,7 +384,7 @@ export default function SenkronizasyonPage() {
         </header>
 
         {/* Filter + action bar */}
-        <div className="flex flex-wrap items-center gap-3 border border-[var(--rule)] bg-[var(--surface)] p-4">
+        <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--surface)] shadow-[var(--shadow)] p-4">
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -409,7 +410,7 @@ export default function SenkronizasyonPage() {
         </div>
 
         {/* Bulk actions bar */}
-        <div className="flex flex-wrap items-center gap-3 border border-[var(--rule)] bg-[var(--surface)] px-4 py-3">
+        <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--surface)] shadow-[var(--shadow)] px-4 py-3">
           <Button
             variant={showBulkLink ? 'secondary' : 'outline'}
             size="sm"
@@ -445,13 +446,13 @@ export default function SenkronizasyonPage() {
         {/* User table — server-paginated so the page doesn't render every
             user (hundreds, in a real school) into the DOM at once. */}
         {tableError && (
-          <p className="text-sm text-[var(--state)] border border-[var(--state)] bg-[var(--surface)] px-3 py-2">
+          <p className="text-sm text-[var(--accent)] rounded-[var(--radius-sm)] border border-[var(--accent)] bg-[var(--accent-tint)] px-3 py-2">
             {tableError}
           </p>
         )}
         {tableLoading ? (
-          <div className="p-16 text-center text-xs font-medium text-[var(--ink-dim)]">
-            Yükleniyor…
+          <div className="p-16 flex justify-center">
+            <LoadBar className="max-w-[240px]" />
           </div>
         ) : (
           <DataTable
@@ -507,7 +508,7 @@ export default function SenkronizasyonPage() {
             </div>
 
             {/* Manual assign by ID */}
-            <div className="border border-[var(--rule)] bg-[var(--surface)] p-4 space-y-3">
+            <div className="rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--surface)] shadow-[var(--shadow)] p-4 space-y-3">
               <div className="text-xs font-medium text-[var(--ink-dim)]">
                 ID ile Manuel Eşleştir
               </div>
@@ -525,7 +526,7 @@ export default function SenkronizasyonPage() {
                 </Button>
               </div>
               {manualAssignError && (
-                <p className="text-sm text-[var(--state)]">{manualAssignError}</p>
+                <p className="text-sm text-[var(--accent)]">{manualAssignError}</p>
               )}
             </div>
 
@@ -555,7 +556,7 @@ export default function SenkronizasyonPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-px bg-[var(--rule)] max-h-[400px] overflow-y-auto border border-[var(--rule)]">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-px bg-[var(--rule)] max-h-[400px] overflow-y-auto rounded-[var(--radius)] border border-[var(--rule)]">
                 {filteredStudents.map((student) => {
                   const checked = selectedChildren.includes(student.id);
                   return (
@@ -571,7 +572,7 @@ export default function SenkronizasyonPage() {
                         type="checkbox"
                         checked={checked}
                         onChange={() => handleToggleChild(student.id)}
-                        className="w-4 h-4 accent-[var(--state)] flex-shrink-0 cursor-pointer"
+                        className="w-4 h-4 accent-[var(--accent)] flex-shrink-0 cursor-pointer"
                       />
                       <div className="flex flex-col gap-0.5 min-w-0">
                         <span className="font-serif text-sm text-[var(--ink)] truncate">
@@ -599,7 +600,7 @@ export default function SenkronizasyonPage() {
 
             {/* Selected children summary */}
             {selectedChildren.length > 0 && (
-              <div className="border border-[var(--rule)] bg-[var(--surface)] p-4 space-y-3">
+              <div className="rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--surface)] shadow-[var(--shadow)] p-4 space-y-3">
                 <div className="text-xs font-medium text-[var(--ink-dim)]">
                   Seçilen Çocuklar ({selectedChildren.length})
                 </div>
@@ -609,7 +610,7 @@ export default function SenkronizasyonPage() {
                     return child ? (
                       <div
                         key={childId}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 border border-[var(--rule)] bg-[var(--paper)]"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--rule)] bg-[var(--paper)]"
                       >
                         <span className="font-serif text-sm text-[var(--ink)]">
                           {child.adSoyad}
@@ -620,7 +621,7 @@ export default function SenkronizasyonPage() {
                         <button
                           type="button"
                           onClick={() => handleToggleChild(childId)}
-                          className="text-[var(--ink-dim)] hover:text-[var(--state)] transition-colors"
+                          className="text-[var(--ink-dim)] hover:text-[var(--accent)] transition-colors"
                           aria-label="Kaldır"
                         >
                           <X size={12} />
@@ -634,7 +635,7 @@ export default function SenkronizasyonPage() {
 
             {/* Error */}
             {error && (
-              <p className="text-sm text-[var(--state)] border border-[var(--state)] bg-[var(--surface)] px-3 py-2">
+              <p className="text-sm text-[var(--accent)] rounded-[var(--radius-sm)] border border-[var(--accent)] bg-[var(--accent-tint)] px-3 py-2">
                 {error}
               </p>
             )}
