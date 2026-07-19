@@ -8,6 +8,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from 'lucide-react';
+import { LoadBar } from '../SkeletonComponents';
 import './Table.css';
 
 export interface TableColumn<T = Record<string, unknown>> {
@@ -165,7 +166,7 @@ export const Table = <T extends Record<string, unknown>>({
   if (loading) {
     return (
       <div className="table-loading">
-        <div className="loading-spinner"></div>
+        <LoadBar style={{ width: 160 }} />
         <p>Yükleniyor...</p>
       </div>
     );

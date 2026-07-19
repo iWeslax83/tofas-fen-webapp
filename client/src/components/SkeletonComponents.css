@@ -1,12 +1,41 @@
-/* Skeleton Components CSS - TOFAS Theme */
+/* Skeleton Components CSS - Soft Modern theme */
 
 /* Base Skeleton */
 .skeleton {
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   border-radius: 8px;
   position: relative;
   overflow: hidden;
+}
+
+/* LoadBar — thin sliding accent progress bar, the spinner replacement. */
+.loadbar {
+  height: 3px;
+  width: 100%;
+  background: var(--surface-2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.loadbar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 35%;
+  background: var(--accent);
+  border-radius: var(--radius-full);
+  animation: loadbar-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes loadbar-slide {
+  from {
+    left: -35%;
+  }
+  to {
+    left: 100%;
+  }
 }
 
 /* Text Skeletons */
@@ -19,7 +48,7 @@
 .skeleton-line {
   height: 16px;
   border-radius: 4px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -31,7 +60,7 @@
   height: 24px;
   width: 60%;
   border-radius: 6px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -39,17 +68,17 @@
   height: 18px;
   width: 40%;
   border-radius: 4px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Card Skeletons */
 .skeleton-card {
-  background: var(--primary-red-lighter);
-  border-radius: 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
   padding: 20px;
-  box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -58,7 +87,7 @@
 
 .skeleton-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(55, 65, 81, 0.15);
+  box-shadow: var(--shadow);
 }
 
 .skeleton-card-header {
@@ -84,13 +113,13 @@
   height: 36px;
   width: 80px;
   border-radius: 8px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .skeleton-button-primary {
   width: 100px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -100,22 +129,22 @@
 
 /* Club Card Skeleton */
 .skeleton-club-card {
-  background: var(--primary-red-lighter);
-  border-radius: 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
   transition: all 0.3s ease;
 }
 
 .skeleton-club-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(55, 65, 81, 0.15);
+  box-shadow: var(--shadow);
 }
 
 .skeleton-club-image {
   height: 160px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -136,17 +165,17 @@
   height: 20px;
   width: 60px;
   border-radius: 4px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Table Skeleton */
 .skeleton-table {
-  background: var(--primary-red-lighter);
-  border-radius: 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
 }
 
 .skeleton-table-header {
@@ -154,14 +183,14 @@
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 16px;
   padding: 16px 20px;
-  background: rgba(55, 65, 81, 0.05);
-  border-bottom: 2px solid rgba(55, 65, 81, 0.1);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--rule);
 }
 
 .skeleton-table-header-cell {
   height: 20px;
   border-radius: 4px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -174,7 +203,7 @@
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 16px;
   padding: 12px 20px;
-  border-bottom: 1px solid rgba(55, 65, 81, 0.05);
+  border-bottom: 1px solid var(--rule);
 }
 
 .skeleton-table-row:last-child {
@@ -184,7 +213,7 @@
 .skeleton-table-cell {
   height: 16px;
   border-radius: 4px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -194,10 +223,10 @@
   flex-direction: column;
   gap: 20px;
   padding: 24px;
-  background: var(--primary-red-lighter);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
 }
 
 .skeleton-form-field {
@@ -210,16 +239,16 @@
   height: 16px;
   width: 40%;
   border-radius: 4px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .skeleton-input {
   height: 44px;
   border-radius: 8px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  border: 1px solid var(--rule);
 }
 
 .skeleton-form-actions {
@@ -241,23 +270,23 @@
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: var(--primary-red-lighter);
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
   transition: all 0.3s ease;
 }
 
 .skeleton-list-item:hover {
   transform: translateX(4px);
-  box-shadow: 0 6px 20px rgba(55, 65, 81, 0.15);
+  box-shadow: var(--shadow);
 }
 
 .skeleton-avatar {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   flex-shrink: 0;
 }
@@ -279,7 +308,7 @@
   width: 24px;
   height: 24px;
   border-radius: 6px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -296,10 +325,10 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  background: var(--primary-red-lighter);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
 }
 
 .skeleton-dashboard-actions {
@@ -314,11 +343,11 @@
 }
 
 .skeleton-dashboard-content {
-  background: var(--primary-red-lighter);
-  border-radius: 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
   padding: 20px;
-  box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
 }
 
 /* Profile Skeleton */
@@ -334,17 +363,17 @@
   align-items: center;
   gap: 20px;
   padding: 24px;
-  background: var(--primary-red-lighter);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
 }
 
 .skeleton-profile-avatar {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   flex-shrink: 0;
 }
@@ -357,10 +386,10 @@
 }
 
 .skeleton-profile-content {
-  background: var(--primary-red-lighter);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
 }
 
 /* Notification Skeleton */
@@ -369,23 +398,23 @@
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: var(--primary-red-lighter);
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
   transition: all 0.3s ease;
 }
 
 .skeleton-notification:hover {
   transform: translateX(4px);
-  box-shadow: 0 6px 20px rgba(55, 65, 81, 0.15);
+  box-shadow: var(--shadow);
 }
 
 .skeleton-notification-icon {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   flex-shrink: 0;
 }
@@ -401,18 +430,18 @@
   height: 12px;
   width: 60px;
   border-radius: 4px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   flex-shrink: 0;
 }
 
 /* Calendar Skeleton */
 .skeleton-calendar {
-  background: var(--primary-red-lighter);
-  border-radius: 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
   padding: 24px;
-  box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
 }
 
 .skeleton-calendar-header {
@@ -426,7 +455,7 @@
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -439,17 +468,17 @@
 .skeleton-calendar-day {
   height: 40px;
   border-radius: 8px;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Chart Skeleton */
 .skeleton-chart {
-  background: var(--primary-red-lighter);
-  border-radius: 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
   padding: 24px;
-  box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
 }
 
 .skeleton-chart-header {
@@ -475,7 +504,7 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -497,7 +526,7 @@
 
 .skeleton-chart-bar {
   flex: 1;
-  background: var(--gray-200);
+  background: var(--surface-2);
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   border-radius: 4px 4px 0 0;
   min-height: 40px;
@@ -519,10 +548,10 @@
   justify-content: center;
   padding: 48px 24px;
   text-align: center;
-  background: var(--primary-red-lighter);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(55, 65, 81, 0.1);
-  border: 2px solid rgba(55, 65, 81, 0.1);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
 }
 
 .error-icon {
@@ -531,35 +560,33 @@
 }
 
 .error-state h3 {
-  color: var(--gray-700);
+  color: var(--ink-2);
   font-size: 20px;
   font-weight: 600;
   margin-bottom: 8px;
 }
 
 .error-state p {
-  color: #666;
+  color: var(--ink-dim);
   font-size: 16px;
   margin-bottom: 24px;
   max-width: 400px;
 }
 
 .retry-button {
-  padding: 12px 24px;
-  background: var(--gray-700);
-  color: white;
+  padding: 10px 20px;
+  background: var(--accent);
+  color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(55, 65, 81, 0.2);
+  transition: background 0.15s ease;
 }
 
 .retry-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(55, 65, 81, 0.3);
+  background: var(--accent-strong);
 }
 
 /* Responsive Design */
