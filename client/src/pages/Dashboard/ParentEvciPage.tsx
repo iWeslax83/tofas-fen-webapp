@@ -14,6 +14,7 @@ import {
 import { toast } from 'sonner';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip, type ChipProps } from '../../components/ui/Chip';
@@ -55,14 +56,14 @@ const APPROVAL_LABELS: Record<ApprovalStatus, string> = {
 };
 
 const APPROVAL_TONES: Record<ApprovalStatus, ChipProps['tone']> = {
-  pending: 'default',
-  approved: 'black',
-  rejected: 'state',
+  pending: 'warn',
+  approved: 'ok',
+  rejected: 'accent',
 };
 
 const selectClasses = cn(
-  'h-9 bg-transparent border-0 border-b border-[var(--rule)] px-1 text-sm',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2',
+  'h-9 bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 text-sm',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -209,7 +210,9 @@ export default function ParentEvciPage() {
   if (isLoading) {
     return (
       <ModernDashboardLayout pageTitle="Evci Çıkış İşlemleri" breadcrumb={breadcrumb}>
-        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
@@ -218,8 +221,8 @@ export default function ParentEvciPage() {
     return (
       <ModernDashboardLayout pageTitle="Evci Çıkış İşlemleri" breadcrumb={breadcrumb}>
         <div className="p-6 max-w-xl">
-          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--state)]">
-            <Chip tone="state">Hata</Chip>
+          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--accent)]">
+            <Chip tone="accent">Hata</Chip>
             <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
             <Button variant="secondary" size="sm" onClick={handleRefresh}>
               Tekrar Dene
@@ -359,9 +362,9 @@ export default function ParentEvciPage() {
           onClick={() => setRejectModalOpen(false)}
           role="presentation"
         >
-          <Card className="relative w-full max-w-md" contentClassName="p-0">
+          <Card className="relative w-full max-w-md overflow-hidden" contentClassName="p-0">
             <div onClick={(e) => e.stopPropagation()}>
-              <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+              <div className="bg-[var(--accent)] text-white px-4 py-2 flex items-center justify-between">
                 <span className="text-xs font-medium">Red Sebebi</span>
                 <button
                   type="button"
@@ -382,9 +385,9 @@ export default function ParentEvciPage() {
                   rows={3}
                   placeholder="Red sebebi…"
                   className={cn(
-                    'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+                    'w-full bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2',
                     'text-[var(--ink)] placeholder:text-[var(--ink-dim)]',
-                    'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+                    'focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
                     'transition-colors resize-y min-h-[4rem]',
                   )}
                 />

@@ -5,6 +5,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { FileText, Search, Eye, X } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { DataTable } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -56,11 +57,11 @@ const STATUS_LABELS: Record<Status, string> = {
 };
 
 const STATUS_TONES: Record<Status, ChipProps['tone']> = {
-  pending: 'default',
-  in_review: 'outline',
-  approved: 'black',
-  rejected: 'state',
-  completed: 'black',
+  pending: 'warn',
+  in_review: 'info',
+  approved: 'ok',
+  rejected: 'accent',
+  completed: 'info',
 };
 
 const PRIORITY_LABELS: Record<Priority, string> = {
@@ -71,8 +72,8 @@ const PRIORITY_LABELS: Record<Priority, string> = {
 
 const PRIORITY_TONES: Record<Priority, ChipProps['tone']> = {
   low: 'default',
-  medium: 'outline',
-  high: 'state',
+  medium: 'warn',
+  high: 'accent',
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -95,8 +96,8 @@ const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
 ];
 
 const selectClasses = cn(
-  'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+  'w-full bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -303,7 +304,9 @@ const AdminDilekceListPage: React.FC = () => {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Dilekçe Yönetimi" breadcrumb={breadcrumb}>
-        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
@@ -370,10 +373,10 @@ const AdminDilekceListPage: React.FC = () => {
                       type="button"
                       onClick={() => setFilterStatus(f.key)}
                       className={cn(
-                        'h-8 px-3 text-xs uppercase tracking-wider border transition-colors',
+                        'h-8 px-3 rounded-[var(--radius-sm)] text-sm font-semibold border transition-colors',
                         active
-                          ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
-                          : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                          ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                          : 'bg-[var(--paper)] text-[var(--ink)] border-[var(--rule)] hover:border-[var(--accent)]',
                       )}
                       aria-pressed={active}
                     >
@@ -442,11 +445,11 @@ function DilekceReviewModal({ dilekce, onClose, onUpdateStatus }: DilekceReviewM
       role="presentation"
     >
       <Card
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden"
         contentClassName="p-0"
       >
         <div onClick={(e) => e.stopPropagation()}>
-          <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+          <div className="bg-[var(--accent)] text-white px-4 py-2 flex items-center justify-between">
             <span className="text-xs font-medium">
               Dilekçe İncelemesi · No. {dilekce._id.slice(-6).toUpperCase()}
             </span>
@@ -503,7 +506,7 @@ function DilekceReviewModal({ dilekce, onClose, onUpdateStatus }: DilekceReviewM
                         href={file}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-sm text-[var(--ink)] hover:text-[var(--state)]"
+                        className="inline-flex items-center gap-2 text-sm text-[var(--ink)] hover:text-[var(--accent)]"
                       >
                         <FileText size={12} />
                         Dosya {i + 1}
@@ -547,10 +550,10 @@ function DilekceReviewModal({ dilekce, onClose, onUpdateStatus }: DilekceReviewM
                           setResponse('');
                         }}
                         className={cn(
-                          'h-8 px-3 text-xs uppercase tracking-wider border transition-colors',
+                          'h-8 px-3 rounded-[var(--radius-sm)] text-sm font-semibold border transition-colors',
                           active
-                            ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
-                            : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                            ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                            : 'bg-[var(--paper)] text-[var(--ink)] border-[var(--rule)] hover:border-[var(--accent)]',
                         )}
                         aria-pressed={active}
                       >

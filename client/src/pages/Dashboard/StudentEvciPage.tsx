@@ -16,6 +16,7 @@ import {
 import { toast } from 'sonner';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip, type ChipProps } from '../../components/ui/Chip';
@@ -58,9 +59,9 @@ const APPROVAL_LABELS: Record<ApprovalStatus, string> = {
 };
 
 const APPROVAL_TONES: Record<ApprovalStatus, ChipProps['tone']> = {
-  pending: 'default',
-  approved: 'black',
-  rejected: 'state',
+  pending: 'warn',
+  approved: 'ok',
+  rejected: 'accent',
 };
 
 const DAYS_OF_WEEK = [
@@ -74,8 +75,8 @@ const DAYS_OF_WEEK = [
 ] as const;
 
 const selectClasses = cn(
-  'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+  'w-full bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -102,7 +103,7 @@ const Field = ({ label, children, error }: FieldProps) => (
   <label className="flex flex-col gap-1">
     <span className="text-xs font-medium text-[var(--ink-dim)]">{label}</span>
     {children}
-    {error && <span className="font-mono text-[10px] text-[var(--state)]">{error}</span>}
+    {error && <span className="font-mono text-[10px] text-[var(--accent)]">{error}</span>}
   </label>
 );
 
@@ -376,7 +377,9 @@ const StudentEvciPage = () => {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Evci İşlemleri" breadcrumb={breadcrumb}>
-        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
@@ -385,8 +388,8 @@ const StudentEvciPage = () => {
     return (
       <ModernDashboardLayout pageTitle="Evci İşlemleri" breadcrumb={breadcrumb}>
         <div className="p-6 max-w-xl">
-          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--state)]">
-            <Chip tone="state">Hata</Chip>
+          <Card contentClassName="px-4 py-3 flex items-center gap-2 border-l-4 border-[var(--accent)]">
+            <Chip tone="accent">Hata</Chip>
             <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
             <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>
               Yeniden Dene
@@ -438,7 +441,7 @@ const StudentEvciPage = () => {
           >
             <Timer size={16} className="text-[var(--ink-dim)] shrink-0" />
             <div className="flex-1 flex items-center gap-2 flex-wrap">
-              <Chip tone={windowIsOpen ? 'black' : 'state'}>
+              <Chip tone={windowIsOpen ? 'ok' : 'warn'}>
                 {windowIsOpen ? 'Pencere Açık' : 'Pencere Kapalı'}
               </Chip>
               <span className="font-serif text-sm text-[var(--ink-2)]">
@@ -498,7 +501,7 @@ const StudentEvciPage = () => {
                         <button
                           type="button"
                           onClick={() => handleDelete(i)}
-                          className="text-[var(--ink-dim)] hover:text-[var(--state)] p-1"
+                          className="text-[var(--ink-dim)] hover:text-[var(--accent)] p-1"
                           aria-label="İptal et"
                           title="İptal et"
                         >
@@ -530,7 +533,7 @@ const StudentEvciPage = () => {
                     />
                     {status === 'rejected' && r.rejectionReason && (
                       <div className="border-t border-[var(--rule)] pt-2 mt-2 flex items-start gap-2">
-                        <AlertCircle size={12} className="text-[var(--state)] mt-1 shrink-0" />
+                        <AlertCircle size={12} className="text-[var(--accent)] mt-1 shrink-0" />
                         <div className="flex-1">
                           <div className="text-xs font-medium text-[var(--ink-dim)]">
                             Red Sebebi
@@ -556,11 +559,11 @@ const StudentEvciPage = () => {
           role="presentation"
         >
           <Card
-            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden"
             contentClassName="p-0"
           >
             <div onClick={(e) => e.stopPropagation()}>
-              <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+              <div className="bg-[var(--accent)] text-white px-4 py-2 flex items-center justify-between">
                 <span className="text-xs font-medium">
                   {editingIndex !== null ? 'Talep Düzenle' : 'Yeni Evci Talebi'}
                 </span>
@@ -586,7 +589,7 @@ const StudentEvciPage = () => {
                     type="checkbox"
                     checked={!form.willGo}
                     onChange={(e) => setForm({ ...form, willGo: !e.target.checked })}
-                    className="accent-[var(--state)]"
+                    className="accent-[var(--accent)]"
                   />
                   <span className="font-serif text-sm text-[var(--ink)]">Evciye Gitmeyeceğim</span>
                 </label>
@@ -648,7 +651,7 @@ const StudentEvciPage = () => {
                         <button
                           type="button"
                           onClick={applyTemplate}
-                          className="mt-1 self-start inline-flex items-center gap-1 text-xs font-medium text-[var(--ink-dim)] hover:text-[var(--state)]"
+                          className="mt-1 self-start inline-flex items-center gap-1 text-xs font-medium text-[var(--ink-dim)] hover:text-[var(--accent)]"
                         >
                           <Copy size={10} />
                           Geçen haftaki gibi ({lastTemplate.destination})

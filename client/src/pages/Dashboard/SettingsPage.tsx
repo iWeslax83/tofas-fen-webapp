@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  Settings,
   LogOut,
   Bell,
   BellOff,
@@ -21,8 +20,13 @@ import { useTheme } from '../../hooks/useTheme';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { SecureAPI } from '../../utils/api';
 import { API_ENDPOINTS } from '../../utils/apiEndpoints';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { Chip } from '../../components/ui/Chip';
+import { Switch } from '../../components/ui/Switch';
 import { toast } from 'sonner';
-import './SettingsPage.css';
+import { cn } from '../../utils/cn';
 import { safeConsoleError } from '../../utils/safeLogger';
 
 interface ApiErrorData {
@@ -62,9 +66,50 @@ const roleLabels: Record<string, string> = {
   teacher: 'Öğretmen',
   student: 'Öğrenci',
   parent: 'Veli',
-
   ziyaretci: 'Ziyaretçi',
 };
+
+interface SectionProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+function Section({ title, children }: SectionProps) {
+  return (
+    <Card contentClassName="p-5">
+      <div className="text-xs font-medium text-[var(--ink-dim)] border-b border-[var(--rule)] pb-3 mb-4 uppercase tracking-wider">
+        {title}
+      </div>
+      {children}
+    </Card>
+  );
+}
+
+interface SettingsRowProps {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  active?: boolean;
+  label: string;
+  description: string;
+  children: React.ReactNode;
+}
+
+function SettingsRow({ icon: Icon, active, label, description, children }: SettingsRowProps) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0 [&+&]:border-t [&+&]:border-[var(--rule)]">
+      <div className="flex flex-col gap-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <Icon
+            size={16}
+            className={cn('shrink-0', active ? 'text-[var(--accent)]' : 'text-[var(--ink-dim)]')}
+          />
+          <span className="font-serif text-sm text-[var(--ink)]">{label}</span>
+        </div>
+        <span className="text-xs text-[var(--ink-dim)]">{description}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const { user, logout, checkAuth } = useAuthContext();
@@ -279,71 +324,76 @@ export default function SettingsPage() {
 
   return (
     <ModernDashboardLayout pageTitle="Ayarlar" breadcrumb={breadcrumb}>
-      <div className="settings-page">
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="page-title-section">
-              <Settings className="page-icon" />
-              <h1 className="page-title-main">Ayarlar</h1>
-            </div>
-          </div>
-        </div>
+      <div className="p-6 max-w-2xl space-y-5">
+        <header>
+          <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Ayarlar</h1>
+        </header>
 
         {/* Profile Info */}
-        <section className="settings-section">
-          <h2 className="settings-section-title">Profil Bilgileri</h2>
-          <div className="profile-info-grid">
-            <div className="profile-info-item">
-              <span className="profile-info-label">Ad Soyad</span>
-              <span className="profile-info-value">{user?.adSoyad || '-'}</span>
+        <Section title="Profil Bilgileri">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-[var(--ink-dim)]">Ad Soyad</span>
+              <span className="font-serif text-sm text-[var(--ink)] px-3 py-2 bg-[var(--surface-2)] rounded-[var(--radius-sm)] border border-[var(--rule)]">
+                {user?.adSoyad || '-'}
+              </span>
             </div>
-            <div className="profile-info-item">
-              <span className="profile-info-label">Rol</span>
-              <span className="profile-info-value">{roleLabels[user?.rol || ''] || user?.rol}</span>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-[var(--ink-dim)]">Rol</span>
+              <span className="font-serif text-sm text-[var(--ink)] px-3 py-2 bg-[var(--surface-2)] rounded-[var(--radius-sm)] border border-[var(--rule)]">
+                {roleLabels[user?.rol || ''] || user?.rol}
+              </span>
             </div>
-            <div className="profile-info-item email-edit-item">
-              <span className="profile-info-label">E-posta</span>
-              <div className="email-edit-row">
-                <div className="email-input-wrapper">
-                  <Mail size={16} className="email-input-icon" />
-                  <input
+
+            <div className="sm:col-span-2 flex flex-col gap-1">
+              <span className="text-xs font-medium text-[var(--ink-dim)]">E-posta</span>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Mail
+                    size={14}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-dim)] pointer-events-none"
+                  />
+                  <Input
                     type="email"
-                    className="email-edit-input"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     placeholder="ornek@gmail.com"
                     disabled={emailSaving}
+                    className="pl-9"
                   />
                 </div>
-                <button
-                  className="email-save-btn"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={handleEmailSave}
                   disabled={emailSaving || newEmail.trim() === (user?.email || '')}
+                  loading={emailSaving}
                 >
                   <Save size={14} />
-                  {emailSaving ? 'Kaydediliyor...' : 'Kaydet'}
-                </button>
+                  Kaydet
+                </Button>
               </div>
+
               {emailNeedsVerification && (
-                <div className="email-verification-section">
-                  <div className="verification-status">
-                    <ShieldCheck size={16} className="verification-icon unverified" />
-                    <span className="verification-text">E-posta doğrulanmamış</span>
-                  </div>
+                <div className="mt-2 flex items-center gap-3 flex-wrap">
+                  <Chip tone="warn">
+                    <ShieldCheck size={12} />
+                    E-posta doğrulanmamış
+                  </Chip>
                   {!codeSent ? (
-                    <button
-                      className="btn-send-verification"
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={handleSendVerificationCode}
-                      disabled={sendingCode}
+                      loading={sendingCode}
                     >
                       <Send size={14} />
-                      {sendingCode ? 'Gönderiliyor...' : 'Doğrulama Kodu Gönder'}
-                    </button>
+                      Doğrulama Kodu Gönder
+                    </Button>
                   ) : (
-                    <div className="verification-code-row">
-                      <input
+                    <div className="flex items-center gap-2">
+                      <Input
                         type="text"
-                        className="verification-code-input"
                         maxLength={6}
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
@@ -351,184 +401,157 @@ export default function SettingsPage() {
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') handleVerifyCode();
                         }}
+                        className="w-28 text-center font-mono tracking-[0.3em]"
                       />
-                      <button
-                        className="btn-verify-code"
+                      <Button
+                        variant="primary"
+                        size="sm"
                         onClick={handleVerifyCode}
                         disabled={verifyingCode || verificationCode.length !== 6}
+                        loading={verifyingCode}
                       >
-                        {verifyingCode ? 'Doğrulanıyor...' : 'Doğrula'}
-                      </button>
-                      <button
-                        className="btn-resend-code"
+                        Doğrula
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={handleSendVerificationCode}
                         disabled={sendingCode}
                       >
-                        {sendingCode ? '...' : 'Tekrar Gönder'}
-                      </button>
+                        Tekrar Gönder
+                      </Button>
                     </div>
                   )}
                 </div>
               )}
               {user?.email && user.emailVerified === true && (
-                <div className="email-verification-section">
-                  <div className="verification-status">
-                    <ShieldCheck size={16} className="verification-icon verified" />
-                    <span className="verification-text verified">E-posta doğrulanmış</span>
-                  </div>
+                <div className="mt-2">
+                  <Chip tone="ok">
+                    <ShieldCheck size={12} />
+                    E-posta doğrulanmış
+                  </Chip>
                 </div>
               )}
             </div>
+
             {user?.sinif && user?.sube && (
-              <div className="profile-info-item">
-                <span className="profile-info-label">Sınıf / Şube</span>
-                <span className="profile-info-value">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-[var(--ink-dim)]">Sınıf / Şube</span>
+                <span className="font-serif text-sm text-[var(--ink)] px-3 py-2 bg-[var(--surface-2)] rounded-[var(--radius-sm)] border border-[var(--rule)]">
                   {user.sinif} / {user.sube}
                 </span>
               </div>
             )}
-            <div className="profile-info-item">
-              <span className="profile-info-label">Kullanıcı ID</span>
-              <span className="profile-info-value">{user?.id || '-'}</span>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-[var(--ink-dim)]">Kullanıcı ID</span>
+              <span className="font-mono text-sm text-[var(--ink)] px-3 py-2 bg-[var(--surface-2)] rounded-[var(--radius-sm)] border border-[var(--rule)]">
+                {user?.id || '-'}
+              </span>
             </div>
           </div>
-        </section>
+        </Section>
 
         {/* Two-Factor Authentication - admin/teacher only */}
         {isAdminOrTeacher && (
-          <section className="settings-section">
-            <h2 className="settings-section-title">Güvenlik</h2>
-            <div className="settings-row">
-              <div className="settings-row-info">
-                <div className="settings-row-label-group">
-                  <Shield
-                    size={18}
-                    className={`settings-row-icon${twoFactorEnabled ? ' active' : ''}`}
-                  />
-                  <span className="settings-row-label">İki Faktörlü Doğrulama</span>
-                </div>
-                <span className="settings-row-desc">
-                  {!user?.email
-                    ? 'İki faktörlü doğrulama için bir e-posta adresi eklemeniz gerekiyor.'
-                    : !user?.emailVerified
-                      ? 'İki faktörlü doğrulama için e-posta adresinizi doğrulamanız gerekiyor.'
-                      : 'Giriş yaparken e-posta adresinize gönderilen bir kod ile ek güvenlik sağlar.'}
-                </span>
-              </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={twoFactorEnabled}
-                  onChange={handleTwoFactorToggle}
-                  disabled={!canEnable2FA || twoFactorLoading}
-                />
-                <span
-                  className={`toggle-slider${!canEnable2FA || twoFactorLoading ? ' disabled' : ''}`}
-                />
-              </label>
-            </div>
-          </section>
+          <Section title="Güvenlik">
+            <SettingsRow
+              icon={Shield}
+              active={twoFactorEnabled}
+              label="İki Faktörlü Doğrulama"
+              description={
+                !user?.email
+                  ? 'İki faktörlü doğrulama için bir e-posta adresi eklemeniz gerekiyor.'
+                  : !user?.emailVerified
+                    ? 'İki faktörlü doğrulama için e-posta adresinizi doğrulamanız gerekiyor.'
+                    : 'Giriş yaparken e-posta adresinize gönderilen bir kod ile ek güvenlik sağlar.'
+              }
+            >
+              <Switch
+                checked={twoFactorEnabled}
+                onChange={handleTwoFactorToggle}
+                disabled={!canEnable2FA || twoFactorLoading}
+              />
+            </SettingsRow>
+          </Section>
         )}
 
         {/* Theme */}
-        <section className="settings-section">
-          <h2 className="settings-section-title">Sayfa Teması</h2>
-          <div className="theme-selector">
-            <button
-              className={`theme-option${theme === 'light' ? ' active' : ''}`}
-              onClick={() => setTheme('light')}
-            >
-              <Sun size={20} />
-              <span>Aydınlık</span>
-            </button>
-            <button
-              className={`theme-option${theme === 'dark' ? ' active' : ''}`}
-              onClick={() => setTheme('dark')}
-            >
-              <Moon size={20} />
-              <span>Karanlık</span>
-            </button>
-            <button
-              className={`theme-option${theme === 'system' ? ' active' : ''}`}
-              onClick={() => setTheme('system')}
-            >
-              <Monitor size={20} />
-              <span>Sistem</span>
-            </button>
+        <Section title="Sayfa Teması">
+          <div className="flex gap-3">
+            {(
+              [
+                { key: 'light', label: 'Aydınlık', icon: Sun },
+                { key: 'dark', label: 'Karanlık', icon: Moon },
+                { key: 'system', label: 'Sistem', icon: Monitor },
+              ] as const
+            ).map(({ key, label, icon: Icon }) => {
+              const active = theme === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTheme(key)}
+                  className={cn(
+                    'flex-1 flex flex-col items-center gap-2 px-3 py-4 rounded-[var(--radius-sm)] border transition-colors',
+                    active
+                      ? 'border-[var(--accent)] bg-[var(--accent-tint)] text-[var(--accent)]'
+                      : 'border-[var(--rule)] bg-[var(--surface)] text-[var(--ink-dim)] hover:border-[var(--ink-dim)]',
+                  )}
+                  aria-pressed={active}
+                >
+                  <Icon size={20} />
+                  <span className="text-sm font-medium">{label}</span>
+                </button>
+              );
+            })}
           </div>
-        </section>
+        </Section>
 
         {/* Notifications */}
-        <section className="settings-section">
-          <h2 className="settings-section-title">Bildirimler</h2>
-          <div className="settings-row">
-            <div className="settings-row-info">
-              <div className="settings-row-label-group">
-                {notificationsEnabled ? (
-                  <Bell size={18} className="settings-row-icon active" />
-                ) : (
-                  <BellOff size={18} className="settings-row-icon" />
-                )}
-                <span className="settings-row-label">Tarayıcı Bildirimleri</span>
-              </div>
-              <span className="settings-row-desc">
-                {permissionDenied
-                  ? 'Bildirim izni tarayıcıdan engellendi. Tarayıcı ayarlarından izin verin.'
-                  : 'Yeni duyuru ve güncellemeler için bildirim al'}
-              </span>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={notificationsEnabled}
-                onChange={handleNotificationToggle}
-                disabled={permissionDenied}
-              />
-              <span className={`toggle-slider${permissionDenied ? ' disabled' : ''}`} />
-            </label>
-          </div>
-        </section>
+        <Section title="Bildirimler">
+          <SettingsRow
+            icon={notificationsEnabled ? Bell : BellOff}
+            active={notificationsEnabled}
+            label="Tarayıcı Bildirimleri"
+            description={
+              permissionDenied
+                ? 'Bildirim izni tarayıcıdan engellendi. Tarayıcı ayarlarından izin verin.'
+                : 'Yeni duyuru ve güncellemeler için bildirim al'
+            }
+          >
+            <Switch
+              checked={notificationsEnabled}
+              onChange={handleNotificationToggle}
+              disabled={permissionDenied}
+            />
+          </SettingsRow>
+        </Section>
 
         {/* Push Notifications */}
         {'serviceWorker' in navigator && 'PushManager' in window && (
-          <section className="settings-section">
-            <h2 className="settings-section-title">Push Bildirimleri</h2>
-            <div className="settings-row">
-              <div className="settings-row-info">
-                <div className="settings-row-label-group">
-                  <Smartphone
-                    size={18}
-                    className={`settings-row-icon${pushEnabled ? ' active' : ''}`}
-                  />
-                  <span className="settings-row-label">Push Bildirimleri</span>
-                </div>
-                <span className="settings-row-desc">
-                  Veli onayı, evci hatırlatmaları ve önemli güncellemeler için anlık bildirim al
-                </span>
-              </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={pushEnabled}
-                  onChange={handlePushToggle}
-                  disabled={pushLoading || permissionDenied}
-                />
-                <span
-                  className={`toggle-slider${pushLoading || permissionDenied ? ' disabled' : ''}`}
-                />
-              </label>
-            </div>
-          </section>
+          <Section title="Push Bildirimleri">
+            <SettingsRow
+              icon={Smartphone}
+              active={pushEnabled}
+              label="Push Bildirimleri"
+              description="Veli onayı, evci hatırlatmaları ve önemli güncellemeler için anlık bildirim al"
+            >
+              <Switch
+                checked={pushEnabled}
+                onChange={handlePushToggle}
+                disabled={pushLoading || permissionDenied}
+              />
+            </SettingsRow>
+          </Section>
         )}
 
         {/* Account */}
-        <section className="settings-section">
-          <h2 className="settings-section-title">Hesap</h2>
-          <button onClick={logout} className="settings-logout-btn">
-            <LogOut size={18} />
+        <Section title="Hesap">
+          <Button variant="danger" size="sm" onClick={logout}>
+            <LogOut size={16} />
             Oturumu Kapat
-          </button>
-        </section>
+          </Button>
+        </Section>
       </div>
     </ModernDashboardLayout>
   );

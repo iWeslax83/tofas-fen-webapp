@@ -77,7 +77,7 @@ function useChartColors(): ChartColors {
 
 const selectClasses = cn(
   'h-9 bg-transparent border border-[var(--rule)] px-2 text-xs uppercase tracking-wider',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)]',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)]',
   'transition-colors',
 );
 
@@ -235,7 +235,7 @@ export default function EvciStatsPage() {
         </header>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--rule)] border border-[var(--rule)]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--rule)] border border-[var(--rule)] rounded-[var(--radius)] overflow-hidden">
           <SummaryCard icon={Users} value={stats.summary.total} label="Toplam Talep" />
           <SummaryCard icon={Home} value={stats.summary.going} label="Gidecek" />
           <SummaryCard icon={Home} value={stats.summary.notGoing} label="Gitmeyecek" />
