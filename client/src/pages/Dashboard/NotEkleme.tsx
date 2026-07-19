@@ -6,6 +6,7 @@ import { Upload, Plus, Download, AlertTriangle, CheckCircle, Info } from 'lucide
 import { useAuthContext } from '../../contexts/AuthContext';
 import { UserRole } from '../../@types';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { safeConsoleError } from '../../utils/safeLogger';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -56,7 +57,7 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
   return (
     <span className="text-xs font-medium text-[var(--ink-dim)]">
       {children}
-      {required && <span className="text-[var(--state)] ml-0.5">*</span>}
+      {required && <span className="text-[var(--accent)] ml-0.5">*</span>}
     </span>
   );
 }
@@ -274,7 +275,9 @@ const NotEkleme: React.FC = () => {
           { label: 'Toplu Not İçe Aktarma' },
         ]}
       >
-        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
@@ -309,7 +312,7 @@ const NotEkleme: React.FC = () => {
                 className={cn(
                   'inline-flex items-center gap-2 px-4 py-2 text-[11px] uppercase tracking-[0.2em] border-b-2 -mb-px transition-colors',
                   active
-                    ? 'border-[var(--state)] text-[var(--ink)]'
+                    ? 'border-[var(--accent)] text-[var(--ink)]'
                     : 'border-transparent text-[var(--ink-dim)] hover:text-[var(--ink)]',
                 )}
                 aria-pressed={active}
@@ -404,7 +407,7 @@ const NotEkleme: React.FC = () => {
                 <div
                   className={cn(
                     'flex items-start gap-2 mb-4',
-                    importResult.success ? 'text-[var(--ok)]' : 'text-[var(--state)]',
+                    importResult.success ? 'text-[var(--ok)]' : 'text-[var(--accent)]',
                   )}
                 >
                   {importResult.success ? (
@@ -420,7 +423,7 @@ const NotEkleme: React.FC = () => {
                     <SectionLabel>Hatalar</SectionLabel>
                     <ul className="space-y-1">
                       {importResult.errors.map((err, i) => (
-                        <li key={i} className="font-mono text-xs text-[var(--state)]">
+                        <li key={i} className="font-mono text-xs text-[var(--accent)]">
                           {err}
                         </li>
                       ))}
@@ -446,7 +449,7 @@ const NotEkleme: React.FC = () => {
                     <SectionLabel>Kaydetme Hataları</SectionLabel>
                     <ul className="space-y-1">
                       {importResult.saveErrors.map((err, i) => (
-                        <li key={i} className="font-mono text-xs text-[var(--state)]">
+                        <li key={i} className="font-mono text-xs text-[var(--accent)]">
                           {err}
                         </li>
                       ))}
@@ -552,9 +555,9 @@ const NotEkleme: React.FC = () => {
                     value={manualNote.semester}
                     onChange={(e) => handleManualNoteChange('semester', e.target.value)}
                     className={cn(
-                      'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+                      'w-full bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2',
                       'text-[var(--ink)]',
-                      'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+                      'focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
                       'transition-colors',
                     )}
                   >
@@ -603,9 +606,9 @@ const NotEkleme: React.FC = () => {
                   rows={3}
                   placeholder="Ek notlar…"
                   className={cn(
-                    'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
+                    'w-full bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2',
                     'text-[var(--ink)] placeholder:text-[var(--ink-dim)]',
-                    'focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+                    'focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
                     'transition-colors resize-y min-h-[4rem]',
                   )}
                 />
