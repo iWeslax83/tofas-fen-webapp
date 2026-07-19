@@ -19,6 +19,7 @@ import {
 import { toast } from 'sonner';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { DataTable } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -61,9 +62,9 @@ const APPROVAL_LABELS: Record<ApprovalKey, string> = {
 };
 
 const APPROVAL_TONES: Record<ApprovalKey, ChipProps['tone']> = {
-  pending: 'default',
-  approved: 'black',
-  rejected: 'state',
+  pending: 'warn',
+  approved: 'ok',
+  rejected: 'accent',
 };
 
 const APPROVAL_FILTERS: { key: 'All' | ApprovalKey; label: string }[] = [
@@ -74,8 +75,8 @@ const APPROVAL_FILTERS: { key: 'All' | ApprovalKey; label: string }[] = [
 ];
 
 const selectClasses = cn(
-  'h-10 bg-transparent border-0 border-b border-[var(--rule)] px-1 text-sm',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2',
+  'h-10 bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 text-sm',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -486,9 +487,9 @@ export default function AdminEvciListPage() {
         accessorFn: (r) => r.status || 'pending',
         cell: ({ row }) => {
           const s = row.original.status;
-          if (!s || s === 'pending') return <Chip tone="default">Beklemede</Chip>;
-          if (s === 'approved') return <Chip tone="black">Onaylandı</Chip>;
-          if (s === 'rejected') return <Chip tone="state">Reddedildi</Chip>;
+          if (!s || s === 'pending') return <Chip tone="warn">Beklemede</Chip>;
+          if (s === 'approved') return <Chip tone="ok">Onaylandı</Chip>;
+          if (s === 'rejected') return <Chip tone="accent">Reddedildi</Chip>;
           return <Chip tone="default">{s}</Chip>;
         },
       },
@@ -515,7 +516,7 @@ export default function AdminEvciListPage() {
                   <button
                     type="button"
                     onClick={() => handleAdminAction(r._id, 'reject')}
-                    className="text-[var(--ink-dim)] hover:text-[var(--state)] p-1"
+                    className="text-[var(--ink-dim)] hover:text-[var(--accent)] p-1"
                     aria-label="Reddet"
                     title="Reddet"
                   >
@@ -526,7 +527,7 @@ export default function AdminEvciListPage() {
               <button
                 type="button"
                 onClick={() => handleDelete(r._id)}
-                className="text-[var(--ink-dim)] hover:text-[var(--state)] p-1"
+                className="text-[var(--ink-dim)] hover:text-[var(--accent)] p-1"
                 aria-label="Sil"
                 title="Sil"
               >
@@ -548,7 +549,9 @@ export default function AdminEvciListPage() {
   if (isLoading) {
     return (
       <ModernDashboardLayout pageTitle="Evci Talepleri Yönetimi" breadcrumb={breadcrumb}>
-        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
@@ -621,8 +624,8 @@ export default function AdminEvciListPage() {
         )}
 
         {showOverride && (
-          <Card>
-            <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center gap-2">
+          <Card className="overflow-hidden">
+            <div className="bg-[var(--accent)] text-white px-4 py-2 flex items-center gap-2">
               <Settings2 size={12} />
               <span className="text-xs font-medium">Talep Penceresi Override</span>
             </div>
@@ -665,8 +668,8 @@ export default function AdminEvciListPage() {
         )}
 
         {showForm && (
-          <Card>
-            <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center gap-2">
+          <Card className="overflow-hidden">
+            <div className="bg-[var(--accent)] text-white px-4 py-2 flex items-center gap-2">
               <Plus size={12} />
               <span className="text-xs font-medium">Yeni Evci Talebi</span>
             </div>
@@ -778,10 +781,10 @@ export default function AdminEvciListPage() {
                       type="button"
                       onClick={() => setFilterParentApproval(f.key)}
                       className={cn(
-                        'h-8 px-3 text-xs uppercase tracking-wider border transition-colors',
+                        'h-8 px-3 rounded-[var(--radius-sm)] text-sm font-semibold border transition-colors',
                         active
-                          ? 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]'
-                          : 'bg-transparent text-[var(--ink)] border-[var(--rule)] hover:border-[var(--ink)]',
+                          ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                          : 'bg-[var(--paper)] text-[var(--ink)] border-[var(--rule)] hover:border-[var(--accent)]',
                       )}
                       aria-pressed={active}
                     >
@@ -834,7 +837,7 @@ export default function AdminEvciListPage() {
                   const st = studentMap.get(r.studentId);
                   return (
                     <li key={r._id} className="flex items-start gap-2 text-sm">
-                      <AlertCircle size={12} className="text-[var(--state)] mt-1 shrink-0" />
+                      <AlertCircle size={12} className="text-[var(--accent)] mt-1 shrink-0" />
                       <span className="font-serif text-[var(--ink)]">
                         <strong>{r.studentName || st?.adSoyad || r.studentId}</strong>:{' '}
                         <span className="text-[var(--ink-2)]">{r.rejectionReason}</span>
