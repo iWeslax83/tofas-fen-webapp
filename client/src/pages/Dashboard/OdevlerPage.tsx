@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { Chip } from '../../components/ui/Chip';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { cn } from '../../utils/cn';
 import { formatDate } from '../../utils/formatDate';
 
@@ -72,8 +73,8 @@ const Field = ({ label, children }: FieldProps) => (
 );
 
 const selectClasses = cn(
-  'w-full bg-transparent border-0 border-b border-[var(--rule)] px-1 py-2',
-  'text-[var(--ink)] focus:outline-none focus:border-[var(--state)] focus:border-b-2 focus:pb-[7px]',
+  'w-full bg-[var(--paper)] dark:bg-[var(--surface-2)] border border-[var(--rule)] rounded-[var(--radius-sm)] px-3 py-2',
+  'text-[var(--ink)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]',
   'transition-colors',
 );
 
@@ -203,7 +204,7 @@ export default function OdevlerPage() {
                 <button
                   type="button"
                   onClick={() => handleDelete(hw.id || hw._id || '')}
-                  className="text-[var(--ink-dim)] hover:text-[var(--state)]"
+                  className="text-[var(--ink-dim)] hover:text-[var(--accent)]"
                   aria-label="Ödevi sil"
                   title="Ödevi sil"
                 >
@@ -226,7 +227,9 @@ export default function OdevlerPage() {
   if (isLoading) {
     return (
       <ModernDashboardLayout pageTitle="Ödevler" breadcrumb={breadcrumb}>
-        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
@@ -292,11 +295,11 @@ function NewHomeworkModal({ onClose, onSuccess }: NewHomeworkModalProps) {
       role="presentation"
     >
       <Card
-        className="relative w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
+        className="relative w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto overflow-x-hidden"
         contentClassName="p-0"
       >
         <div onClick={(e) => e.stopPropagation()}>
-          <div className="bg-[var(--state)] text-white px-4 py-2 flex items-center justify-between">
+          <div className="bg-[var(--accent)] text-white px-4 py-2 flex items-center justify-between">
             <span className="text-xs font-medium">Yeni Ödev</span>
             <button
               type="button"
