@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tofaş Fen — Soft Modern Mockup v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" />
+<style>
+  /* ============ TOKENS ============ */
+  :root {
+    --paper: #faf8f4;
+    --surface: #ffffff;
+    --surface-2: #f4f1ea;
+    --rule: #e7e2d8;
+    --ink: #221f1a;
+    --ink-2: #5c564b;
+    --ink-dim: #918a7c;
+    --accent: #c8102e;
+    --accent-strong: #a60d26;
+    --accent-tint: #faeaed;
+    --ok: #2e7d46;
+    --ok-tint: #e9f3ec;
+    --warn: #a05e03;
+    --warn-tint: #f8efe0;
+    --info: #1d5f8a;
+    --info-tint: #e7f0f6;
+    --radius: 10px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 2px rgba(34, 31, 26, 0.05), 0 2px 8px rgba(34, 31, 26, 0.04);
+    --font-sans: 'Source Sans 3', system-ui, sans-serif;
+    --font-serif: 'Source Serif 4', Georgia, serif;
+  }
+  [data-theme='dark'] {
+    --paper: #1b1916;
+    --surface: #242119;
+    --surface-2: #2c2820;
+    --rule: #3a352b;
+    --ink: #f1ede4;
+    --ink-2: #b5aea0;
+    --ink-dim: #837c6e;
+    --accent: #ea4a5e;
+    --accent-strong: #f06a7b;
+    --accent-tint: #3a2226;
+    --ok: #5cb87a;
+    --ok-tint: #22301f;
+    --warn: #d99a45;
+    --warn-tint: #362b18;
+    --info: #6aa8cc;
+    --info-tint: #1e2a33;
+    --shadow: none;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { font-size: 16px; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+  }
+
+  /* ============ LAYOUT ============ */
+  .app { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 236px; flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--rule);
+    padding: 16px 10px;
+    display: flex; flex-direction: column; gap: 2px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 14px; border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--accent); color: #fff;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 15px;
+  }
+  .brand-name { font-weight: 700; font-size: 14px; letter-spacing: 0.01em; }
+  .brand-sub { font-size: 11px; color: var(--ink-dim); }
+
+  .nav-section { font-size: 10.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-dim); padding: 12px 10px 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px; border-radius: var(--radius-sm);
+    color: var(--ink-2); font-size: 13.5px; font-weight: 500;
+    text-decoration: none; cursor: pointer;
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-item.active { background: var(--accent-tint); color: var(--accent); font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); }
+  .nav-item .ico { width: 17px; text-align: center; opacity: 0.75; }
+  .nav-item .count {
+    margin-left: auto; font-size: 11px; font-weight: 700;
+    background: var(--accent); color: #fff;
+    border-radius: 99px; padding: 0 7px; line-height: 17px;
+  }
+  .sidebar-foot { margin-top: auto; border-top: 1px solid var(--rule); padding: 10px 10px 2px; display: flex; align-items: center; gap: 10px; }
+  .sidebar-foot .avatar { width: 30px; height: 30px; font-size: 11px; }
+  .sidebar-foot small { color: var(--ink-dim); display: block; font-size: 11px; }
+
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+  /* Topbar */
+  .topbar {
+    display: flex; align-items: center; gap: 18px;
+    padding: 10px 28px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 5;
+  }
+  .crumb { font-size: 13px; color: var(--ink-dim); white-space: nowrap; }
+  .crumb b { color: var(--ink); font-weight: 600; }
+  .global-search { flex: 1; max-width: 420px; position: relative; }
+  .global-search input {
+    width: 100%; font: inherit; font-size: 13.5px;
+    background: var(--paper); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: var(--radius-sm);
+    padding: 7px 12px 7px 32px; outline: none;
+  }
+  .global-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
+  .global-search .ico { position: absolute; left: 10px; top: 7px; color: var(--ink-dim); }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .icon-btn {
+    width: 32px; height: 32px; border-radius: var(--radius-sm);
+    border: 1px solid var(--rule); background: var(--surface);
+    color: var(--ink-2); cursor: pointer; font-size: 14px;
+    display: grid; place-items: center; position: relative;
+  }
+  .icon-btn:hover { background: var(--surface-2); }
+  .icon-btn .dot { position: absolute; top: 6px; right: 7px; width: 7px; height: 7px; border-radius: 99px; background: var(--accent); border: 1.5px solid var(--surface); }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 99px;
+    background: var(--accent-tint); border: 1px solid var(--rule);
+    display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--accent);
+  }
+  .user-cell { display: flex; align-items: center; gap: 9px; padding-left: 8px; border-left: 1px solid var(--rule); }
+  .user-cell .name { font-size: 13px; font-weight: 600; line-height: 1.2; }
+  .user-cell .role { font-size: 11.5px; color: var(--ink-dim); }
+
+  .content { padding: 22px 28px 48px; display: flex; flex-direction: column; gap: 18px; }
+
+  /* Page header */
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .page-title { font-family: var(--font-serif); font-weight: 700; font-size: 24px; letter-spacing: -0.01em; }
+  .page-sub { color: var(--ink-2); font-size: 13.5px; margin-top: 2px; }
+  .page-actions { display: flex; gap: 8px; }
+
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule); }
+  .tab {
+    padding: 8px 14px; font-size: 13.5px; font-weight: 600; color: var(--ink-dim);
+    border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer;
+  }
+  .tab:hover { color: var(--ink-2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ============ COMPONENTS ============ */
+  .btn {
+    font: inherit; font-size: 13.5px; font-weight: 600;
+    border-radius: var(--radius-sm); padding: 7px 14px;
+    border: 1px solid transparent; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-strong); }
+  .btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--rule); }
+  .btn-secondary:hover { background: var(--surface-2); }
+  .btn-sm { padding: 5px 10px; font-size: 12.5px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    display: flex; flex-direction: column;
+  }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 13px 18px; border-bottom: 1px solid var(--rule);
+  }
+  .card-title { font-weight: 600; font-size: 14.5px; }
+  .card-body { padding: 16px 18px; }
+
+  /* Stat cards */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .stat { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
+  .stat-ico { width: 36px; height: 36px; border-radius: var(--radius-sm); display: grid; place-items: center; font-size: 16px; flex-shrink: 0; }
+  .stat-body { min-width: 0; }
+  .stat-label { font-size: 12px; font-weight: 600; color: var(--ink-dim); letter-spacing: 0.02em; }
+  .stat-value { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .stat-delta { font-size: 12px; margin-top: 1px; color: var(--ink-dim); }
+  .stat-delta.up { color: var(--ok); }
+
+  /* Chips */
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 600;
+    border-radius: 99px; padding: 2px 9px; white-space: nowrap;
+  }
+  .chip-ok { background: var(--ok-tint); color: var(--ok); }
+  .chip-warn { background: var(--warn-tint); color: var(--warn); }
+  .chip-accent { background: var(--accent-tint); color: var(--accent); }
+  .chip-info { background: var(--info-tint); color: var(--info); }
+  .chip-neutral { background: var(--surface-2); color: var(--ink-2); }
+
+  /* Main grid: 2/3 table + 1/3 rail */
+  .grid-main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+  .rail { display: flex; flex-direction: column; gap: 18px; }
+
+  /* Table toolbar */
+  .toolbar { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+  .toolbar .input, .toolbar .select {
+    font: inherit; font-size: 13px; color: var(--ink);
+    background: var(--paper); border: 1px solid var(--rule);
+    border-radius: var(--radius-sm); padding: 6px 10px; outline: none;
+  }
+  [data-theme='dark'] .toolbar .input, [data-theme='dark'] .toolbar .select { background: var(--surface-2); }
+  .toolbar .input:focus, .toolbar .select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
+  .toolbar .spacer { flex: 1; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead th {
+    text-align: left; font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-dim); background: var(--surface-2);
+    padding: 9px 18px; white-space: nowrap;
+  }
+  thead th.r, td.r { text-align: right; }
+  tbody td { padding: 10px 18px; border-top: 1px solid var(--rule); }
+  tbody tr:hover { background: var(--surface-2); }
+  .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .cell-main { font-weight: 600; }
+  .cell-sub { font-size: 12px; color: var(--ink-dim); }
+  .table-foot { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; border-top: 1px solid var(--rule); font-size: 12.5px; color: var(--ink-dim); }
+  .pager { display: flex; gap: 4px; }
+  .pager button {
+    min-width: 28px; height: 28px; border-radius: 6px; font: inherit; font-size: 12.5px; font-weight: 600;
+    border: 1px solid var(--rule); background: var(--surface); color: var(--ink-2); cursor: pointer;
+  }
+  .pager button.cur { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .pager button:hover:not(.cur) { background: var(--surface-2); }
+
+  /* CSS bar chart */
+  .chart { display: flex; align-items: flex-end; gap: 10px; height: 150px; padding: 4px 2px 0; }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+  .bar { width: 100%; max-width: 38px; border-radius: 5px 5px 0 0; background: var(--accent); }
+  .bar.muted { background: var(--surface-2); border: 1px solid var(--rule); border-bottom: 0; }
+  .bar-label { font-size: 11.5px; color: var(--ink-dim); font-weight: 600; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--ink-2); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+  /* Timeline (bugünkü program) */
+  .tl { list-style: none; }
+  .tl li { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+  .tl li:last-child { border-bottom: 0; }
+  .tl time { font-variant-numeric: tabular-nums; font-size: 12.5px; font-weight: 700; color: var(--ink-dim); width: 78px; flex-shrink: 0; }
+  .tl .what { font-weight: 600; font-size: 13.5px; }
+  .tl .where { font-size: 12px; color: var(--ink-dim); }
+  .tl li.now time, .tl li.now .what { color: var(--accent); }
+
+  /* Announcements */
+  .ann { list-style: none; }
+  .ann li { padding: 10px 0; border-bottom: 1px solid var(--rule); }
+  .ann li:last-child { border-bottom: 0; }
+  .ann .t { font-weight: 600; font-size: 13.5px; }
+  .ann .m { font-size: 12.5px; color: var(--ink-2); margin-top: 1px; }
+  .ann .d { font-size: 11.5px; color: var(--ink-dim); margin-top: 3px; }
+
+  .skeleton-note { font-size: 12px; color: var(--ink-dim); padding: 10px 18px; border-top: 1px solid var(--rule); }
+  .bone { height: 12px; border-radius: 6px; background: var(--surface-2); animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+  .loadbar { height: 3px; width: 100%; background: var(--surface-2); border-radius: 99px; overflow: hidden; position: relative; }
+  .loadbar::after { content: ''; position: absolute; inset: 0; width: 35%; background: var(--accent); border-radius: 99px; animation: slide 1.1s ease-in-out infinite; }
+  @keyframes slide { from { left: -35%; } to { left: 100%; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">TF</div>
+      <div>
+        <div class="brand-name">Tofaş Fen Lisesi</div>
+        <div class="brand-sub">Bilgi Yönetim Sistemi</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Genel</div>
+    <a class="nav-item active"><span class="ico">▤</span> Genel Bakış</a>
+    <a class="nav-item"><span class="ico">▦</span> Ders Programı</a>
+    <a class="nav-item"><span class="ico">✎</span> Ödevler <span class="count">3</span></a>
+    <a class="nav-item"><span class="ico">≣</span> Notlarım</a>
+    <a class="nav-item"><span class="ico">◔</span> Performans</a>
+
+    <div class="nav-section">İletişim</div>
+    <a class="nav-item"><span class="ico">✉</span> Mesajlar <span class="count">1</span></a>
+    <a class="nav-item"><span class="ico">🕪</span> Duyurular</a>
+    <a class="nav-item"><span class="ico">🗓</span> Randevular</a>
+
+    <div class="nav-section">İşlemler</div>
+    <a class="nav-item"><span class="ico">⇄</span> Evci Başvurusu</a>
+    <a class="nav-item"><span class="ico">🍽</span> Yemek Listesi</a>
+    <a class="nav-item"><span class="ico">🖹</span> Dilekçeler</a>
+    <a class="nav-item"><span class="ico">⚙</span> Ayarlar</a>
+
+    <div class="sidebar-foot">
+      <div class="avatar">EŞ</div>
+      <div>
+        <div style="font-size:12.5px;font-weight:600">Emir Şakarya</div>
+        <small>12-Ç · No 847</small>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="crumb">Panel / <b>Genel Bakış</b></div>
+      <div class="global-search">
+        <span class="ico">⌕</span>
+        <input placeholder="Öğrenci, ders, duyuru ara… (⌘K)" />
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" onclick="document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'dark' ? '' : 'dark'" title="Tema">◐</button>
+        <button class="icon-btn" title="Bildirimler">🕭<span class="dot"></span></button>
+        <div class="user-cell">
+          <div class="avatar">EŞ</div>
+          <div>
+            <div class="name">Emir Şakarya</div>
+            <div class="role">Öğrenci · 12-Ç</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Genel Bakış</h1>
+          <p class="page-sub">18 Temmuz 2026 Cumartesi · 2025–2026 Bahar Dönemi · İngilizce ödevinin teslimi yarın</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary">⤓ Rapor İndir</button>
+          <button class="btn btn-primary">+ Evci Başvurusu</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">Özet</div>
+        <div class="tab">Notlar</div>
+        <div class="tab">Devamsızlık</div>
+        <div class="tab">Belgeler</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-ico" style="background: var(--accent-tint); color: var(--accent);">≣</div>
+          <div class="stat-body">
+            <div class="stat-label">Not Ortalaması</div>
+            <div class="stat-value">87,4</div>
+            <div class="stat-delta up">▲ 2,1 geçen döneme göre</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="stat-ico" style="background: var(--warn-tint); color: var(--warn);">✎</div>
+          <div class="stat-body">
+            <div class="stat-label">Bekleyen Ödev</div>
+            <div class="stat-value">3</div>
+            <div class="stat-delta">1'i yarın teslim</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="stat-ico" style="background: var(--info-tint); color: var(--info);">◔</div>
+          <div class="stat-body">
+            <div class="stat-label">Devamsızlık</div>
+            <div class="stat-value">1,5 <span style="font-size:14px;font-weight:600">gün</span></div>
+            <div class="stat-delta">Sınır: 10 gün</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="stat-ico" style="background: var(--ok-tint); color: var(--ok);">🕪</div>
+          <div class="stat-body">
+            <div class="stat-label">Okunmamış Duyuru</div>
+            <div class="stat-value">2</div>
+            <div class="stat-delta">Son: dün 16:40</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-main">
+        <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">Ders Bazında Ortalama — 2. Dönem</div>
+              <div class="legend">
+                <span><i style="background: var(--accent)"></i>Sen</span>
+                <span><i style="background: var(--surface-2); border: 1px solid var(--rule)"></i>Sınıf ortalaması</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart">
+                <div class="bar-group"><div style="display:flex;gap:3px;width:100%;height:92%;align-items:flex-end;justify-content:center"><div class="bar" style="height:96%"></div><div class="bar muted" style="height:78%"></div></div><span class="bar-label">Matematik</span></div>
+                <div class="bar-group"><div style="display:flex;gap:3px;width:100%;height:92%;align-items:flex-end;justify-content:center"><div class="bar" style="height:88%"></div><div class="bar muted" style="height:81%"></div></div><span class="bar-label">Fizik</span></div>
+                <div class="bar-group"><div style="display:flex;gap:3px;width:100%;height:92%;align-items:flex-end;justify-content:center"><div class="bar" style="height:58%"></div><div class="bar muted" style="height:72%"></div></div><span class="bar-label">Kimya</span></div>
+                <div class="bar-group"><div style="display:flex;gap:3px;width:100%;height:92%;align-items:flex-end;justify-content:center"><div class="bar" style="height:82%"></div><div class="bar muted" style="height:70%"></div></div><span class="bar-label">Biyoloji</span></div>
+                <div class="bar-group"><div style="display:flex;gap:3px;width:100%;height:92%;align-items:flex-end;justify-content:center"><div class="bar" style="height:75%"></div><div class="bar muted" style="height:77%"></div></div><span class="bar-label">İngilizce</span></div>
+                <div class="bar-group"><div style="display:flex;gap:3px;width:100%;height:92%;align-items:flex-end;justify-content:center"><div class="bar" style="height:91%"></div><div class="bar muted" style="height:84%"></div></div><span class="bar-label">Edebiyat</span></div>
+                <div class="bar-group"><div style="display:flex;gap:3px;width:100%;height:92%;align-items:flex-end;justify-content:center"><div class="bar" style="height:86%"></div><div class="bar muted" style="height:80%"></div></div><span class="bar-label">Tarih</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="toolbar">
+              <span class="card-title" style="margin-right:6px">Son Notlar</span>
+              <input class="input" placeholder="⌕ Ara…" style="width:180px" />
+              <select class="select"><option>Tüm dersler</option><option>Matematik</option><option>Fizik</option></select>
+              <select class="select"><option>2. Dönem</option><option>1. Dönem</option></select>
+              <div class="spacer"></div>
+              <button class="btn btn-secondary btn-sm">⤓ Dışa Aktar</button>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Ders</th><th>Öğretmen</th><th>Değerlendirme</th><th>Tarih</th><th class="r">Not</th><th class="r">Sınıf Ort.</th><th>Durum</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="cell-main">Fizik</span><div class="cell-sub">FIZ-201</div></td>
+                  <td>Gökçe Şahinoğlu</td><td>2. Yazılı</td><td>14 Tem 2026</td>
+                  <td class="r num">92</td><td class="r" style="color:var(--ink-dim)">74,2</td>
+                  <td><span class="chip chip-ok">Başarılı</span></td>
+                </tr>
+                <tr>
+                  <td><span class="cell-main">Matematik</span><div class="cell-sub">MAT-204</div></td>
+                  <td>Rüştü Çağlayangil</td><td>Performans Ödevi</td><td>11 Tem 2026</td>
+                  <td class="r num">96</td><td class="r" style="color:var(--ink-dim)">81,6</td>
+                  <td><span class="chip chip-ok">Başarılı</span></td>
+                </tr>
+                <tr>
+                  <td><span class="cell-main">İngilizce</span><div class="cell-sub">ING-112</div></td>
+                  <td>Çağrı Düzgüner</td><td>Sözlü</td><td>8 Tem 2026</td>
+                  <td class="r num">78</td><td class="r" style="color:var(--ink-dim)">76,9</td>
+                  <td><span class="chip chip-ok">Başarılı</span></td>
+                </tr>
+                <tr>
+                  <td><span class="cell-main">Kimya</span><div class="cell-sub">KIM-203</div></td>
+                  <td>Işık Ağaçkıran</td><td>1. Yazılı</td><td>1 Tem 2026</td>
+                  <td class="r num">54</td><td class="r" style="color:var(--ink-dim)">68,4</td>
+                  <td><span class="chip chip-warn">Geliştirilmeli</span></td>
+                </tr>
+                <tr>
+                  <td><span class="cell-main">Edebiyat</span><div class="cell-sub">EDB-108</div></td>
+                  <td>Şükran Öztürkoğlu</td><td>Kompozisyon</td><td>26 Haz 2026</td>
+                  <td class="r num">88</td><td class="r" style="color:var(--ink-dim)">79,3</td>
+                  <td><span class="chip chip-ok">Başarılı</span></td>
+                </tr>
+                <tr>
+                  <td><span class="cell-main">Tarih</span><div class="cell-sub">TAR-105</div></td>
+                  <td>Doğukan Erdoğmuş</td><td>Kısa Sınav</td><td>19 Haz 2026</td>
+                  <td class="r num">85</td><td class="r" style="color:var(--ink-dim)">73,8</td>
+                  <td><span class="chip chip-info">Onay bekliyor</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="table-foot">
+              <span>1–6 / 42 kayıt</span>
+              <div class="pager">
+                <button>‹</button><button class="cur">1</button><button>2</button><button>3</button><button>…</button><button>7</button><button>›</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="rail">
+
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">Bugünkü Program</div>
+              <span class="chip chip-accent">3. ders</span>
+            </div>
+            <div class="card-body" style="padding-top:6px;padding-bottom:6px">
+              <ul class="tl">
+                <li><time>08:30–09:10</time><div><div class="what">Matematik</div><div class="where">D-204 · R. Çağlayangil</div></div></li>
+                <li><time>09:20–10:00</time><div><div class="what">Matematik</div><div class="where">D-204 · R. Çağlayangil</div></div></li>
+                <li class="now"><time>10:10–10:50</time><div><div class="what">Fizik</div><div class="where">Lab-2 · G. Şahinoğlu</div></div></li>
+                <li><time>11:00–11:40</time><div><div class="what">İngilizce</div><div class="where">D-108 · Ç. Düzgüner</div></div></li>
+                <li><time>13:00–13:40</time><div><div class="what">Beden Eğitimi</div><div class="where">Spor Salonu</div></div></li>
+                <li><time>13:50–14:30</time><div><div class="what">Edebiyat</div><div class="where">D-301 · Ş. Öztürkoğlu</div></div></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">Duyurular</div>
+              <button class="btn btn-secondary btn-sm">Tümü</button>
+            </div>
+            <div class="card-body" style="padding-top:4px;padding-bottom:4px">
+              <ul class="ann">
+                <li>
+                  <div class="t">Servis güzergâhı değişikliği</div>
+                  <div class="m">Görükle hattı pazartesiden itibaren yeni güzergâhtan işleyecek.</div>
+                  <div class="d">Dün 16:40 · İdare</div>
+                </li>
+                <li>
+                  <div class="t">TÜBİTAK proje başvuruları</div>
+                  <div class="m">Son başvuru 24 Temmuz. Danışman öğretmeninizle görüşün.</div>
+                  <div class="d">16 Tem · Müdür Yrd.</div>
+                </li>
+                <li>
+                  <div class="t">Yemekhane menüsü güncellendi</div>
+                  <div class="m">Ağustos ayı menüsü yayında.</div>
+                  <div class="d">15 Tem · Yemekhane</div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><div class="card-title">Yükleme Durumu</div><span class="chip chip-neutral">örnek</span></div>
+            <div style="padding: 12px 18px;"><div class="loadbar"></div></div>
+            <div style="display:flex;gap:12px;padding:8px 18px"><div class="bone" style="width:35%"></div><div class="bone" style="width:45%"></div></div>
+            <div style="display:flex;gap:12px;padding:8px 18px 4px"><div class="bone" style="width:28%"></div><div class="bone" style="width:52%"></div></div>
+            <div class="skeleton-note">Spinner yok — ince kırmızı ilerleme çubuğu + iskelet satırlar.</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>
