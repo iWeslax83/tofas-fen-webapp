@@ -48,7 +48,7 @@ const getFileIcon = (mimeType: string) => {
 };
 
 const iconButton =
-  'inline-flex items-center justify-center h-8 w-8 border border-[var(--rule)] text-[var(--ink-dim)] hover:text-[var(--ink)] hover:border-[var(--ink)] transition-colors disabled:opacity-40 disabled:hover:border-[var(--rule)]';
+  'inline-flex items-center justify-center h-8 w-8 rounded-[var(--radius-sm)] border border-[var(--rule)] text-[var(--ink-dim)] hover:text-[var(--ink)] hover:border-[var(--accent)] transition-colors disabled:opacity-40 disabled:hover:border-[var(--rule)]';
 
 const MessagesTab: React.FC<MessagesTabProps> = ({
   conversations,
@@ -105,7 +105,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                     className={cn(
                       'w-full flex items-start gap-3 px-4 py-3 text-left transition-colors',
                       isActive
-                        ? 'bg-[var(--surface)] border-l-2 border-[var(--state)]'
+                        ? 'bg-[var(--surface)] border-l-2 border-[var(--accent)]'
                         : 'border-l-2 border-transparent hover:bg-[var(--surface-2)]',
                     )}
                   >
@@ -127,7 +127,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                         </span>
                       )}
                       {unread > 0 && (
-                        <span className="inline-flex items-center justify-center min-w-5 h-5 px-1 bg-[var(--state)] text-white text-[10px] font-semibold">
+                        <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[var(--accent)] text-white text-[10px] font-semibold">
                           {unread}
                         </span>
                       )}
@@ -190,7 +190,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                         {message.attachments.map((attachment, index) => (
                           <li
                             key={index}
-                            className="flex items-center gap-2 border border-[var(--rule)] px-2 py-1 text-xs text-[var(--ink-2)]"
+                            className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--rule)] px-2 py-1 text-xs text-[var(--ink-2)]"
                           >
                             {getFileIcon(attachment.mimeType)}
                             <span className="flex-1 truncate">{attachment.originalName}</span>
@@ -199,7 +199,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                             </span>
                             <button
                               type="button"
-                              className="text-[var(--ink-dim)] hover:text-[var(--state)] transition-colors"
+                              className="text-[var(--ink-dim)] hover:text-[var(--accent)] transition-colors"
                               title="İndir"
                             >
                               <Download size={12} />
@@ -235,7 +235,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                       <button
                         type="button"
                         onClick={() => onRemoveFile(index)}
-                        className="text-[var(--ink-dim)] hover:text-[var(--state)] transition-colors"
+                        className="text-[var(--ink-dim)] hover:text-[var(--accent)] transition-colors"
                         title="Kaldır"
                       >
                         <Trash2 size={12} />
@@ -268,14 +268,14 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                       onSendMessage();
                     }
                   }}
-                  className="flex-1 resize-none border border-[var(--rule)] bg-transparent px-3 py-2 font-serif text-sm leading-relaxed text-[var(--ink)] placeholder:text-[var(--ink-dim)] focus:outline-none focus:border-[var(--ink)]"
+                  className="flex-1 resize-none rounded-[var(--radius-sm)] border border-[var(--rule)] bg-[var(--paper)] dark:bg-[var(--surface-2)] px-3 py-2 font-serif text-sm leading-relaxed text-[var(--ink)] placeholder:text-[var(--ink-dim)] focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-tint)]"
                 />
 
                 <button
                   type="button"
                   onClick={onSendMessage}
                   disabled={!canSend}
-                  className="inline-flex items-center justify-center h-8 w-8 bg-[var(--ink)] text-[var(--paper)] hover:bg-[var(--state)] transition-colors disabled:opacity-40 disabled:hover:bg-[var(--ink)]"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-[var(--radius-sm)] bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)] transition-colors disabled:opacity-40 disabled:hover:bg-[var(--accent)]"
                   title="Gönder"
                 >
                   <Send size={16} />
