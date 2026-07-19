@@ -6,6 +6,7 @@ import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import EnhancedErrorBoundary from '../../components/EnhancedErrorBoundary';
 import { Card } from '../../components/ui/Card';
 import { Chip } from '../../components/ui/Chip';
+import { LoadBar } from '../../components/SkeletonComponents';
 import { ParentsList, StudentsList, LinkedPairsList, ConfirmationModal } from './parent-child';
 import type { UserType, LinkedPair, ConfirmAction } from './parent-child';
 
@@ -294,7 +295,9 @@ function ParentChildManagementContent() {
   if (loading) {
     return (
       <ModernDashboardLayout pageTitle="Veli-Öğrenci Eşleştirme" breadcrumb={breadcrumb}>
-        <div className="p-6 text-xs font-medium text-[var(--ink-dim)]">Yükleniyor…</div>
+        <div className="p-6 max-w-xs">
+          <LoadBar />
+        </div>
       </ModernDashboardLayout>
     );
   }
@@ -307,14 +310,14 @@ function ParentChildManagementContent() {
         </header>
 
         {successMessage && (
-          <Card accentBar contentClassName="px-4 py-2 flex items-center gap-2">
-            <Chip tone="black">Bildirim</Chip>
+          <Card contentClassName="px-4 py-2 flex items-center gap-2 border-l-4 border-[var(--ok)] bg-[var(--ok-tint)]">
+            <Chip tone="ok">Bildirim</Chip>
             <span className="font-serif text-sm text-[var(--ink)]">{successMessage}</span>
           </Card>
         )}
         {error && (
-          <Card contentClassName="px-4 py-2 flex items-center gap-2 border-l-4 border-[var(--state)]">
-            <Chip tone="state">Hata</Chip>
+          <Card contentClassName="px-4 py-2 flex items-center gap-2 border-l-4 border-[var(--accent)] bg-[var(--accent-tint)]">
+            <Chip tone="accent">Hata</Chip>
             <span className="font-serif text-sm text-[var(--ink)] flex-1">{error}</span>
             <button
               onClick={() => setError(null)}
@@ -408,23 +411,37 @@ function StatsBar({
   // Two separate counts, not a fraction of each other — a parent and a
   // student are unrelated denominators, so "0 / 444" used to read like
   // "0 out of 444" rather than "0 unmatched parents, 444 unmatched students".
-  const items = [
-    { label: 'Veli', value: parents, icon: Users },
-    { label: 'Öğrenci', value: students, icon: UserPlus },
-    { label: 'Aktif Bağlantı', value: linked, icon: Link2 },
-    { label: 'Eşleşmemiş Veli', value: unmatchedParents, icon: AlertTriangle },
-    { label: 'Eşleşmemiş Öğrenci', value: unmatchedStudents, icon: AlertTriangle },
+  const items: {
+    label: string;
+    value: number;
+    icon: typeof Users;
+    tone: 'info' | 'ok' | 'warn';
+  }[] = [
+    { label: 'Veli', value: parents, icon: Users, tone: 'info' },
+    { label: 'Öğrenci', value: students, icon: UserPlus, tone: 'info' },
+    { label: 'Aktif Bağlantı', value: linked, icon: Link2, tone: 'ok' },
+    { label: 'Eşleşmemiş Veli', value: unmatchedParents, icon: AlertTriangle, tone: 'warn' },
+    { label: 'Eşleşmemiş Öğrenci', value: unmatchedStudents, icon: AlertTriangle, tone: 'warn' },
   ];
+  const toneColor: Record<'info' | 'ok' | 'warn', string> = {
+    info: 'var(--info)',
+    ok: 'var(--ok)',
+    warn: 'var(--warn)',
+  };
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-px bg-[var(--rule)] border border-[var(--rule)]">
-      {items.map(({ label, value, icon: Icon, hint }) => (
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-px bg-[var(--rule)] rounded-[var(--radius)] border border-[var(--rule)] overflow-hidden">
+      {items.map(({ label, value, icon: Icon, tone }) => (
         <div key={label} className="bg-[var(--paper)] p-4">
-          <div className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]">
+          <div
+            className="flex items-center gap-2 text-xs font-medium text-[var(--ink-dim)]"
+            style={{ color: toneColor[tone] }}
+          >
             <Icon size={12} />
             {label}
           </div>
-          <div className="font-serif text-2xl text-[var(--ink)] mt-2">{value}</div>
-          {hint && <div className="text-xs font-medium text-[var(--ink-dim-2)] mt-1">{hint}</div>}
+          <div className="font-serif text-2xl text-[var(--ink)] mt-2 [font-variant-numeric:tabular-nums]">
+            {value}
+          </div>
         </div>
       ))}
     </div>
