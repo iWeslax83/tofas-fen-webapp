@@ -16,9 +16,9 @@ describe('Chip', () => {
     expect(node.className).toContain('bg-[var(--surface-2)]');
   });
 
-  it('flips to the state tone (red on white)', () => {
+  it('flips to the state tone (accent tint)', () => {
     render(<Chip tone="state">err</Chip>);
-    expect(screen.getByText('err').className).toContain('bg-[var(--state)]');
+    expect(screen.getByText('err').className).toContain('bg-[var(--accent-tint)]');
   });
 
   it('flips to the black tone (ink on paper)', () => {

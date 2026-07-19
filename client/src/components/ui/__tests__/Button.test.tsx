@@ -61,12 +61,12 @@ describe('Button', () => {
 
   it('applies the primary variant classes by default', () => {
     render(<Button>Primary</Button>);
-    expect(screen.getByRole('button').className).toContain('bg-[var(--ink)]');
+    expect(screen.getByRole('button').className).toContain('bg-[var(--accent)]');
   });
 
   it('switches to the danger variant when requested', () => {
     render(<Button variant="danger">Sil</Button>);
-    expect(screen.getByRole('button').className).toContain('bg-[var(--state)]');
+    expect(screen.getByRole('button').className).toContain('bg-[var(--accent-tint)]');
   });
 
   it('applies size classes', () => {
