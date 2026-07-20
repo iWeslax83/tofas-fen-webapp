@@ -342,7 +342,6 @@ function NewHomeworkModal({ onClose, onSuccess }: NewHomeworkModalProps) {
                   description: formData.get('content') as string,
                   subject: formData.get('subject') as string,
                   classLevel: formData.get('grade') as string,
-                  classSection: (formData.get('section') as string) || 'A',
                   assignedDate: (formData.get('startDate') as string) || new Date().toISOString(),
                   dueDate: formData.get('endDate') as string,
                   attachments: fileUrl ? [fileUrl] : [],

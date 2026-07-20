@@ -127,16 +127,24 @@ router.get(
 
       // Rol bazlı filtreleme
       if (role === 'student') {
-        // Öğrenci sadece kendi sınıfının ödevlerini görebilir
+        // Öğrenci sadece kendi sınıfının ödevlerini görebilir.
+        // classSection boş/eksik bırakılan ödevler tüm şubeleri kapsar (B-H21).
         const student = (await User.findOne({ id: userId })
           .select('sinif sube')
           .lean()) as LeanStudentInfo | null;
         if (student?.sinif) {
           filter.classLevel = student.sinif;
-          if (student.sube) filter.classSection = student.sube;
+          if (student.sube) {
+            filter.$or = [
+              { classSection: student.sube },
+              { classSection: { $in: [null, ''] } },
+              { classSection: { $exists: false } },
+            ];
+          }
         }
       } else if (role === 'parent') {
-        // Veli sadece çocuklarının sınıflarının ödevlerini görebilir
+        // Veli sadece çocuklarının sınıflarının ödevlerini görebilir.
+        // classSection boş/eksik bırakılan ödevler tüm şubeleri kapsar (B-H21).
         const childIds = await getParentChildIds(userId!);
         if (childIds.length === 0) {
           return res.json({
@@ -150,7 +158,13 @@ router.get(
         const levels = [...new Set(children.map((c) => c.sinif).filter(Boolean))];
         const sections = [...new Set(children.map((c) => c.sube).filter(Boolean))];
         if (levels.length > 0) filter.classLevel = { $in: levels };
-        if (sections.length > 0) filter.classSection = { $in: sections };
+        if (sections.length > 0) {
+          filter.$or = [
+            { classSection: { $in: sections } },
+            { classSection: { $in: [null, ''] } },
+            { classSection: { $exists: false } },
+          ];
+        }
       } else if (role === 'teacher') {
         // Öğretmen kendi ödevlerini veya query param ile filtre uygulayabilir
         if (!classLevel && !classSection && !teacherId) {
