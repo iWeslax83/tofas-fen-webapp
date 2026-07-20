@@ -147,7 +147,7 @@ export const enhancedHelmet = helmet({
   ieNoOpen: true,
   noSniff: true,
   permittedCrossDomainPolicies: { permittedPolicies: 'none' },
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  referrerPolicy: { policy: 'no-referrer' },
   xssFilter: true,
 });
 
@@ -309,7 +309,7 @@ export const securityHeaders = (_req: Request, res: Response, next: NextFunction
   res.setHeader('X-XSS-Protection', '1; mode=block');
 
   // Referrer policy
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Referrer-Policy', 'no-referrer');
 
   // Permissions policy
   res.setHeader(

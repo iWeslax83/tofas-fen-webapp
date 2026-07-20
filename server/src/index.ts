@@ -129,6 +129,8 @@ app.use(
     frameguard: { action: 'deny' },
     noSniff: true,
     xssFilter: true,
+    hidePoweredBy: true,
+    referrerPolicy: { policy: 'no-referrer' },
   }),
 );
 
