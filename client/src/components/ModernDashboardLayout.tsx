@@ -9,6 +9,15 @@ import { SidebarProfile } from './SidebarProfile';
 import { CommandPalette } from './CommandPalette';
 import './ModernDashboardLayout.css';
 
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Yönetici',
+  teacher: 'Öğretmen',
+  student: 'Öğrenci',
+  parent: 'Veli',
+  hizmetli: 'Hizmetli',
+  ziyaretci: 'Ziyaretçi',
+};
+
 interface ModernDashboardLayoutProps {
   children: React.ReactNode;
   pageTitle: string;
