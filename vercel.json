@@ -5,7 +5,12 @@
   "buildCommand": "npm run build:client",
   "outputDirectory": "client/dist",
 
-  "rewrites": [{ "source": "/((?!assets/).*)", "destination": "/index.html" }],
+  "rewrites": [
+    {
+      "source": "/((?!assets/|fonts/|images/|video/|health$|tofaslogo\\.png$|bg-tofas\\.jpg$|manifest\\.webmanifest$|offline\\.html$|sw\\.js$|theme-init\\.js$).*)",
+      "destination": "/index.html"
+    }
+  ],
 
   "headers": [
     {
