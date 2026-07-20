@@ -7,17 +7,7 @@ import { dashboardButtons, type UserRole } from '../pages/Dashboard/dashboardBut
 import { useNotifications } from '../hooks/useNotifications';
 import { SidebarProfile } from './SidebarProfile';
 import { CommandPalette } from './CommandPalette';
-import { Portrait } from './Portrait';
 import './ModernDashboardLayout.css';
-
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Yönetici',
-  teacher: 'Öğretmen',
-  student: 'Öğrenci',
-  parent: 'Veli',
-  hizmetli: 'Hizmetli',
-  ziyaretci: 'Ziyaretçi',
-};
 
 interface ModernDashboardLayoutProps {
   children: React.ReactNode;
@@ -256,16 +246,6 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
                   </div>
                 </div>
               )}
-            </div>
-
-            <div className="user-cell">
-              <Portrait name={user.adSoyad ?? user.id} size="sm" />
-              <div>
-                <div className="user-cell-name">{user.adSoyad ?? user.id}</div>
-                <div className="user-cell-role">
-                  {ROLE_LABELS[user.rol ?? 'student'] ?? user.rol}
-                </div>
-              </div>
             </div>
           </div>
         </header>
