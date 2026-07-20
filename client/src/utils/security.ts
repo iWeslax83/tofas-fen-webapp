@@ -177,27 +177,49 @@ export class XSSProtection {
 // B-H2: the backend issues a `csrfToken` cookie on every login/refresh/verify-2fa
 // response. For cross-origin deployments the SPA cannot read this cookie via
 // document.cookie, so the server also returns the token in the response body.
-// We store it in memory and echo it back as the X-CSRF-Token header on every
+// We store it and echo it back as the X-CSRF-Token header on every
 // state-changing request. The server middleware compares header === cookie
 // (double-submit pattern).
 export class CSRFProtection {
   private static readonly CSRF_COOKIE_NAME = 'csrfToken';
-  /** In-memory token received from the server response body.
-   *  Cross-origin SPAs cannot read httpOnly or cross-domain cookies via
-   *  document.cookie, so the server returns the CSRF token in the response
-   *  body and we store it here for the request interceptor to send back as
-   *  the X-CSRF-Token header. */
+  /** sessionStorage key backing the in-memory token below. A plain static
+   *  field alone resets to null on every reload/new tab (fresh JS module
+   *  state), which left a window — between that reset and the next `/me`
+   *  round trip finishing — where a mutating request would go out with no
+   *  X-CSRF-Token header and get rejected. sessionStorage survives reloads
+   *  within the same tab, so a reload no longer depends on that round trip
+   *  completing before the user can act. */
+  private static readonly STORAGE_KEY = 'csrfToken';
+
+  /** In-memory token, mirrored to sessionStorage so it survives a reload. */
   private static _token: string | null = null;
 
   /** Store the CSRF token received from a server response body. */
   static setToken(token: string) {
     this._token = token;
+    try {
+      sessionStorage.setItem(this.STORAGE_KEY, token);
+    } catch {
+      /* storage disabled / quota / safari private mode */
+    }
   }
 
-  /** Return the CSRF token. Prefers the in-memory copy (from the response
-   *  body); falls back to document.cookie for same-origin deployments. */
+  /** Return the CSRF token. Prefers the in-memory copy, then sessionStorage
+   *  (survives reloads within the tab), then falls back to document.cookie
+   *  for same-origin deployments. */
   static getToken(): string | null {
     if (this._token) return this._token;
+
+    try {
+      const stored = sessionStorage.getItem(this.STORAGE_KEY);
+      if (stored) {
+        this._token = stored;
+        return stored;
+      }
+    } catch {
+      /* storage disabled / quota / safari private mode */
+    }
+
     if (typeof document === 'undefined') return null;
     const match = document.cookie
       .split(';')
@@ -206,9 +228,14 @@ export class CSRFProtection {
     return match ? decodeURIComponent(match.slice(this.CSRF_COOKIE_NAME.length + 1)) : null;
   }
 
-  /** Clear the in-memory token (e.g. on logout). */
+  /** Clear the token (e.g. on logout). */
   static clearToken() {
     this._token = null;
+    try {
+      sessionStorage.removeItem(this.STORAGE_KEY);
+    } catch {
+      /* storage disabled / quota / safari private mode */
+    }
   }
 
   /** @deprecated Server issues tokens now. */
