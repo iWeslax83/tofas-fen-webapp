@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Plus, X, Save, Link2, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { toast } from 'sonner';
 import { UserService } from '../../utils/apiService';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
@@ -238,7 +239,7 @@ export default function SenkronizasyonPage() {
       const { error } = await UserService.deleteUser(userId);
       if (error) {
         safeConsoleError('Kullanıcı silinirken hata oluştu:', error);
-        alert('Kullanıcı silinirken hata oluştu: ' + error);
+        toast.error('Kullanıcı silinirken hata oluştu: ' + error);
       } else {
         setAllUsers((users) => users.filter((u) => u.id !== userId));
         setTableUsers((users) => users.filter((u) => u.id !== userId));
@@ -249,12 +250,12 @@ export default function SenkronizasyonPage() {
         if (editUser?.id === userId) {
           setEditUser(null);
         }
-        alert('Kullanıcı başarıyla silindi.');
+        toast.success('Kullanıcı başarıyla silindi.');
         fetchTablePage();
       }
     } catch (error) {
       safeConsoleError('Kullanıcı silinirken hata oluştu:', error);
-      alert('Kullanıcı silinirken hata oluştu.');
+      toast.error('Kullanıcı silinirken hata oluştu.');
     }
   };
 
