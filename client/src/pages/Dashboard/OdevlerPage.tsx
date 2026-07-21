@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { Chip } from '../../components/ui/Chip';
+import { useConfirm } from '../../components/ui/ConfirmDialog';
 import { LoadBar } from '../../components/SkeletonComponents';
 import { cn } from '../../utils/cn';
 import { formatDate } from '../../utils/formatDate';
@@ -80,6 +81,7 @@ const selectClasses = cn(
 
 export default function OdevlerPage() {
   const { user, isLoading: authLoading } = useAuthGuard(['admin', 'teacher', 'student', 'parent']);
+  const confirm = useConfirm();
   const [showModal, setShowModal] = useState(false);
   const [homeworks, setHomeworks] = useState<Homework[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -105,7 +107,13 @@ export default function OdevlerPage() {
   }, [user, authLoading]);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Ödevi silmek istediğinize emin misiniz?')) return;
+    const ok = await confirm({
+      title: 'Ödevi sil',
+      description: 'Ödevi silmek istediğinize emin misiniz?',
+      confirmLabel: 'Sil',
+      variant: 'danger',
+    });
+    if (!ok) return;
     const { error } = await HomeworkService.deleteHomework(id);
     if (error) {
       alert('Ödev silinirken hata oluştu: ' + error);
