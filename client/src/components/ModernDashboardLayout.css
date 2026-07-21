@@ -76,12 +76,12 @@
 .modern-sidebar .logo-image {
   width: auto;
   /* The crest's text band and atom outline stop resolving below ~50px. */
-  height: 40px;
+  height: 56px;
   flex-shrink: 0;
 }
 
 .modern-sidebar .logo-text h2 {
-  font-size: 0.875rem;
+  font-size: 1.125rem;
   font-weight: 700;
   margin: 0;
   color: var(--ink);
@@ -90,7 +90,7 @@
 }
 
 .modern-sidebar .logo-text span {
-  font-size: 0.6875rem;
+  font-size: 0.875rem;
   color: var(--ink-dim);
   font-weight: 400;
 }
