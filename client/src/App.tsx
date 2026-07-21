@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/react';
 import ErrorBoundary from './components/ErrorBoundary';
 import AuthProvider from './contexts/AuthContext';
 import AppRoutes from './routes/AppRoutes';
+import { ConfirmProvider } from './components/ui/ConfirmDialog';
 import { useUIStore } from './stores/uiStore';
 import './App.css';
 
@@ -12,7 +13,9 @@ function AppInner() {
 
   return (
     <ErrorBoundary resetKey={location.pathname}>
-      <AppRoutes />
+      <ConfirmProvider>
+        <AppRoutes />
+      </ConfirmProvider>
     </ErrorBoundary>
   );
 }

@@ -21,6 +21,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { Input } from '../../components/ui/Input';
+import { useConfirm } from '../../components/ui/ConfirmDialog';
 import { EvciService } from '../../utils/apiService';
 import { cn } from '../../utils/cn';
 import { safeConsoleError } from '../../utils/safeLogger';
@@ -109,6 +110,7 @@ const Field = ({ label, children, error }: FieldProps) => (
 
 const StudentEvciPage = () => {
   const { user: authUser } = useAuthGuard(['student']);
+  const confirm = useConfirm();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -282,7 +284,13 @@ const StudentEvciPage = () => {
       toast.error('Veli tarafından onaylanmış talep silinemez.');
       return;
     }
-    if (!window.confirm('Talebi iptal etmek istediğinize emin misiniz?')) return;
+    const ok = await confirm({
+      title: 'Talebi iptal et',
+      description: 'Talebi iptal etmek istediğinize emin misiniz?',
+      confirmLabel: 'İptal Et',
+      variant: 'danger',
+    });
+    if (!ok) return;
     if (!target._id) return;
     try {
       const { error: apiError } = await EvciService.deleteEvciRequest(target._id);

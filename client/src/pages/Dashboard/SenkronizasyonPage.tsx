@@ -12,6 +12,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip } from '../../components/ui/Chip';
 import { DataTable } from '../../components/ui/DataTable';
+import { useConfirm } from '../../components/ui/ConfirmDialog';
 import { LoadBar } from '../../components/SkeletonComponents';
 import { cn } from '../../utils/cn';
 import { safeConsoleError, safeConsoleWarn } from '../../utils/safeLogger';
@@ -72,6 +73,7 @@ function getRolLabel(u: UserType): string {
 export default function SenkronizasyonPage() {
   const { user, isLoading: authLoading } = useAuthContext();
   const navigate = useNavigate();
+  const confirm = useConfirm();
 
   // State management
   // The full roster, unpaginated — used only by the parent-child matching
@@ -224,8 +226,13 @@ export default function SenkronizasyonPage() {
 
   const handleDeleteUser = async (userToDelete: UserType) => {
     const userId = userToDelete.id;
-    const confirmMessage = `"${userToDelete.adSoyad}" kullanıcısını silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz!`;
-    if (!window.confirm(confirmMessage)) return;
+    const ok = await confirm({
+      title: 'Kullanıcıyı sil',
+      description: `"${userToDelete.adSoyad}" kullanıcısını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`,
+      confirmLabel: 'Sil',
+      variant: 'danger',
+    });
+    if (!ok) return;
 
     try {
       const { error } = await UserService.deleteUser(userId);

@@ -9,6 +9,7 @@ import { DataTable } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { FilePickerButton } from '../../components/ui/FilePickerButton';
+import { useConfirm } from '../../components/ui/ConfirmDialog';
 import { DormitoryService } from '../../utils/apiService';
 import { cn } from '../../utils/cn';
 import { safeConsoleError } from '../../utils/safeLogger';
@@ -62,6 +63,7 @@ const Field = ({ label, htmlFor, children }: FieldProps) => (
 
 export default function SupervisorListPage() {
   const { user } = useAuthGuard(['admin', 'teacher', 'parent', 'student']);
+  const confirm = useConfirm();
   const [supervisorLists, setSupervisorLists] = useState<SupervisorList[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState('');
@@ -155,21 +157,30 @@ export default function SupervisorListPage() {
     }
   };
 
-  const handleDelete = useCallback(async (id: string) => {
-    if (!window.confirm('Bu listeyi silmek istediğinize emin misiniz?')) return;
-    try {
-      const { error: apiError } = await DormitoryService.deleteSupervisor(id);
-      if (apiError) {
-        toast.error(apiError);
-      } else {
-        toast.success('Liste başarıyla silindi');
-        setSupervisorLists((lists) => lists.filter((l) => l._id !== id));
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const ok = await confirm({
+        title: 'Listeyi sil',
+        description: 'Bu listeyi silmek istediğinize emin misiniz?',
+        confirmLabel: 'Sil',
+        variant: 'danger',
+      });
+      if (!ok) return;
+      try {
+        const { error: apiError } = await DormitoryService.deleteSupervisor(id);
+        if (apiError) {
+          toast.error(apiError);
+        } else {
+          toast.success('Liste başarıyla silindi');
+          setSupervisorLists((lists) => lists.filter((l) => l._id !== id));
+        }
+      } catch (err) {
+        safeConsoleError('Error deleting supervisor list:', err);
+        toast.error('Liste silinirken hata oluştu');
       }
-    } catch (err) {
-      safeConsoleError('Error deleting supervisor list:', err);
-      toast.error('Liste silinirken hata oluştu');
-    }
-  }, []);
+    },
+    [confirm],
+  );
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString('tr-TR', {

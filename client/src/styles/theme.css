@@ -1843,69 +1843,78 @@
   font-family: var(--font-mono);
 }
 
-/* Typography Headings */
-h1,
-.h1 {
-  font-size: var(--font-size-4xl);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
-  letter-spacing: var(--letter-spacing-tight);
-  font-family: var(--font-display);
-  color: var(--gray-900);
-}
+/* Typography Headings
+   Wrapped in @layer base: unlayered rules always beat every Tailwind
+   @layer (base/components/utilities) regardless of source order or
+   specificity, so a plain `p { color: ... }` here silently ate any
+   `text-white/*` utility on a <p>/<h1-6> — e.g. the hero copy on
+   RegistrationFormPage/LoginPage rendered dark-on-dark and vanished.
+   @layer base lets Tailwind's utility layer win as intended, while these
+   rules still apply as defaults when no utility overrides them. */
+@layer base {
+  h1,
+  .h1 {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tight);
+    font-family: var(--font-display);
+    color: var(--gray-900);
+  }
 
-h2,
-.h2 {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
-  letter-spacing: var(--letter-spacing-tight);
-  font-family: var(--font-display);
-  color: var(--gray-900);
-}
+  h2,
+  .h2 {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tight);
+    font-family: var(--font-display);
+    color: var(--gray-900);
+  }
 
-h3,
-.h3 {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-snug);
-  letter-spacing: var(--letter-spacing-normal);
-  color: var(--gray-800);
-}
+  h3,
+  .h3 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-snug);
+    letter-spacing: var(--letter-spacing-normal);
+    color: var(--gray-800);
+  }
 
-h4,
-.h4 {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-normal);
-  letter-spacing: var(--letter-spacing-normal);
-  color: var(--gray-800);
-}
+  h4,
+  .h4 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-normal);
+    letter-spacing: var(--letter-spacing-normal);
+    color: var(--gray-800);
+  }
 
-h5,
-.h5 {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-normal);
-  letter-spacing: var(--letter-spacing-normal);
-  color: var(--gray-700);
-}
+  h5,
+  .h5 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
+    letter-spacing: var(--letter-spacing-normal);
+    color: var(--gray-700);
+  }
 
-h6,
-.h6 {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-normal);
-  letter-spacing: var(--letter-spacing-wide);
-  color: var(--gray-700);
-}
+  h6,
+  .h6 {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
+    letter-spacing: var(--letter-spacing-wide);
+    color: var(--gray-700);
+  }
 
-p,
-.p {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-normal);
-  line-height: var(--line-height-relaxed);
-  color: var(--gray-700);
+  p,
+  .p {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-relaxed);
+    color: var(--gray-700);
+  }
 }
 
 /* Utility Classes */
@@ -2433,13 +2442,19 @@ p,
 }
 
 /* Micro-interactions - Link Hover */
-/* Global link micro-interaction (underline) is disabled for cleaner dashboard buttons */
-a {
-  transition: color 0.2s ease;
-}
+/* Global link micro-interaction (underline) is disabled for cleaner dashboard buttons.
+   Wrapped in @layer base for the same reason as the typography block above:
+   unlayered `a:hover { color }` was beating every `hover:text-*` utility on
+   Link/<a> elements sitewide, forcing stale --primary-red-dark (a dead
+   pre-Soft-Modern teal) instead of the intended --accent crimson. */
+@layer base {
+  a {
+    transition: color 0.2s ease;
+  }
 
-a:hover {
-  color: var(--primary-red-dark);
+  a:hover {
+    color: var(--primary-red-dark);
+  }
 }
 
 /* Micro-interactions - Badge Pulse */
