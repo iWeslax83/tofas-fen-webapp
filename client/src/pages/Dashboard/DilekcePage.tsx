@@ -11,6 +11,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { Input } from '../../components/ui/Input';
+import { useConfirm } from '../../components/ui/ConfirmDialog';
 import { apiClient } from '../../utils/api';
 import { extractError } from '../../utils/apiResponseHandler';
 import { cn } from '../../utils/cn';
@@ -117,6 +118,7 @@ const Field = ({ label, children, fullWidth }: FieldProps) => (
 const DilekcePage: React.FC = () => {
   const { user } = useAuthContext();
   const navigate = useNavigate();
+  const confirm = useConfirm();
 
   const [dilekceler, setDilekceler] = useState<Dilekce[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,20 +149,29 @@ const DilekcePage: React.FC = () => {
     }
   };
 
-  const handleDelete = useCallback(async (id: string) => {
-    if (!window.confirm('Bu dilekçeyi silmek istediğinizden emin misiniz?')) return;
-    try {
-      const response = await apiClient.delete(`/api/dilekce/${id}`);
-      if (response.data.success) {
-        toast.success('Dilekçe silindi');
-        loadDilekceler();
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const ok = await confirm({
+        title: 'Dilekçeyi sil',
+        description: 'Bu dilekçeyi silmek istediğinizden emin misiniz?',
+        confirmLabel: 'Sil',
+        variant: 'danger',
+      });
+      if (!ok) return;
+      try {
+        const response = await apiClient.delete(`/api/dilekce/${id}`);
+        if (response.data.success) {
+          toast.success('Dilekçe silindi');
+          loadDilekceler();
+        }
+      } catch (error) {
+        safeConsoleError('Error deleting dilekce:', error);
+        const message = extractError(error) || 'Dilekçe silinemedi';
+        toast.error(message);
       }
-    } catch (error) {
-      safeConsoleError('Error deleting dilekce:', error);
-      const message = extractError(error) || 'Dilekçe silinemedi';
-      toast.error(message);
-    }
-  }, []);
+    },
+    [confirm],
+  );
 
   const columns = useMemo<ColumnDef<Dilekce>[]>(
     () => [

@@ -25,6 +25,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip, type ChipProps } from '../../components/ui/Chip';
 import { Input } from '../../components/ui/Input';
+import { useConfirm } from '../../components/ui/ConfirmDialog';
 import { EvciService, UserService } from '../../utils/apiService';
 import { cn } from '../../utils/cn';
 import { safeConsoleError } from '../../utils/safeLogger';
@@ -93,6 +94,7 @@ const Field = ({ label, children }: FieldProps) => (
 
 export default function AdminEvciListPage() {
   const { user: authUser } = useAuthGuard(['admin', 'teacher']);
+  const confirm = useConfirm();
   const [requests, setRequests] = useState<EvciTalep[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -203,26 +205,35 @@ export default function AdminEvciListPage() {
     }
   };
 
-  const handleDelete = useCallback(async (id: string) => {
-    if (!window.confirm('Bu talebi silmek istediğinize emin misiniz?')) return;
-    try {
-      const { error: apiError } = await EvciService.deleteEvciRequest(id);
-      if (apiError) {
-        toast.error(apiError);
-      } else {
-        setRequests((reqs) => reqs.filter((r) => r._id !== id));
-        setSelectedIds((prev) => {
-          const next = new Set(prev);
-          next.delete(id);
-          return next;
-        });
-        toast.success('Evci talebi başarıyla silindi');
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const ok = await confirm({
+        title: 'Talebi sil',
+        description: 'Bu talebi silmek istediğinize emin misiniz?',
+        confirmLabel: 'Sil',
+        variant: 'danger',
+      });
+      if (!ok) return;
+      try {
+        const { error: apiError } = await EvciService.deleteEvciRequest(id);
+        if (apiError) {
+          toast.error(apiError);
+        } else {
+          setRequests((reqs) => reqs.filter((r) => r._id !== id));
+          setSelectedIds((prev) => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          });
+          toast.success('Evci talebi başarıyla silindi');
+        }
+      } catch (err) {
+        if (import.meta.env.DEV) safeConsoleError('Error deleting evci request:', err);
+        toast.error('Evci talebi silinirken hata oluştu');
       }
-    } catch (err) {
-      if (import.meta.env.DEV) safeConsoleError('Error deleting evci request:', err);
-      toast.error('Evci talebi silinirken hata oluştu');
-    }
-  }, []);
+    },
+    [confirm],
+  );
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -236,8 +247,10 @@ export default function AdminEvciListPage() {
   const handleBulkAction = async (status: 'approved' | 'rejected') => {
     if (selectedIds.size === 0) return;
     const label = status === 'approved' ? 'onaylamak' : 'reddetmek';
-    if (!window.confirm(`Seçili ${selectedIds.size} talebi ${label} istediğinize emin misiniz?`))
-      return;
+    const ok = await confirm(
+      `Seçili ${selectedIds.size} talebi ${label} istediğinize emin misiniz?`,
+    );
+    if (!ok) return;
     try {
       const result = (await EvciService.bulkUpdateStatus(Array.from(selectedIds), status)) as {
         error?: string;
@@ -281,7 +294,8 @@ export default function AdminEvciListPage() {
   const handleAdminAction = useCallback(
     async (id: string, action: 'approve' | 'reject') => {
       const label = action === 'approve' ? 'onaylamak' : 'reddetmek';
-      if (!window.confirm(`Bu talebi ${label} istediğinize emin misiniz?`)) return;
+      const ok = await confirm(`Bu talebi ${label} istediğinize emin misiniz?`);
+      if (!ok) return;
       try {
         const { error: apiError } = await EvciService.adminApproveEvciRequest(id, action);
         if (apiError) {
@@ -295,7 +309,7 @@ export default function AdminEvciListPage() {
         toast.error('İşlem sırasında hata oluştu');
       }
     },
-    [fetchData, page],
+    [fetchData, page, confirm],
   );
 
   const handleWindowOverride = async () => {
