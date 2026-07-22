@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, X, Save, Link2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Plus, X, Save, Link2, ChevronLeft, ChevronRight, KeyRound } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import { UserService } from '../../utils/apiService';
@@ -9,6 +9,9 @@ import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import BulkLinkSection from './BulkLinkSection';
 import AddUserModal from './AddUserModal';
 import EditUserModal from './EditUserModal';
+import ResetReasonModal from './PasswordManagement/ResetReasonModal';
+import PasswordRevealModal from './PasswordManagement/PasswordRevealModal';
+import { useResetPassword } from './PasswordManagement/hooks/useUserPasswordActions';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Chip } from '../../components/ui/Chip';
@@ -102,6 +105,12 @@ export default function SenkronizasyonPage() {
   const [manualAssignError, setManualAssignError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editUser, setEditUser] = useState<UserType | null>(null);
+  const [resetPasswordUser, setResetPasswordUser] = useState<UserType | null>(null);
+  const [revealedPassword, setRevealedPassword] = useState<{
+    password: string;
+    label: string;
+  } | null>(null);
+  const resetPasswordMut = useResetPassword();
 
   // Student search and filter states
   const [studentSearch, setStudentSearch] = useState('');
@@ -259,6 +268,28 @@ export default function SenkronizasyonPage() {
     }
   };
 
+  const handleResetPasswordConfirm = (reason: string, reasonNote?: string) => {
+    if (!resetPasswordUser) return;
+    resetPasswordMut.mutate(
+      { userId: resetPasswordUser.id, reason, ...(reasonNote !== undefined && { reasonNote }) },
+      {
+        onSuccess: (res) => {
+          setRevealedPassword({
+            password: res.password,
+            label: `${resetPasswordUser.adSoyad} (${resetPasswordUser.id})`,
+          });
+          setResetPasswordUser(null);
+        },
+        onError: (err: unknown) => {
+          toast.error(
+            `Şifre yenilenirken hata oluştu: ${err instanceof Error ? err.message : 'Bilinmeyen hata'}`,
+          );
+          setResetPasswordUser(null);
+        },
+      },
+    );
+  };
+
   // Manual assignment by ID
   const handleManualAssign = () => {
     const student = allUsers.find((u) => u.id === manualAssignId && u.rol === 'student');
@@ -361,6 +392,10 @@ export default function SenkronizasyonPage() {
           <div className="flex flex-wrap gap-1.5">
             <Button variant="ghost" size="sm" onClick={() => setEditUser(u)}>
               Düzenle
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setResetPasswordUser(u)}>
+              <KeyRound size={14} />
+              Şifre Yenile
             </Button>
             {u.rol === 'parent' && (
               <Button variant="secondary" size="sm" onClick={() => handleSelectParent(u)}>
@@ -692,6 +727,22 @@ export default function SenkronizasyonPage() {
             setTableUsers((users) => users.map(applyUpdate));
           }}
           onClose={() => setEditUser(null)}
+        />
+      )}
+
+      {resetPasswordUser && (
+        <ResetReasonModal
+          userLabel={`${resetPasswordUser.adSoyad} (${resetPasswordUser.id})`}
+          onConfirm={handleResetPasswordConfirm}
+          onCancel={() => setResetPasswordUser(null)}
+        />
+      )}
+
+      {revealedPassword && (
+        <PasswordRevealModal
+          password={revealedPassword.password}
+          userLabel={revealedPassword.label}
+          onClose={() => setRevealedPassword(null)}
         />
       )}
     </ModernDashboardLayout>
