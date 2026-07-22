@@ -366,7 +366,12 @@ export async function getStudentOverview(userId: string, sinif?: string): Promis
     }),
     Homework.countDocuments({ status: 'completed', ...classFilter }),
     classLevel && classSection
-      ? Schedule.findOne({ classLevel, classSection, isActive: true }).lean<{
+      ? Schedule.findOne({
+          classLevel,
+          classSection,
+          isActive: true,
+          academicYear: getAcademicYear(),
+        }).lean<{
           schedule?: Array<{
             day: string;
             periods: Array<{
