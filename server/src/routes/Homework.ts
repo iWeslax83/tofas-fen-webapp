@@ -8,6 +8,7 @@ import { getParentChildIds } from '../middleware/parentChildAccess';
 import { MongoFilter } from '../types';
 import logger from '../utils/logger';
 import { asyncHandler } from '../middleware/errorHandler';
+import { getAcademicYear } from '../utils/academicYear';
 
 /** Lean User shape for student/child lookups */
 interface LeanStudentInfo {
@@ -117,11 +118,16 @@ router.get(
         classSection,
         teacherId,
         status,
+        academicYear,
         page = 1,
         limit = 20,
       } = req.query;
 
-      const filter: MongoFilter<IHomework> = {};
+      const filter: MongoFilter<IHomework> = {
+        // Öğretim yılı geçişinde eski yılın ödevleri kendiliğinden listeden
+        // düşer. Arşive bakmak için ?academicYear=2025-2026 verilir.
+        academicYear: (academicYear as string) || getAcademicYear(),
+      };
       const role = req.user?.role;
       const userId = req.user?.userId;
 

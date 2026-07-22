@@ -9,6 +9,7 @@ import { EvciRequest } from '../../models/EvciRequest';
 import { Schedule } from '../../models/Schedule';
 import Announcement from '../../models/Announcement';
 import { calculateClassRanking, type ClassRanking } from '../../services/rankingService';
+import { getAcademicYear } from '../../utils/academicYear';
 
 export interface AdminOverview {
   totalStudents: number;
@@ -177,7 +178,7 @@ async function getStudentActivity(userId: string, classLevel?: string): Promise<
       .limit(ACTIVITY_LIMIT)
       .lean<Array<{ _id: unknown; lesson: string; average?: number; lastUpdated: Date }>>(),
     classLevel
-      ? Homework.find({ classLevel, isPublished: true })
+      ? Homework.find({ classLevel, isPublished: true, academicYear: getAcademicYear() })
           .sort({ assignedDate: -1 })
           .limit(ACTIVITY_LIMIT)
           .lean<
@@ -338,7 +339,10 @@ export async function getStudentOverview(userId: string, sinif?: string): Promis
   }>();
   const classLevel = sinif ?? student?.sinif;
   const classSection = student?.sube;
-  const classFilter = classLevel ? { classLevel } : {};
+  // academicYear tüm Homework sorgularına yayılır (357, 358, 363, 379).
+  const classFilter = classLevel
+    ? { classLevel, academicYear: getAcademicYear() }
+    : { academicYear: getAcademicYear() };
 
   const [
     notes,
