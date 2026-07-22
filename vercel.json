@@ -7,6 +7,10 @@
 
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://tofas-fen-webapp.onrender.com/api/:path*"
+    },
+    {
       "source": "/((?!assets/|fonts/|images/|video/|health$|tofaslogo\\.png$|bg-tofas\\.jpg$|manifest\\.webmanifest$|offline\\.html$|sw\\.js$|theme-init\\.js$).*)",
       "destination": "/index.html"
     }
