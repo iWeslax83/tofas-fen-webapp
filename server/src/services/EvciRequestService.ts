@@ -1,6 +1,7 @@
 import { EvciRequest, IEvciRequest, getWeekMonday } from '../models/EvciRequest';
 import { User } from '../models/User';
 import { EvciWindowOverride } from '../models/EvciWindowOverride';
+import { CalendarEvent } from '../models/Calendar';
 import { NotificationService } from './NotificationService';
 import { publishEvent } from '../utils/websocket-enhanced';
 import { EventType } from './EventService';
@@ -103,6 +104,20 @@ function getTurkeyNow(): Date {
   return new Date(now.getTime() + turkeyOffset + now.getTimezoneOffset() * 60 * 1000);
 }
 
+/**
+ * Okul takviminde ('holiday' tipi, herkese açık etkinlik) verilen anı kapsayan
+ * bir tatil (yaz tatili, yarıyıl tatili vb.) varsa onu döner. Yönetici bu
+ * etkinlikleri Takvim sayfasından oluşturur; ek bir tarih config'i gerekmez.
+ */
+async function findActiveHoliday(date: Date) {
+  return CalendarEvent.findOne({
+    type: 'holiday',
+    isPublic: true,
+    startDate: { $lte: date },
+    endDate: { $gte: date },
+  }).sort({ startDate: -1 });
+}
+
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
@@ -119,6 +134,10 @@ export class EvciRequestService {
     const override = await EvciWindowOverride.findOne({ weekOf });
     if (override) {
       return override.isOpen;
+    }
+
+    if (await findActiveHoliday(turkeyNow)) {
+      return false;
     }
 
     const day = turkeyNow.getDay();
@@ -138,7 +157,13 @@ export class EvciRequestService {
       isOpen = override.isOpen;
       reason = override.reason;
     } else {
-      isOpen = day >= 1 && day <= 4;
+      const holiday = await findActiveHoliday(turkeyNow);
+      if (holiday) {
+        isOpen = false;
+        reason = holiday.title;
+      } else {
+        isOpen = day >= 1 && day <= 4;
+      }
     }
 
     const mondayDiff = day === 0 ? 6 : day - 1;
