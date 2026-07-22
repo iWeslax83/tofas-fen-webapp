@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { AcademicYearRollover } from '../../models';
 
 function rolloverFixture(overrides: Record<string, unknown> = {}) {
@@ -15,6 +15,13 @@ function rolloverFixture(overrides: Record<string, unknown> = {}) {
 }
 
 describe('AcademicYearRollover', () => {
+  // Mongoose builds indexes in the background after model compilation; on a
+  // freshly-started in-memory Mongo, the unique(toYear) index may not exist
+  // yet when the very first test runs, letting a "duplicate" insert through.
+  beforeAll(async () => {
+    await AcademicYearRollover.init();
+  });
+
   it('varsayılan durumu proposed', async () => {
     const doc = await AcademicYearRollover.create(rolloverFixture());
     expect(doc.status).toBe('proposed');
