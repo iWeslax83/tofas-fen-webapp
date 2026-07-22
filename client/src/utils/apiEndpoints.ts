@@ -360,3 +360,11 @@ export const PASSWORD_ADMIN_ENDPOINTS = {
   GENERATE: (userId: string) => `/api/admin/passwords/generate/${userId}`,
   AUDIT: '/api/admin/passwords/audit',
 } as const;
+
+export const ACADEMIC_YEAR_ENDPOINTS = {
+  PENDING_ROLLOVER: '/api/academic-year/rollover/pending',
+  PROPOSE_ROLLOVER: '/api/academic-year/rollover/propose',
+  APPLY_ROLLOVER: (rolloverId: string) => `/api/academic-year/rollover/${rolloverId}/apply`,
+  ROLLBACK_ROLLOVER: (rolloverId: string) => `/api/academic-year/rollover/${rolloverId}/rollback`,
+  CANCEL_ROLLOVER: (rolloverId: string) => `/api/academic-year/rollover/${rolloverId}`,
+};
