@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AcademicYearRollover, User } from '../../../models';
 import { proposeRollover, applyRollover } from '../../../modules/academicYear/academicYearService';
 
@@ -86,5 +86,35 @@ describe('applyRollover', () => {
     const result = await applyRollover({ rolloverId, admin });
     expect(result.failures.map((f) => f.userId)).toContain('s11');
     expect((await User.findOne({ id: 's9' }))?.sinif).toBe('10');
+  });
+
+  it('fallback bulkWrite atarsa applyRollover reddedilmez ve ApplyResult döner', async () => {
+    // Hem transaction denemesini hem de ordered:false fallback çağrısını
+    // zorla reddediyoruz — asıl kanıtlanmak istenen, fallback'in kendisi
+    // patladığında applyRollover'ın reject olmadan bir ApplyResult döndürmesi
+    // (CAS zaten 'applied' durumuna geçmiş olsa bile, kayıt kilitlenmemeli).
+    const bulkWriteSpy = vi
+      .spyOn(User, 'bulkWrite')
+      .mockRejectedValueOnce(
+        Object.assign(
+          new Error('Transaction numbers are only allowed on a replica set member or mongos'),
+          { code: 20 },
+        ),
+      )
+      .mockRejectedValueOnce(new Error('connection reset'));
+
+    let outcome: Awaited<ReturnType<typeof applyRollover>>;
+    try {
+      outcome = await applyRollover({ rolloverId, admin });
+    } finally {
+      bulkWriteSpy.mockRestore();
+    }
+
+    expect(typeof outcome.promoted).toBe('number');
+    expect(typeof outcome.graduated).toBe('number');
+    expect(Array.isArray(outcome.failures)).toBe(true);
+
+    const doc = await AcademicYearRollover.findOne({ rolloverId });
+    expect(doc?.status).toBe('applied');
   });
 });

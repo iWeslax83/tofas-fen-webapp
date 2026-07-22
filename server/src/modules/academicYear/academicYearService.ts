@@ -188,7 +188,17 @@ async function runUserOps(
       error: txErr instanceof Error ? txErr.message : txErr,
     });
 
-    await User.bulkWrite(ops, { ordered: false });
+    try {
+      await User.bulkWrite(ops, { ordered: false });
+    } catch (bulkErr) {
+      // Fallback yazma da patlarsa CAS zaten 'applied' durumuna geçmiş olur;
+      // burada yutup aşağıdaki okuma ile hangi kullanıcıların gerçekten
+      // yazıldığını tespit etmeye devam ediyoruz — aksi halde applyRollover
+      // reddedilir ve rollover kaydı asla yeniden denenemeyecek şekilde takılır.
+      logger.error('Rollover fallback bulkWrite failed, reconciling via read', {
+        error: bulkErr instanceof Error ? bulkErr.message : bulkErr,
+      });
+    }
 
     // Hangi kullanıcının gerçekten yazıldığını doğrulamak için okuyoruz;
     // bulkWrite sonucu hangi op'un eşleşmediğini kullanıcı bazında vermiyor.
