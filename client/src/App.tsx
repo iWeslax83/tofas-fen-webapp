@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
+import { Analytics } from '@vercel/analytics/react';
 import ErrorBoundary from './components/ErrorBoundary';
 import AuthProvider from './contexts/AuthContext';
 import AppRoutes from './routes/AppRoutes';
@@ -69,6 +70,7 @@ function App() {
       <Router>
         <AppInner />
       </Router>
+      <Analytics />
     </AuthProvider>
   );
 }
