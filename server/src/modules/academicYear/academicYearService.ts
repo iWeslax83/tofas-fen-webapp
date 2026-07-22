@@ -217,3 +217,113 @@ async function runUserOps(
     session.endSession();
   }
 }
+
+export const ROLLBACK_WINDOW_DAYS = 30;
+
+function buildRollbackOps(snapshot: RolloverSnapshotEntry[]): UserBulkOp[] {
+  return snapshot.map((entry) =>
+    entry.action === 'graduate'
+      ? {
+          updateOne: {
+            filter: { id: entry.userId },
+            // tokenVersion'a dokunulmaz: mezuniyette bir artırılmıştı,
+            // azaltmak o anda geçersiz kılınan JWT'leri yeniden geçerli
+            // hale getirirdi. Öğrenci yeniden giriş yapar.
+            update: {
+              $set: { isActive: true, sinif: entry.fromSinif },
+              $unset: { mezuniyetTarihi: '' },
+            },
+          },
+        }
+      : {
+          updateOne: {
+            filter: { id: entry.userId },
+            update: { $set: { sinif: entry.fromSinif } },
+          },
+        },
+  );
+}
+
+export async function rollbackRollover(input: {
+  rolloverId: string;
+  admin: RolloverAdminContext;
+}): Promise<{ reverted: number; failures: { userId: string; error: string }[] }> {
+  const existing = (await AcademicYearRollover.findOne({
+    rolloverId: input.rolloverId,
+  })) as IAcademicYearRollover | null;
+
+  if (!existing || existing.status !== 'applied') {
+    const err: NodeJS.ErrnoException = new Error(
+      `Geçiş uygulanmış durumda değil: ${input.rolloverId}`,
+    );
+    err.code = 'ROLLOVER_NOT_APPLIED';
+    throw err;
+  }
+
+  const windowMs = ROLLBACK_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  if (!existing.appliedAt || Date.now() - existing.appliedAt.getTime() > windowMs) {
+    const err: NodeJS.ErrnoException = new Error(
+      `Geri alma süresi doldu (${ROLLBACK_WINDOW_DAYS} gün)`,
+    );
+    err.code = 'ROLLOVER_NOT_REVERSIBLE';
+    throw err;
+  }
+
+  const rollover = (await AcademicYearRollover.findOneAndUpdate(
+    { rolloverId: input.rolloverId, status: 'applied' },
+    {
+      $set: {
+        status: 'rolled_back',
+        rolledBackAt: new Date(),
+        rolledBackBy: input.admin.id,
+      },
+    },
+    { new: true },
+  )) as IAcademicYearRollover | null;
+
+  if (!rollover) {
+    const err: NodeJS.ErrnoException = new Error(
+      `Geçiş uygulanmış durumda değil: ${input.rolloverId}`,
+    );
+    err.code = 'ROLLOVER_NOT_APPLIED';
+    throw err;
+  }
+
+  const { applied, failures } = await runUserOps(
+    rollover.snapshot,
+    buildRollbackOps(rollover.snapshot),
+  );
+
+  logger.info(
+    `Rolled back rollover ${rollover.fromYear} -> ${rollover.toYear}: ${applied} user(s) reverted`,
+  );
+
+  return { reverted: applied, failures };
+}
+
+export async function cancelRollover(input: {
+  rolloverId: string;
+  admin: RolloverAdminContext;
+}): Promise<{ cancelled: number }> {
+  const rollover = (await AcademicYearRollover.findOneAndUpdate(
+    { rolloverId: input.rolloverId, status: 'proposed' },
+    {
+      $set: {
+        status: 'cancelled',
+        cancelledAt: new Date(),
+        cancelledBy: input.admin.id,
+      },
+    },
+    { new: true },
+  )) as IAcademicYearRollover | null;
+
+  if (!rollover) {
+    const err: NodeJS.ErrnoException = new Error(
+      `Geçiş bulunamadı veya zaten işlenmiş: ${input.rolloverId}`,
+    );
+    err.code = 'ROLLOVER_NOT_PENDING';
+    throw err;
+  }
+
+  return { cancelled: rollover.snapshot.length };
+}
