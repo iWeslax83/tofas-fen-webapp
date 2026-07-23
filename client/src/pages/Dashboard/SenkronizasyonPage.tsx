@@ -1,5 +1,16 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Users,
+  Plus,
+  X,
+  Save,
+  Link2,
+  ChevronLeft,
+  ChevronRight,
+  KeyRound,
+  CalendarClock,
+} from 'lucide-react';
 import { Users, Plus, X, Save, Link2, ChevronLeft, ChevronRight, KeyRound } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
@@ -465,6 +476,10 @@ export default function SenkronizasyonPage() {
           <Button variant="secondary" size="sm" onClick={() => navigate('/admin/veli-eslestirme')}>
             <Users size={14} />
             Veli-Öğrenci Eşleştirme Sayfası
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => navigate('/admin/ogretim-yili')}>
+            <CalendarClock size={14} />
+            Öğretim Yılı Geçişi
           </Button>
         </div>
 

@@ -63,6 +63,7 @@ const EvciStatsPage = lazy(() => import('../pages/Dashboard/EvciStatsPage'));
 // Settings and Admin Pages
 const SettingsPage = lazy(() => import('../pages/Dashboard/SettingsPage'));
 const SenkronizasyonPage = lazy(() => import('../pages/Dashboard/SenkronizasyonPage'));
+const OgretimYiliPage = lazy(() => import('../pages/Dashboard/OgretimYiliPage'));
 const ParentChildManagement = lazy(() => import('../pages/Dashboard/ParentChildManagement'));
 // const ReportManagement = lazy(() => import('../pages/Dashboard/ReportManagement'));
 const CalendarPage = lazy(() => import('../pages/Dashboard/CalendarPage'));
@@ -292,6 +293,14 @@ export default function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <SenkronizasyonPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/ogretim-yili"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <OgretimYiliPage />
                 </ProtectedRoute>
               }
             />

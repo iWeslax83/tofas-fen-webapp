@@ -38,6 +38,8 @@ export interface IUser extends Document {
   loginCount: number;
   passwordLastSetAt?: Date;
   importBatchId?: string;
+  /** 12. sınıfı bitirip öğretim yılı geçişinde mezun edilen öğrencilerde dolu. */
+  mezuniyetTarihi?: Date;
   isActive: boolean;
   kvkkConsent: boolean;
   kvkkConsentDate?: Date;
@@ -178,6 +180,10 @@ const UserSchema = new Schema<IUser>(
       type: String,
       sparse: true,
       index: true,
+    },
+    mezuniyetTarihi: {
+      type: Date,
+      index: true, // Mezun listeleri ve raporlar için
     },
     isActive: {
       type: Boolean,

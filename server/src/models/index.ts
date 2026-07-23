@@ -46,3 +46,9 @@ export { PASSWORD_AUDIT_ACTIONS, PASSWORD_AUDIT_REASONS } from './PasswordAuditL
 export { PasswordImportBatch } from './PasswordImportBatch';
 export type { IPasswordImportBatch, PasswordImportBatchStatus } from './PasswordImportBatch';
 export { PASSWORD_IMPORT_BATCH_STATUSES } from './PasswordImportBatch';
+export { AcademicYearRollover, ROLLOVER_STATUSES } from './AcademicYearRollover';
+export type {
+  IAcademicYearRollover,
+  RolloverStatus,
+  RolloverSnapshotEntry,
+} from './AcademicYearRollover';

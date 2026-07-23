@@ -7,6 +7,7 @@ import { body } from 'express-validator';
 import { User } from '../models';
 import { getParentChildIds } from '../middleware/parentChildAccess';
 import logger from '../utils/logger';
+import { getAcademicYear } from '../utils/academicYear';
 
 const router = Router();
 
@@ -133,7 +134,9 @@ router.get('/', authenticateJWT, async (req, res) => {
       if (classSection) filter.classSection = classSection;
     }
 
-    if (academicYear) filter.academicYear = academicYear;
+    // Parametre verilmezse içinde bulunulan öğretim yılı; arşiv için
+    // ?academicYear=2025-2026 verilir.
+    filter.academicYear = (academicYear as string) || getAcademicYear();
     if (semester) filter.semester = semester;
     if (isActive !== undefined) filter.isActive = isActive === 'true';
 
@@ -219,7 +222,7 @@ router.get('/class/:classLevel/:classSection', authenticateJWT, async (req, res)
       isActive: true,
     };
 
-    if (academicYear) filter.academicYear = academicYear;
+    filter.academicYear = (academicYear as string) || getAcademicYear();
     if (semester) filter.semester = semester;
 
     const schedule = await Schedule.findOne(filter).sort({ createdAt: -1 }).lean();

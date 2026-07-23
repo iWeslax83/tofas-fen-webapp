@@ -3,6 +3,7 @@ import { EvciRequest, getWeekMonday } from '../models/EvciRequest';
 import { User } from '../models/User';
 import { NotificationService } from './NotificationService';
 import { PushNotificationService } from './pushNotificationService';
+import { proposeRollover, summarizeSnapshot } from '../modules/academicYear/academicYearService';
 import logger from '../utils/logger';
 
 export class SchedulerService {
@@ -11,30 +12,57 @@ export class SchedulerService {
    */
   static initialize(): void {
     // Perşembe 16:00 (Europe/Istanbul) — evci hatırlatmaları
-    cron.schedule('0 16 * * 4', async () => {
-      logger.info('Running evci reminder job (Thursday 16:00 Turkey time)');
-      try {
-        await SchedulerService.sendEvciReminders();
-      } catch (error) {
-        logger.error('Evci reminder job failed', { error });
-      }
-    }, {
-      timezone: 'Europe/Istanbul',
-    });
+    cron.schedule(
+      '0 16 * * 4',
+      async () => {
+        logger.info('Running evci reminder job (Thursday 16:00 Turkey time)');
+        try {
+          await SchedulerService.sendEvciReminders();
+        } catch (error) {
+          logger.error('Evci reminder job failed', { error });
+        }
+      },
+      {
+        timezone: 'Europe/Istanbul',
+      },
+    );
 
     // Cuma 08:00 (Europe/Istanbul) — onaylanmamış talepleri admin'e eskalasyon
-    cron.schedule('0 8 * * 5', async () => {
-      logger.info('Running evci escalation job (Friday 08:00 Turkey time)');
-      try {
-        await SchedulerService.escalateUnapprovedRequests();
-      } catch (error) {
-        logger.error('Evci escalation job failed', { error });
-      }
-    }, {
-      timezone: 'Europe/Istanbul',
-    });
+    cron.schedule(
+      '0 8 * * 5',
+      async () => {
+        logger.info('Running evci escalation job (Friday 08:00 Turkey time)');
+        try {
+          await SchedulerService.escalateUnapprovedRequests();
+        } catch (error) {
+          logger.error('Evci escalation job failed', { error });
+        }
+      },
+      {
+        timezone: 'Europe/Istanbul',
+      },
+    );
 
-    logger.info('SchedulerService initialized — evci reminders (Thu 16:00), escalation (Fri 08:00)');
+    // 1 Ağustos 03:00 (Europe/Istanbul) = 1 Ağustos 00:00 UTC — öğretim yılı
+    // geçiş önerisi. Kayıtlara dokunmaz, adminin onayını bekler.
+    cron.schedule(
+      '0 3 1 8 *',
+      async () => {
+        logger.info('Running academic year rollover proposal job (1 August 03:00 Turkey time)');
+        try {
+          await SchedulerService.proposeAcademicYearRollover();
+        } catch (error) {
+          logger.error('Academic year rollover proposal job failed', { error });
+        }
+      },
+      {
+        timezone: 'Europe/Istanbul',
+      },
+    );
+
+    logger.info(
+      'SchedulerService initialized — evci reminders (Thu 16:00), escalation (Fri 08:00), academic year rollover (1 Aug 03:00)',
+    );
   }
 
   /**
@@ -82,7 +110,9 @@ export class SchedulerService {
       }
     }
 
-    logger.info(`Escalated ${pendingRequests.length} unapproved evci requests to ${admins.length} admins`);
+    logger.info(
+      `Escalated ${pendingRequests.length} unapproved evci requests to ${admins.length} admins`,
+    );
   }
 
   /**
@@ -105,12 +135,14 @@ export class SchedulerService {
 
     // Bu hafta talep atan öğrenci ID'leri
     const submittedRequests = await EvciRequest.find({ weekOf }).select('studentId');
-    const submittedStudentIds = new Set(submittedRequests.map(r => r.studentId));
+    const submittedStudentIds = new Set(submittedRequests.map((r) => r.studentId));
 
     // Talep atmayanları filtrele
-    const missingStudents = boardingStudents.filter(s => !submittedStudentIds.has(s.id));
+    const missingStudents = boardingStudents.filter((s) => !submittedStudentIds.has(s.id));
 
-    logger.info(`Evci reminders: ${missingStudents.length} boarding students have not submitted this week`);
+    logger.info(
+      `Evci reminders: ${missingStudents.length} boarding students have not submitted this week`,
+    );
 
     for (const student of missingStudents) {
       try {
@@ -119,7 +151,8 @@ export class SchedulerService {
           await NotificationService.createNotification({
             userId: student.id,
             title: 'Evci Talebi Hatırlatması',
-            message: 'Bu hafta henüz evci talebi oluşturmadınız. Lütfen Perşembe gün sonuna kadar talebinizi oluşturun.',
+            message:
+              'Bu hafta henüz evci talebi oluşturmadınız. Lütfen Perşembe gün sonuna kadar talebinizi oluşturun.',
             type: 'reminder',
             priority: 'high',
             category: 'administrative',
@@ -171,5 +204,51 @@ export class SchedulerService {
     }
 
     logger.info(`Evci reminders sent successfully for week ${weekOf}`);
+  }
+
+  /**
+   * Öğretim yılı geçiş önerisi üretir ve adminlere haber verir.
+   * Öneri üretilmezse (zaten var veya aktif öğrenci yok) sessizce çıkar.
+   */
+  static async proposeAcademicYearRollover(): Promise<void> {
+    const rollover = await proposeRollover();
+    if (!rollover) return;
+
+    const counts = summarizeSnapshot(rollover.snapshot);
+    const graduating = counts.graduate ?? 0;
+    const promoting = rollover.snapshot.length - graduating;
+    const message =
+      `${rollover.fromYear} öğretim yılı sona erdi. ` +
+      `${promoting} öğrenci bir üst sınıfa geçecek, ${graduating} öğrenci mezun edilecek. ` +
+      `İşlem sizin onayınızı bekliyor.`;
+
+    const admins = await User.find({ rol: 'admin', isActive: true });
+
+    for (const admin of admins) {
+      try {
+        await NotificationService.createNotification({
+          userId: admin.id,
+          title: 'Öğretim Yılı Geçişi Onay Bekliyor',
+          message,
+          type: 'warning',
+          priority: 'high',
+          category: 'administrative',
+          sendEmail: true,
+          emailSubject: `Öğretim Yılı Geçişi — ${rollover.toYear}`,
+          actionUrl: '/admin/ogretim-yili',
+          actionText: 'Geçişi İncele',
+        });
+
+        PushNotificationService.sendToUser(admin.id, {
+          title: 'Öğretim Yılı Geçişi Onay Bekliyor',
+          body: message,
+          url: '/admin/ogretim-yili',
+        }).catch(() => {});
+      } catch (err) {
+        logger.error(`Failed to send rollover notification to admin ${admin.id}`, { error: err });
+      }
+    }
+
+    logger.info(`Rollover proposal notified to ${admins.length} admin(s)`);
   }
 }
