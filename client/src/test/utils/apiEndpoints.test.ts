@@ -26,9 +26,9 @@ describe('API Endpoints', () => {
     });
 
     it('should generate parent-child endpoints correctly', () => {
-      expect(API_ENDPOINTS.USER.GET_CHILDREN('parent123')).toBe('/api/user/parent/parent123/children');
-      expect(API_ENDPOINTS.USER.PARENT_CHILD.LINK).toBe('/api/user/parent-child-link');
-      expect(API_ENDPOINTS.USER.PARENT_CHILD.UNLINK).toBe('/api/user/parent-child-link');
+      expect(API_ENDPOINTS.USER.GET_CHILDREN('parent123')).toBe(
+        '/api/user/parent/parent123/children',
+      );
     });
   });
 
@@ -56,7 +56,9 @@ describe('API Endpoints', () => {
     });
 
     it('should have teacher query-based endpoint', () => {
-      expect(API_ENDPOINTS.HOMEWORKS.GET_BY_TEACHER('teacher123')).toBe('/api/homeworks?teacherId=teacher123');
+      expect(API_ENDPOINTS.HOMEWORKS.GET_BY_TEACHER('teacher123')).toBe(
+        '/api/homeworks?teacherId=teacher123',
+      );
     });
   });
 
@@ -69,8 +71,12 @@ describe('API Endpoints', () => {
     });
 
     it('should have role-based announcement endpoints', () => {
-      expect(API_ENDPOINTS.ANNOUNCEMENTS.GET_BY_ROLE('student')).toBe('/api/announcements/role/student');
-      expect(API_ENDPOINTS.ANNOUNCEMENTS.GET_BY_ROLE('teacher')).toBe('/api/announcements/role/teacher');
+      expect(API_ENDPOINTS.ANNOUNCEMENTS.GET_BY_ROLE('student')).toBe(
+        '/api/announcements/role/student',
+      );
+      expect(API_ENDPOINTS.ANNOUNCEMENTS.GET_BY_ROLE('teacher')).toBe(
+        '/api/announcements/role/teacher',
+      );
     });
   });
 
@@ -82,8 +88,12 @@ describe('API Endpoints', () => {
       expect(API_ENDPOINTS.EVCI.BULK_STATUS).toBe('/api/evci-requests/bulk-status');
       expect(API_ENDPOINTS.EVCI.WINDOW_OVERRIDE).toBe('/api/evci-requests/window-override');
       expect(API_ENDPOINTS.EVCI.SUBMISSION_WINDOW).toBe('/api/evci-requests/submission-window');
-      expect(API_ENDPOINTS.EVCI.PARENT_APPROVAL('123')).toBe('/api/evci-requests/123/parent-approval');
-      expect(API_ENDPOINTS.EVCI.ADMIN_APPROVAL('123')).toBe('/api/evci-requests/123/admin-approval');
+      expect(API_ENDPOINTS.EVCI.PARENT_APPROVAL('123')).toBe(
+        '/api/evci-requests/123/parent-approval',
+      );
+      expect(API_ENDPOINTS.EVCI.ADMIN_APPROVAL('123')).toBe(
+        '/api/evci-requests/123/admin-approval',
+      );
     });
   });
 
@@ -109,7 +119,9 @@ describe('API Endpoints', () => {
       expect(API_ENDPOINTS.CLUBS.LEAVE('123')).toBe('/api/clubs/123/leave');
       expect(API_ENDPOINTS.CLUBS.MEMBERS.BASE('123')).toBe('/api/clubs/123/members');
       expect(API_ENDPOINTS.CLUBS.MEMBERS.ADD('123')).toBe('/api/clubs/123/members/add');
-      expect(API_ENDPOINTS.CLUBS.MEMBERS.REMOVE('123', 'member456')).toBe('/api/clubs/123/members/member456');
+      expect(API_ENDPOINTS.CLUBS.MEMBERS.REMOVE('123', 'member456')).toBe(
+        '/api/clubs/123/members/member456',
+      );
     });
   });
 });

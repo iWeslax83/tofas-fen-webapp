@@ -138,23 +138,6 @@ export class UserService {
   static async verifyEmailCode(code: string) {
     return ApiService.post('/api/auth/verify-email', { code });
   }
-
-  static async linkParentChild(parentId: string, childId: string) {
-    return ApiService.post(API_ENDPOINTS.USER.PARENT_CHILD.LINK, { parentId, childId });
-  }
-
-  static async unlinkParentChild(parentId: string, childId: string) {
-    return ApiService.delete(API_ENDPOINTS.USER.PARENT_CHILD.UNLINK, {
-      data: { parentId, childId },
-    });
-  }
-
-  static async bulkLinkParentChild(formData: FormData, preview = false) {
-    const endpoint = preview
-      ? `${API_ENDPOINTS.USER.BULK_PARENT_CHILD_LINK}?preview=true`
-      : API_ENDPOINTS.USER.BULK_PARENT_CHILD_LINK;
-    return ApiService.upload(endpoint, formData);
-  }
 }
 
 // Notes service

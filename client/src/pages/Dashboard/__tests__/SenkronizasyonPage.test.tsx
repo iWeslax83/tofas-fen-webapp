@@ -31,7 +31,6 @@ vi.mock('../../../components/ModernDashboardLayout', () => ({
   default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('../BulkLinkSection', () => ({ default: () => null }));
 vi.mock('../AddUserModal', () => ({ default: () => null }));
 vi.mock('../EditUserModal', () => ({ default: () => null }));
 

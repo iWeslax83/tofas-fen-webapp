@@ -12,8 +12,6 @@ import evciRequestRoutes from '../routes/EvciRequest';
 import dormitoryRoutes from '../routes/Dormitory';
 import monitoringRoutes from '../routes/monitoring';
 import scheduleRoutes from '../routes/Schedule';
-import mealListRoutes from '../routes/MealList';
-import supervisorListRoutes from '../routes/SupervisorList';
 import calendarRoutes from '../routes/Calendar';
 import communicationRoutes from '../routes/Communication';
 import performanceRoutes from '../routes/Performance';
@@ -48,8 +46,6 @@ export function registerRoutes(app: express.Express): void {
   app.use('/api/evci-requests', evciRequestRoutes);
   app.use('/api/dormitory', dormitoryRoutes);
   app.use('/api/schedule', scheduleRoutes);
-  app.use('/api/meals', mealListRoutes);
-  app.use('/api/supervisors', supervisorListRoutes);
   app.use('/api/monitoring', monitoringRoutes);
   app.use('/api/calendar', calendarRoutes);
   app.use('/api/communication', communicationRoutes);

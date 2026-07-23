@@ -1,8 +1,6 @@
 import { Router } from 'express';
 import { Request, Response } from 'express';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
-import multer from 'multer';
-import { verifyUploadedFiles } from '../config/upload';
 import logger from '../utils/logger';
 import {
   listUsers,
@@ -16,12 +14,8 @@ import {
   updateUserLegacy,
   getUserEmailById,
   deleteUser,
-  linkParentChild,
   getChildrenForParent,
-  bulkLinkParentChildFromFile,
 } from '../services/UserService';
-
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const router = Router();
 
@@ -237,69 +231,6 @@ router.get(
 
 /**
  * @swagger
- * /api/users/parent-child-link:
- *   post:
- *     summary: Link a parent to a child (student)
- *     description: Creates a bidirectional parent-child relationship. Admin can link any pair; parents can only link themselves.
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - parentId
- *               - childId
- *             properties:
- *               parentId:
- *                 type: string
- *                 description: ID of the parent user
- *               childId:
- *                 type: string
- *                 description: ID of the student user
- *     responses:
- *       200:
- *         description: Link created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *       400:
- *         description: Invalid roles (parent must be parent role, child must be student role)
- *       403:
- *         description: Forbidden - not admin and not the parent
- *       404:
- *         description: User not found
- */
-router.post('/parent-child-link', authenticateJWT, async (req, res) => {
-  const { parentId, childId } = req.body;
-  const authUser = (req as unknown as { user?: { userId?: string; role?: string } }).user;
-
-  // Yetki kontrolü: Admin veya parentId kendisi olmalı
-  if (authUser?.role !== 'admin' && authUser?.userId !== parentId) {
-    return res.status(403).json({ error: 'Bu işlem için yetkiniz yok' });
-  }
-
-  const result = await linkParentChild({ parentId, childId });
-  if (result.notFound) {
-    res.status(404).json({ error: 'Kullanıcı bulunamadı' });
-    return;
-  }
-  if (result.invalidRole) {
-    res.status(400).json({ error: 'Geçersiz rol' });
-    return;
-  }
-  res.json({ success: true });
-});
-
-/**
- * @swagger
  * /api/users/parent/{parentId}/children:
  *   get:
  *     summary: Get a parent's children
@@ -344,101 +275,6 @@ router.get('/parent/:parentId/children', authenticateJWT, async (req, res) => {
 });
 
 // Şifre değiştirme endpoint'i kaldırıldı - artık TCKN kullanılıyor ve değiştirilemez
-
-/**
- * @swagger
- * /api/users/bulk-parent-child-link:
- *   post:
- *     summary: Bulk link parents to children from file
- *     description: Upload an Excel/CSV file to link parent-child relationships in bulk. Supports preview mode. Admin only.
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: preview
- *         schema:
- *           type: string
- *           enum: ['true', 'false']
- *         description: If 'true', returns parsed data without linking
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             required:
- *               - file
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
- *                 description: Excel or CSV file (max 5MB)
- *     responses:
- *       200:
- *         description: Link result or preview data
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 linked:
- *                   type: integer
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: string
- *       400:
- *         description: No file uploaded or no link data found
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin role
- *       500:
- *         description: Internal server error
- */
-router.post(
-  '/bulk-parent-child-link',
-  authenticateJWT,
-  authorizeRoles(['admin']),
-  upload.single('file'),
-  verifyUploadedFiles,
-  async (req: Request, res: Response) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'Dosya yüklenmedi' });
-      }
-
-      const result = await bulkLinkParentChildFromFile({
-        fileBuffer: req.file.buffer,
-        originalname: req.file.originalname,
-        preview: req.query.preview === 'true',
-      });
-
-      if (result.noData) {
-        return res.status(400).json({ error: 'Dosyada eşleştirme verisi bulunamadı' });
-      }
-
-      if (result.preview) {
-        return res.json({
-          preview: true,
-          total: result.total,
-          links: result.links,
-        });
-      }
-
-      res.json({
-        linked: result.linked,
-        errors: result.errors,
-      });
-    } catch (error) {
-      logger.error('Bulk parent-child link error', {
-        error: error instanceof Error ? error.message : error,
-      });
-      res.status(500).json({ error: 'Toplu eşleştirme sırasında hata oluştu' });
-    }
-  },
-);
 
 /**
  * @swagger
@@ -666,7 +502,21 @@ router.post('/', authenticateJWT, authorizeRoles(['admin']), async (req, res) =>
   if (result.duplicate) {
     return res.status(400).json({ error: 'User already exists (duplicate)' });
   }
-  res.status(201).json(result.user);
+  if (result.directParentCreationBlocked) {
+    return res.status(400).json({
+      error:
+        'Veli hesapları artık ayrı oluşturulamaz. Her öğrenci için veli hesabı otomatik açılır.',
+    });
+  }
+  res.status(201).json({
+    ...result.user,
+    ...(result.parentAccount?.created && {
+      parentAccount: {
+        id: result.parentAccount.parentId,
+        generatedPassword: result.parentAccount.generatedPassword,
+      },
+    }),
+  });
 });
 
 /**
@@ -750,7 +600,22 @@ router.post('/create', authenticateJWT, authorizeRoles(['admin']), async (req, r
     res.status(400).json({ error: 'Şifre gereklidir' });
     return;
   }
-  res.status(201).json({ success: true });
+  if (result.directParentCreationBlocked) {
+    res.status(400).json({
+      error:
+        'Veli hesapları artık ayrı oluşturulamaz. Her öğrenci için veli hesabı otomatik açılır.',
+    });
+    return;
+  }
+  res.status(201).json({
+    success: true,
+    ...(result.parentAccount?.created && {
+      parentAccount: {
+        id: result.parentAccount.parentId,
+        generatedPassword: result.parentAccount.generatedPassword,
+      },
+    }),
+  });
 });
 
 /**
