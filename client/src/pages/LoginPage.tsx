@@ -424,10 +424,37 @@ export default function LoginPage() {
         </div>
       </main>
 
-      <footer className="relative z-10 flex justify-center p-6">
-        <p className="bg-black/70 px-3 py-1.5 text-xs text-white/90">
-          © {new Date().getFullYear()} Tofaş Fen Lisesi. Tüm hakları saklıdır.
-        </p>
+      <footer className="relative z-10 w-full bg-black/70 py-4">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-6 text-center">
+          <p className="text-xs text-white/90">
+            © {new Date().getFullYear()} Tofaş Fen Lisesi Bilgilendirme Sistemi. Tüm hakları
+            saklıdır.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] text-white/70">
+            <Link to="/gizlilik-politikasi" className="transition-colors hover:text-white/90">
+              Gizlilik Politikası
+            </Link>
+            <span>•</span>
+            <Link to="/kullanim-sartlari" className="transition-colors hover:text-white/90">
+              Kullanım Şartları
+            </Link>
+            <span>•</span>
+            <Link to="/kvkk-aydinlatma-metni" className="transition-colors hover:text-white/90">
+              KVKK Aydınlatma Metni
+            </Link>
+            <span>•</span>
+            <a
+              href="https://stratosiha.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 transition-colors hover:text-white/90"
+            >
+              <span>Made by</span>
+              <img src="/brand/stratos-iha-logo.png" alt="STRATOS İHA" className="h-3.5 w-3.5" />
+              <span>STRATOS İHA</span>
+            </a>
+          </div>
+        </div>
       </footer>
     </div>
   );

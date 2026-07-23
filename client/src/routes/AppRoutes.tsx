@@ -37,6 +37,10 @@ const NotFoundPage = lazy(() => import('../pages/Dashboard/NotFoundPage'));
 // Auth Pages
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const RegistrationFormPage = lazy(() => import('../pages/RegistrationFormPage'));
+// Legal Pages
+const GizlilikPolitikasiPage = lazy(() => import('../pages/Legal/GizlilikPolitikasiPage'));
+const KullanimSartlariPage = lazy(() => import('../pages/Legal/KullanimSartlariPage'));
+const KvkkAydinlatmaMetniPage = lazy(() => import('../pages/Legal/KvkkAydinlatmaMetniPage'));
 // Academic Pages
 const OdevlerPage = lazy(() => import('../pages/Dashboard/OdevlerPage'));
 const DersProgramiPage = lazy(() => import('../pages/Dashboard/DersProgramiPage'));
@@ -110,6 +114,9 @@ export default function AppRoutes() {
             <Route path="/" element={<RootRedirect />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/kayit-basvurusu" element={<RegistrationFormPage />} />
+            <Route path="/gizlilik-politikasi" element={<GizlilikPolitikasiPage />} />
+            <Route path="/kullanim-sartlari" element={<KullanimSartlariPage />} />
+            <Route path="/kvkk-aydinlatma-metni" element={<KvkkAydinlatmaMetniPage />} />
 
             {/* Main Dashboard Routes */}
             <Route path="/admin" element={<ModernDashboard key="admin" />} />
