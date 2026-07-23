@@ -47,9 +47,18 @@ function resolveApiBaseUrl(): string {
           'Check your CI build args / Dockerfile ARG.',
       );
     }
+    // A leading "/" means same-origin: the frontend host proxies /api/* to
+    // the backend (see vercel.json rewrites), so the API's Set-Cookie
+    // headers arrive as first-party cookies instead of cross-site ones.
+    // Browsers that block third-party cookies (Safari ITP by default, and
+    // increasingly Chrome) silently drop a cross-site cookie even with
+    // SameSite=None — login "succeeds" but the session never sticks.
+    if (value.startsWith('/')) {
+      return value === '/' ? '' : value;
+    }
     if (!/^https:\/\//i.test(value)) {
       throw new Error(
-        `VITE_API_URL must use https:// in production (got: ${value}). ` +
+        `VITE_API_URL must use https:// (or a leading "/" for a same-origin proxy) in production (got: ${value}). ` +
           'Plaintext HTTP would leak auth cookies over the wire.',
       );
     }
