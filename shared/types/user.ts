@@ -11,6 +11,7 @@ export interface User {
   rol: UserRole;
   email?: string;
   sinif?: string;
+  mezuniyetTarihi?: string;
   sube?: string;
   oda?: string;
   pansiyon: boolean;
