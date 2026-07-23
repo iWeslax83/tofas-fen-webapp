@@ -49,12 +49,6 @@ vi.mock('../../middleware/waf', () => ({
   getWafStatus: vi.fn(() => ({})),
 }));
 
-// Mock the bulkImportService used in POST /bulk-parent-child-link
-vi.mock('../../services/bulkImportService', () => ({
-  parseParentChildFile: vi.fn(() => [{ parentId: 'p1', childId: 'c1' }]),
-  bulkLinkParentChild: vi.fn().mockResolvedValue({ linked: 1, errors: [] }),
-}));
-
 // -----------------------------------------------------------------------
 // Role helpers
 // -----------------------------------------------------------------------
@@ -315,6 +309,35 @@ describe('POST /api/users', () => {
     expect(res.body).not.toHaveProperty('sifre');
     expect(res.body).not.toHaveProperty('tckn');
   });
+
+  it('creating a student auto-creates a shared V<id> parent account', async () => {
+    asAdmin();
+    const res = await request(app)
+      .post('/api/users')
+      .send({ id: '500', adSoyad: 'Ogrenci Bes Yuz', sifre: 'pw', rol: 'student' })
+      .expect(201);
+
+    expect(res.body.parentAccount).toMatchObject({ id: 'V500' });
+    expect(typeof res.body.parentAccount.generatedPassword).toBe('string');
+
+    const parent = await User.findOne({ id: 'V500' });
+    expect(parent).not.toBeNull();
+    expect(parent?.rol).toBe('parent');
+    expect(parent?.childId).toContain('500');
+    expect(parent?.isActive).toBe(true);
+  });
+
+  it('rejects direct creation of a personal parent account', async () => {
+    asAdmin();
+    const res = await request(app)
+      .post('/api/users')
+      .send({ id: 'directparent1', adSoyad: 'Deneme', sifre: 'pw', rol: 'parent' })
+      .expect(400);
+    expect(res.body).toHaveProperty('error');
+
+    const found = await User.findOne({ id: 'directparent1' });
+    expect(found).toBeNull();
+  });
 });
 
 // -----------------------------------------------------------------------
@@ -356,6 +379,30 @@ describe('POST /api/users/create', () => {
     const res = await request(app)
       .post('/api/users/create')
       .send({ id: 'dup2', adSoyad: 'Kopya', sifre: 'pw', rol: 'student' })
+      .expect(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  it('creating a student via legacy endpoint auto-creates a V<id> parent account', async () => {
+    asAdmin();
+    const res = await request(app)
+      .post('/api/users/create')
+      .send({ id: '501', adSoyad: 'Ogrenci Bes Yuz Bir', sifre: 'pw', rol: 'student' })
+      .expect(201);
+
+    expect(res.body.parentAccount).toMatchObject({ id: 'V501' });
+    expect(typeof res.body.parentAccount.generatedPassword).toBe('string');
+
+    const parent = await User.findOne({ id: 'V501' });
+    expect(parent).not.toBeNull();
+    expect(parent?.rol).toBe('parent');
+  });
+
+  it('rejects direct creation of a personal parent account via legacy endpoint', async () => {
+    asAdmin();
+    const res = await request(app)
+      .post('/api/users/create')
+      .send({ id: 'directparent2', adSoyad: 'Deneme', sifre: 'pw', rol: 'parent' })
       .expect(400);
     expect(res.body).toHaveProperty('error');
   });
@@ -418,6 +465,23 @@ describe('PUT /api/users/:userId', () => {
     const res = await request(app).put('/api/users/nobody').send({ adSoyad: 'Ghost' }).expect(404);
     expect(res.body).toHaveProperty('error');
   });
+
+  it('deactivating a student mirrors isActive onto its V<id> parent account', async () => {
+    asAdmin();
+    await seedUser({ id: 'deact1', adSoyad: 'Deaktif Ogrenci', rol: 'student', isActive: true });
+    await seedUser({
+      id: 'Vdeact1',
+      adSoyad: 'Deaktif Ogrenci Velisi',
+      rol: 'parent',
+      childId: ['deact1'],
+      isActive: true,
+    });
+
+    await request(app).put('/api/users/deact1').send({ isActive: false }).expect(200);
+
+    const parent = await User.findOne({ id: 'Vdeact1' });
+    expect(parent?.isActive).toBe(false);
+  });
 });
 
 // -----------------------------------------------------------------------
@@ -478,70 +542,26 @@ describe('DELETE /api/users/:userId', () => {
     // Route calls deleteOne and doesn't check result — always 204
     await request(app).delete('/api/users/nobody').expect(204);
   });
-});
 
-// -----------------------------------------------------------------------
-// POST /api/users/parent-child-link
-// -----------------------------------------------------------------------
-describe('POST /api/users/parent-child-link', () => {
-  it('admin can link a parent to a child — returns {success:true}', async () => {
+  it('deleting a student cascades to its V<id> parent account', async () => {
     asAdmin();
-    await seedUser({ id: 'par1', adSoyad: 'Veli Bir', rol: 'parent' });
-    await seedUser({ id: 'chi1', adSoyad: 'Cocuk Bir', rol: 'student' });
+    await seedUser({ id: 'del2', rol: 'student' });
+    await seedUser({ id: 'Vdel2', rol: 'parent', childId: ['del2'] });
 
-    const res = await request(app)
-      .post('/api/users/parent-child-link')
-      .send({ parentId: 'par1', childId: 'chi1' })
-      .expect(200);
+    await request(app).delete('/api/users/del2').expect(204);
 
-    expect(res.body).toHaveProperty('success', true);
+    expect(await User.findOne({ id: 'del2' })).toBeNull();
+    expect(await User.findOne({ id: 'Vdel2' })).toBeNull();
   });
 
-  it('returns 404 when parent does not exist', async () => {
+  it('deleting a non-student does not touch unrelated V<id> accounts', async () => {
     asAdmin();
-    await seedUser({ id: 'chi2', rol: 'student' });
+    await seedUser({ id: 'teacherX', rol: 'teacher' });
+    await seedUser({ id: 'VteacherX', rol: 'parent', childId: ['someone-else'] });
 
-    const res = await request(app)
-      .post('/api/users/parent-child-link')
-      .send({ parentId: 'ghost-parent', childId: 'chi2' })
-      .expect(404);
-    expect(res.body).toHaveProperty('error');
-  });
+    await request(app).delete('/api/users/teacherX').expect(204);
 
-  it('returns 400 when parent has wrong role', async () => {
-    asAdmin();
-    await seedUser({ id: 'notparent1', adSoyad: 'Ogretmen', rol: 'teacher' });
-    await seedUser({ id: 'chi3', rol: 'student' });
-
-    const res = await request(app)
-      .post('/api/users/parent-child-link')
-      .send({ parentId: 'notparent1', childId: 'chi3' })
-      .expect(400);
-    expect(res.body).toHaveProperty('error');
-  });
-
-  it('non-admin linking as a different parent is forbidden — 403', async () => {
-    asParent('par-other');
-    await seedUser({ id: 'par2', adSoyad: 'Baska Veli', rol: 'parent' });
-    await seedUser({ id: 'chi4', rol: 'student' });
-
-    const res = await request(app)
-      .post('/api/users/parent-child-link')
-      .send({ parentId: 'par2', childId: 'chi4' })
-      .expect(403);
-    expect(res.body).toHaveProperty('error');
-  });
-
-  it('parent can link themselves to own child', async () => {
-    asParent('par3');
-    await seedUser({ id: 'par3', adSoyad: 'Veli Uc', rol: 'parent' });
-    await seedUser({ id: 'chi5', adSoyad: 'Cocuk Bes', rol: 'student' });
-
-    const res = await request(app)
-      .post('/api/users/parent-child-link')
-      .send({ parentId: 'par3', childId: 'chi5' })
-      .expect(200);
-    expect(res.body).toHaveProperty('success', true);
+    expect(await User.findOne({ id: 'VteacherX' })).not.toBeNull();
   });
 });
 
@@ -592,43 +612,6 @@ describe('GET /api/users/parent/:parentId/children', () => {
 
     const res = await request(app).get('/api/users/parent/par14/children').expect(200);
     expect(Array.isArray(res.body)).toBe(true);
-  });
-});
-
-// -----------------------------------------------------------------------
-// POST /api/users/bulk-parent-child-link (file upload, mocked service)
-// -----------------------------------------------------------------------
-describe('POST /api/users/bulk-parent-child-link', () => {
-  it('admin with valid file gets linked count in response', async () => {
-    asAdmin();
-    const res = await request(app)
-      .post('/api/users/bulk-parent-child-link')
-      .attach('file', Buffer.from('parentId,childId\np1,c1'), 'links.csv')
-      .expect(200);
-
-    expect(res.body).toHaveProperty('linked');
-    expect(res.body).toHaveProperty('errors');
-    expect(typeof res.body.linked).toBe('number');
-    expect(Array.isArray(res.body.errors)).toBe(true);
-  });
-
-  it('returns 400 when no file is uploaded', async () => {
-    asAdmin();
-    const res = await request(app).post('/api/users/bulk-parent-child-link').expect(400);
-
-    expect(res.body).toHaveProperty('error');
-  });
-
-  it('preview=true returns parsed data without linking', async () => {
-    asAdmin();
-    const res = await request(app)
-      .post('/api/users/bulk-parent-child-link?preview=true')
-      .attach('file', Buffer.from('parentId,childId\np1,c1'), 'links.csv')
-      .expect(200);
-
-    expect(res.body).toHaveProperty('preview', true);
-    expect(res.body).toHaveProperty('total');
-    expect(res.body).toHaveProperty('links');
   });
 });
 

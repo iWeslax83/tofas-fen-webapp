@@ -30,11 +30,6 @@ export const API_ENDPOINTS = {
       return `/api/user/list?${qs.toString()}`;
     },
     GET_CHILDREN: (parentId: string) => `/api/user/parent/${parentId}/children`,
-    PARENT_CHILD: {
-      LINK: '/api/user/parent-child-link',
-      UNLINK: '/api/user/parent-child-link',
-    },
-    BULK_PARENT_CHILD_LINK: '/api/user/bulk-parent-child-link',
   },
 
   // Notes and grades endpoints
@@ -116,14 +111,14 @@ export const API_ENDPOINTS = {
   DORMITORY: {
     MEALS: {
       BASE: '/api/dormitory/meals',
-      CREATE: '/api/dormitory/meals/create',
+      CREATE: '/api/dormitory/meals',
       UPDATE: (id: string) => `/api/dormitory/meals/${id}`,
       DELETE: (id: string) => `/api/dormitory/meals/${id}`,
       DOWNLOAD: (id: string) => `/api/dormitory/meals/${id}/download`,
     },
     SUPERVISORS: {
       BASE: '/api/dormitory/supervisors',
-      CREATE: '/api/dormitory/supervisors/create',
+      CREATE: '/api/dormitory/supervisors',
       UPDATE: (id: string) => `/api/dormitory/supervisors/${id}`,
       DELETE: (id: string) => `/api/dormitory/supervisors/${id}`,
       DOWNLOAD: (id: string) => `/api/dormitory/supervisors/${id}/download`,
@@ -164,7 +159,7 @@ export const API_ENDPOINTS = {
   // Requests endpoints
   REQUESTS: {
     BASE: '/api/requests',
-    CREATE: '/api/requests/create',
+    CREATE: '/api/requests',
     UPDATE: (id: string) => `/api/requests/${id}`,
     DELETE: (id: string) => `/api/requests/${id}`,
     GET_BY_USER: (userId: string) => `/api/requests/user/${userId}`,
