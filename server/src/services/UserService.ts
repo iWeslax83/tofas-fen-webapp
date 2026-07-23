@@ -1,8 +1,23 @@
+import crypto from 'crypto';
 import { User, IUser } from '../models';
 import bcrypt from 'bcryptjs';
 import { BCRYPT_COST } from '../modules/auth/services/authService';
-import { parseParentChildFile, bulkLinkParentChild } from './bulkImportService';
 import { safeSearchRegex } from '../utils/regex';
+import { NotificationService } from './NotificationService';
+import logger from '../utils/logger';
+
+/**
+ * Parent accounts are no longer personal — each student gets exactly one
+ * auto-generated "veli" account (id = 'V' + studentId) that both parents
+ * share. This prefix can never collide with real ids: students use numeric
+ * ids, teachers/admins use name- or role-based ids, and 'ZYR-' is reserved
+ * for visitor accounts.
+ */
+export const PARENT_ACCOUNT_PREFIX = 'V';
+
+export function parentAccountIdForStudent(studentId: string): string {
+  return `${PARENT_ACCOUNT_PREFIX}${studentId}`;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Param / Result types
@@ -58,8 +73,12 @@ export interface CreateUserResult {
   typeError?: true;
   /** Set when a user with this id already exists */
   duplicate?: true;
+  /** Set when someone tries to create a personal 'parent' account directly */
+  directParentCreationBlocked?: true;
   /** The saved Mongoose document (intentionally includes sifre hash — callers send it as-is) */
   user?: IUser;
+  /** Set when a student was created — the auto-generated parent account */
+  parentAccount?: ParentAccountSyncResult;
 }
 
 export interface CreateUserLegacyParams {
@@ -79,7 +98,10 @@ export interface CreateUserLegacyResult {
   missingFields?: true;
   duplicate?: true;
   missingPassword?: true;
+  directParentCreationBlocked?: true;
   success?: true;
+  /** Set when a student was created — the auto-generated parent account */
+  parentAccount?: ParentAccountSyncResult;
 }
 
 export interface UpdateUserParams {
@@ -105,35 +127,18 @@ export interface UpdateUserLegacyResult {
   user?: IUser;
 }
 
-export interface LinkParentChildParams {
-  parentId: string;
-  childId: string;
-}
-
-export interface LinkParentChildResult {
-  notFound?: true;
-  invalidRole?: true;
-  success?: true;
-}
-
 export interface GetChildrenResult {
   notFound?: true;
   children?: IUser[];
 }
 
-export interface BulkLinkParams {
-  fileBuffer: Buffer;
-  originalname: string;
-  preview: boolean;
-}
-
-export interface BulkLinkResult {
-  noData?: true;
-  preview?: true;
-  total?: number;
-  links?: Array<{ parentId: string; childId: string }>;
-  linked?: number;
-  errors?: { parentId: string; childId: string; message: string }[];
+export interface ParentAccountSyncResult {
+  parentId: string;
+  created: boolean;
+  /** Plaintext password — only present when the account was just created. Never stored. */
+  generatedPassword?: string;
+  /** Set when V<id> already existed but wasn't a valid parent account (data conflict) */
+  conflict?: true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -229,6 +234,84 @@ export async function getUserByIdForView(userId: string): Promise<IUser | null> 
   return User.findOne({ id: userId }).select('-sifre -tckn') as unknown as Promise<IUser | null>;
 }
 
+/**
+ * Ensure the auto-generated shared parent account for a student exists and
+ * is in sync with the student's active status. Both parents log in with
+ * this single account (id 'V'+studentId) — there is no personal parent
+ * identity anymore, so there's nothing to "link" or "match" by hand.
+ *
+ * On first creation a random password is generated and returned in plain
+ * text exactly once (it is never stored or logged) so the caller can hand
+ * it to the admin. On every subsequent call the existing account is just
+ * kept in sync (active state, child reference).
+ */
+export async function ensureParentAccountForStudent(
+  studentId: string,
+  studentName: string,
+  isActive: boolean,
+): Promise<ParentAccountSyncResult> {
+  const parentId = parentAccountIdForStudent(studentId);
+  const existing = await User.findOne({ id: parentId });
+
+  if (existing) {
+    if (existing.rol !== 'parent') {
+      // Something else already owns this id (shouldn't happen given the
+      // 'V' prefix is reserved, but if it does, this is exactly the kind
+      // of silent mismatch admins need to know about).
+      await notifyAdminsOfParentAccountConflict(studentId, parentId);
+      return { parentId, created: false, conflict: true };
+    }
+    let changed = false;
+    if (existing.isActive !== isActive) {
+      existing.isActive = isActive;
+      changed = true;
+    }
+    if (!existing.childId?.includes(studentId)) {
+      existing.childId = [...(existing.childId || []), studentId];
+      changed = true;
+    }
+    if (changed) await existing.save();
+    return { parentId, created: false };
+  }
+
+  const generatedPassword = crypto.randomBytes(9).toString('base64url');
+  const hashedPassword = await bcrypt.hash(generatedPassword, BCRYPT_COST);
+  const parent = new User({
+    id: parentId,
+    adSoyad: `${studentName} Velisi`,
+    sifre: hashedPassword,
+    rol: 'parent',
+    childId: [studentId],
+    isActive,
+  });
+  await parent.save();
+  return { parentId, created: true, generatedPassword };
+}
+
+async function notifyAdminsOfParentAccountConflict(
+  studentId: string,
+  parentId: string,
+): Promise<void> {
+  logger.error('Parent account id conflict', { studentId, parentId });
+  try {
+    await NotificationService.createRoleBasedNotifications({
+      roles: ['admin'],
+      title: 'Veli hesabı eşleştirme hatası',
+      message: `${studentId} numaralı öğrenci için otomatik veli hesabı (${parentId}) oluşturulamadı: bu id başka bir hesap tarafından kullanılıyor.`,
+      type: 'error',
+      priority: 'high',
+      category: 'administrative',
+      sendEmail: true,
+      emailSubject: 'Veli hesabı eşleştirme hatası - Tofaş Fen Lisesi',
+    });
+  } catch (error) {
+    logger.error('Failed to notify admins of parent account conflict', {
+      error: error instanceof Error ? error.message : error,
+      studentId,
+    });
+  }
+}
+
 /** POST /api/users — create user (admin only), returns raw doc including sifre hash */
 export async function createUser(params: CreateUserParams): Promise<CreateUserResult> {
   const { id, adSoyad, sifre, rol, sinif, sube, email } = params;
@@ -245,6 +328,10 @@ export async function createUser(params: CreateUserParams): Promise<CreateUserRe
     (email && typeof email !== 'string')
   ) {
     return { typeError: true };
+  }
+
+  if (rol === 'parent') {
+    return { directParentCreationBlocked: true };
   }
 
   const existingUser = await User.findOne({ id });
@@ -266,7 +353,11 @@ export async function createUser(params: CreateUserParams): Promise<CreateUserRe
   await user.save();
   // Never expose the password hash or TCKN in API responses.
   const { sifre: _sifre, tckn: _tckn, ...safeUser } = user.toObject();
-  return { user: safeUser as unknown as IUser };
+
+  const parentAccount =
+    rol === 'student' ? await ensureParentAccountForStudent(id, adSoyad, true) : undefined;
+
+  return { user: safeUser as unknown as IUser, parentAccount };
 }
 
 /** POST /api/users/create — legacy create endpoint */
@@ -277,6 +368,10 @@ export async function createUserLegacy(
 
   if (!id || !adSoyad || !rol) {
     return { missingFields: true };
+  }
+
+  if (rol === 'parent') {
+    return { directParentCreationBlocked: true };
   }
 
   const existingUser = await User.findOne({ id });
@@ -307,7 +402,11 @@ export async function createUserLegacy(
   void tckn;
 
   await user.save();
-  return { success: true };
+
+  const parentAccount =
+    rol === 'student' ? await ensureParentAccountForStudent(id, adSoyad, true) : undefined;
+
+  return { success: true, parentAccount };
 }
 
 /** PUT /api/users/:userId — update user (sensitive fields stripped by route for non-admin) */
@@ -320,6 +419,9 @@ export async function updateUser(params: UpdateUserParams): Promise<UpdateUserRe
     }).select('-sifre -tckn')) as unknown as IUser | null;
     if (!user) {
       return { notFound: true };
+    }
+    if (user.rol === 'student' && Object.prototype.hasOwnProperty.call(updateData, 'isActive')) {
+      await ensureParentAccountForStudent(user.id, user.adSoyad, user.isActive);
     }
     return { user };
   } catch {
@@ -341,6 +443,9 @@ export async function updateUserLegacy(
   if (!user) {
     return { notFound: true };
   }
+  if (user.rol === 'student' && Object.prototype.hasOwnProperty.call(updateData, 'isActive')) {
+    await ensureParentAccountForStudent(user.id, user.adSoyad, user.isActive);
+  }
   return { user };
 }
 
@@ -355,35 +460,17 @@ export async function getUserEmailById(userId: string): Promise<string | null> {
   return doc?.email ?? null;
 }
 
-/** DELETE /api/users/:userId — always succeeds (204 even for missing ids) */
+/**
+ * DELETE /api/users/:userId — always succeeds (204 even for missing ids).
+ * Deleting a student cascades to its auto-generated parent account, since
+ * that account only ever exists to serve this one student.
+ */
 export async function deleteUser(userId: string): Promise<void> {
+  const user = await User.findOne({ id: userId }).select('rol').lean<{ rol?: string } | null>();
   await User.deleteOne({ id: userId });
-}
-
-/** POST /api/users/parent-child-link — bidirectional parent-child relationship */
-export async function linkParentChild(
-  params: LinkParentChildParams,
-): Promise<LinkParentChildResult> {
-  const { parentId, childId } = params;
-
-  const parent = await User.findOne({ id: parentId });
-  const child = await User.findOne({ id: childId });
-  if (!parent || !child) {
-    return { notFound: true };
+  if (user?.rol === 'student') {
+    await User.deleteOne({ id: parentAccountIdForStudent(userId) });
   }
-  if (parent.rol !== 'parent' || child.rol !== 'student') {
-    return { invalidRole: true };
-  }
-  if (!parent.childId) parent.childId = [];
-  if (!parent.childId.includes(childId)) {
-    parent.childId.push(childId);
-    await parent.save();
-  }
-  if (child.parentId !== parentId) {
-    child.parentId = parentId;
-    await child.save();
-  }
-  return { success: true };
 }
 
 /** GET /api/users/parent/:parentId/children */
@@ -396,28 +483,4 @@ export async function getChildrenForParent(parentId: string): Promise<GetChildre
     id: { $in: parent.childId || [] },
   }).select('-sifre')) as unknown as IUser[];
   return { children };
-}
-
-/** POST /api/users/bulk-parent-child-link */
-export async function bulkLinkParentChildFromFile(params: BulkLinkParams): Promise<BulkLinkResult> {
-  const { fileBuffer, originalname, preview } = params;
-
-  const links = parseParentChildFile(fileBuffer, originalname);
-  if (links.length === 0) {
-    return { noData: true };
-  }
-
-  if (preview) {
-    return {
-      preview: true,
-      total: links.length,
-      links: links.slice(0, 100),
-    };
-  }
-
-  const result = await bulkLinkParentChild(links);
-  return {
-    linked: result.linked,
-    errors: result.errors,
-  };
 }

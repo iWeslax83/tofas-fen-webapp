@@ -33,7 +33,8 @@
     "migrate": "ts-node src/scripts/runMigrations.ts",
     "migrate:up": "ts-node src/scripts/runMigrations.ts up",
     "migrate:down": "ts-node src/scripts/runMigrations.ts down",
-    "generate:openapi": "ts-node src/scripts/generateOpenApi.ts"
+    "generate:openapi": "ts-node src/scripts/generateOpenApi.ts",
+    "backfill-parent-accounts": "ts-node src/scripts/backfillParentAccounts.ts"
   },
   "keywords": [
     "tofas",

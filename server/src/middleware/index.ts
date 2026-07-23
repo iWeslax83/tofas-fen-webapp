@@ -19,8 +19,6 @@ export {
   validateNote,
   validateAnnouncement,
   validateHomework,
-  validateMealList,
-  validateSupervisorList,
   validateEvciRequest,
   validateRequestData,
 } from './validation';

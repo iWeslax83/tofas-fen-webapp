@@ -1,30 +1,17 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Users,
-  Plus,
-  X,
-  Save,
-  Link2,
-  ChevronLeft,
-  ChevronRight,
-  KeyRound,
-  CalendarClock,
-} from 'lucide-react';
-import { Users, Plus, X, Save, Link2, ChevronLeft, ChevronRight, KeyRound } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, KeyRound, CalendarClock } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import { UserService } from '../../utils/apiService';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ModernDashboardLayout from '../../components/ModernDashboardLayout';
-import BulkLinkSection from './BulkLinkSection';
 import AddUserModal from './AddUserModal';
 import EditUserModal from './EditUserModal';
 import ResetReasonModal from './PasswordManagement/ResetReasonModal';
 import PasswordRevealModal from './PasswordManagement/PasswordRevealModal';
 import { useResetPassword } from './PasswordManagement/hooks/useUserPasswordActions';
 import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
 import { Chip } from '../../components/ui/Chip';
 import { DataTable } from '../../components/ui/DataTable';
 import { useConfirm } from '../../components/ui/ConfirmDialog';
@@ -51,16 +38,6 @@ interface UserType {
   meslek?: string;
   departman?: string;
   _showPassword?: boolean;
-}
-
-interface BulkLinkPreview {
-  total: number;
-  links?: { parentId: string; childId: string }[];
-}
-
-interface BulkLinkResult {
-  linked: number;
-  errors?: { parentId: string; childId: string; message: string }[];
 }
 
 const ROLES = [
@@ -108,12 +85,6 @@ export default function SenkronizasyonPage() {
   const [tableLoading, setTableLoading] = useState(true);
   const [tableError, setTableError] = useState('');
 
-  const [selectedParent, setSelectedParent] = useState<UserType | null>(null);
-  const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [manualAssignId, setManualAssignId] = useState('');
-  const [manualAssignError, setManualAssignError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editUser, setEditUser] = useState<UserType | null>(null);
   const [resetPasswordUser, setResetPasswordUser] = useState<UserType | null>(null);
@@ -122,18 +93,6 @@ export default function SenkronizasyonPage() {
     label: string;
   } | null>(null);
   const resetPasswordMut = useResetPassword();
-
-  // Student search and filter states
-  const [studentSearch, setStudentSearch] = useState('');
-  const [studentClassFilter, setStudentClassFilter] = useState('');
-
-  // Bulk parent-child link states
-  const [showBulkLink, setShowBulkLink] = useState(false);
-  const [linkFile, setLinkFile] = useState<File | null>(null);
-  const [linkPreview, setLinkPreview] = useState<BulkLinkPreview | null>(null);
-  const [linkLoading, setLinkLoading] = useState(false);
-  const [linkResult, setLinkResult] = useState<BulkLinkResult | null>(null);
-  const [linkError, setLinkError] = useState('');
 
   // Only allow admins
   useEffect(() => {
@@ -219,32 +178,6 @@ export default function SenkronizasyonPage() {
     fetchTablePage();
   }, [fetchTablePage]);
 
-  const refetchAll = useCallback(() => {
-    fetchAllUsers();
-    fetchTablePage();
-  }, [fetchAllUsers, fetchTablePage]);
-
-  // Filter students for parent-child matching — sourced from the full
-  // roster since this panel needs to search/filter across every student,
-  // not just the current table page.
-  const filteredStudents = allUsers
-    .filter((u) => u.rol === 'student')
-    .filter((student) => {
-      const matchesSearch =
-        studentSearch === '' || student.adSoyad.toLowerCase().includes(studentSearch.toLowerCase());
-      const matchesClass = studentClassFilter === '' || student.sinif === studentClassFilter;
-      return matchesSearch && matchesClass;
-    });
-
-  // Select parent and load their children
-  const handleSelectParent = (parent: UserType) => {
-    setSelectedParent(parent);
-    setSelectedChildren(parent.childId || []);
-    setManualAssignId('');
-    setManualAssignError('');
-    setError('');
-  };
-
   const handleDeleteUser = async (userToDelete: UserType) => {
     const userId = userToDelete.id;
     const ok = await confirm({
@@ -263,10 +196,6 @@ export default function SenkronizasyonPage() {
       } else {
         setAllUsers((users) => users.filter((u) => u.id !== userId));
         setTableUsers((users) => users.filter((u) => u.id !== userId));
-        if (selectedParent?.id === userId) {
-          setSelectedParent(null);
-          setSelectedChildren([]);
-        }
         if (editUser?.id === userId) {
           setEditUser(null);
         }
@@ -299,54 +228,6 @@ export default function SenkronizasyonPage() {
         },
       },
     );
-  };
-
-  // Manual assignment by ID
-  const handleManualAssign = () => {
-    const student = allUsers.find((u) => u.id === manualAssignId && u.rol === 'student');
-    if (!student) {
-      setManualAssignError('Geçersiz öğrenci ID!');
-      return;
-    }
-    if (selectedChildren.includes(student.id)) {
-      setManualAssignError('Bu öğrenci zaten ekli.');
-      return;
-    }
-    setSelectedChildren((prev) => [...prev, student.id]);
-    setManualAssignId('');
-    setManualAssignError('');
-  };
-
-  // Toggle child selection
-  const handleToggleChild = (studentId: string) => {
-    setSelectedChildren((prev) =>
-      prev.includes(studentId) ? prev.filter((id) => id !== studentId) : [...prev, studentId],
-    );
-  };
-
-  // Save changes to backend
-  const handleSave = async () => {
-    if (!selectedParent) return;
-    setSaving(true);
-    try {
-      const { error } = await UserService.updateUser(selectedParent.id, {
-        childId: selectedChildren,
-      });
-      if (error) {
-        setError(error);
-      } else {
-        const applyChildId = (u: UserType) =>
-          u.id === selectedParent.id ? { ...u, childId: selectedChildren } : u;
-        setAllUsers((users) => users.map(applyChildId));
-        setTableUsers((users) => users.map(applyChildId));
-        setSelectedParent(null);
-        setSelectedChildren([]);
-        setError('');
-      }
-    } catch (e) {
-      setError('Kayıt sırasında hata oluştu.');
-    }
-    setSaving(false);
   };
 
   const breadcrumb = [
@@ -408,11 +289,6 @@ export default function SenkronizasyonPage() {
               <KeyRound size={14} />
               Şifre Yenile
             </Button>
-            {u.rol === 'parent' && (
-              <Button variant="secondary" size="sm" onClick={() => handleSelectParent(u)}>
-                Çocuk Eşleştir
-              </Button>
-            )}
             <Button variant="danger" size="sm" onClick={() => handleDeleteUser(u)}>
               Sil
             </Button>
@@ -463,43 +339,13 @@ export default function SenkronizasyonPage() {
           </Button>
         </div>
 
-        {/* Bulk actions bar */}
+        {/* Admin actions bar */}
         <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--surface)] shadow-[var(--shadow)] px-4 py-3">
-          <Button
-            variant={showBulkLink ? 'secondary' : 'outline'}
-            size="sm"
-            onClick={() => setShowBulkLink(!showBulkLink)}
-          >
-            <Link2 size={14} />
-            Toplu Veli-Öğrenci Eşleştir
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => navigate('/admin/veli-eslestirme')}>
-            <Users size={14} />
-            Veli-Öğrenci Eşleştirme Sayfası
-          </Button>
           <Button variant="secondary" size="sm" onClick={() => navigate('/admin/ogretim-yili')}>
             <CalendarClock size={14} />
             Öğretim Yılı Geçişi
           </Button>
         </div>
-
-        {/* Bulk Parent-Child Link Panel */}
-        {showBulkLink && (
-          <BulkLinkSection
-            linkFile={linkFile}
-            setLinkFile={setLinkFile}
-            linkPreview={linkPreview}
-            setLinkPreview={setLinkPreview}
-            linkLoading={linkLoading}
-            setLinkLoading={setLinkLoading}
-            linkResult={linkResult}
-            setLinkResult={setLinkResult}
-            linkError={linkError}
-            setLinkError={setLinkError}
-            onLinkComplete={refetchAll}
-            onClose={() => setShowBulkLink(false)}
-          />
-        )}
 
         {/* User table — server-paginated so the page doesn't render every
             user (hundreds, in a real school) into the DOM at once. */}
@@ -547,177 +393,6 @@ export default function SenkronizasyonPage() {
               </Button>
             </div>
           </div>
-        )}
-
-        {/* Parent-child matching panel */}
-        {selectedParent && (
-          <Card accentBar contentClassName="p-6 space-y-6">
-            {/* Panel header */}
-            <div className="border-b border-[var(--rule)] pb-4">
-              <div className="text-xs font-medium text-[var(--ink-dim)]">Eşleştirme Paneli</div>
-              <h2 className="font-serif text-xl text-[var(--ink)] mt-1 flex items-center gap-2">
-                <Users size={18} />
-                Veli: {selectedParent.adSoyad}
-              </h2>
-              <p className="mt-1 text-sm text-[var(--ink-dim)]">
-                Aşağıdan bu veliye ait çocuk(ları) seçin. Kaydet butonuna basınca veritabanına
-                işlenecek.
-              </p>
-            </div>
-
-            {/* Manual assign by ID */}
-            <div className="rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--surface)] shadow-[var(--shadow)] p-4 space-y-3">
-              <div className="text-xs font-medium text-[var(--ink-dim)]">
-                ID ile Manuel Eşleştir
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  type="text"
-                  className={cn(inputBase, 'flex-1 min-w-[150px]')}
-                  placeholder="Öğrenci ID girin"
-                  value={manualAssignId}
-                  onChange={(e) => setManualAssignId(e.target.value)}
-                />
-                <Button variant="primary" size="sm" onClick={handleManualAssign}>
-                  <Plus size={14} />
-                  Ekle
-                </Button>
-              </div>
-              {manualAssignError && (
-                <p className="text-sm text-[var(--accent)]">{manualAssignError}</p>
-              )}
-            </div>
-
-            {/* Student selection */}
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-xs font-medium text-[var(--ink-dim)]">Mevcut Öğrenciler</div>
-                <div className="flex flex-wrap gap-2">
-                  <input
-                    type="text"
-                    className={cn(inputBase, 'min-w-[180px]')}
-                    placeholder="Öğrenci adı ile ara..."
-                    value={studentSearch}
-                    onChange={(e) => setStudentSearch(e.target.value)}
-                  />
-                  <select
-                    className={cn(inputBase, 'min-w-[130px]')}
-                    value={studentClassFilter}
-                    onChange={(e) => setStudentClassFilter(e.target.value)}
-                  >
-                    <option value="">Tüm Sınıflar</option>
-                    <option value="9">9. Sınıf</option>
-                    <option value="10">10. Sınıf</option>
-                    <option value="11">11. Sınıf</option>
-                    <option value="12">12. Sınıf</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-px bg-[var(--rule)] max-h-[400px] overflow-y-auto rounded-[var(--radius)] border border-[var(--rule)]">
-                {filteredStudents.map((student) => {
-                  const checked = selectedChildren.includes(student.id);
-                  return (
-                    <label
-                      key={student.id}
-                      className={cn(
-                        'flex items-center gap-3 p-3 cursor-pointer bg-[var(--paper)]',
-                        'hover:bg-[var(--surface)] transition-colors',
-                        checked && 'bg-[var(--surface-2)]',
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => handleToggleChild(student.id)}
-                        className="w-4 h-4 accent-[var(--accent)] flex-shrink-0 cursor-pointer"
-                      />
-                      <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="font-serif text-sm text-[var(--ink)] truncate">
-                          {student.adSoyad}
-                        </span>
-                        <span className="font-mono text-[10px] text-[var(--ink-dim)]">
-                          {student.sinif || '—'}/{student.sube || '—'}
-                        </span>
-                        {student.pansiyon && (
-                          <Chip tone="black" className="w-fit">
-                            Yatılı
-                          </Chip>
-                        )}
-                      </div>
-                    </label>
-                  );
-                })}
-                {filteredStudents.length === 0 && (
-                  <div className="col-span-full bg-[var(--paper)] p-8 text-center text-xs font-medium text-[var(--ink-dim)]">
-                    Arama kriterlerine uygun öğrenci bulunamadı.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Selected children summary */}
-            {selectedChildren.length > 0 && (
-              <div className="rounded-[var(--radius)] border border-[var(--rule)] bg-[var(--surface)] shadow-[var(--shadow)] p-4 space-y-3">
-                <div className="text-xs font-medium text-[var(--ink-dim)]">
-                  Seçilen Çocuklar ({selectedChildren.length})
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {selectedChildren.map((childId) => {
-                    const child = allUsers.find((u) => u.id === childId);
-                    return child ? (
-                      <div
-                        key={childId}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--rule)] bg-[var(--paper)]"
-                      >
-                        <span className="font-serif text-sm text-[var(--ink)]">
-                          {child.adSoyad}
-                        </span>
-                        <span className="font-mono text-[10px] text-[var(--ink-dim)]">
-                          {child.sinif || '—'}/{child.sube || '—'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleChild(childId)}
-                          className="text-[var(--ink-dim)] hover:text-[var(--accent)] transition-colors"
-                          aria-label="Kaldır"
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ) : null;
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Error */}
-            {error && (
-              <p className="text-sm text-[var(--accent)] rounded-[var(--radius-sm)] border border-[var(--accent)] bg-[var(--accent-tint)] px-3 py-2">
-                {error}
-              </p>
-            )}
-
-            {/* Action buttons */}
-            <div className="flex flex-wrap gap-2 pt-4 border-t border-[var(--rule)]">
-              <Button variant="primary" size="sm" onClick={handleSave} loading={saving}>
-                <Save size={14} />
-                Kaydet
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setSelectedParent(null);
-                  setSelectedChildren([]);
-                  setError('');
-                }}
-              >
-                <X size={14} />
-                İptal
-              </Button>
-            </div>
-          </Card>
         )}
       </div>
 

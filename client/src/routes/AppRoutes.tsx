@@ -64,7 +64,6 @@ const EvciStatsPage = lazy(() => import('../pages/Dashboard/EvciStatsPage'));
 const SettingsPage = lazy(() => import('../pages/Dashboard/SettingsPage'));
 const SenkronizasyonPage = lazy(() => import('../pages/Dashboard/SenkronizasyonPage'));
 const OgretimYiliPage = lazy(() => import('../pages/Dashboard/OgretimYiliPage'));
-const ParentChildManagement = lazy(() => import('../pages/Dashboard/ParentChildManagement'));
 // const ReportManagement = lazy(() => import('../pages/Dashboard/ReportManagement'));
 const CalendarPage = lazy(() => import('../pages/Dashboard/CalendarPage'));
 // const FileManagementPage = lazy(() => import('../pages/Dashboard/FileManagementPage'));
@@ -301,14 +300,6 @@ export default function AppRoutes() {
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <OgretimYiliPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/veli-eslestirme"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <ParentChildManagement />
                 </ProtectedRoute>
               }
             />
