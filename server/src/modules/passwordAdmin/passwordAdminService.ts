@@ -7,6 +7,7 @@ import { recordPasswordEvent } from './passwordAuditService';
 import { parseClassListFile, ParsedStudentRow } from './classListParser';
 import { buildCredentialsXlsx, CredentialsRow } from './credentialsExporter';
 import { BCRYPT_COST } from '../auth/services/authService';
+import { ensureParentAccountForStudent } from '../../services/UserService';
 
 export interface AdminContext {
   id: string;
@@ -260,6 +261,14 @@ export async function activateImportBatch(input: {
     throw err;
   }
   await User.updateMany({ importBatchId: updated.batchId }, { $set: { isActive: true } });
+
+  // Toplu içe aktarımla gelen öğrenciler UserService.createUser'ı atlar, bu yüzden
+  // aktivasyon sonrası veli hesapları (ve pansiyon senkronu) burada elle tetiklenir.
+  const students = await User.find({ importBatchId: updated.batchId, rol: 'student' })
+    .select('id adSoyad')
+    .lean<{ id: string; adSoyad: string }[]>();
+  await Promise.all(students.map((s) => ensureParentAccountForStudent(s.id, s.adSoyad, true)));
+
   return { activated: updated.userIds.length };
 }
 

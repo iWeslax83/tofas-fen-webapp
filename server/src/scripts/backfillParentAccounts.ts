@@ -9,7 +9,10 @@
  * This script:
  *   1. Finds every active student missing its V<id> account and creates one
  *      (random password, printed once so it can be handed to the school).
- *   2. Finds legacy personal parent accounts (rol:'parent', id not starting
+ *   2. Resyncs pansiyon/isActive/childId on every existing V<id> account so
+ *      it matches its student (covers accounts that went stale before the
+ *      pansiyon-resync fix landed in UserService.updateUser/updateUserLegacy).
+ *   3. Finds legacy personal parent accounts (rol:'parent', id not starting
  *      with 'V') and deactivates them — never deletes, so nothing is lost if
  *      this needs to be reviewed later.
  *
@@ -38,35 +41,50 @@ async function backfillParentAccounts(): Promise<void> {
   console.log('');
 
   const students = (await User.find({ rol: 'student' })
-    .select('id adSoyad isActive')
-    .lean()) as Array<{ id: string; adSoyad: string; isActive: boolean }>;
+    .select('id adSoyad isActive pansiyon')
+    .lean()) as Array<{ id: string; adSoyad: string; isActive: boolean; pansiyon: boolean }>;
 
   let created = 0;
-  let alreadyExisted = 0;
+  let resynced = 0;
+  let alreadyInSync = 0;
   let conflicts = 0;
   const createdReport: Array<{ studentId: string; parentId: string; password?: string }> = [];
+  const resyncReport: Array<{ studentId: string; parentId: string; pansiyon: boolean }> = [];
 
   for (const student of students) {
     const parentId = parentAccountIdForStudent(student.id);
     const existing = await User.findOne({ id: parentId })
-      .select('rol')
-      .lean<{ rol?: string } | null>();
+      .select('rol pansiyon isActive childId')
+      .lean<{ rol?: string; pansiyon?: boolean; isActive?: boolean; childId?: string[] } | null>();
 
-    if (existing) {
-      if (existing.rol !== 'parent') {
-        conflicts++;
-        console.warn(
-          `CONFLICT: ${parentId} already exists with rol=${existing.rol}, expected 'parent' (student ${student.id})`,
-        );
-      } else {
-        alreadyExisted++;
-      }
+    if (existing && existing.rol !== 'parent') {
+      conflicts++;
+      console.warn(
+        `CONFLICT: ${parentId} already exists with rol=${existing.rol}, expected 'parent' (student ${student.id})`,
+      );
+      continue;
+    }
+
+    const studentPansiyon = student.pansiyon ?? false;
+    const needsResync =
+      !!existing &&
+      (existing.pansiyon !== studentPansiyon ||
+        existing.isActive !== student.isActive ||
+        !existing.childId?.includes(student.id));
+
+    if (existing && !needsResync) {
+      alreadyInSync++;
       continue;
     }
 
     if (!CONFIRM) {
-      created++;
-      createdReport.push({ studentId: student.id, parentId });
+      if (existing) {
+        resynced++;
+        resyncReport.push({ studentId: student.id, parentId, pansiyon: studentPansiyon });
+      } else {
+        created++;
+        createdReport.push({ studentId: student.id, parentId });
+      }
       continue;
     }
 
@@ -84,15 +102,27 @@ async function backfillParentAccounts(): Promise<void> {
       });
     } else if (result.conflict) {
       conflicts++;
+    } else if (existing) {
+      resynced++;
+      resyncReport.push({ studentId: student.id, parentId, pansiyon: studentPansiyon });
     } else {
-      alreadyExisted++;
+      alreadyInSync++;
     }
   }
 
   console.log(`\nStudents scanned: ${students.length}`);
-  console.log(`V-accounts already present: ${alreadyExisted}`);
+  console.log(`V-accounts already in sync: ${alreadyInSync}`);
   console.log(`V-accounts ${CONFIRM ? 'created' : 'to be created'}: ${created}`);
+  console.log(
+    `V-accounts ${CONFIRM ? 'resynced' : 'to be resynced'} (stale pansiyon/isActive/childId): ${resynced}`,
+  );
   if (conflicts > 0) console.log(`Conflicts (id taken by a non-parent user): ${conflicts}`);
+  if (resyncReport.length > 0) {
+    console.log('\n--- Resynced parent accounts ---');
+    for (const row of resyncReport) {
+      console.log(`${row.parentId} (student ${row.studentId}): pansiyon=${row.pansiyon}`);
+    }
+  }
 
   if (createdReport.length > 0) {
     console.log('\n--- New parent accounts (save this — passwords are shown once) ---');
