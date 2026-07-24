@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { LoadBar } from './SkeletonComponents';
+import { useDelayedFlag } from '../hooks/useDelayedFlag';
 
 interface ProtectedRouteProps {
   children: React.ReactElement;
@@ -26,12 +27,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   const user = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);
   const initialized = useAuthStore((s) => s.initialized);
+  const isSlow = useDelayedFlag(6000);
 
   if (!initialized || isLoading) {
     return (
       <div className="loading-container">
         <LoadBar className="loading-container-bar" />
-        <p>Yükleniyor...</p>
+        <p>{isSlow ? 'Sunucu uyandırılıyor, bu biraz sürebilir...' : 'Yükleniyor...'}</p>
       </div>
     );
   }
