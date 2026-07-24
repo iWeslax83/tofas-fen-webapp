@@ -253,6 +253,11 @@ export async function ensureParentAccountForStudent(
   const parentId = parentAccountIdForStudent(studentId);
   const existing = await User.findOne({ id: parentId });
 
+  // Veli hesabının pansiyon durumu öğrencininkini yansıtır; böylece gündüzlü
+  // öğrencilerin velilerine evci/pansiyon menüleri gösterilmez.
+  const student = await User.findOne({ id: studentId }).select('pansiyon');
+  const studentPansiyon = student?.pansiyon ?? false;
+
   if (existing) {
     if (existing.rol !== 'parent') {
       // Something else already owns this id (shouldn't happen given the
@@ -270,6 +275,10 @@ export async function ensureParentAccountForStudent(
       existing.childId = [...(existing.childId || []), studentId];
       changed = true;
     }
+    if (existing.pansiyon !== studentPansiyon) {
+      existing.pansiyon = studentPansiyon;
+      changed = true;
+    }
     if (changed) await existing.save();
     return { parentId, created: false };
   }
@@ -283,6 +292,7 @@ export async function ensureParentAccountForStudent(
     rol: 'parent',
     childId: [studentId],
     isActive,
+    pansiyon: studentPansiyon,
   });
   await parent.save();
   return { parentId, created: true, generatedPassword };

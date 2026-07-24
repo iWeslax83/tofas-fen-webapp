@@ -55,13 +55,31 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [setIsOpen]);
 
-  const roleButtons = useMemo(() => {
+  const navSections = useMemo(() => {
     const role = user?.rol || 'student';
-    return dashboardButtons.filter((btn) => {
+    const visible = dashboardButtons.filter((btn) => {
       if (!btn.roles.includes(role)) return false;
       if (btn.showForDormitory && !user?.pansiyon) return false;
       return true;
     });
+    return [
+      {
+        key: 'quick',
+        label: 'Hızlı Erişim',
+        items: visible.filter((b) => (b.section ?? 'quick') === 'quick'),
+      },
+      {
+        key: 'dormitory',
+        label: 'Pansiyon',
+        items: visible.filter((b) => b.section === 'dormitory'),
+      },
+      {
+        key: 'registration',
+        label: 'Yeni Kayıt',
+        items: visible.filter((b) => b.section === 'registration'),
+      },
+      { key: 'system', label: 'Sistem', items: visible.filter((b) => b.section === 'system') },
+    ].filter((s) => s.key === 'system' || s.items.length > 0);
   }, [user?.rol, user?.pansiyon]);
 
   // Guard must be AFTER all hooks to avoid "fewer hooks" error on logout
@@ -114,32 +132,32 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
               </Link>
             </div>
 
-            <div className="nav-section">
-              <h3>Hızlı Erişim</h3>
-              {roleButtons.map((button) => (
-                <Link
-                  key={button.key}
-                  to={button.route}
-                  className={navClass(button.route)}
-                  onClick={closeSidebarOnMobile}
-                >
-                  {button.icon && <button.icon className="nav-icon" />}
-                  <span>{button.title}</span>
-                </Link>
-              ))}
-            </div>
-
-            <div className="nav-section">
-              <h3>Sistem</h3>
-              <Link
-                to={`/${user.rol}/ayarlar`}
-                className={navClass(`/${user.rol}/ayarlar`)}
-                onClick={closeSidebarOnMobile}
-              >
-                <Settings className="nav-icon" />
-                <span>Ayarlar</span>
-              </Link>
-            </div>
+            {navSections.map((section) => (
+              <div className="nav-section" key={section.key}>
+                <h3>{section.label}</h3>
+                {section.items.map((button) => (
+                  <Link
+                    key={button.key}
+                    to={button.route}
+                    className={navClass(button.route)}
+                    onClick={closeSidebarOnMobile}
+                  >
+                    {button.icon && <button.icon className="nav-icon" />}
+                    <span>{button.title}</span>
+                  </Link>
+                ))}
+                {section.key === 'system' && (
+                  <Link
+                    to={`/${user.rol}/ayarlar`}
+                    className={navClass(`/${user.rol}/ayarlar`)}
+                    onClick={closeSidebarOnMobile}
+                  >
+                    <Settings className="nav-icon" />
+                    <span>Ayarlar</span>
+                  </Link>
+                )}
+              </div>
+            ))}
           </nav>
 
           <SidebarProfile
