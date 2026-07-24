@@ -19,7 +19,8 @@ import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { LoadBar } from '../../components/SkeletonComponents';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { Chip, type ChipProps } from '../../components/ui/Chip';
+import { Chip } from '../../components/ui/Chip';
+import { StatusTag, type StatusTagTone } from '../../components/ui/StatusTag';
 import { Input } from '../../components/ui/Input';
 import { useConfirm } from '../../components/ui/ConfirmDialog';
 import { EvciService } from '../../utils/apiService';
@@ -59,7 +60,7 @@ const APPROVAL_LABELS: Record<ApprovalStatus, string> = {
   rejected: 'Veli Reddetti',
 };
 
-const APPROVAL_TONES: Record<ApprovalStatus, ChipProps['tone']> = {
+const APPROVAL_TONES: Record<ApprovalStatus, StatusTagTone> = {
   pending: 'warn',
   approved: 'ok',
   rejected: 'accent',
@@ -495,9 +496,9 @@ const StudentEvciPage = () => {
           >
             <Timer size={16} className="text-[var(--ink-dim)] shrink-0" />
             <div className="flex-1 flex items-center gap-2 flex-wrap">
-              <Chip tone={windowIsOpen ? 'ok' : 'warn'}>
+              <StatusTag tone={windowIsOpen ? 'ok' : 'warn'}>
                 {windowIsOpen ? 'Pencere Açık' : 'Pencere Kapalı'}
-              </Chip>
+              </StatusTag>
               <span className="font-serif text-sm text-[var(--ink-2)]">
                 {windowIsOpen
                   ? countdown
@@ -538,10 +539,10 @@ const StudentEvciPage = () => {
                 <Card key={r._id || i} contentClassName="p-0">
                   <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-[var(--rule)]">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Chip tone={APPROVAL_TONES[status]}>{APPROVAL_LABELS[status]}</Chip>
-                      <Chip tone={r.willGo ? 'outline' : 'default'}>
+                      <StatusTag tone={APPROVAL_TONES[status]}>{APPROVAL_LABELS[status]}</StatusTag>
+                      <StatusTag tone={r.willGo ? 'info' : 'neutral'}>
                         {r.willGo ? 'Gidecek' : 'Gitmeyecek'}
-                      </Chip>
+                      </StatusTag>
                     </div>
                     {canModify && (
                       <div className="flex items-center gap-1">

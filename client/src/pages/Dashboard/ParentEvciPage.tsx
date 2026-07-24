@@ -17,7 +17,8 @@ import ModernDashboardLayout from '../../components/ModernDashboardLayout';
 import { LoadBar } from '../../components/SkeletonComponents';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { Chip, type ChipProps } from '../../components/ui/Chip';
+import { Chip } from '../../components/ui/Chip';
+import { StatusTag, type StatusTagTone } from '../../components/ui/StatusTag';
 import { EvciService } from '../../utils/apiService';
 import { cn } from '../../utils/cn';
 import { safeConsoleError } from '../../utils/safeLogger';
@@ -55,7 +56,7 @@ const APPROVAL_LABELS: Record<ApprovalStatus, string> = {
   rejected: 'Reddedildi',
 };
 
-const APPROVAL_TONES: Record<ApprovalStatus, ChipProps['tone']> = {
+const APPROVAL_TONES: Record<ApprovalStatus, StatusTagTone> = {
   pending: 'warn',
   approved: 'ok',
   rejected: 'accent',
@@ -287,10 +288,10 @@ export default function ParentEvciPage() {
               return (
                 <Card key={request._id} contentClassName="p-0">
                   <div className="px-4 py-2 border-b border-[var(--rule)] flex items-center gap-2 flex-wrap">
-                    <Chip tone={request.willGo ? 'outline' : 'default'}>
+                    <StatusTag tone={request.willGo ? 'info' : 'neutral'}>
                       {request.willGo ? 'Gidecek' : 'Gitmeyecek'}
-                    </Chip>
-                    <Chip tone={APPROVAL_TONES[status]}>{APPROVAL_LABELS[status]}</Chip>
+                    </StatusTag>
+                    <StatusTag tone={APPROVAL_TONES[status]}>{APPROVAL_LABELS[status]}</StatusTag>
                   </div>
 
                   <div className="p-4 space-y-3">
