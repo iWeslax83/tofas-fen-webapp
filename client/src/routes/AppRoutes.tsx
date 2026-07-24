@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../stores/authStore';
 import ProtectedRoute from '../components/ProtectedRoute';
 import EnhancedErrorBoundary from '../components/EnhancedErrorBoundary';
+import { useDelayedFlag } from '../hooks/useDelayedFlag';
 
 // Scroll to top on route changes
 function ScrollToTop() {
@@ -14,10 +15,10 @@ function ScrollToTop() {
 }
 
 // Loading component for Suspense
-const LoadingSpinner = () => (
+const LoadingSpinner = ({ slowMessage }: { slowMessage?: string } = {}) => (
   <div className="loading-container">
     <div className="loading-spinner"></div>
-    <p>Yükleniyor...</p>
+    <p>{slowMessage || 'Yükleniyor...'}</p>
   </div>
 );
 
@@ -91,9 +92,14 @@ function RootRedirect() {
   // Otherwise the first render sees no user and flashes to /login for one
   // frame even when the session cookie is valid.
   const { user, isLoading, initialized } = useAuth();
+  const isSlow = useDelayedFlag(6000);
 
   if (!initialized || isLoading) {
-    return <LoadingSpinner />;
+    return (
+      <LoadingSpinner
+        slowMessage={isSlow ? 'Sunucu uyandırılıyor, bu biraz sürebilir...' : undefined}
+      />
+    );
   }
 
   if (user?.rol) {
