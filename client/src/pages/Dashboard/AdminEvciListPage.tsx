@@ -23,7 +23,8 @@ import { LoadBar } from '../../components/SkeletonComponents';
 import { DataTable } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { Chip, type ChipProps } from '../../components/ui/Chip';
+import { Chip } from '../../components/ui/Chip';
+import { StatusTag, type StatusTagTone } from '../../components/ui/StatusTag';
 import { Input } from '../../components/ui/Input';
 import { useConfirm } from '../../components/ui/ConfirmDialog';
 import { EvciService, UserService } from '../../utils/apiService';
@@ -62,7 +63,7 @@ const APPROVAL_LABELS: Record<ApprovalKey, string> = {
   rejected: 'Veli Reddetti',
 };
 
-const APPROVAL_TONES: Record<ApprovalKey, ChipProps['tone']> = {
+const APPROVAL_TONES: Record<ApprovalKey, StatusTagTone> = {
   pending: 'warn',
   approved: 'ok',
   rejected: 'accent',
@@ -167,16 +168,14 @@ export default function AdminEvciListPage() {
   }, [authUser, page, fetchData]);
 
   const saveNew = async () => {
-    if (
-      !(
-        newReq.studentId &&
-        newReq.studentName &&
-        newReq.startDate &&
-        newReq.endDate &&
-        newReq.destination &&
-        typeof newReq.willGo === 'boolean'
-      )
-    ) {
+    if (!(
+      newReq.studentId &&
+      newReq.studentName &&
+      newReq.startDate &&
+      newReq.endDate &&
+      newReq.destination &&
+      typeof newReq.willGo === 'boolean'
+    )) {
       toast.error('Lütfen tüm alanları doldurun');
       return;
     }
@@ -481,9 +480,9 @@ export default function AdminEvciListPage() {
         header: 'Durum',
         accessorFn: (r) => r.willGo,
         cell: ({ row }) => (
-          <Chip tone={row.original.willGo ? 'outline' : 'default'}>
+          <StatusTag tone={row.original.willGo ? 'info' : 'neutral'}>
             {row.original.willGo ? 'Gidecek' : 'Gitmeyecek'}
-          </Chip>
+          </StatusTag>
         ),
       },
       {
@@ -492,7 +491,7 @@ export default function AdminEvciListPage() {
         accessorFn: (r) => r.parentApproval || 'pending',
         cell: ({ row }) => {
           const k = (row.original.parentApproval || 'pending') as ApprovalKey;
-          return <Chip tone={APPROVAL_TONES[k]}>{APPROVAL_LABELS[k]}</Chip>;
+          return <StatusTag tone={APPROVAL_TONES[k]}>{APPROVAL_LABELS[k]}</StatusTag>;
         },
       },
       {
@@ -501,10 +500,10 @@ export default function AdminEvciListPage() {
         accessorFn: (r) => r.status || 'pending',
         cell: ({ row }) => {
           const s = row.original.status;
-          if (!s || s === 'pending') return <Chip tone="warn">Beklemede</Chip>;
-          if (s === 'approved') return <Chip tone="ok">Onaylandı</Chip>;
-          if (s === 'rejected') return <Chip tone="accent">Reddedildi</Chip>;
-          return <Chip tone="default">{s}</Chip>;
+          if (!s || s === 'pending') return <StatusTag tone="warn">Beklemede</StatusTag>;
+          if (s === 'approved') return <StatusTag tone="ok">Onaylandı</StatusTag>;
+          if (s === 'rejected') return <StatusTag tone="accent">Reddedildi</StatusTag>;
+          return <StatusTag tone="neutral">{s}</StatusTag>;
         },
       },
       {
