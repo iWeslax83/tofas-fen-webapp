@@ -16,6 +16,9 @@ import {
 
 export type UserRole = 'admin' | 'teacher' | 'student' | 'parent' | 'ziyaretci';
 
+// Sidebar groupings. Rendered top-to-bottom in this order under their headings.
+export type NavSection = 'quick' | 'dormitory' | 'registration' | 'system';
+
 export interface DashboardButton {
   key: string;
   title: string;
@@ -24,14 +27,15 @@ export interface DashboardButton {
   roles: UserRole[]; // Who can see this button
   crudRoles?: UserRole[]; // Who can add/edit/delete (if different from view)
   icon?: React.ElementType;
-  showForDormitory?: boolean; // Only show for students with pansiyon=true
+  showForDormitory?: boolean; // Only show for users with pansiyon=true (boarders / their parents)
   actionText?: string; // Custom action text for the button
   color?: string;
+  section?: NavSection; // Sidebar section (defaults to 'quick')
 }
 
 export const dashboardButtons: DashboardButton[] = [
-  // STUDENT PRIORITY BUTTONS (Most Important First)
-  // STUDENT PRIORITY BUTTONS (Most Important First)
+  // ─── STUDENT ───────────────────────────────────────────────────────────────
+  // Hızlı Erişim: Ödevler, Ders Programı, Duyurular, Notlarım, Dilekçe
   {
     key: 'student-assignments',
     title: 'Ödevler',
@@ -60,14 +64,13 @@ export const dashboardButtons: DashboardButton[] = [
     actionText: 'Duyuruları Gör',
   },
   {
-    key: 'student-evci',
-    title: 'Evci Bilgilerim',
-    description: 'Evci bilgilerini görüntüle',
-    route: '/student/evci',
+    key: 'grades-student',
+    title: 'Notlarım',
+    description: 'Notlarını görüntüle',
+    route: '/student/notlar',
     roles: ['student'],
-    showForDormitory: true,
-    icon: House,
-    actionText: 'Bilgilerimi Gör',
+    icon: BookOpen,
+    actionText: 'Notlarımı Gör',
   },
   {
     key: 'dilekce-student',
@@ -78,16 +81,18 @@ export const dashboardButtons: DashboardButton[] = [
     icon: MessageSquareWarning,
     actionText: 'Dilekçe Oluştur',
   },
+  // Pansiyon (only for boarding students, pansiyon=true)
   {
-    key: 'grades-student',
-    title: 'Notlarım',
-    description: 'Notlarını görüntüle',
-    route: '/student/notlar',
+    key: 'student-evci',
+    title: 'Evci Bilgilerim',
+    description: 'Evci bilgilerini görüntüle',
+    route: '/student/evci',
     roles: ['student'],
-    icon: BookOpen,
-    actionText: 'Notlarımı Gör',
+    showForDormitory: true,
+    section: 'dormitory',
+    icon: House,
+    actionText: 'Bilgilerimi Gör',
   },
-  // Dormitory related buttons (only for students with pansiyon=true)
   {
     key: 'student-meal-list',
     title: 'Yemek Listesi',
@@ -95,12 +100,12 @@ export const dashboardButtons: DashboardButton[] = [
     route: '/student/yemek-listesi',
     roles: ['student'],
     showForDormitory: true,
+    section: 'dormitory',
     icon: Utensils,
     actionText: 'Menüyü Gör',
   },
 
-  // TEACHER PRIORITY BUTTONS
-
+  // ─── TEACHER (order unchanged) ───────────────────────────────────────────────
   {
     key: 'teacher-assignments',
     title: 'Ödevler',
@@ -119,7 +124,6 @@ export const dashboardButtons: DashboardButton[] = [
     icon: BookOpen,
     actionText: 'Notları Gir',
   },
-
   {
     key: 'teacher-schedule',
     title: 'Ders Programı',
@@ -148,7 +152,8 @@ export const dashboardButtons: DashboardButton[] = [
     actionText: 'Dilekçe Oluştur',
   },
 
-  // PARENT PRIORITY BUTTONS
+  // ─── PARENT ──────────────────────────────────────────────────────────────────
+  // Hızlı Erişim: Ödevler, Ders Programı, Duyurular, Notlar, Dilekçe
   {
     key: 'assignments-parent',
     title: 'Ödevler',
@@ -164,26 +169,8 @@ export const dashboardButtons: DashboardButton[] = [
     description: 'Çocuğunun ders programını görüntüle',
     route: '/parent/ders-programi',
     roles: ['parent'],
-    icon: BookOpen,
+    icon: ClipboardList,
     actionText: 'Programı Gör',
-  },
-  {
-    key: 'grades-parent',
-    title: 'Notlar',
-    description: 'Çocuğunun notlarını görüntüle',
-    route: '/parent/notlar',
-    roles: ['parent'],
-    icon: BookOpen,
-    actionText: 'Notları Gör',
-  },
-  {
-    key: 'parent-evci',
-    title: 'Evci Bilgileri',
-    description: 'Çocuğunun evci bilgilerini görüntüle',
-    route: '/parent/evci',
-    roles: ['parent'],
-    icon: House,
-    actionText: 'Bilgileri Gör',
   },
   {
     key: 'announcements-parent',
@@ -195,6 +182,15 @@ export const dashboardButtons: DashboardButton[] = [
     actionText: 'Duyuruları Gör',
   },
   {
+    key: 'grades-parent',
+    title: 'Notlar',
+    description: 'Çocuğunun notlarını görüntüle',
+    route: '/parent/notlar',
+    roles: ['parent'],
+    icon: BookOpen,
+    actionText: 'Notları Gör',
+  },
+  {
     key: 'dilekce-parent',
     title: 'Dilekçe',
     description: 'Dilekçe oluştur ve takip et',
@@ -203,64 +199,32 @@ export const dashboardButtons: DashboardButton[] = [
     icon: MessageSquareWarning,
     actionText: 'Dilekçe Oluştur',
   },
+  // Pansiyon (only for parents of boarding students, pansiyon=true)
   {
-    key: 'meal-list',
-    title: 'Pansiyon Yemek Listesi',
-    description: 'Aylık yemek menüsünü görüntüle ve düzenle',
-    route: '/admin/yemek-listesi',
-    roles: ['admin'],
-    crudRoles: ['admin'],
+    key: 'parent-evci',
+    title: 'Evci Bilgileri',
+    description: 'Çocuğunun evci bilgilerini görüntüle',
+    route: '/parent/evci',
+    roles: ['parent'],
+    showForDormitory: true,
+    section: 'dormitory',
+    icon: House,
+    actionText: 'Bilgileri Gör',
+  },
+  {
+    key: 'meal-list-parent',
+    title: 'Yemek Listesi',
+    description: 'Pansiyon yemek menüsünü görüntüle',
+    route: '/parent/yemek-listesi',
+    roles: ['parent'],
+    showForDormitory: true,
+    section: 'dormitory',
     icon: Utensils,
-    actionText: 'Menüyü Yönet',
+    actionText: 'Menüyü Gör',
   },
 
-  {
-    key: 'supervisor-list-admin',
-    title: 'Pansiyon Belletmen Listesi',
-    description: 'Belletmen nöbet listelerini yönet',
-    route: '/admin/belletmen-listesi',
-    roles: ['admin'],
-    crudRoles: ['admin'],
-    icon: ClipboardList,
-    actionText: 'Listeyi Yönet',
-  },
-  // Admin only
-  {
-    key: 'admin-evci-list',
-    title: 'Evci Listesi',
-    description: 'Evci öğrencileri yönet',
-    route: '/admin/evci-listesi',
-    roles: ['admin'],
-    icon: House,
-    actionText: 'Listeyi Yönet',
-  },
-  {
-    key: 'admin-evci-stats',
-    title: 'Evci İstatistikleri',
-    description: 'Evci talep istatistiklerini görüntüle',
-    route: '/admin/evci-istatistik',
-    roles: ['admin'],
-    icon: BarChart3,
-    actionText: 'İstatistikleri Gör',
-  },
-  {
-    key: 'admin-dilekce-list',
-    title: 'Dilekçe Yönetimi',
-    description: 'Dilekçeleri incele ve yönet',
-    route: '/admin/dilekce-listesi',
-    roles: ['admin'],
-    icon: MessageSquareWarning,
-    actionText: 'Dilekçeleri Yönet',
-  },
-  {
-    key: 'assignments-admin',
-    title: 'Ödevler',
-    description: 'Tüm ödevleri görüntüle',
-    route: '/admin/odevler',
-    roles: ['admin'],
-    icon: NotebookText,
-    actionText: 'Ödevleri Gör',
-  },
+  // ─── ADMIN ───────────────────────────────────────────────────────────────────
+  // Hızlı Erişim: Duyurular, Dilekçe Yönetimi
   {
     key: 'announcements-admin',
     title: 'Duyurular',
@@ -271,21 +235,65 @@ export const dashboardButtons: DashboardButton[] = [
     actionText: 'Duyuruları Gör',
   },
   {
-    key: 'sync',
-    title: 'Senkronizasyon',
-    description: 'Veri senkronizasyon işlemleri',
-    route: '/admin/senkronizasyon',
+    key: 'admin-dilekce-list',
+    title: 'Dilekçe Yönetimi',
+    description: 'Dilekçeleri incele ve yönet',
+    route: '/admin/dilekce-listesi',
     roles: ['admin'],
-    icon: Wrench,
-    actionText: 'Senkronize Et',
+    icon: MessageSquareWarning,
+    actionText: 'Dilekçeleri Yönet',
   },
-  // Admin: Yeni Kayıt ve Randevu Yönetimi
+  // Pansiyon: Evci Listesi, Evci İstatistikleri, Pansiyon Yemek Listesi, Pansiyon Belletmen Listesi
+  {
+    key: 'admin-evci-list',
+    title: 'Evci Listesi',
+    description: 'Evci öğrencileri yönet',
+    route: '/admin/evci-listesi',
+    roles: ['admin'],
+    section: 'dormitory',
+    icon: House,
+    actionText: 'Listeyi Yönet',
+  },
+  {
+    key: 'admin-evci-stats',
+    title: 'Evci İstatistikleri',
+    description: 'Evci talep istatistiklerini görüntüle',
+    route: '/admin/evci-istatistik',
+    roles: ['admin'],
+    section: 'dormitory',
+    icon: BarChart3,
+    actionText: 'İstatistikleri Gör',
+  },
+  {
+    key: 'meal-list',
+    title: 'Pansiyon Yemek Listesi',
+    description: 'Aylık yemek menüsünü görüntüle ve düzenle',
+    route: '/admin/yemek-listesi',
+    roles: ['admin'],
+    crudRoles: ['admin'],
+    section: 'dormitory',
+    icon: Utensils,
+    actionText: 'Menüyü Yönet',
+  },
+  {
+    key: 'supervisor-list-admin',
+    title: 'Pansiyon Belletmen Listesi',
+    description: 'Belletmen nöbet listelerini yönet',
+    route: '/admin/belletmen-listesi',
+    roles: ['admin'],
+    crudRoles: ['admin'],
+    section: 'dormitory',
+    icon: ClipboardList,
+    actionText: 'Listeyi Yönet',
+  },
+  // Yeni Kayıt: Yeni Kayıt Başvuruları, Randevu Başvuruları, Ziyaretçi Sohbetleri
   {
     key: 'admin-registrations',
     title: 'Yeni Kayıt Başvuruları',
     description: 'Yeni kayıt başvurularını incele ve yönet',
     route: '/admin/yeni-kayit-basvurulari',
     roles: ['admin'],
+    section: 'registration',
     icon: UserPlus,
     actionText: 'Başvuruları Gör',
   },
@@ -295,6 +303,7 @@ export const dashboardButtons: DashboardButton[] = [
     description: 'Okul randevu taleplerini yönet',
     route: '/admin/randevu-basvurulari',
     roles: ['admin'],
+    section: 'registration',
     icon: CalendarDays,
     actionText: 'Randevuları Gör',
   },
@@ -304,11 +313,23 @@ export const dashboardButtons: DashboardButton[] = [
     description: 'Yeni kayıt ziyaretçileri ile mesajlaş',
     route: '/admin/ziyaretci-sohbet',
     roles: ['admin'],
+    section: 'registration',
     icon: MessageCircle,
     actionText: 'Sohbetleri Gör',
   },
+  // Sistem: Senkronizasyon (Ayarlar sidebar'da ayrıca eklenir)
+  {
+    key: 'sync',
+    title: 'Senkronizasyon',
+    description: 'Veri senkronizasyon işlemleri',
+    route: '/admin/senkronizasyon',
+    roles: ['admin'],
+    section: 'system',
+    icon: Wrench,
+    actionText: 'Senkronize Et',
+  },
 
-  // Ziyaretci Buttons
+  // ─── ZİYARETÇİ ───────────────────────────────────────────────────────────────
   {
     key: 'visitor-chat',
     title: 'Yönetici ile Sohbet',

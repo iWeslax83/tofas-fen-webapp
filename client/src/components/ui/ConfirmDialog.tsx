@@ -66,10 +66,14 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             </div>
           </DialogBody>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => settle(false)}>
+            <Button variant="secondary" size="sm" onClick={() => settle(false)}>
               {options?.cancelLabel ?? 'Vazgeç'}
             </Button>
-            <Button variant={isDanger ? 'danger' : 'primary'} onClick={() => settle(true)}>
+            <Button
+              variant={isDanger ? 'danger' : 'primary'}
+              size="sm"
+              onClick={() => settle(true)}
+            >
               {options?.confirmLabel ?? 'Onayla'}
             </Button>
           </DialogFooter>

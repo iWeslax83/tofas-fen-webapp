@@ -335,7 +335,9 @@ export default function SettingsPage() {
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium text-[var(--ink-dim)]">Ad Soyad</span>
               <span className="font-serif text-sm text-[var(--ink)] px-3 py-2 bg-[var(--surface-2)] rounded-[var(--radius-sm)] border border-[var(--rule)]">
-                {user?.adSoyad || '-'}
+                {(user?.rol === 'parent'
+                  ? user?.adSoyad?.replace(/\s*Velisi$/, '')
+                  : user?.adSoyad) || '-'}
               </span>
             </div>
             <div className="flex flex-col gap-1">

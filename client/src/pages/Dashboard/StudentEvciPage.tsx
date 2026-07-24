@@ -108,6 +108,47 @@ const Field = ({ label, children, error }: FieldProps) => (
   </label>
 );
 
+const HOURS_24 = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const MINUTES_60 = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+
+// 24 saat (military time) formatında saat seçici — native type="time" tarayıcı
+// diline göre AM/PM gösterebildiği için saat/dakika açılır listeleriyle değiştirildi.
+const TimeSelect24 = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
+  const [hh = '', mm = ''] = value ? value.split(':') : [];
+  const emit = (h: string, m: string) => onChange(h && m ? `${h}:${m}` : '');
+  return (
+    <div className="flex items-center gap-2">
+      <select
+        aria-label="Saat"
+        value={hh}
+        onChange={(e) => emit(e.target.value, mm || '00')}
+        className={selectClasses}
+      >
+        <option value="">SS</option>
+        {HOURS_24.map((h) => (
+          <option key={h} value={h}>
+            {h}
+          </option>
+        ))}
+      </select>
+      <span className="text-[var(--ink-dim)]">:</span>
+      <select
+        aria-label="Dakika"
+        value={mm}
+        onChange={(e) => emit(hh || '00', e.target.value)}
+        className={selectClasses}
+      >
+        <option value="">DD</option>
+        {MINUTES_60.map((m) => (
+          <option key={m} value={m}>
+            {m}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
+
 const StudentEvciPage = () => {
   const { user: authUser } = useAuthGuard(['student']);
   const confirm = useConfirm();
@@ -432,6 +473,11 @@ const StudentEvciPage = () => {
 
   const windowIsOpen = submissionWindow?.isOpen ?? true;
 
+  // Bu hafta için (reddedilmemiş) bir talep varsa yeni talep butonu gizlenir.
+  const hasThisWeekRequest = submissionWindow?.weekOf
+    ? requests.some((r) => r.weekOf === submissionWindow.weekOf && r.parentApproval !== 'rejected')
+    : false;
+
   return (
     <ModernDashboardLayout pageTitle="Evci İşlemleri" breadcrumb={breadcrumb}>
       <div className="p-6 space-y-6">
@@ -466,12 +512,14 @@ const StudentEvciPage = () => {
           </Card>
         )}
 
-        <div className="flex justify-end">
-          <Button variant="primary" size="sm" onClick={handleNew} disabled={!windowIsOpen}>
-            <Plus size={14} />
-            Yeni Evci Talebi
-          </Button>
-        </div>
+        {!hasThisWeekRequest && (
+          <div className="flex justify-end">
+            <Button variant="primary" size="sm" onClick={handleNew} disabled={!windowIsOpen}>
+              <Plus size={14} />
+              Yeni Evci Talebi
+            </Button>
+          </div>
+        )}
 
         {requests.length === 0 ? (
           <Card contentClassName="p-10 flex flex-col items-center text-center gap-3">
@@ -620,10 +668,9 @@ const StudentEvciPage = () => {
                         </select>
                       </Field>
                       <Field label="Çıkış Saati">
-                        <Input
-                          type="time"
+                        <TimeSelect24
                           value={form.startTime || ''}
-                          onChange={(e) => setForm({ ...form, startTime: e.target.value })}
+                          onChange={(v) => setForm({ ...form, startTime: v })}
                         />
                       </Field>
                       <Field label="Dönüş Günü" error={errors.endDate}>
@@ -641,10 +688,9 @@ const StudentEvciPage = () => {
                         </select>
                       </Field>
                       <Field label="Dönüş Saati">
-                        <Input
-                          type="time"
+                        <TimeSelect24
                           value={form.endTime || ''}
-                          onChange={(e) => setForm({ ...form, endTime: e.target.value })}
+                          onChange={(v) => setForm({ ...form, endTime: v })}
                         />
                       </Field>
                     </div>

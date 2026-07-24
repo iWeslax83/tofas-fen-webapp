@@ -1,5 +1,6 @@
 import { useMemo, useState, lazy, Suspense } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { AlertCircle, Plus } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useNotes } from '../../hooks/queries/noteQueries';
@@ -187,6 +188,15 @@ export default function NotlarPage() {
       <div className="p-6 space-y-6">
         <header className="flex items-center justify-between gap-3 flex-wrap">
           <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">{pageTitle}</h1>
+
+          {isTeacher && (
+            <Link to="/teacher/file-import">
+              <Button variant="primary" size="sm">
+                <Plus size={14} />
+                Not Gir
+              </Button>
+            </Link>
+          )}
 
           {isParent && children.length > 1 && (
             <label className="flex items-center gap-2">
