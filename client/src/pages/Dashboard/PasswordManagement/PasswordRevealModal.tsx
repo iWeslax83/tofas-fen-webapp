@@ -24,9 +24,11 @@ export default function PasswordRevealModal({
     return () => {
       if (clearTimer.current) {
         clearTimeout(clearTimer.current);
+        // Only clear if we actually wrote to the clipboard. Without this
+        // guard, opening + closing the modal wipes whatever the user had
+        // copied beforehand.
+        navigator.clipboard.writeText('').catch(() => undefined);
       }
-      // Clear clipboard on unmount if we wrote to it
-      navigator.clipboard.writeText('').catch(() => undefined);
     };
   }, []);
 

@@ -18,8 +18,16 @@ const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 /**
  * bcrypt cost factor. Production uses 13 (roughly 2x the CPU cost of 12).
- * Tests/dev use 10 so that test suites don't spend seconds per hash.
- * Single source of truth for the codebase — see N-M1 in CODE_REVIEW_REPORT_2026-04-29.md.
+ * Dev uses 10 for a fast feedback loop. Tests use 4 — bcrypt's minimum cost,
+ * giving ~1ms per hash on commodity hardware. Single source of truth for the
+ * codebase — see N-M1 in CODE_REVIEW_REPORT_2026-04-29.md.
+ *
+ * Note on bulk paths (passwordAdminService.writeUsersForBatch /
+ * regenerateImportBatchPasswords): even at cost 4, a 200-user class import
+ * fans out 200 hashes via Promise.all. On modern CI hardware that completes
+ * in well under a second; if a future bulk-path test starts dominating CI
+ * runtime, consider mocking bcrypt for that test file rather than lowering
+ * BCRYPT_COST further (4 is bcrypt's lower bound).
  */
 export const BCRYPT_COST =
   process.env.NODE_ENV === 'production' ? 13 : process.env.NODE_ENV === 'test' ? 4 : 10;

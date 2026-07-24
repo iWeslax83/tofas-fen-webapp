@@ -27,11 +27,11 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     // N-M7: defense in depth alongside verifyUploadedFiles magic-byte check.
-    if (/\.(xlsx?|XLSX?)$/.test(file.originalname)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Sadece XLS / XLSX dosyaları kabul edilir'));
-    }
+    // Reject silently with cb(null, false) so the controller's `!req.file`
+    // 400 path runs. Calling cb(new Error(...)) instead causes multer to
+    // invoke next(err), which jumps straight to the global error handler
+    // and surfaces a 500 to the client.
+    cb(null, /\.xlsx?$/i.test(file.originalname));
   },
 });
 

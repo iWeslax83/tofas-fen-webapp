@@ -260,7 +260,19 @@ export async function activateImportBatch(input: {
     err.code = 'BATCH_NOT_PENDING';
     throw err;
   }
-  await User.updateMany({ importBatchId: updated.batchId }, { $set: { isActive: true } });
+  // Compensating revert: if the User.updateMany fails (network blip, replica
+  // lag), the batch would otherwise stay `activated` while users remain
+  // inactive — and the status guard above would block any retry. Revert to
+  // `pending` on failure so the operator can retry.
+  try {
+    await User.updateMany({ importBatchId: updated.batchId }, { $set: { isActive: true } });
+  } catch (err) {
+    await PasswordImportBatch.findOneAndUpdate(
+      { batchId: input.batchId, status: 'activated' },
+      { $set: { status: 'pending' }, $unset: { activatedAt: '' } },
+    ).catch(() => undefined);
+    throw err;
+  }
 
   // Toplu içe aktarımla gelen öğrenciler UserService.createUser'ı atlar, bu yüzden
   // aktivasyon sonrası veli hesapları (ve pansiyon senkronu) burada elle tetiklenir.
@@ -332,14 +344,24 @@ export async function regenerateImportBatchPasswords(input: {
     succeededIds = users.map((u) => u.id);
   } catch (txErr) {
     // Replica-set required for transactions. On standalone Mongo the
-    // commit will throw with code 20 — fall back to non-transactional
-    // bulkWrite and report failures.
+    // commit will throw with code 20 — fall back to bulkWrite and report
+    // failures. `ordered: true` makes the success/failure boundary
+    // contiguous: ops 0..matchedCount-1 succeeded, the rest didn't run.
+    // With `ordered: false` the failed indices can be scattered, and
+    // mapping them back via `matchedCount` mis-attributes successes.
     await session.abortTransaction().catch(() => undefined);
-    const fallback = await User.bulkWrite(ops, { ordered: false });
-    succeededIds = users.filter((_u, i) => i < (fallback.matchedCount ?? 0)).map((u) => u.id);
-    failures = users
-      .filter((u) => !succeededIds.includes(u.id))
-      .map((u) => ({ userId: u.id, error: 'bulkWrite did not match' }));
+    let matched = 0;
+    let reason = 'bulkWrite did not match';
+    try {
+      const fallback = await User.bulkWrite(ops, { ordered: true });
+      matched = fallback.matchedCount ?? 0;
+    } catch (bwErr) {
+      const e = bwErr as { matchedCount?: number; message?: string };
+      matched = e.matchedCount ?? 0;
+      if (e.message) reason = e.message;
+    }
+    succeededIds = users.slice(0, matched).map((u) => u.id);
+    failures = users.slice(matched).map((u) => ({ userId: u.id, error: reason }));
     void txErr;
   } finally {
     session.endSession();
@@ -412,7 +434,18 @@ export async function cancelImportBatch(input: {
     err.code = 'BATCH_NOT_PENDING';
     throw err;
   }
-  await User.deleteMany({ importBatchId: updated.batchId });
+  // Compensating revert: failed deleteMany would leave orphan users with the
+  // batch permanently `cancelled` and unretryable. Revert to `pending` so the
+  // operator can retry.
+  try {
+    await User.deleteMany({ importBatchId: updated.batchId });
+  } catch (err) {
+    await PasswordImportBatch.findOneAndUpdate(
+      { batchId: input.batchId, status: 'cancelled' },
+      { $set: { status: 'pending' }, $unset: { cancelledAt: '' } },
+    ).catch(() => undefined);
+    throw err;
+  }
   return { cancelled: updated.userIds.length };
 }
 
