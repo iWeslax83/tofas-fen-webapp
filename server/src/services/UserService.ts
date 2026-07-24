@@ -430,7 +430,11 @@ export async function updateUser(params: UpdateUserParams): Promise<UpdateUserRe
     if (!user) {
       return { notFound: true };
     }
-    if (user.rol === 'student' && Object.prototype.hasOwnProperty.call(updateData, 'isActive')) {
+    if (
+      user.rol === 'student' &&
+      (Object.prototype.hasOwnProperty.call(updateData, 'isActive') ||
+        Object.prototype.hasOwnProperty.call(updateData, 'pansiyon'))
+    ) {
       await ensureParentAccountForStudent(user.id, user.adSoyad, user.isActive);
     }
     return { user };
@@ -453,7 +457,11 @@ export async function updateUserLegacy(
   if (!user) {
     return { notFound: true };
   }
-  if (user.rol === 'student' && Object.prototype.hasOwnProperty.call(updateData, 'isActive')) {
+  if (
+    user.rol === 'student' &&
+    (Object.prototype.hasOwnProperty.call(updateData, 'isActive') ||
+      Object.prototype.hasOwnProperty.call(updateData, 'pansiyon'))
+  ) {
     await ensureParentAccountForStudent(user.id, user.adSoyad, user.isActive);
   }
   return { user };
