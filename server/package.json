@@ -45,7 +45,7 @@
     "backend"
   ],
   "author": "Tofaş Fen Lisesi",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "dependencies": {
     "@apollo/server": "^4.13.0",
     "@graphql-tools/utils": "^10.11.0",

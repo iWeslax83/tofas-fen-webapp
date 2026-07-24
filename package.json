@@ -2,6 +2,7 @@
   "name": "tofas-fen-webapp",
   "version": "1.0.0",
   "description": "Tofaş Fen Lisesi Bilgi Sistemi - Full Stack Web Application",
+  "license": "AGPL-3.0-only",
   "packageManager": "npm@11.6.1",
   "workspaces": [
     "client",

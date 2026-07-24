@@ -2,6 +2,7 @@
   "name": "@tofas-fen/shared",
   "version": "1.0.0",
   "description": "Shared types and DTOs for Tofaş Fen Webapp",
+  "license": "AGPL-3.0-only",
   "main": "types/index.ts",
   "types": "types/index.ts",
   "scripts": {
@@ -11,4 +12,3 @@
     "typescript": "^5.1.6"
   }
 }
-

@@ -244,7 +244,7 @@ Commit'ler öncesi Husky + lint-staged, değişen `.ts`/`.tsx` dosyalarında Pre
 
 ## Lisans
 
-MIT. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
+AGPL-3.0. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
 
 ## İletişim
 
