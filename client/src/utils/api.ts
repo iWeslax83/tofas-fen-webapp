@@ -221,6 +221,12 @@ const createSecureApiClient = (): AxiosInstance => {
             {},
             {
               withCredentials: true,
+              // Bare axios call bypasses apiClient's 120s default: without an
+              // explicit timeout this hangs forever if Render never answers,
+              // holding `isRefreshing` true and stalling every queued 401
+              // across the app indefinitely (the root-route "infinite
+              // loading" reports traced back to this).
+              timeout: 120000,
             },
           );
 
