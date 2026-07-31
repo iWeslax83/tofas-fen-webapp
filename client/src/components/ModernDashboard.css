@@ -11,7 +11,7 @@
   background: var(--paper);
 }
 
-.loading-container {
+.dashboard-loading-content {
   text-align: center;
   color: var(--ink);
 }
@@ -31,4 +31,10 @@
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: var(--space-6);
+}
+
+.dashboard-loading-content p {
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  margin-top: var(--space-4);
 }

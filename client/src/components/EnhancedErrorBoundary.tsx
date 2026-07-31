@@ -190,7 +190,7 @@ class EnhancedErrorBoundary extends Component<Props, State> {
             <div className="error-header">
               {this.getErrorIcon(error)}
               <h1 className="error-title">Bir Hata Oluştu</h1>
-              <p className="error-message">{error.message}</p>
+              <p className="enhanced-error-message">{error.message}</p>
             </div>
 
             <div className="error-details">

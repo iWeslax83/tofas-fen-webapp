@@ -1,5 +1,5 @@
-import nodemailer from "nodemailer";
-import { config } from "./config/environment";
+import nodemailer from 'nodemailer';
+import { config } from './config/environment';
 
 const transporter = nodemailer.createTransport({
   host: config.SMTP_HOST,
@@ -9,6 +9,12 @@ const transporter = nodemailer.createTransport({
     user: config.SMTP_USER,
     pass: config.SMTP_PASS,
   },
+  // Without these, a blocked/unreachable SMTP host hangs past the client's
+  // 120s axios timeout (client aborts with no response, request never
+  // fails server-side to report a real error).
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 20000,
 });
 
 export async function sendMail(to: string, subject: string, content: string, isHtml = true) {
@@ -38,7 +44,7 @@ export async function sendVerificationEmail(to: string, code: string, userName: 
     </div>
   `;
 
-  return sendMail(to, "E-posta Doğrulama Kodu - Tofaş Fen Lisesi", html);
+  return sendMail(to, 'E-posta Doğrulama Kodu - Tofaş Fen Lisesi', html);
 }
 
 export async function sendTwoFactorEmail(to: string, code: string, userName: string) {
@@ -58,6 +64,5 @@ export async function sendTwoFactorEmail(to: string, code: string, userName: str
     </div>
   `;
 
-  return sendMail(to, "Giriş Doğrulama Kodu - Tofaş Fen Lisesi", html);
+  return sendMail(to, 'Giriş Doğrulama Kodu - Tofaş Fen Lisesi', html);
 }
-
