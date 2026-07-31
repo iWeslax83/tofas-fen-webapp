@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useUser, useIsLoading } from '../stores/authStore';
 import { LoadBar } from './SkeletonComponents';
+import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import ModernDashboardLayout from './ModernDashboardLayout';
 import EmailVerificationBanner from './EmailVerificationBanner';
 import { WelcomeHero } from './dashboard/WelcomeHero';
@@ -36,6 +37,7 @@ const ModernDashboard: React.FC = () => {
   const authLoading = useIsLoading();
   const navigate = useNavigate();
   const { data: overviewData } = useDashboardOverview();
+  const isSlow = useDelayedFlag(6000);
 
   useEffect(() => {
     if (authLoading) return;
@@ -45,12 +47,13 @@ const ModernDashboard: React.FC = () => {
   if (authLoading) {
     return (
       <div className="modern-dashboard-loading">
-        <div className="loading-container">
+        <div className="dashboard-loading-content">
           <div className="loading-logo">
             <GraduationCap className="loading-icon" />
           </div>
           <div className="loading-text">Tofaş Fen Lisesi</div>
           <LoadBar className="loading-container-bar" />
+          {isSlow && <p>Sunucu uyandırılıyor, bu biraz sürebilir...</p>}
         </div>
       </div>
     );
