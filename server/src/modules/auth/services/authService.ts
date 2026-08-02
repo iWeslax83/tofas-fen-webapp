@@ -598,7 +598,18 @@ export class AuthService {
     user.emailVerificationExpiry = expiry;
     await user.save();
 
-    await sendVerificationEmail(user.email, code, user.adSoyad);
+    // Don't block the response on SMTP: send async so a slow/unreachable
+    // mail host can't hold the request open past the proxy timeout.
+    sendVerificationEmail(user.email, code, user.adSoyad).catch(async (emailErr) => {
+      user.emailVerificationCode = undefined as any;
+      user.emailVerificationExpiry = undefined as any;
+      await user.save().catch(() => {});
+      logSecurityEvent({
+        event: SecurityEvent.EMAIL_SEND_FAILED,
+        userId: user.id,
+        details: { type: 'email_verification', error: (emailErr as Error).message },
+      });
+    });
   }
 
   /**
