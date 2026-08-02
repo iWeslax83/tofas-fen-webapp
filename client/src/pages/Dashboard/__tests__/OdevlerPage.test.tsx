@@ -1,8 +1,14 @@
 /**
  * @vitest-environment jsdom
  */
+import type { ReactElement } from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render as rtlRender, screen, waitFor } from '@testing-library/react';
+import { ConfirmProvider } from '../../../components/ui/ConfirmDialog';
+
+function render(ui: ReactElement) {
+  return rtlRender(<ConfirmProvider>{ui}</ConfirmProvider>);
+}
 
 const getHomeworksMock = vi.fn();
 

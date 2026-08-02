@@ -1,9 +1,23 @@
 /**
  * @vitest-environment jsdom
  */
+import type { ReactElement } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render as rtlRender, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ConfirmProvider } from '../../../components/ui/ConfirmDialog';
+
+function render(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  });
+  return rtlRender(
+    <QueryClientProvider client={queryClient}>
+      <ConfirmProvider>{ui}</ConfirmProvider>
+    </QueryClientProvider>,
+  );
+}
 
 const listUsersMock = vi.fn();
 const getUsersMock = vi.fn();
