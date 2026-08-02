@@ -1,8 +1,7 @@
 import request from 'supertest';
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { app } from '../../index';
 import { User } from '../../models';
-import { connectDB, closeDB } from '../../db';
 
 vi.mock('../../utils/jwt', async () => {
   const actual = await vi.importActual('../../utils/jwt');
@@ -18,16 +17,11 @@ vi.mock('../../utils/jwt', async () => {
 
 describe('User Routes', () => {
   beforeEach(async () => {
-    await connectDB();
     try {
       await User.deleteMany({});
     } catch (e) {
       // Ignore cleanup error
     }
-  });
-
-  afterEach(async () => {
-    await closeDB();
   });
 
   describe('GET /api/users/role/:role', () => {

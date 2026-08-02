@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import { app } from '../../index';
-import { connectDB, closeDB } from '../../db';
 import { User } from '../../models';
 import type { Request, Response, NextFunction } from 'express';
 
@@ -85,17 +84,12 @@ async function seedUser(overrides: Record<string, unknown> = {}) {
 // Lifecycle
 // -----------------------------------------------------------------------
 beforeEach(async () => {
-  await connectDB();
   try {
     await User.deleteMany({});
   } catch (err) {
     console.warn('Test DB cleanup error', err);
   }
   asAdmin();
-});
-
-afterEach(async () => {
-  await closeDB();
 });
 
 // -----------------------------------------------------------------------

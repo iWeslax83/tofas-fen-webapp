@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import { app } from '../../index';
-import { connectDB, closeDB } from '../../db';
 import { Schedule } from '../../models/Schedule';
 import { User } from '../../models';
 import { getAcademicYear } from '../../utils/academicYear';
@@ -80,7 +79,6 @@ async function seedSchedule(
 }
 
 beforeEach(async () => {
-  await connectDB();
   try {
     await Schedule.deleteMany({});
     await User.deleteMany({});
@@ -88,10 +86,6 @@ beforeEach(async () => {
     console.warn('Test DB cleanup error', err);
   }
   asAdmin();
-});
-
-afterEach(async () => {
-  await closeDB();
 });
 
 describe('GET /api/schedule', () => {

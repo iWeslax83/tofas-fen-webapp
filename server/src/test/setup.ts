@@ -45,7 +45,22 @@ beforeAll(async () => {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 10000,
       bufferCommands: false,
-      // bufferMaxEntries: 0
+      // With bufferCommands off, mongoose's default autoCreate races the
+      // driver's own "connected" signal: on a fresh in-memory mongod it can
+      // try to auto-create a registered model's collection from inside this
+      // very connect() call before the topology reports ready, throwing
+      // "Client must be connected before running operations". Collections
+      // are created lazily on first write anyway; tests that need one to
+      // exist up front call Model.init() themselves after connect resolves.
+      autoCreate: false,
+      // Same race for index builds: mongoose's autoIndex fires in the
+      // background for every registered model right after 'open', separate
+      // from any explicit Model.init() a test file calls. On the shared
+      // connection that background build can straddle a reconnect and throw
+      // "Client must be connected before running operations" from inside
+      // Model.create(). Tests that rely on unique-index enforcement already
+      // call Model.init() explicitly in their own beforeAll.
+      autoIndex: false,
     });
     console.log('✅ Test database connected successfully');
   } catch (error) {

@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import { app } from '../../index';
-import { connectDB, closeDB } from '../../db';
 import { Announcement } from '../../models';
 
 vi.mock('../../utils/jwt', async () => {
@@ -18,13 +17,8 @@ vi.mock('../../utils/jwt', async () => {
 
 // Test database setup
 beforeEach(async () => {
-  await connectDB();
   // Clear test data
   await Announcement.deleteMany({});
-});
-
-afterEach(async () => {
-  await closeDB();
 });
 
 describe('Announcements API Tests', () => {

@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import { app } from '../../index';
-import { connectDB, closeDB } from '../../db';
 import Note from '../../models/Note';
 import { User } from '../../models';
 import type { Request, Response, NextFunction } from 'express';
@@ -85,7 +84,6 @@ async function seedNote(overrides: Partial<typeof baseNote> = {}) {
 // Lifecycle
 // -----------------------------------------------------------------------
 beforeEach(async () => {
-  await connectDB();
   try {
     await Note.deleteMany({});
     await User.deleteMany({});
@@ -93,10 +91,6 @@ beforeEach(async () => {
     console.warn('Test DB cleanup error', err);
   }
   asAdmin();
-});
-
-afterEach(async () => {
-  await closeDB();
 });
 
 // -----------------------------------------------------------------------
