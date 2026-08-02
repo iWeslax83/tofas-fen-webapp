@@ -1,12 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import mongoose from 'mongoose';
-import { connectDB, closeDB } from '../../db';
 import { User, IUser } from '../../models/User';
 
 // Test database setup
 describe('User Model', () => {
   beforeEach(async () => {
-    await connectDB();
     try {
       await User.collection.dropIndexes();
     } catch (e) {
@@ -18,7 +16,6 @@ describe('User Model', () => {
 
   afterEach(async () => {
     await User.deleteMany({});
-    await closeDB();
   });
 
   describe('User Creation', () => {
@@ -251,13 +248,11 @@ import bcrypt from 'bcryptjs';
 
 describe('User schema sifre `select: false` (N-H4)', () => {
   beforeEach(async () => {
-    await connectDB();
     await User.deleteMany({});
   });
 
   afterEach(async () => {
     await User.deleteMany({});
-    await closeDB();
   });
 
   // Seed helper re-creates the test user for each test.

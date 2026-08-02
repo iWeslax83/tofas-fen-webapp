@@ -19,7 +19,10 @@ describe('AcademicYearRollover', () => {
   // freshly-started in-memory Mongo, the unique(toYear) index may not exist
   // yet when the very first test runs, letting a "duplicate" insert through.
   beforeAll(async () => {
-    await AcademicYearRollover.init();
+    // Model.init() gates its index build behind the connection's autoIndex
+    // option (disabled in test/setup.ts to avoid a background-build race);
+    // ensureIndexes() builds them directly regardless of that gate.
+    await AcademicYearRollover.ensureIndexes();
   });
 
   it('varsayılan durumu proposed', async () => {

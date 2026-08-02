@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import { app } from '../../index';
-import { connectDB, closeDB } from '../../db';
 import { EvciRequest } from '../../models/EvciRequest';
 import { EvciWindowOverride } from '../../models/EvciWindowOverride';
 import { User } from '../../models/User';
@@ -130,7 +129,6 @@ async function seedUser(overrides: Record<string, unknown> = {}) {
 // Lifecycle
 // -----------------------------------------------------------------------
 beforeEach(async () => {
-  await connectDB();
   try {
     await EvciRequest.deleteMany({});
     await EvciWindowOverride.deleteMany({});
@@ -139,10 +137,6 @@ beforeEach(async () => {
     console.warn('Test DB cleanup error', err);
   }
   asAdmin();
-});
-
-afterEach(async () => {
-  await closeDB();
 });
 
 // -----------------------------------------------------------------------

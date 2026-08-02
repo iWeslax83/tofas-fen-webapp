@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import request from 'supertest';
 import { app } from '../../index';
-import { connectDB, closeDB } from '../../db';
 import { User, Announcement, Homework } from '../../models';
 
 vi.mock('../../middleware/security', () => ({
@@ -47,7 +46,6 @@ vi.mock('../../utils/jwt', async () => {
 
 // Test database setup
 beforeAll(async () => {
-  await connectDB();
   try {
     await User.deleteMany({});
     await Announcement.deleteMany({});
@@ -55,10 +53,6 @@ beforeAll(async () => {
   } catch (e) {
     // Ignore cleanup error
   }
-}, 30000);
-
-afterAll(async () => {
-  await closeDB();
 }, 30000);
 
 describe('Load Tests', () => {
