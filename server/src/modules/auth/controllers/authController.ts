@@ -502,9 +502,9 @@ export class AuthController {
 
       await AuthService.sendEmailVerification(userId);
 
-      res.status(202).json({
+      res.json({
         success: true,
-        message: 'Doğrulama kodu e-posta adresinize gönderiliyor',
+        message: 'Doğrulama kodu e-posta adresinize gönderildi',
       });
     },
   );

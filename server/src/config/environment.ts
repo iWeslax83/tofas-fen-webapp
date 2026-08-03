@@ -57,6 +57,12 @@ export const config = {
   SMTP_USER: process.env.SMTP_USER || '',
   SMTP_PASS: process.env.SMTP_PASS || '',
   SMTP_FROM: process.env.SMTP_FROM || 'noreply@tofas-fen.com',
+  // Resend HTTPS API. Set this on hosts that block outbound SMTP ports
+  // (Render free instances do); mailService falls back to SMTP when unset.
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+  MAIL_FROM: process.env.MAIL_FROM || process.env.SMTP_FROM || 'noreply@tofas-fen.com',
+  // MAIL_FROM has no mailbox behind it; replies are routed here instead.
+  MAIL_REPLY_TO: process.env.MAIL_REPLY_TO || '',
 
   // Alert emails
   ALERT_EMAIL_ENABLED: process.env.ALERT_EMAIL_ENABLED === 'true',

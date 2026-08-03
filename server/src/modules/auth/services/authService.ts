@@ -598,9 +598,13 @@ export class AuthService {
     user.emailVerificationExpiry = expiry;
     await user.save();
 
-    // Don't block the response on SMTP: send async so a slow/unreachable
-    // mail host can't hold the request open past the proxy timeout.
-    sendVerificationEmail(user.email, code, user.adSoyad).catch(async (emailErr) => {
+    // Awaited on purpose: the mail transport is bounded (Resend HTTPS call with
+    // a 15s timeout, or SMTP with connect/socket timeouts), so this can't hold
+    // the request past the proxy timeout, and the caller gets a real error
+    // instead of a success message for a mail that never left.
+    try {
+      await sendVerificationEmail(user.email, code, user.adSoyad);
+    } catch (emailErr) {
       user.emailVerificationCode = undefined as any;
       user.emailVerificationExpiry = undefined as any;
       await user.save().catch(() => {});
@@ -609,7 +613,8 @@ export class AuthService {
         userId: user.id,
         details: { type: 'email_verification', error: (emailErr as Error).message },
       });
-    });
+      throw AppError.internal('Doğrulama e-postası gönderilemedi, lütfen tekrar deneyin');
+    }
   }
 
   /**

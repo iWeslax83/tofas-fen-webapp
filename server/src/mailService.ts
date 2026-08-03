@@ -1,6 +1,14 @@
 import nodemailer from 'nodemailer';
 import { config } from './config/environment';
 
+// Render's free instances block outbound traffic on the SMTP ports (25, 465,
+// 587), so a nodemailer connect there never completes: the request hangs until
+// the proxy gives up with a 502. When RESEND_API_KEY is set we send over the
+// Resend HTTPS API instead, which is unaffected by that block. SMTP stays as
+// the fallback for local development and self-hosted deploys.
+const RESEND_ENDPOINT = 'https://api.resend.com/emails';
+const RESEND_TIMEOUT_MS = 15000;
+
 const transporter = nodemailer.createTransport({
   host: config.SMTP_HOST,
   port: config.SMTP_PORT,
@@ -17,11 +25,49 @@ const transporter = nodemailer.createTransport({
   socketTimeout: 20000,
 });
 
+async function sendViaResend(to: string, subject: string, content: string, isHtml: boolean) {
+  const response = await fetch(RESEND_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${config.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: config.MAIL_FROM,
+      to: [to],
+      subject,
+      // MAIL_FROM is a send-only address with no mailbox behind it, so replies
+      // would go nowhere without this.
+      ...(config.MAIL_REPLY_TO ? { reply_to: [config.MAIL_REPLY_TO] } : {}),
+      ...(isHtml ? { html: content } : { text: content }),
+    }),
+    signal: AbortSignal.timeout(RESEND_TIMEOUT_MS),
+  });
+
+  const payload = (await response.json().catch(() => null)) as {
+    id?: string;
+    message?: string;
+    name?: string;
+  } | null;
+
+  if (!response.ok) {
+    const detail = payload?.message || payload?.name || `HTTP ${response.status}`;
+    throw new Error(`Resend gönderimi başarısız: ${detail}`);
+  }
+
+  return { messageId: payload?.id ?? '' };
+}
+
 export async function sendMail(to: string, subject: string, content: string, isHtml = true) {
+  if (config.RESEND_API_KEY) {
+    return sendViaResend(to, subject, content, isHtml);
+  }
+
   const info = await transporter.sendMail({
-    from: config.SMTP_FROM,
+    from: config.MAIL_FROM,
     to,
     subject,
+    replyTo: config.MAIL_REPLY_TO || undefined,
     text: isHtml ? undefined : content,
     html: isHtml ? content : undefined,
   });
