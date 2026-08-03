@@ -36,6 +36,9 @@ async function sendViaResend(to: string, subject: string, content: string, isHtm
       from: config.MAIL_FROM,
       to: [to],
       subject,
+      // MAIL_FROM is a send-only address with no mailbox behind it, so replies
+      // would go nowhere without this.
+      ...(config.MAIL_REPLY_TO ? { reply_to: [config.MAIL_REPLY_TO] } : {}),
       ...(isHtml ? { html: content } : { text: content }),
     }),
     signal: AbortSignal.timeout(RESEND_TIMEOUT_MS),
@@ -64,6 +67,7 @@ export async function sendMail(to: string, subject: string, content: string, isH
     from: config.MAIL_FROM,
     to,
     subject,
+    replyTo: config.MAIL_REPLY_TO || undefined,
     text: isHtml ? undefined : content,
     html: isHtml ? content : undefined,
   });

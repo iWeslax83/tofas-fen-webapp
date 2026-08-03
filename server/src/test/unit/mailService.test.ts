@@ -18,6 +18,7 @@ vi.mock('../../config/environment', () => ({
     SMTP_PASS: 'pass',
     SMTP_FROM: 'noreply@example.com',
     MAIL_FROM: 'noreply@example.com',
+    MAIL_REPLY_TO: '',
     RESEND_API_KEY: '',
   },
 }));
@@ -31,6 +32,7 @@ describe('mailService transport selection', () => {
   beforeEach(() => {
     sendMailMock.mockClear();
     (config as any).RESEND_API_KEY = '';
+    (config as any).MAIL_REPLY_TO = '';
   });
 
   afterEach(() => {
@@ -86,6 +88,23 @@ describe('mailService transport selection', () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.text).toBe('düz metin');
     expect(body.html).toBeUndefined();
+  });
+
+  it('sets reply_to only when MAIL_REPLY_TO is configured', async () => {
+    (config as any).RESEND_API_KEY = 'test-key';
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: 'resend-message-id' }),
+    });
+    global.fetch = fetchMock as any;
+
+    await sendMail('student@example.com', 'Konu', '<p>merhaba</p>');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).reply_to).toBeUndefined();
+
+    (config as any).MAIL_REPLY_TO = 'okul@example.com';
+    await sendMail('student@example.com', 'Konu', '<p>merhaba</p>');
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).reply_to).toEqual(['okul@example.com']);
   });
 
   it('throws with the Resend error detail on a failed send', async () => {
