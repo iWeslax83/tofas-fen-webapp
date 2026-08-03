@@ -1,25 +1,9 @@
-import nodemailer from 'nodemailer';
 import logger from '../utils/logger';
 
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const MAX_EMAILS_PER_TYPE = 10;
 
 const emailSendCounts = new Map<string, { count: number; windowStart: number }>();
-
-function getTransport() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 20000,
-  });
-}
 
 export class AlertEmailService {
   static async sendAlert(
@@ -49,16 +33,16 @@ export class AlertEmailService {
     }
 
     const severityPrefix = severity === 'critical' ? '[KRITIK]' : '[UYARI]';
-    const from = process.env.SMTP_FROM || 'noreply@tofas-fen.com';
 
     try {
-      const transport = getTransport();
-      await transport.sendMail({
-        from,
-        to: recipients,
-        subject: `${severityPrefix} Tofaş Fen - ${subject}`,
-        text: `Severity: ${severity.toUpperCase()}\nTime: ${new Date().toISOString()}\n\n${body}`,
-      });
+      // Lazy-import to avoid a circular dep with mailService -> logger.
+      const { sendMail } = await import('../mailService');
+      await sendMail(
+        recipients,
+        `${severityPrefix} Tofaş Fen - ${subject}`,
+        `Severity: ${severity.toUpperCase()}\nTime: ${new Date().toISOString()}\n\n${body}`,
+        false,
+      );
       logger.info(`Alert email sent: ${subject}`, { severity, to: recipients });
     } catch (error) {
       logger.error('Failed to send alert email', {
