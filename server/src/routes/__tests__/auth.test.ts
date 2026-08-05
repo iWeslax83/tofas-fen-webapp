@@ -9,11 +9,6 @@ vi.mock('../../middleware/rateLimiter', () => ({
   apiLimiter: (req: any, res: any, next: any) => next(),
 }));
 
-// Mock captcha middleware
-vi.mock('../../middleware/captcha', () => ({
-  captchaMiddleware: (req: any, res: any, next: any) => next(),
-}));
-
 // Mock tokenBlacklist
 vi.mock('../../utils/tokenBlacklist', () => ({
   tokenBlacklist: {

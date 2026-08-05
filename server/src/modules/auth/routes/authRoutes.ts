@@ -5,7 +5,6 @@ import { AuthController } from '../controllers/authController';
 import { AuthService, BCRYPT_COST } from '../services/authService';
 import { authenticateJWT, authorizeRoles } from '../../../utils/jwt';
 import { authLimiter } from '../../../middleware/rateLimiter';
-import { captchaMiddleware } from '../../../middleware/captcha';
 import { validateUnlockAccount } from '../validators/authValidators';
 import { User } from '../../../models/User';
 import logger from '../../../utils/logger';
@@ -49,7 +48,7 @@ const router = Router();
  *       429:
  *         description: Çok fazla giriş denemesi
  */
-router.post('/login', authLimiter, captchaMiddleware, AuthController.login);
+router.post('/login', authLimiter, AuthController.login);
 
 /**
  * @swagger
