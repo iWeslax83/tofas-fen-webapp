@@ -8,7 +8,6 @@ import { sendVerificationEmail, sendTwoFactorEmail } from '../../../mailService'
 import { config } from '../../../config/environment';
 import { logSecurityEvent, SecurityEvent } from '../../../utils/securityLogger';
 import { SecurityAlertService } from '../../../services/SecurityAlertService';
-import { trackFailedLogin, resetFailedLogin } from '../../../middleware/captcha';
 import { decrypt } from '../../../utils/encryption';
 import { RefreshToken } from '../../../models/RefreshToken';
 const uuidv4 = () => crypto.randomUUID();
@@ -135,18 +134,11 @@ export class AuthService {
         userAgent: meta?.userAgent,
       });
 
-      // Track for CAPTCHA and security alerts
       if (meta?.ip) {
-        trackFailedLogin(meta.ip);
         SecurityAlertService.trackLoginFailure(id, meta.ip).catch(() => {});
       }
 
       throw AppError.unauthorized('Geçersiz kullanıcı adı veya şifre');
-    }
-
-    // Reset CAPTCHA tracking on successful login
-    if (meta?.ip) {
-      resetFailedLogin(meta.ip);
     }
 
     // #8: Reset failed attempts on success
