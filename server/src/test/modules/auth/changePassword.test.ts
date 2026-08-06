@@ -2,7 +2,11 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import bcrypt from 'bcryptjs';
 import { User } from '../../../models/User';
 import { PasswordAuditLog } from '../../../models/PasswordAuditLog';
-import { AuthService, BCRYPT_COST } from '../../../modules/auth/services/authService';
+import {
+  AuthService,
+  BCRYPT_COST,
+  usingDistributedPassword,
+} from '../../../modules/auth/services/authService';
 
 const ID = 'degistiren_kullanici';
 const ESKI = 'EskiSifre1';
@@ -84,5 +88,36 @@ describe('AuthService.changePassword', () => {
 
     const user = await User.findOne({ id: ID }).select('+sifre');
     expect(await bcrypt.compare(YENI, user!.sifre!)).toBe(true);
+  });
+
+  it('şifre değişince kullanıcı dağıtılan şifreyi kullanmıyor sayılır', async () => {
+    await AuthService.changePassword(ID, ESKI, YENI);
+
+    const user = await User.findOne({ id: ID });
+    expect(usingDistributedPassword(user!)).toBe(false);
+  });
+});
+
+describe('usingDistributedPassword', () => {
+  it('hiç kendi şifresini belirlememişse true', () => {
+    expect(usingDistributedPassword({ passwordLastSetAt: new Date('2026-01-01') })).toBe(true);
+  });
+
+  it('kendi şifresi admin damgasından yeniyse false', () => {
+    expect(
+      usingDistributedPassword({
+        passwordLastSetAt: new Date('2026-01-01'),
+        passwordSelfChangedAt: new Date('2026-02-01'),
+      }),
+    ).toBe(false);
+  });
+
+  it('admin sonradan reset attıysa tekrar true', () => {
+    expect(
+      usingDistributedPassword({
+        passwordSelfChangedAt: new Date('2026-01-01'),
+        passwordLastSetAt: new Date('2026-03-01'),
+      }),
+    ).toBe(true);
   });
 });

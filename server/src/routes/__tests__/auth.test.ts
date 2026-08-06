@@ -35,7 +35,10 @@ vi.mock('../../utils/logger', () => ({
 }));
 
 // Mock AuthService
-vi.mock('../../modules/auth/services/authService', () => ({
+// toAuthUserPayload saf bir yardımcı, gerçeği kalsın: /me yanıtının alanlarını
+// o üretiyor, mock'lanırsa handler patlar.
+vi.mock('../../modules/auth/services/authService', async (importOriginal) => ({
+  ...(await importOriginal<any>()),
   AuthService: {
     authenticateUser: vi.fn(),
     registerUser: vi.fn(),

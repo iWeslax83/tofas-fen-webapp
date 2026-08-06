@@ -14,6 +14,10 @@ export interface User {
   childId?: string[];
   isActive?: boolean;
   childrenSiniflar?: { sinif: string; sube: string; adSoyad?: string }[];
+  /** Kullanıcı hâlâ okul yönetiminin dağıttığı otomatik şifreyi mi kullanıyor. */
+  usingDistributedPassword?: boolean;
+  /** Yönetimin en son şifre yazdığı an; band kapatma mantığı bunu okur. */
+  passwordLastSetAt?: string;
   createdAt?: string;
   updatedAt?: string;
 }

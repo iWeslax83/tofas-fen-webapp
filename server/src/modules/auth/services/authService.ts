@@ -45,6 +45,49 @@ const DUMMY_BCRYPT_HASH = bcrypt.hashSync(
   BCRYPT_COST,
 );
 
+/** Kullanıcı hâlâ admin'in dağıttığı şifreyi mi kullanıyor. */
+export function usingDistributedPassword(user: {
+  passwordSelfChangedAt?: Date;
+  passwordLastSetAt?: Date;
+}): boolean {
+  if (!user.passwordSelfChangedAt) return true;
+  if (!user.passwordLastSetAt) return false;
+  return user.passwordSelfChangedAt < user.passwordLastSetAt;
+}
+
+/** Giriş ve profil yanıtlarında dönen kullanıcı alanları, tek yerde. */
+export function toAuthUserPayload(user: {
+  id: string;
+  adSoyad: string;
+  rol: string;
+  email?: string;
+  emailVerified?: boolean;
+  twoFactorEnabled?: boolean;
+  sinif?: string;
+  sube?: string;
+  oda?: string;
+  pansiyon?: boolean;
+  lastLogin?: Date;
+  passwordSelfChangedAt?: Date;
+  passwordLastSetAt?: Date;
+}) {
+  return {
+    id: user.id,
+    adSoyad: user.adSoyad,
+    rol: user.rol,
+    email: user.email,
+    emailVerified: user.emailVerified,
+    twoFactorEnabled: user.twoFactorEnabled,
+    sinif: user.sinif,
+    sube: user.sube,
+    oda: user.oda,
+    pansiyon: user.pansiyon,
+    lastLogin: user.lastLogin,
+    passwordLastSetAt: user.passwordLastSetAt,
+    usingDistributedPassword: usingDistributedPassword(user),
+  };
+}
+
 /**
  * Authentication Service
  * Business logic for authentication operations
@@ -172,19 +215,7 @@ export class AuthService {
 
           const tokens = generateTokenPair(user.id, user.rol, user.email, user.tokenVersion);
           return {
-            user: {
-              id: user.id,
-              adSoyad: user.adSoyad,
-              rol: user.rol,
-              email: user.email,
-              emailVerified: user.emailVerified,
-              twoFactorEnabled: user.twoFactorEnabled,
-              sinif: user.sinif,
-              sube: user.sube,
-              oda: user.oda,
-              pansiyon: user.pansiyon,
-              lastLogin: user.lastLogin,
-            },
+            user: toAuthUserPayload(user),
             tokens,
           };
         }
@@ -265,19 +296,7 @@ export class AuthService {
     });
 
     return {
-      user: {
-        id: user.id,
-        adSoyad: user.adSoyad,
-        rol: user.rol,
-        email: user.email,
-        emailVerified: user.emailVerified,
-        twoFactorEnabled: user.twoFactorEnabled,
-        sinif: user.sinif,
-        sube: user.sube,
-        oda: user.oda,
-        pansiyon: user.pansiyon,
-        lastLogin: user.lastLogin,
-      },
+      user: toAuthUserPayload(user),
       tokens,
     };
   }
@@ -414,19 +433,7 @@ export class AuthService {
     const tokens = generateTokenPair(user.id, user.rol, user.email, user.tokenVersion);
 
     return {
-      user: {
-        id: user.id,
-        adSoyad: user.adSoyad,
-        rol: user.rol,
-        email: user.email,
-        emailVerified: user.emailVerified,
-        twoFactorEnabled: user.twoFactorEnabled,
-        sinif: user.sinif,
-        sube: user.sube,
-        oda: user.oda,
-        pansiyon: user.pansiyon,
-        lastLogin: user.lastLogin,
-      },
+      user: toAuthUserPayload(user),
       tokens,
       trustedDeviceToken,
     };

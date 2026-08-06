@@ -9,7 +9,21 @@ import bcrypt from 'bcryptjs';
 vi.mock('../../../models/User');
 vi.mock('bcryptjs');
 vi.mock('../../../utils/jwt');
-vi.mock('../../../modules/auth/services/authService');
+// AuthService sınıfı mock'lanıyor ama toAuthUserPayload saf bir yardımcı,
+// gerçeği kalsın: controller yanıtlarının alanlarını o üretiyor.
+vi.mock('../../../modules/auth/services/authService', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    AuthService: {
+      authenticateUser: vi.fn(),
+      registerUser: vi.fn(),
+      rotateRefreshToken: vi.fn(),
+      changePassword: vi.fn(),
+      getUserProfile: vi.fn(),
+    },
+  };
+});
 
 import { AuthService } from '../../../modules/auth/services/authService';
 

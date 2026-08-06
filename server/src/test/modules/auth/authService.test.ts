@@ -42,6 +42,8 @@ describe('AuthService', () => {
         rol: 'student',
         email: 'john@example.com',
         lastLogin: expect.any(Date),
+        // Kendi şifresini hiç belirlememiş kullanıcı: hatırlatma bandı çıkar.
+        usingDistributedPassword: true,
       });
       expect(result.tokens).toBeDefined();
     });

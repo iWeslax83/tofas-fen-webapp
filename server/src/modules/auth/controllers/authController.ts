@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../../../utils/AppError';
 import { User } from '../../../models/User';
-import { AuthService } from '../services/authService';
+import { AuthService, toAuthUserPayload } from '../services/authService';
 import { generateTokenPair, verifyRefreshToken, logoutUser } from '../../../utils/jwt';
 import { asyncHandler } from '../../../middleware/errorHandler';
 import bcrypt from 'bcryptjs';
@@ -122,19 +122,7 @@ export class AuthController {
       success: true,
       message: 'Giriş başarılı',
       csrfToken,
-      user: {
-        id: user.id,
-        adSoyad: user.adSoyad,
-        rol: user.rol,
-        email: user.email,
-        emailVerified: user.emailVerified,
-        twoFactorEnabled: user.twoFactorEnabled,
-        sinif: user.sinif,
-        sube: user.sube,
-        oda: user.oda,
-        pansiyon: user.pansiyon,
-        lastLogin: user.lastLogin,
-      },
+      user,
       expiresIn: tokens.expiresIn,
       refreshExpiresIn: tokens.refreshExpiresIn,
       // Backward compatibility for frontend migration
@@ -318,17 +306,7 @@ export class AuthController {
     res.json({
       success: true,
       user: {
-        id: user.id,
-        adSoyad: user.adSoyad,
-        rol: user.rol,
-        email: user.email,
-        emailVerified: user.emailVerified,
-        twoFactorEnabled: user.twoFactorEnabled,
-        sinif: user.sinif,
-        sube: user.sube,
-        oda: user.oda,
-        pansiyon: user.pansiyon,
-        lastLogin: user.lastLogin,
+        ...toAuthUserPayload(user),
         createdAt: user.createdAt,
       },
     });
@@ -361,17 +339,7 @@ export class AuthController {
 
     res.json({
       csrfToken,
-      id: user.id,
-      adSoyad: user.adSoyad,
-      rol: user.rol,
-      email: user.email,
-      emailVerified: user.emailVerified,
-      twoFactorEnabled: user.twoFactorEnabled,
-      sinif: user.sinif,
-      sube: user.sube,
-      oda: user.oda,
-      pansiyon: user.pansiyon,
-      lastLogin: user.lastLogin,
+      ...toAuthUserPayload(user),
       createdAt: user.createdAt,
     });
   });
