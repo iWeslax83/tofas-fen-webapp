@@ -135,6 +135,11 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
 
 const ACTIVITY_LIMIT = 6;
 
+/** Son Hareketler penceresi: bundan eskisi "son" sayılmaz. */
+const ACTIVITY_WINDOW_MS = 30 * 86_400_000;
+
+const activitySince = (): Date => new Date(Date.now() - ACTIVITY_WINDOW_MS);
+
 const iso = (d?: Date | string | null): string =>
   d ? new Date(d).toISOString() : new Date(0).toISOString();
 
@@ -147,6 +152,7 @@ const mergeActivity = (entries: ActivityEntry[]): ActivityEntry[] =>
 /** Announcements aimed at this role, or at everyone. */
 async function announcementActivity(role: string, url: string): Promise<ActivityEntry[]> {
   const anns = await Announcement.find({
+    createdAt: { $gte: activitySince() },
     $or: [
       { targetRoles: role },
       { targetRoles: { $size: 0 } },
@@ -173,12 +179,18 @@ async function announcementActivity(role: string, url: string): Promise<Activity
  */
 async function getStudentActivity(userId: string, classLevel?: string): Promise<ActivityEntry[]> {
   const [notes, homeworks, anns] = await Promise.all([
-    Note.find({ studentId: userId })
+    Note.find({ studentId: userId, lastUpdated: { $gte: activitySince() } })
       .sort({ lastUpdated: -1 })
       .limit(ACTIVITY_LIMIT)
       .lean<Array<{ _id: unknown; lesson: string; average?: number; lastUpdated: Date }>>(),
     classLevel
-      ? Homework.find({ classLevel, isPublished: true, academicYear: getAcademicYear() })
+      ? Homework.find({
+          classLevel,
+          isPublished: true,
+          status: { $ne: 'expired' },
+          academicYear: getAcademicYear(),
+          assignedDate: { $gte: activitySince() },
+        })
           .sort({ assignedDate: -1 })
           .limit(ACTIVITY_LIMIT)
           .lean<
@@ -218,16 +230,24 @@ async function getStudentActivity(userId: string, classLevel?: string): Promise<
 /** What the teacher has set, and what is waiting on them. */
 async function getTeacherActivity(userId: string): Promise<ActivityEntry[]> {
   const [homeworks, dilekceler, anns] = await Promise.all([
-    Homework.find({ teacherId: userId }).sort({ assignedDate: -1 }).limit(ACTIVITY_LIMIT).lean<
-      Array<{
-        id?: string;
-        title: string;
-        subject: string;
-        classLevel: string;
-        assignedDate: Date;
-      }>
-    >(),
-    Dilekce.find({ reviewedBy: userId })
+    Homework.find({
+      teacherId: userId,
+      isPublished: true,
+      status: { $ne: 'expired' },
+      assignedDate: { $gte: activitySince() },
+    })
+      .sort({ assignedDate: -1 })
+      .limit(ACTIVITY_LIMIT)
+      .lean<
+        Array<{
+          id?: string;
+          title: string;
+          subject: string;
+          classLevel: string;
+          assignedDate: Date;
+        }>
+      >(),
+    Dilekce.find({ reviewedBy: userId, createdAt: { $gte: activitySince() } })
       .sort({ createdAt: -1 })
       .limit(ACTIVITY_LIMIT)
       .lean<Array<{ _id: unknown; subject: string; userName: string; createdAt: Date }>>(),
@@ -258,11 +278,11 @@ async function getTeacherActivity(userId: string): Promise<ActivityEntry[]> {
 /** The administrator's inbox: what arrived and needs a decision. */
 async function getAdminActivity(): Promise<ActivityEntry[]> {
   const [registrations, dilekceler, anns] = await Promise.all([
-    Registration.find()
+    Registration.find({ createdAt: { $gte: activitySince() } })
       .sort({ createdAt: -1 })
       .limit(ACTIVITY_LIMIT)
       .lean<Array<{ _id: unknown; studentName: string; status: string; createdAt: Date }>>(),
-    Dilekce.find()
+    Dilekce.find({ createdAt: { $gte: activitySince() } })
       .sort({ createdAt: -1 })
       .limit(ACTIVITY_LIMIT)
       .lean<Array<{ _id: unknown; subject: string; userName: string; createdAt: Date }>>(),
@@ -294,7 +314,7 @@ async function getAdminActivity(): Promise<ActivityEntry[]> {
 async function getParentActivity(childIds: string[]): Promise<ActivityEntry[]> {
   const [notes, anns] = await Promise.all([
     childIds.length
-      ? Note.find({ studentId: { $in: childIds } })
+      ? Note.find({ studentId: { $in: childIds }, lastUpdated: { $gte: activitySince() } })
           .sort({ lastUpdated: -1 })
           .limit(ACTIVITY_LIMIT)
           .lean<

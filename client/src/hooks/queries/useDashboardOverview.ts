@@ -115,6 +115,8 @@ export function useDashboardOverview() {
       )) as unknown as { data: DashboardOverviewResponse; status: number };
       return { success: true, data: res.data, statusCode: res.status };
     },
-    { staleTime: 60_000 },
+    // Panel her açıldığında taze veri gelsin. 60 saniyelik bayatlıkla, silinen
+    // bir duyuru veya ödev panele dönüldüğünde hâlâ "son hareket" görünüyordu.
+    { staleTime: 0, refetchOnMount: 'always' },
   );
 }
