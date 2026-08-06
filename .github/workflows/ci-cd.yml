@@ -256,6 +256,14 @@ jobs:
       id-token: write
       attestations: write
 
+    # İki push arka arkaya main'e düştüğünde bu iş paralel koşuyor ve iki koşu
+    # aynı GHCR paketine aynı anda yazıyordu. 2026-08-05'te iki koşu 11 saniye
+    # arayla imza atmaya çalıştı, ikincisi "DENIED: denied" aldı. Aynı anda tek
+    # koşu yazsın; sıradaki iptal edilmesin, beklesin.
+    concurrency:
+      group: ghcr-publish-${{ github.repository }}
+      cancel-in-progress: false
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -412,6 +420,10 @@ jobs:
       #   could not parse reference: ghcr.io/iWeslax83/...
       # The metadata-action handles this automatically for tags, but the
       # cosign command builds the ref by hand — lowercase via ${var,,}.
+      #
+      # GHCR imza itmeyi ara sıra "DENIED: denied" ile geri çeviriyor (token
+      # ucundan, imaj push'u aynı kimlikle geçmiş olmasına rağmen). Geçici bir
+      # durum, tekrar denemek yetiyor; üç deneme, artan bekleme.
       - name: Sign client image with cosign
         env:
           COSIGN_EXPERIMENTAL: 'true'
@@ -419,7 +431,15 @@ jobs:
           DIGEST: ${{ steps.push-client.outputs.digest }}
         run: |
           IMG_LC="${IMG,,}"
-          cosign sign --yes "${IMG_LC}@${DIGEST}"
+          for deneme in 1 2 3; do
+            if cosign sign --yes "${IMG_LC}@${DIGEST}"; then
+              exit 0
+            fi
+            echo "cosign sign başarısız (deneme ${deneme}/3), bekleniyor..."
+            sleep $((deneme * 15))
+          done
+          echo "cosign sign üç denemede de başarısız oldu"
+          exit 1
 
       - name: Sign server image with cosign
         env:
@@ -428,7 +448,15 @@ jobs:
           DIGEST: ${{ steps.push-server.outputs.digest }}
         run: |
           IMG_LC="${IMG,,}"
-          cosign sign --yes "${IMG_LC}@${DIGEST}"
+          for deneme in 1 2 3; do
+            if cosign sign --yes "${IMG_LC}@${DIGEST}"; then
+              exit 0
+            fi
+            echo "cosign sign başarısız (deneme ${deneme}/3), bekleniyor..."
+            sleep $((deneme * 15))
+          done
+          echo "cosign sign üç denemede de başarısız oldu"
+          exit 1
 
   # Deploy to Staging
   deploy-staging:
