@@ -17,6 +17,7 @@ import { LoadBar } from './SkeletonComponents';
 import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import ModernDashboardLayout from './ModernDashboardLayout';
 import EmailVerificationBanner from './EmailVerificationBanner';
+import PasswordChangeBanner from './PasswordChangeBanner';
 import { WelcomeHero } from './dashboard/WelcomeHero';
 import { KpiTable, type KpiItem } from './dashboard/KpiTable';
 import { TodaySchedule, type ScheduleRow } from './dashboard/TodaySchedule';
@@ -226,6 +227,7 @@ const ModernDashboard: React.FC = () => {
       <div className="space-y-[18px] p-6">
         <WelcomeHero adSoyad={authUser.adSoyad} />
         <EmailVerificationBanner />
+        <PasswordChangeBanner />
         <KpiTable items={kpiItems} />
 
         {/* Main column + 340px right rail, matching the mockup's grid-main.

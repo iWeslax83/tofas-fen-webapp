@@ -35,11 +35,15 @@ vi.mock('../../utils/logger', () => ({
 }));
 
 // Mock AuthService
-vi.mock('../../modules/auth/services/authService', () => ({
+// toAuthUserPayload saf bir yardımcı, gerçeği kalsın: /me yanıtının alanlarını
+// o üretiyor, mock'lanırsa handler patlar.
+vi.mock('../../modules/auth/services/authService', async (importOriginal) => ({
+  ...(await importOriginal<any>()),
   AuthService: {
     authenticateUser: vi.fn(),
     registerUser: vi.fn(),
     rotateRefreshToken: vi.fn(),
+    changePassword: vi.fn(),
   },
 }));
 
@@ -278,6 +282,55 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(401);
       expect(response.body.error).toBe('Access token required');
+    });
+  });
+
+  describe('POST /auth/change-password', () => {
+    beforeEach(() => {
+      vi.mocked(AuthService.changePassword).mockReset();
+    });
+
+    it('5 karakterlik yeni şifreyi 400 ile reddeder', async () => {
+      const res = await request(app)
+        .post('/auth/change-password')
+        .set('Cookie', ['accessToken=access-token'])
+        .send({ currentPassword: 'EskiSifre1', newPassword: 'kisa1' });
+
+      expect(res.status).toBe(400);
+      expect(AuthService.changePassword).not.toHaveBeenCalled();
+    });
+
+    it('6 karakterlik, rakamsız ve büyük harfsiz şifreyi kabul eder', async () => {
+      vi.mocked(AuthService.changePassword).mockResolvedValue({
+        tokens: {
+          accessToken: 'access-token',
+          refreshToken: 'refresh-token',
+          expiresIn: 900,
+          refreshExpiresIn: 259200,
+          tokenVersion: 1,
+        },
+      } as any);
+
+      const res = await request(app)
+        .post('/auth/change-password')
+        .set('Cookie', ['accessToken=access-token'])
+        .send({ currentPassword: 'EskiSifre1', newPassword: 'yenisifre' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.csrfToken).toBeTruthy();
+      expect(AuthService.changePassword).toHaveBeenCalledWith(
+        expect.any(String),
+        'EskiSifre1',
+        'yenisifre',
+      );
+    });
+
+    it('oturum çerezi olmadan 401 döner', async () => {
+      const res = await request(app)
+        .post('/auth/change-password')
+        .send({ currentPassword: 'EskiSifre1', newPassword: 'yenisifre' });
+
+      expect(res.status).toBe(401);
     });
   });
 });

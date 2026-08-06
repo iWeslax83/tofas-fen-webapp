@@ -28,6 +28,7 @@ import { Switch } from '../../components/ui/Switch';
 import { toast } from 'sonner';
 import { cn } from '../../utils/cn';
 import { safeConsoleError } from '../../utils/safeLogger';
+import ChangePasswordSection from './ChangePasswordSection';
 
 interface ApiErrorData {
   message?: string;
@@ -451,6 +452,10 @@ export default function SettingsPage() {
               </span>
             </div>
           </div>
+        </Section>
+
+        <Section title="Şifre">
+          <ChangePasswordSection />
         </Section>
 
         {/* Two-Factor Authentication - admin/teacher only */}

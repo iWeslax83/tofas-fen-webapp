@@ -37,6 +37,8 @@ export interface IUser extends Document {
   lastLogin?: Date;
   loginCount: number;
   passwordLastSetAt?: Date;
+  /** Kullanıcının kendi belirlediği şifrenin zamanı. Admin reset'i bunu güncellemez. */
+  passwordSelfChangedAt?: Date;
   importBatchId?: string;
   /** 12. sınıfı bitirip öğretim yılı geçişinde mezun edilen öğrencilerde dolu. */
   mezuniyetTarihi?: Date;
@@ -175,6 +177,9 @@ const UserSchema = new Schema<IUser>(
     passwordLastSetAt: {
       type: Date,
       index: true,
+    },
+    passwordSelfChangedAt: {
+      type: Date,
     },
     importBatchId: {
       type: String,
