@@ -66,9 +66,7 @@ export const validateChangePassword = [
     .notEmpty()
     .withMessage('Yeni şifre gereklidir')
     .isLength({ min: 6, max: 100 })
-    .withMessage('Yeni şifre 6-100 karakter arasında olmalıdır')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Yeni şifre en az bir küçük harf, bir büyük harf ve bir rakam içermelidir'),
+    .withMessage('Yeni şifre 6-100 karakter arasında olmalıdır'),
 
   handleValidationErrors,
 ];
@@ -103,9 +101,7 @@ export const validateResetPassword = [
     .notEmpty()
     .withMessage('Yeni şifre gereklidir')
     .isLength({ min: 6, max: 100 })
-    .withMessage('Yeni şifre 6-100 karakter arasında olmalıdır')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Yeni şifre en az bir küçük harf, bir büyük harf ve bir rakam içermelidir'),
+    .withMessage('Yeni şifre 6-100 karakter arasında olmalıdır'),
 
   handleValidationErrors,
 ];

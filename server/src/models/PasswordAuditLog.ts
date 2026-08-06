@@ -1,12 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export type PasswordAuditAction = 'bulk_import' | 'admin_generated' | 'admin_reset';
+export type PasswordAuditAction = 'bulk_import' | 'admin_generated' | 'admin_reset' | 'self_change';
 export type PasswordAuditReason = 'forgot' | 'security' | 'new_user' | 'bulk_import' | 'other';
 
 export const PASSWORD_AUDIT_ACTIONS: PasswordAuditAction[] = [
   'bulk_import',
   'admin_generated',
   'admin_reset',
+  'self_change',
 ];
 export const PASSWORD_AUDIT_REASONS: PasswordAuditReason[] = [
   'forgot',
@@ -19,8 +20,9 @@ export const PASSWORD_AUDIT_REASONS: PasswordAuditReason[] = [
 export interface IPasswordAuditLog extends Document {
   userId: string;
   userSnapshot: { id: string; adSoyad: string; rol: string };
-  adminId: string;
-  adminSnapshot: { id: string; adSoyad: string };
+  /** self_change kayıtlarında yok: işlemi kullanıcının kendisi yaptı. */
+  adminId?: string;
+  adminSnapshot?: { id: string; adSoyad: string };
   action: PasswordAuditAction;
   reason: PasswordAuditReason;
   reasonNote?: string;
@@ -38,10 +40,10 @@ const PasswordAuditLogSchema = new Schema<IPasswordAuditLog>(
       adSoyad: { type: String, required: true },
       rol: { type: String, required: true },
     },
-    adminId: { type: String, required: true, index: true },
+    adminId: { type: String, index: true },
     adminSnapshot: {
-      id: { type: String, required: true },
-      adSoyad: { type: String, required: true },
+      id: { type: String },
+      adSoyad: { type: String },
     },
     action: { type: String, enum: PASSWORD_AUDIT_ACTIONS, required: true, index: true },
     reason: { type: String, enum: PASSWORD_AUDIT_REASONS, required: true },

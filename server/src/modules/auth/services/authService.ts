@@ -4,7 +4,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { generateTokenPair } from '../../../utils/jwt';
 import crypto from 'crypto';
-import { sendVerificationEmail, sendTwoFactorEmail } from '../../../mailService';
+import { sendVerificationEmail, sendTwoFactorEmail, sendMail } from '../../../mailService';
+import { recordPasswordEvent } from '../../passwordAdmin/passwordAuditService';
 import { config } from '../../../config/environment';
 import { logSecurityEvent, SecurityEvent } from '../../../utils/securityLogger';
 import { SecurityAlertService } from '../../../services/SecurityAlertService';
@@ -646,6 +647,69 @@ export class AuthService {
   }
 
   /**
+   * Kullanıcının kendi şifresini değiştirmesi. Mevcut şifreyi doğrular,
+   * yenisini bcrypt ile yazar ve tokenVersion'ı artırarak diğer cihazlardaki
+   * oturumları geçersiz kılar. Çağıranın cihazı düşmesin diye yeni token
+   * çifti döner.
+   */
+  static async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ tokens: ReturnType<typeof generateTokenPair> }> {
+    const user = await User.findOne({ id: userId }).select('+sifre');
+    if (!user) {
+      throw AppError.unauthorized('Kullanıcı bulunamadı');
+    }
+
+    let authenticated = false;
+    if (user.sifre) {
+      authenticated = await bcrypt.compare(currentPassword, user.sifre);
+    } else if (user.tckn) {
+      const decryptedTckn = decrypt(user.tckn);
+      authenticated = String(decryptedTckn).trim() === String(currentPassword).trim();
+    }
+
+    if (!authenticated) {
+      throw AppError.unauthorized('Mevcut şifre yanlış');
+    }
+
+    if (currentPassword === newPassword) {
+      throw AppError.validation('Yeni şifre mevcut şifreyle aynı olamaz');
+    }
+
+    const { isValid, errors } = AuthService.validatePasswordStrength(newPassword);
+    if (!isValid) {
+      throw AppError.validation(errors.join(', '));
+    }
+
+    user.sifre = await bcrypt.hash(newPassword, BCRYPT_COST);
+    user.passwordSelfChangedAt = new Date();
+    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+    await user.save();
+
+    await recordPasswordEvent({
+      user: { id: user.id, adSoyad: user.adSoyad, rol: user.rol },
+      action: 'self_change',
+      reason: 'other',
+    });
+
+    if (user.email) {
+      sendMail(
+        user.email,
+        'Şifreniz değiştirildi',
+        `<p>Merhaba ${user.adSoyad},</p>
+         <p>Hesabınızın şifresi az önce değiştirildi. Bu işlemi siz yapmadıysanız
+         okul yönetimiyle iletişime geçin.</p>`,
+      ).catch(() => {});
+    }
+
+    return {
+      tokens: generateTokenPair(user.id, user.rol, user.email, user.tokenVersion),
+    };
+  }
+
+  /**
    * Validate password strength
    */
   static validatePasswordStrength(password: string): { isValid: boolean; errors: string[] } {
@@ -664,17 +728,8 @@ export class AuthService {
       errors.push('Şifre 100 karakterden kısa olmalıdır');
     }
 
-    if (!/[A-Z]/.test(password)) {
-      errors.push('Şifre en az bir büyük harf içermelidir');
-    }
-
-    if (!/[a-z]/.test(password)) {
-      errors.push('Şifre en az bir küçük harf içermelidir');
-    }
-
-    if (!/[0-9]/.test(password)) {
-      errors.push('Şifre en az bir rakam içermelidir');
-    }
+    // Karakter sınıfı zorunluluğu yok: kullanıcıyı "Sifre1!" kalıbına itmek
+    // gerçek gücü artırmıyor, tek kural uzunluk.
 
     return {
       isValid: errors.length === 0,

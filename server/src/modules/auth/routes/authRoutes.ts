@@ -5,7 +5,7 @@ import { AuthController } from '../controllers/authController';
 import { AuthService, BCRYPT_COST } from '../services/authService';
 import { authenticateJWT, authorizeRoles } from '../../../utils/jwt';
 import { authLimiter } from '../../../middleware/rateLimiter';
-import { validateUnlockAccount } from '../validators/authValidators';
+import { validateUnlockAccount, validateChangePassword } from '../validators/authValidators';
 import { User } from '../../../models/User';
 import logger from '../../../utils/logger';
 import { logSecurityEvent, SecurityEvent } from '../../../utils/securityLogger';
@@ -49,6 +49,46 @@ const router = Router();
  *         description: Çok fazla giriş denemesi
  */
 router.post('/login', authLimiter, AuthController.login);
+
+/**
+ * @swagger
+ * /api/auth/change-password:
+ *   post:
+ *     summary: Kullanıcının kendi şifresini değiştirmesi
+ *     tags: [Authentication]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPassword, newPassword]
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 6
+ *                 maxLength: 100
+ *     responses:
+ *       200:
+ *         description: Şifre güncellendi
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       429:
+ *         description: Çok fazla deneme
+ */
+router.post(
+  '/change-password',
+  authenticateJWT,
+  authLimiter,
+  validateChangePassword,
+  AuthController.changePassword,
+);
 
 /**
  * @swagger

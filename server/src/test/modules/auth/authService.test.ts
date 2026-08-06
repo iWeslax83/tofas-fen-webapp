@@ -120,25 +120,24 @@ describe('AuthService', () => {
       expect(result.errors).toContain('Şifre en az 6 karakter olmalıdır');
     });
 
-    it('should reject password without uppercase', () => {
+    // Tek kural uzunluk: karakter sınıfı zorunluluğu kasten kaldırıldı,
+    // kullanıcı 6 karakterlik istediği şifreyi seçebiliyor.
+    it('should accept password without uppercase', () => {
       const result = AuthService.validatePasswordStrength('password123');
 
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Şifre en az bir büyük harf içermelidir');
+      expect(result.isValid).toBe(true);
     });
 
-    it('should reject password without lowercase', () => {
+    it('should accept password without lowercase', () => {
       const result = AuthService.validatePasswordStrength('PASSWORD123');
 
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Şifre en az bir küçük harf içermelidir');
+      expect(result.isValid).toBe(true);
     });
 
-    it('should reject password without number', () => {
-      const result = AuthService.validatePasswordStrength('Password');
+    it('should accept password without number', () => {
+      const result = AuthService.validatePasswordStrength('parolam');
 
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Şifre en az bir rakam içermelidir');
+      expect(result.isValid).toBe(true);
     });
 
     it('should reject too long password', () => {

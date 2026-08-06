@@ -144,6 +144,40 @@ export class AuthController {
   });
 
   /**
+   * Kullanıcının kendi şifresini değiştirmesi. tokenVersion arttığı için eski
+   * çerezler geçersizleşir, bu yüzden işlemi yapan cihaza yenileri yazılır.
+   */
+  static changePassword = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      throw AppError.unauthorized('Oturum bulunamadı');
+    }
+
+    const { currentPassword, newPassword } = req.body;
+    const { tokens } = await AuthService.changePassword(userId, currentPassword, newPassword);
+
+    res.cookie('accessToken', tokens.accessToken, {
+      httpOnly: true,
+      secure: cookieSecure(),
+      sameSite: cookieSameSite(),
+      maxAge: tokens.expiresIn * 1000,
+      path: '/',
+    });
+
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: cookieSecure(),
+      sameSite: cookieSameSite(),
+      maxAge: tokens.refreshExpiresIn * 1000,
+      path: '/',
+    });
+
+    const csrfToken = issueCsrfToken(res, tokens.refreshExpiresIn * 1000);
+
+    res.json({ success: true, message: 'Şifreniz güncellendi', csrfToken });
+  });
+
+  /**
    * User registration
    */
   static register = asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {

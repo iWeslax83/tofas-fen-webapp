@@ -7,7 +7,8 @@ import {
 
 export interface RecordPasswordEventInput {
   user: { id: string; adSoyad: string; rol: string };
-  admin: { id: string; adSoyad: string };
+  /** self_change dışındaki her eylemde dolu. */
+  admin?: { id: string; adSoyad: string };
   action: PasswordAuditAction;
   reason: PasswordAuditReason;
   reasonNote?: string;
@@ -40,7 +41,7 @@ export async function recordPasswordEvent(
   const doc = await PasswordAuditLog.create({
     userId: input.user.id,
     userSnapshot: input.user,
-    adminId: input.admin.id,
+    adminId: input.admin?.id,
     adminSnapshot: input.admin,
     action: input.action,
     reason: input.reason,
