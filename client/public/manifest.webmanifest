@@ -5,21 +5,33 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0f766e",
+  "theme_color": "#c8102e",
   "orientation": "portrait-primary",
   "scope": "/",
   "icons": [
     {
-      "src": "/tofaslogo.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/tofaslogo.png",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "categories": ["education", "productivity"],
@@ -30,14 +42,14 @@
       "short_name": "Duyurular",
       "description": "Son duyuruları görüntüle",
       "url": "/duyurular",
-      "icons": [{ "src": "/tofaslogo.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Ödevler",
       "short_name": "Ödevler",
       "description": "Ödevleri görüntüle",
       "url": "/odevler",
-      "icons": [{ "src": "/tofaslogo.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
     }
   ],
   "share_target": {

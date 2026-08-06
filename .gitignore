@@ -60,6 +60,8 @@ client/logs/
 
 # Screenshots (test/review artifacts)
 *.png
+# ...ama uygulama ikonları takip edilsin
+!client/public/icons/*.png
 
 # Coverage
 coverage/
