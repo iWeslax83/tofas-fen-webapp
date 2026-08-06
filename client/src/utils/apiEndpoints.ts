@@ -10,7 +10,7 @@ export const API_ENDPOINTS = {
     VERIFY_2FA: '/api/auth/verify-2fa',
     RESEND_2FA: '/api/auth/resend-2fa',
     TOGGLE_2FA: '/api/auth/toggle-2fa',
-    // CHANGE_PASSWORD kaldırıldı - artık TCKN kullanılıyor
+    CHANGE_PASSWORD: '/api/auth/change-password',
   },
 
   // User management endpoints
