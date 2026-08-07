@@ -83,7 +83,10 @@ describe('useErrorHandler', () => {
       });
     });
     expect(value).toBeNull();
-    expect(result.current.error).toBe('Async fail');
+    // Ham Error.message artık ekrana basılmıyor; kullanıcıya Türkçe bir cümle
+    // gösteriliyor (bkz. utils/errorMessages).
+    expect(result.current.error).not.toBe('Async fail');
+    expect(result.current.error).toMatch(/[çğıöşü]/i);
   });
 
   it('handleAsyncError uses custom error message', async () => {
@@ -99,17 +102,17 @@ describe('useErrorHandler', () => {
   it('handleApiError extracts error from response.data.error', () => {
     const { result } = renderHook(() => useErrorHandler());
     act(() => {
-      result.current.handleApiError({ response: { data: { error: 'API error' } } });
+      result.current.handleApiError({ response: { data: { error: 'Randevu bulunamadı.' } } });
     });
-    expect(result.current.error).toBe('API error');
+    expect(result.current.error).toBe('Randevu bulunamadı.');
   });
 
   it('handleApiError extracts error from response.data.message', () => {
     const { result } = renderHook(() => useErrorHandler());
     act(() => {
-      result.current.handleApiError({ response: { data: { message: 'API message' } } });
+      result.current.handleApiError({ response: { data: { message: 'Talep kaydedilemedi.' } } });
     });
-    expect(result.current.error).toBe('API message');
+    expect(result.current.error).toBe('Talep kaydedilemedi.');
   });
 
   it('handleApiError uses fallback message', () => {
@@ -123,8 +126,8 @@ describe('useErrorHandler', () => {
   it('handleApiError uses error.message when no response data', () => {
     const { result } = renderHook(() => useErrorHandler());
     act(() => {
-      result.current.handleApiError({ message: 'Direct message' });
+      result.current.handleApiError({ message: 'Doğrudan gelen mesaj.' });
     });
-    expect(result.current.error).toBe('Direct message');
+    expect(result.current.error).toBe('Doğrudan gelen mesaj.');
   });
 });

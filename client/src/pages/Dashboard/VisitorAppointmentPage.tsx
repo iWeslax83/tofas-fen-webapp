@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { kullaniciyaGosterilecekHata } from '../../utils/errorMessages';
 import { CalendarDays, Clock, AlertCircle, XCircle, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { ModernDashboardLayout } from '../../components/ModernDashboardLayout';
@@ -145,7 +146,7 @@ export default function VisitorAppointmentPage() {
       await fetchAppointments();
     } catch (err: unknown) {
       const e2 = err as { response?: { data?: { error?: string } } };
-      toast.error(e2?.response?.data?.error || 'Randevu iptal edilirken hata oluştu');
+      toast.error(kullaniciyaGosterilecekHata(e2, 'Randevu iptal edilemedi.'));
     } finally {
       setCancelling(null);
     }
