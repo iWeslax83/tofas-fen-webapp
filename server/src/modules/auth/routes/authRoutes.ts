@@ -408,7 +408,7 @@ router.post('/forgot-password', authLimiter, async (req: Request, res: Response)
         <p>Sayın ${user.adSoyad},</p>
         <p>Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın. Bağlantı 1 saat geçerlidir.</p>
         <p style="text-align: center; margin: 24px 0;">
-          <a href="${resetUrl}" style="display:inline-block;background:#0f766e;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600;">Şifremi Sıfırla</a>
+          <a href="${resetUrl}" style="display:inline-block;background:#c8102e;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600;">Şifremi Sıfırla</a>
         </p>
         <p style="color:#64748b;font-size:13px;">Bu talebi siz yapmadıysanız bu e-postayı yok sayabilirsiniz.</p>
       </div>
@@ -454,10 +454,17 @@ router.post('/reset-password', authLimiter, async (req: Request, res: Response) 
       return;
     }
 
-    // Basic strength check — the full PasswordPolicy validator lives in
-    // client/src/utils/security.ts but this is the backend fail-safe.
-    if (typeof newPassword !== 'string' || newPassword.length < 8) {
-      res.status(400).json({ error: 'Şifre en az 8 karakter olmalıdır' });
+    // Şifre kuralı tek yerde: AuthService.validatePasswordStrength (6-100
+    // karakter). Bu uç eskiden kendi 8 karakter sınırını uyguluyordu, ayarlardaki
+    // şifre değiştirme formuyla çelişiyordu.
+    if (typeof newPassword !== 'string') {
+      res.status(400).json({ error: 'Şifre metin olmalıdır' });
+      return;
+    }
+
+    const { isValid, errors } = AuthService.validatePasswordStrength(newPassword);
+    if (!isValid) {
+      res.status(400).json({ error: errors.join(', ') });
       return;
     }
 

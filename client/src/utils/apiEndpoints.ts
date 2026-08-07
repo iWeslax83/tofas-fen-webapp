@@ -11,6 +11,8 @@ export const API_ENDPOINTS = {
     RESEND_2FA: '/api/auth/resend-2fa',
     TOGGLE_2FA: '/api/auth/toggle-2fa',
     CHANGE_PASSWORD: '/api/auth/change-password',
+    FORGOT_PASSWORD: '/api/auth/forgot-password',
+    RESET_PASSWORD: '/api/auth/reset-password',
   },
 
   // User management endpoints
