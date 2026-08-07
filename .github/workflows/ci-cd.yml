@@ -410,7 +410,7 @@ jobs:
       # `cosign verify --certificate-identity-regexp ... <image>`. No
       # signing key is stored in the repo or in secrets.
       - name: Install cosign
-        uses: sigstore/cosign-installer@v4
+        uses: sigstore/cosign-installer@v4.1.2
         with:
           cosign-release: v2.4.1
 
