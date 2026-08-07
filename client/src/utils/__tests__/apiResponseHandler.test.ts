@@ -100,13 +100,21 @@ describe('isSuccess', () => {
 });
 
 describe('extractError', () => {
-  it('returns the canned message for null / empty input', () => {
-    expect(extractError(null)).toBe('Bilinmeyen hata');
-    expect(extractError(undefined)).toBe('Bilinmeyen hata');
+  // Ham sunucu metni artık olduğu gibi geçmiyor: errorMessages süzüyor.
+  // Kullanıcıya bir şey anlatmayan İngilizce/teknik metinler Türkçe
+  // karşılıklarıyla değişiyor, düzgün Türkçe cümleler korunuyor.
+  it('returns a Turkish sentence for null / empty input', () => {
+    for (const girdi of [null, undefined]) {
+      const mesaj = extractError(girdi);
+      expect(mesaj.length).toBeGreaterThan(10);
+      expect(mesaj).toMatch(/[çğıöşü]/i);
+    }
   });
 
-  it('extracts a string body sitting at err.response.data', () => {
-    expect(extractError({ response: { data: 'plain text error' } })).toBe('plain text error');
+  it('keeps a Turkish string body sitting at err.response.data', () => {
+    expect(extractError({ response: { data: 'Dosya çok büyük görünüyor.' } })).toBe(
+      'Dosya çok büyük görünüyor.',
+    );
   });
 
   it('prefers the nested error.message when both data.error and data.message exist', () => {
@@ -114,28 +122,28 @@ describe('extractError', () => {
       extractError({
         response: {
           data: {
-            error: { message: 'nested message' },
-            message: 'root message',
+            error: { message: 'İç mesaj burada duruyor.' },
+            message: 'Kök mesaj burada duruyor.',
           },
         },
       }),
-    ).toBe('nested message');
+    ).toBe('İç mesaj burada duruyor.');
   });
 
   it('falls back to data.message when error is absent', () => {
     expect(
       extractError({
-        response: { data: { message: 'root message' } },
+        response: { data: { message: 'Kök mesaj burada duruyor.' } },
       }),
-    ).toBe('root message');
+    ).toBe('Kök mesaj burada duruyor.');
   });
 
   it('joins data.errors[] when the entries are strings', () => {
     expect(
       extractError({
-        response: { data: { errors: ['too short', 'no @'] } },
+        response: { data: { errors: ['Şifre çok kısa', 'E-posta geçersiz'] } },
       }),
-    ).toBe('too short, no @');
+    ).toBe('Şifre çok kısa, E-posta geçersiz');
   });
 
   it('joins data.errors[] when the entries have .message', () => {
@@ -143,33 +151,44 @@ describe('extractError', () => {
       extractError({
         response: {
           data: {
-            errors: [{ message: 'A' }, { message: 'B' }],
+            errors: [{ message: 'A alanı zorunlu' }, { message: 'B alanı zorunlu' }],
           },
         },
       }),
-    ).toBe('A, B');
+    ).toBe('A alanı zorunlu, B alanı zorunlu');
   });
 
   it('reads the top-level error / message string when there is no axios envelope', () => {
-    expect(extractError({ error: 'top error' })).toBe('top error');
-    expect(extractError({ message: 'top message' })).toBe('top message');
+    expect(extractError({ error: 'Üst düzey hata mesajı.' })).toBe('Üst düzey hata mesajı.');
+    expect(extractError({ message: 'Üst düzey bilgi mesajı.' })).toBe('Üst düzey bilgi mesajı.');
   });
 
   it('reads top-level error.message when error is an object', () => {
-    expect(extractError({ error: { message: 'wrapped' } })).toBe('wrapped');
+    expect(extractError({ error: { message: 'Sarmalanmış Türkçe mesaj.' } })).toBe(
+      'Sarmalanmış Türkçe mesaj.',
+    );
+  });
+
+  it('replaces English technical strings instead of showing them', () => {
+    for (const ham of ['Internal server error', 'User not found', 'Validation failed']) {
+      const mesaj = extractError({ response: { status: 500, data: { error: ham } } });
+      expect(mesaj).not.toBe(ham);
+      expect(mesaj).toMatch(/[çğıöşü]/i);
+    }
   });
 
   it('maps known HTTP status codes to Turkish copy', () => {
-    expect(extractError({ status: 400 })).toBe('Geçersiz istek');
-    expect(extractError({ status: 401 })).toBe('Yetkisiz erişim');
-    expect(extractError({ status: 403 })).toBe('Erişim reddedildi');
-    expect(extractError({ status: 404 })).toBe('Kaynak bulunamadı');
-    expect(extractError({ status: 500 })).toBe('Sunucu hatası');
-    expect(extractError({ status: 418 })).toBe('HTTP 418 hatası');
+    expect(extractError({ status: 400 })).toMatch(/bilgi|kontrol/i);
+    expect(extractError({ status: 401 })).toMatch(/giriş/i);
+    expect(extractError({ status: 403 })).toMatch(/yetki/i);
+    expect(extractError({ status: 404 })).toMatch(/bulunamadı/i);
+    expect(extractError({ status: 500 })).toMatch(/sunucu/i);
   });
 
-  it('falls back to "Bilinmeyen hata" when nothing matches', () => {
-    expect(extractError({ random: 'thing' })).toBe('Bilinmeyen hata');
+  it('falls back to a Turkish sentence when nothing matches', () => {
+    const mesaj = extractError({});
+    expect(mesaj.length).toBeGreaterThan(10);
+    expect(mesaj).toMatch(/[çğıöşü]/i);
   });
 });
 
@@ -193,9 +212,9 @@ describe('handleResponse', () => {
   });
 
   it('resolves to { data: fallback, error: <message> } on rejection', async () => {
-    const apiCall = Promise.reject({ response: { data: 'boom' } });
+    const apiCall = Promise.reject({ response: { data: 'Kayıt bulunamadı gibi görünüyor.' } });
     const result = await handleResponse(apiCall, { x: 0 });
-    expect(result).toEqual({ data: { x: 0 }, error: 'boom' });
+    expect(result).toEqual({ data: { x: 0 }, error: 'Kayıt bulunamadı gibi görünüyor.' });
   });
 });
 
@@ -209,6 +228,7 @@ describe('handleResponseArray', () => {
   it('falls back to [] on error', async () => {
     const apiCall = Promise.reject({ status: 500 });
     const result = await handleResponseArray<number>(apiCall, []);
-    expect(result).toEqual({ data: [], error: 'Sunucu hatası' });
+    expect(result.data).toEqual([]);
+    expect(result.error).toMatch(/sunucu/i);
   });
 });

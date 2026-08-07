@@ -1,5 +1,6 @@
 import { AxiosResponse } from 'axios';
 import { safeConsoleWarn } from '../utils/safeLogger';
+import { kullaniciyaGosterilecekHata } from './errorMessages';
 
 // Standard API response structure
 export interface ApiResponse<T = unknown> {
@@ -124,94 +125,13 @@ export class ApiResponseHandler {
 
   /**
    * Extract error message from response
+   *
+   * Her ApiService çağrısı hatasını buradan geçiriyor. Ham sunucu metnini
+   * olduğu gibi döndürmek yerine errorMessages'a veriyoruz: teknik ve
+   * İngilizce metinler kullanıcının anlayacağı Türkçe cümlelere çevriliyor.
    */
   static extractError(response: unknown): string {
-    if (!response) return 'Bilinmeyen hata';
-
-    const respAny = response as Record<string, unknown>;
-
-    // Handle axios error response
-    const axiosResp = respAny['response'] as Record<string, unknown> | undefined;
-    const errorData = axiosResp?.['data'] as Record<string, unknown> | string | undefined;
-    if (typeof errorData === 'string') return errorData;
-    if (errorData && typeof errorData === 'object') {
-      const errObj = errorData as Record<string, unknown>;
-
-      // Many APIs wrap error details under "error"
-      const nestedError = errObj['error'];
-      if (typeof nestedError === 'string') {
-        return nestedError;
-      }
-      if (nestedError && typeof nestedError === 'object') {
-        const nestedObj = nestedError as Record<string, unknown>;
-        const nestedMsg = nestedObj['message'];
-        if (typeof nestedMsg === 'string' && nestedMsg.trim().length > 0) {
-          return nestedMsg;
-        }
-      }
-
-      // Direct message on root
-      const directMsg = errObj['message'];
-      if (typeof directMsg === 'string' && directMsg.trim().length > 0) {
-        return directMsg;
-      }
-
-      // Aggregated errors array
-      const errs = errObj['errors'] as unknown;
-      if (Array.isArray(errs)) {
-        const joined = (errs as unknown[])
-          .map((e) => {
-            if (typeof e === 'string') return e;
-            if (e && typeof e === 'object' && 'message' in (e as Record<string, unknown>)) {
-              const m = (e as Record<string, unknown>)['message'];
-              return typeof m === 'string' ? m : '';
-            }
-            return '';
-          })
-          .filter(Boolean)
-          .join(', ');
-        if (joined) return joined;
-      }
-    }
-
-    // Handle direct error object
-    const directError = respAny['error'];
-    if (typeof directError === 'string' && directError.trim().length > 0) {
-      return directError;
-    }
-    if (directError && typeof directError === 'object') {
-      const directErrObj = directError as Record<string, unknown>;
-      const directErrMsg = directErrObj['message'];
-      if (typeof directErrMsg === 'string' && directErrMsg.trim().length > 0) {
-        return directErrMsg;
-      }
-    }
-
-    const directMessage = respAny['message'];
-    if (typeof directMessage === 'string' && directMessage.trim().length > 0) {
-      return directMessage;
-    }
-
-    // Handle HTTP status errors
-    const status = respAny['status'] as number | undefined;
-    if (status) {
-      switch (status) {
-        case 400:
-          return 'Geçersiz istek';
-        case 401:
-          return 'Yetkisiz erişim';
-        case 403:
-          return 'Erişim reddedildi';
-        case 404:
-          return 'Kaynak bulunamadı';
-        case 500:
-          return 'Sunucu hatası';
-        default:
-          return `HTTP ${status} hatası`;
-      }
-    }
-
-    return 'Bilinmeyen hata';
+    return kullaniciyaGosterilecekHata(response);
   }
 
   /**

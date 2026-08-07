@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
+import { kullaniciyaGosterilecekHata } from '../utils/errorMessages';
 
 interface ErrorState {
   error: string | null;
@@ -38,8 +39,7 @@ export const useErrorHandler = (): UseErrorHandlerReturn => {
       try {
         return await asyncFn();
       } catch (err: unknown) {
-        const message = errorMessage || (err instanceof Error ? err.message : 'Bir hata oluştu');
-        setError(message);
+        setError(kullaniciyaGosterilecekHata(err, errorMessage));
         return null;
       }
     },
@@ -48,24 +48,8 @@ export const useErrorHandler = (): UseErrorHandlerReturn => {
 
   const handleApiError = useCallback(
     (error: unknown, fallbackMessage?: string) => {
-      let message = fallbackMessage || 'Bir hata oluştu';
-
-      const errObj =
-        typeof error === 'object' && error !== null ? (error as Record<string, unknown>) : null;
-      const resp = errObj?.['response'] as Record<string, unknown> | undefined;
-      const respData = resp?.['data'] as Record<string, unknown> | undefined;
-
-      if (typeof respData?.['error'] === 'string') {
-        message = respData['error'];
-      } else if (typeof respData?.['message'] === 'string') {
-        message = respData['message'];
-      } else if (typeof errObj?.['message'] === 'string') {
-        // Covers both Error instances (Error.message is an own property)
-        // and plain `{ message: '...' }` objects from non-axios callers.
-        message = errObj['message'] as string;
-      }
-
-      setError(message);
+      // Ham sunucu metni yerine kullanıcının anlayacağı cümle.
+      setError(kullaniciyaGosterilecekHata(error, fallbackMessage));
     },
     [setError],
   );

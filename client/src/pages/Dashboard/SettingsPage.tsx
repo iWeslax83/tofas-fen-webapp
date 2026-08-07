@@ -28,25 +28,12 @@ import { Switch } from '../../components/ui/Switch';
 import { toast } from 'sonner';
 import { cn } from '../../utils/cn';
 import { safeConsoleError } from '../../utils/safeLogger';
+import { kullaniciyaGosterilecekHata } from '../../utils/errorMessages';
 import ChangePasswordSection from './ChangePasswordSection';
 
-interface ApiErrorData {
-  message?: string;
-  error?: string | { message?: string };
-}
-
-function getApiErrorMessage(error: unknown, fallback: string): string {
-  if (axios.isAxiosError<ApiErrorData>(error)) {
-    const data = error.response?.data;
-    if (data) {
-      if (typeof data.error === 'object' && data.error?.message) return data.error.message;
-      if (typeof data.error === 'string') return data.error;
-      if (data.message) return data.message;
-    }
-  }
-  if (error instanceof Error) return error.message;
-  return fallback;
-}
+// Hata metinleri tek yerden geliyor: utils/errorMessages.
+const getApiErrorMessage = (error: unknown, fallback: string) =>
+  kullaniciyaGosterilecekHata(error, fallback);
 
 const NOTIF_PREF_KEY = 'tofas_notifications_enabled';
 const PUSH_PREF_KEY = 'tofas_push_enabled';

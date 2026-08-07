@@ -9,6 +9,7 @@
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { ApiResponse, PaginatedResponse } from '../utils/api';
 import { toast } from 'sonner';
+import { kullaniciyaGosterilecekHata } from '../utils/errorMessages';
 
 // Query Keys Factory - Centralized query key management
 export const queryKeys = {
@@ -157,7 +158,7 @@ export function useApiMutation<TData, TVariables>(
     onError: (error, variables) => {
       // Show error toast
       if (options?.showToast !== false) {
-        toast.error(options?.errorMessage || error.message || 'İşlem başarısız');
+        toast.error(kullaniciyaGosterilecekHata(error, options?.errorMessage));
       }
 
       // Call custom onError
