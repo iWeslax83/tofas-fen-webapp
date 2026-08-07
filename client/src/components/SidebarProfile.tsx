@@ -23,7 +23,7 @@ export interface SidebarProfileProps {
 export function SidebarProfile({ name, userId, role, pansiyon, photoSrc }: SidebarProfileProps) {
   const roleLabel = ROLE_LABELS[role] ?? role;
   return (
-    <div className="p-3 mt-auto border-t border-rule flex gap-3">
+    <div className="p-3 mt-auto shrink-0 border-t border-rule flex gap-3">
       <Portrait name={name} src={photoSrc} size="sm" />
       <div className="flex-1 min-w-0">
         <div className="text-xs text-ink-dim truncate">{userId}</div>

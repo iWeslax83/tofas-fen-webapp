@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Home, Settings, Menu, X, Bell, CheckCheck, Search } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -6,6 +6,9 @@ import { useInitialized } from '../stores/authStore';
 import { dashboardButtons, type UserRole } from '../pages/Dashboard/dashboardButtonConfig';
 import { useNotifications } from '../hooks/useNotifications';
 import { SidebarProfile } from './SidebarProfile';
+
+/** Menü ipucunun bir kez gösterilip kapatıldığını hatırlayan anahtar. */
+const MENU_IPUCU_KEY = 'tofas_menu_ipucu';
 import { CommandPalette } from './CommandPalette';
 import './ModernDashboardLayout.css';
 
@@ -36,6 +39,24 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
   const { user } = useAuthContext();
   const initialized = useInitialized();
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 1024);
+  const [menuIpucuHakki, setMenuIpucuHakki] = useState(
+    () => window.innerWidth <= 1024 && localStorage.getItem(MENU_IPUCU_KEY) !== 'goruldu',
+  );
+  // Girişten hemen sonra "Giriş başarılı" bildirimi ekranın aynı köşesinde
+  // duruyor. İpucu onun altında kalmasın diye bildirim kapandıktan sonra çıkıyor.
+  const [menuIpucuGorunsun, setMenuIpucuGorunsun] = useState(false);
+
+  useEffect(() => {
+    if (!menuIpucuHakki) return;
+    const zaman = setTimeout(() => setMenuIpucuGorunsun(true), 4500);
+    return () => clearTimeout(zaman);
+  }, [menuIpucuHakki]);
+
+  const menuIpucunuKapat = useCallback(() => {
+    localStorage.setItem(MENU_IPUCU_KEY, 'goruldu');
+    setMenuIpucuHakki(false);
+    setMenuIpucuGorunsun(false);
+  }, []);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const { notifications, unreadCount, isOpen, setIsOpen, markAsRead, markAllAsRead } =
     useNotifications(user?.id, initialized && !!user);
@@ -96,9 +117,31 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
   return (
     <div className="modern-dashboard">
       {/* Mobile Menu Button */}
-      <button className="mobile-menu-button" onClick={() => setSidebarOpen(!sidebarOpen)}>
+      <button
+        className="mobile-menu-button"
+        aria-label={sidebarOpen ? 'Menüyü kapat' : 'Menüyü aç'}
+        aria-expanded={sidebarOpen}
+        onClick={() => {
+          menuIpucunuKapat();
+          setSidebarOpen(!sidebarOpen);
+        }}
+      >
         {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
+
+      {/* Telefonda sayfaların tamamı bu menünün arkasında duruyor. İlk girişte
+          menüyü fark etmeyen kullanıcılar uygulamayı boş sanıyordu. */}
+      {menuIpucuGorunsun && !sidebarOpen && (
+        <div className="menu-ipucu" role="note">
+          <p className="menu-ipucu-metin">
+            Ödevler, notlar, duyurular ve diğer sayfalar soldaki menüde. Menüyü açmak için
+            yukarıdaki düğmeye dokun.
+          </p>
+          <button type="button" className="menu-ipucu-kapat" onClick={menuIpucunuKapat}>
+            Anladım
+          </button>
+        </div>
+      )}
 
       {/* Sidebar */}
       {showSidebar && (
