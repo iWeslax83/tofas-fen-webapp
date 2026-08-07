@@ -292,6 +292,24 @@ describe('POST /api/users', () => {
     expect(res.body.error.toLowerCase()).toContain('exist');
   });
 
+  it('başka bir hesabın e-postasıyla kullanıcı açılamaz — 409 ve anlaşılır mesaj', async () => {
+    asAdmin();
+    await seedUser({ id: 'sahip1', email: 'dolu@okul.test' });
+
+    const res = await request(app)
+      .post('/api/users')
+      .send({
+        id: 'yeni1',
+        adSoyad: 'Yeni',
+        sifre: 'pw1234',
+        rol: 'student',
+        email: 'dolu@okul.test',
+      })
+      .expect(409);
+
+    expect(res.body.error).toContain('başka bir hesap');
+  });
+
   it('does not expose the password hash or TCKN in the create response', async () => {
     asAdmin();
     const res = await request(app)
@@ -364,6 +382,24 @@ describe('POST /api/users/create', () => {
       .send({ id: 'leg3', adSoyad: 'No Pass', rol: 'student' })
       .expect(400);
     expect(res.body).toHaveProperty('error');
+  });
+
+  it('başka bir hesabın e-postasıyla legacy uçtan kullanıcı açılamaz — 409', async () => {
+    asAdmin();
+    await seedUser({ id: 'sahip2', email: 'dolu2@okul.test' });
+
+    const res = await request(app)
+      .post('/api/users/create')
+      .send({
+        id: 'leg9',
+        adSoyad: 'Yeni',
+        sifre: 'pw1234',
+        rol: 'teacher',
+        email: 'dolu2@okul.test',
+      })
+      .expect(409);
+
+    expect(res.body.error).toContain('başka bir hesap');
   });
 
   it('returns 400 on duplicate id', async () => {
@@ -514,6 +550,28 @@ describe('PUT /api/users/:userId/update', () => {
       .send({ adSoyad: 'Ghost' })
       .expect(404);
     expect(res.body).toHaveProperty('error');
+  });
+
+  // E-posta benzersiz bir alan. Çakışma eskiden mongo'nun E11000 hatasıyla
+  // 500'e dönüşüyor ve kullanıcı "Internal server error" görüyordu.
+  it('başka bir hesabın e-postası girilirse 409 ve ne olduğunu anlatan mesaj döner', async () => {
+    asAdmin();
+    await seedUser({ id: 'sahip', email: 'ortak@okul.test' });
+    await seedUser({ id: 'isteyen', email: 'kendi@okul.test' });
+
+    const res = await request(app)
+      .put('/api/users/isteyen/update')
+      .send({ email: 'ortak@okul.test' })
+      .expect(409);
+
+    expect(res.body.error).toContain('başka bir hesap');
+  });
+
+  it('kullanıcı kendi e-postasını tekrar kaydedebilir', async () => {
+    asAdmin();
+    await seedUser({ id: 'ayni', email: 'ayni@okul.test' });
+
+    await request(app).put('/api/users/ayni/update').send({ email: 'ayni@okul.test' }).expect(200);
   });
 });
 
