@@ -6,12 +6,6 @@ export const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-export const validatePassword = (password: string): boolean => {
-  // At least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
-  return passwordRegex.test(password);
-};
-
 export const validatePhone = (phone: string): boolean => {
   const phoneRegex = /^(\+90|0)?[0-9]{10}$/;
   return phoneRegex.test(phone);
@@ -57,25 +51,6 @@ export const userProfileSchema = yup.object({
   cinsiyet: yup.string().oneOf(['erkek', 'kadın'], 'Geçerli bir cinsiyet seçiniz').optional(),
   meslek: yup.string().max(100, 'Meslek en fazla 100 karakter olabilir').optional(),
   departman: yup.string().max(100, 'Departman en fazla 100 karakter olabilir').optional(),
-});
-
-export const passwordChangeSchema = yup.object({
-  currentPassword: yup
-    .string()
-    .required('Mevcut şifre zorunludur')
-    .min(6, 'Şifre en az 6 karakter olmalıdır'),
-  newPassword: yup
-    .string()
-    .required('Yeni şifre zorunludur')
-    .min(8, 'Şifre en az 8 karakter olmalıdır')
-    .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      'Şifre en az bir küçük harf, bir büyük harf ve bir rakam içermelidir',
-    ),
-  confirmPassword: yup
-    .string()
-    .required('Şifre tekrarı zorunludur')
-    .oneOf([yup.ref('newPassword')], 'Şifreler eşleşmiyor'),
 });
 
 // Request validation schemas

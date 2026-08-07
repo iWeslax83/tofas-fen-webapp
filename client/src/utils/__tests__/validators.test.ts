@@ -1,11 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  validateEmail,
-  validatePassword,
-  validatePhone,
-  validateSchoolId,
-  validateRequired,
-} from '../validation';
+import { validateEmail, validatePhone, validateSchoolId, validateRequired } from '../validation';
 
 describe('validateEmail', () => {
   it('accepts simple addresses', () => {
@@ -19,33 +13,6 @@ describe('validateEmail', () => {
     expect(validateEmail('@nope.com')).toBe(false);
     expect(validateEmail('a b@c.com')).toBe(false);
     expect(validateEmail('')).toBe(false);
-  });
-});
-
-describe('validatePassword', () => {
-  it('accepts a password with all required classes (lower, upper, digit, special, ≥8)', () => {
-    expect(validatePassword('Aa1!aaaa')).toBe(true);
-    expect(validatePassword('Tofa$2026')).toBe(true);
-  });
-
-  it('rejects strings under 8 characters', () => {
-    expect(validatePassword('Aa1!aaa')).toBe(false);
-  });
-
-  it('rejects strings missing the lowercase class', () => {
-    expect(validatePassword('AA1!AAAA')).toBe(false);
-  });
-
-  it('rejects strings missing the uppercase class', () => {
-    expect(validatePassword('aa1!aaaa')).toBe(false);
-  });
-
-  it('rejects strings missing a digit', () => {
-    expect(validatePassword('Aa!aaaaa')).toBe(false);
-  });
-
-  it('rejects strings missing a special char', () => {
-    expect(validatePassword('Aa1aaaaa')).toBe(false);
   });
 });
 

@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   TokenManager,
   InputSanitizer,
-  PasswordPolicy,
   XSSProtection,
   CSRFProtection,
   RateLimiter,
@@ -69,34 +68,6 @@ describe('InputSanitizer', () => {
   it('should handle null and undefined', () => {
     expect(InputSanitizer.sanitizeString(null as any)).toBe('');
     expect(InputSanitizer.sanitizeString(undefined as any)).toBe('');
-  });
-});
-
-describe('PasswordPolicy', () => {
-  it('should validate strong password', () => {
-    const password = 'StrongPass123!';
-    const result = PasswordPolicy.validate(password);
-
-    expect(result.isValid).toBe(true);
-    expect(result.errors).toHaveLength(0);
-  });
-
-  it('should reject weak password', () => {
-    const password = 'weak';
-    const result = PasswordPolicy.validate(password);
-
-    expect(result.isValid).toBe(false);
-    expect(result.errors.length).toBeGreaterThan(0);
-  });
-
-  it('should check password strength', () => {
-    const weakPassword = 'weak';
-    const mediumPassword = 'MediumPass123';
-    const strongPassword = 'StrongPass123!';
-
-    expect(PasswordPolicy.getStrength(weakPassword)).toBe('weak');
-    expect(PasswordPolicy.getStrength(mediumPassword)).toBe('medium');
-    expect(PasswordPolicy.getStrength(strongPassword)).toBe('strong');
   });
 });
 
