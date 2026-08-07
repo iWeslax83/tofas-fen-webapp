@@ -2,23 +2,29 @@ import { forwardRef, type HTMLAttributes } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../utils/cn';
 
+/**
+ * Durum ve etiket rozeti.
+ *
+ * Eskiden `rounded-full` + renkli dolgu ("hap") idi. O kalıp durum göstermek
+ * için kullanılmıyor artık: köşeli, ince çerçeveli etiket. Renk çerçeve ve
+ * yazıda taşınıyor, arka plan boş kalıyor. Kenar çubuğundaki rol/pansiyon
+ * etiketleri de zaten bu görünümdeydi, ikisi artık aynı.
+ */
 export const chipVariants = cva(
-  'inline-flex items-center gap-1.5 px-2.5 h-[22px] rounded-full text-xs font-semibold whitespace-nowrap',
+  'inline-flex items-center gap-1.5 px-2 h-[22px] rounded-[3px] border text-xs font-semibold whitespace-nowrap',
   {
     variants: {
       tone: {
-        // Neutral tint — the default look, and Soft Modern's `chip-neutral`.
-        default: 'bg-[var(--surface-2)] text-[var(--ink-2)]',
-        neutral: 'bg-[var(--surface-2)] text-[var(--ink-2)]',
-        // Accent tint — was a solid red fill; Soft Modern status chips are
-        // tint-only (see docs/ui-overhaul-2026-07-plan.md).
-        state: 'bg-[var(--accent-tint)] text-[var(--accent)]',
-        accent: 'bg-[var(--accent-tint)] text-[var(--accent)]',
-        ok: 'bg-[var(--ok-tint)] text-[var(--ok)]',
-        warn: 'bg-[var(--warn-tint)] text-[var(--warn)]',
-        info: 'bg-[var(--info-tint)] text-[var(--info)]',
-        black: 'bg-[var(--ink)] text-[var(--paper)]',
-        outline: 'bg-transparent text-[var(--ink)] border border-[var(--ink)]',
+        default: 'bg-[var(--surface-2)] text-[var(--ink-2)] border-[var(--rule)]',
+        neutral: 'bg-[var(--surface-2)] text-[var(--ink-2)] border-[var(--rule)]',
+        state: 'bg-transparent text-[var(--accent)] border-[var(--accent)]',
+        accent: 'bg-transparent text-[var(--accent)] border-[var(--accent)]',
+        ok: 'bg-transparent text-[var(--ok)] border-[var(--ok)]',
+        warn: 'bg-transparent text-[var(--warn)] border-[var(--warn)]',
+        info: 'bg-transparent text-[var(--info)] border-[var(--info)]',
+        // Tek dolu varyant: bir şeyi öne çıkarmak için, durum göstermek için değil.
+        black: 'bg-[var(--ink)] text-[var(--paper)] border-[var(--ink)]',
+        outline: 'bg-transparent text-[var(--ink)] border-[var(--ink)]',
       },
     },
     defaultVariants: { tone: 'default' },
