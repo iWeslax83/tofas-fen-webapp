@@ -1,6 +1,7 @@
 import rateLimit from 'express-rate-limit';
 import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
+import { HATA } from '../utils/hataMesajlari';
 
 /**
  * Enhanced Rate Limiter with user-specific limits
@@ -46,8 +47,8 @@ export const createRateLimiter = (options: {
       });
 
       res.status(429).json({
-        error: 'Rate limit exceeded',
-        message: options.message || 'Too many requests',
+        error: options.message || HATA.COK_FAZLA_ISTEK,
+        message: options.message || HATA.COK_FAZLA_ISTEK,
         retryAfter: Math.ceil(options.windowMs / 1000),
         limit: options.max,
         windowMs: options.windowMs,

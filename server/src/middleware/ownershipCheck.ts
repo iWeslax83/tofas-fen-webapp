@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { getParentChildIds } from './parentChildAccess';
 import logger from '../utils/logger';
+import { HATA } from '../utils/hataMesajlari';
 
 /**
  * Middleware that ensures users can only access their own resources.
@@ -17,13 +18,13 @@ export function requireOwnership(
   options?: {
     allowParentAccess?: boolean;
     allowedRoles?: string[];
-  }
+  },
 ) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = req.user;
       if (!user) {
-        res.status(401).json({ error: 'Authentication required' });
+        res.status(401).json({ error: HATA.GIRIS_GEREKLI });
         return;
       }
 
@@ -96,13 +97,13 @@ export function requireResourceOwnership(
   getResourceOwnerId: (req: Request) => string | undefined | Promise<string | undefined>,
   options?: {
     allowParentAccess?: boolean;
-  }
+  },
 ) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = req.user;
       if (!user) {
-        res.status(401).json({ error: 'Authentication required' });
+        res.status(401).json({ error: HATA.GIRIS_GEREKLI });
         return;
       }
 

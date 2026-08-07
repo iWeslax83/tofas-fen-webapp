@@ -95,6 +95,7 @@ vi.mock('../../mailService', () => ({
 import { AuthService } from '../../modules/auth/services/authService';
 import { User } from '../../models/User';
 import authRoutes from '../../modules/auth/routes/authRoutes';
+import { HATA } from '../../utils/hataMesajlari';
 
 const app = express();
 app.use(express.json());
@@ -281,7 +282,7 @@ describe('Auth Routes', () => {
       const response = await request(app).get('/auth/me');
 
       expect(response.status).toBe(401);
-      expect(response.body.error).toBe('Access token required');
+      expect(response.body.error).toBe(HATA.GIRIS_GEREKLI);
     });
   });
 

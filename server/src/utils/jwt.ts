@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import { tokenBlacklist } from './tokenBlacklist';
 import logger from './logger';
+import { HATA } from './hataMesajlari';
 
 // Extend Request interface to include user property
 declare global {
@@ -112,14 +113,14 @@ export const authenticateJWT = async (
     }
 
     if (!token) {
-      res.status(401).json({ error: 'Access token required' });
+      res.status(401).json({ error: HATA.GIRIS_GEREKLI });
       return;
     }
 
     // Check if token is blacklisted
     const isBlacklisted = await tokenBlacklist.isBlacklisted(token);
     if (isBlacklisted) {
-      res.status(401).json({ error: 'Token has been revoked' });
+      res.status(401).json({ error: HATA.OTURUM_SONLANDI });
       return;
     }
 
@@ -146,12 +147,12 @@ export const authenticateJWT = async (
 export const authorizeRoles = (allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      res.status(401).json({ error: 'Authentication required' });
+      res.status(401).json({ error: HATA.GIRIS_GEREKLI });
       return;
     }
 
     if (!allowedRoles.includes(req.user.role)) {
-      res.status(403).json({ error: 'Insufficient permissions' });
+      res.status(403).json({ error: HATA.YETKI_YOK });
       return;
     }
 

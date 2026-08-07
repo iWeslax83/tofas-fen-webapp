@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '../models';
 import logger from '../utils/logger';
+import { HATA } from '../utils/hataMesajlari';
 
 /**
  * Lookup a parent's childId array from the database.
@@ -27,7 +28,7 @@ export function verifyParentChildAccess(studentIdSource: string) {
     try {
       const user = req.user;
       if (!user) {
-        res.status(401).json({ error: 'Authentication required' });
+        res.status(401).json({ error: HATA.GIRIS_GEREKLI });
         return;
       }
 
@@ -47,7 +48,7 @@ export function verifyParentChildAccess(studentIdSource: string) {
       else if (source === 'query') studentId = req.query[field] as string;
 
       if (!studentId) {
-        res.status(400).json({ error: 'Student ID is required' });
+        res.status(400).json({ error: HATA.OGRENCI_NO_GEREKLI });
         return;
       }
 
@@ -71,7 +72,7 @@ export function verifyParentChildAccess(studentIdSource: string) {
       }
 
       // Any other role - deny
-      res.status(403).json({ error: 'Insufficient permissions' });
+      res.status(403).json({ error: HATA.YETKI_YOK });
     } catch (error) {
       logger.error('Parent-child access check error', {
         error: error instanceof Error ? error.message : error,

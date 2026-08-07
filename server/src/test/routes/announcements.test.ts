@@ -122,7 +122,7 @@ describe('Announcements API Tests', () => {
       const response = await request(app).post('/api/announcements').send(invalidData).expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toMatch(/validation/i);
+      expect(response.body.error).toMatch(/hatalı alan/i);
     });
 
     it('should validate priority values', async () => {
