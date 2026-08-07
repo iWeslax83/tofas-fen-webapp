@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import DOMPurify from 'isomorphic-dompurify';
 import logger from '../utils/logger';
+import { HATA } from '../utils/hataMesajlari';
 
 // Enhanced validation result handler with security logging
 export const validateRequest = (req: Request, res: Response, next: NextFunction) => {
@@ -18,9 +19,9 @@ export const validateRequest = (req: Request, res: Response, next: NextFunction)
     });
 
     return res.status(400).json({
-      error: 'Validation failed',
+      error: HATA.GIRDI_HATALI,
       details: errors.array(),
-      message: 'Please check your input and try again',
+      message: HATA.GIRDI_HATALI,
     });
   }
   return next();

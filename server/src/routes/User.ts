@@ -18,6 +18,7 @@ import {
   deleteUser,
   getChildrenForParent,
 } from '../services/UserService';
+import { HATA } from '../utils/hataMesajlari';
 
 const router = Router();
 
@@ -66,7 +67,7 @@ router.get(
       logger.error('Error getting users', {
         error: error instanceof Error ? error.message : error,
       });
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: HATA.SUNUCU_HATASI });
     }
   },
 );
@@ -142,7 +143,7 @@ router.get(
       logger.error('Error listing paginated users', {
         error: error instanceof Error ? error.message : error,
       });
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: HATA.SUNUCU_HATASI });
     }
   },
 );
@@ -348,8 +349,8 @@ router.put('/:userId', authenticateJWT, async (req, res) => {
   }
 
   const result = await updateUser({ userId, updateData });
-  if (result.notFound) return res.status(404).json({ error: 'User not found' });
-  if (result.updateFailed) return res.status(400).json({ error: 'Update failed' });
+  if (result.notFound) return res.status(404).json({ error: HATA.KULLANICI_YOK });
+  if (result.updateFailed) return res.status(400).json({ error: HATA.GUNCELLEME_BASARISIZ });
   res.json(result.user);
 });
 
@@ -453,7 +454,7 @@ router.put('/:userId/update', authenticateJWT, async (req, res) => {
   try {
     const result = await updateUserLegacy({ userId, updateData });
     if (result.notFound) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: HATA.KULLANICI_YOK });
     }
     res.json({ success: true, user: result.user });
   } catch (error) {
@@ -466,7 +467,7 @@ router.put('/:userId/update', authenticateJWT, async (req, res) => {
       });
     }
     logger.error('User update error', { error: error instanceof Error ? error.message : error });
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: HATA.SUNUCU_HATASI });
   }
 });
 
@@ -523,7 +524,7 @@ router.post('/', authenticateJWT, authorizeRoles(['admin']), async (req, res) =>
   const result = await createUser({ id, adSoyad, sifre, rol, sinif, sube, email });
 
   if (result.validationError) {
-    return res.status(400).json({ error: 'Validation failed' });
+    return res.status(400).json({ error: HATA.GIRDI_HATALI });
   }
   if (result.typeError) {
     return res.status(400).json({ error: 'Invalid input types' });
@@ -713,12 +714,12 @@ router.get('/me', authenticateJWT, async (req, res) => {
   try {
     const userId = (req as unknown as { user?: { userId?: string; role?: string } }).user?.userId;
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      return res.status(401).json({ error: HATA.GIRIS_GEREKLI });
     }
 
     const user = await getUserById(userId);
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: HATA.KULLANICI_YOK });
     }
 
     res.json(user);
@@ -726,7 +727,7 @@ router.get('/me', authenticateJWT, async (req, res) => {
     logger.error('Error getting user info', {
       error: error instanceof Error ? error.message : error,
     });
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: HATA.SUNUCU_HATASI });
   }
 });
 
@@ -770,12 +771,12 @@ router.get('/:userId', authenticateJWT, async (req, res) => {
 
     const user = await getUserByIdForView(userId);
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: HATA.KULLANICI_YOK });
     }
     res.json(user);
   } catch (error) {
     logger.error('Error getting user', { error: error instanceof Error ? error.message : error });
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: HATA.SUNUCU_HATASI });
   }
 });
 

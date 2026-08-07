@@ -4,6 +4,7 @@ import { PerformanceService } from '../services/PerformanceService';
 import { authenticateJWT, authorizeRoles } from '../utils/jwt';
 import logger from '../utils/logger';
 import { asyncHandler } from '../middleware/errorHandler';
+import { HATA } from '../utils/hataMesajlari';
 
 const router = express.Router();
 
@@ -71,7 +72,7 @@ const handleValidationErrors = (
   if (!errors.isEmpty()) {
     return res.status(400).json({
       success: false,
-      message: 'Validation error',
+      message: HATA.GIRDI_HATALI,
       errors: errors.array(),
     });
   }

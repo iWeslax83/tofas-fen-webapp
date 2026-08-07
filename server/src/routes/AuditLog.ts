@@ -3,6 +3,7 @@ import { authenticateJWT } from '../utils/jwt';
 import { requireRole } from '../middleware/auth';
 import { AuditLogService } from '../services/auditLogService';
 import { asyncHandler } from '../middleware/errorHandler';
+import { HATA } from '../utils/hataMesajlari';
 
 const router = Router();
 
@@ -105,7 +106,7 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?.userId;
     if (!userId) {
-      res.status(401).json({ error: 'Unauthorized' });
+      res.status(401).json({ error: HATA.GIRIS_GEREKLI });
       return;
     }
 

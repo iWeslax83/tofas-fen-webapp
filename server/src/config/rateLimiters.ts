@@ -3,6 +3,7 @@ import { RedisStore } from 'rate-limit-redis';
 import { createClient } from 'redis';
 import express from 'express';
 import logger from '../utils/logger';
+import { HATA } from '../utils/hataMesajlari';
 
 /**
  * All rate limiter configurations - extracted from index.ts.
@@ -38,7 +39,7 @@ export const generalLimiter = rateLimit({
   legacyHeaders: false,
   handler: (_req: express.Request, res: express.Response) => {
     res.status(429).json({
-      error: 'Rate limit exceeded',
+      error: HATA.COK_FAZLA_ISTEK,
       message: 'Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.',
       retryAfter: Math.ceil(RATE_LIMIT_WINDOW_MS / 1000),
       limit: RATE_LIMIT_MAX_REQUESTS,

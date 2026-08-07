@@ -8,6 +8,7 @@ import logger from '../utils/logger';
 
 import { createEndpointLimiter } from '../config/rateLimiters';
 import { asyncHandler } from '../middleware/errorHandler';
+import { HATA } from '../utils/hataMesajlari';
 
 const router = Router();
 
@@ -28,7 +29,7 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const userId = req.user?.userId;
-      if (!userId) return res.status(401).json({ error: 'Authentication required' });
+      if (!userId) return res.status(401).json({ error: HATA.GIRIS_GEREKLI });
 
       const consents = await KvkkConsent.find({ userId }).lean();
 
@@ -63,7 +64,7 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const userId = req.user?.userId;
-      if (!userId) return res.status(401).json({ error: 'Authentication required' });
+      if (!userId) return res.status(401).json({ error: HATA.GIRIS_GEREKLI });
 
       const { consentType, granted } = req.body;
 
@@ -142,7 +143,7 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const userId = req.user?.userId;
-      if (!userId) return res.status(401).json({ error: 'Authentication required' });
+      if (!userId) return res.status(401).json({ error: HATA.GIRIS_GEREKLI });
 
       const user = await User.findOne({ id: userId }).lean();
       if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
@@ -195,7 +196,7 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const userId = req.user?.userId;
-      if (!userId) return res.status(401).json({ error: 'Authentication required' });
+      if (!userId) return res.status(401).json({ error: HATA.GIRIS_GEREKLI });
 
       const { reason } = req.body;
 
@@ -243,7 +244,7 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     try {
       const userId = req.user?.userId;
-      if (!userId) return res.status(401).json({ error: 'Authentication required' });
+      if (!userId) return res.status(401).json({ error: HATA.GIRIS_GEREKLI });
 
       const requests = await DataDeletionRequest.find({ userId }).sort({ requestedAt: -1 }).lean();
 

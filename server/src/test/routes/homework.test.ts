@@ -190,7 +190,7 @@ describe('Homework API Tests', () => {
       const response = await request(app).post('/api/homeworks').send(invalidData).expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toMatch(/validation/i);
+      expect(response.body.error).toMatch(/hatalı alan/i);
     });
 
     it('should validate due date is in the future', async () => {
@@ -209,7 +209,7 @@ describe('Homework API Tests', () => {
       const response = await request(app).post('/api/homeworks').send(invalidData).expect(400);
 
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toMatch(/validation/i);
+      expect(response.body.error).toMatch(/hatalı alan/i);
     });
   });
 

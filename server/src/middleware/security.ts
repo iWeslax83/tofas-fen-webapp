@@ -5,6 +5,7 @@ import { validationResult } from 'express-validator';
 import DOMPurify from 'isomorphic-dompurify';
 import logger from '../utils/logger';
 import { cookieSameSite, cookieSecure } from '../utils/cookies';
+import { HATA } from '../utils/hataMesajlari';
 
 // Enhanced security middleware for comprehensive protection
 
@@ -18,15 +19,15 @@ export const createRateLimiters = () => {
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // Limit each IP to 100 requests per windowMs
     message: {
-      error: 'Too many requests from this IP, please try again later.',
+      error: HATA.COK_FAZLA_ISTEK,
       retryAfter: '15 minutes',
     },
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     handler: (_req: Request, res: Response) => {
       res.status(429).json({
-        error: 'Rate limit exceeded',
-        message: 'Too many requests from this IP, please try again later.',
+        error: HATA.COK_FAZLA_ISTEK,
+        message: HATA.COK_FAZLA_ISTEK,
         retryAfter: Math.ceil(15 * 60), // seconds
         limit: 100,
         windowMs: 15 * 60 * 1000,
@@ -39,7 +40,7 @@ export const createRateLimiters = () => {
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5, // Limit each IP to 5 requests per windowMs
     message: {
-      error: 'Too many authentication attempts, please try again later.',
+      error: HATA.COK_FAZLA_GIRIS,
       retryAfter: '15 minutes',
     },
     standardHeaders: true,
@@ -47,8 +48,8 @@ export const createRateLimiters = () => {
     skipSuccessfulRequests: true, // Don't count successful requests
     handler: (_req: Request, res: Response) => {
       res.status(429).json({
-        error: 'Authentication rate limit exceeded',
-        message: 'Too many authentication attempts, please try again later.',
+        error: HATA.COK_FAZLA_GIRIS,
+        message: HATA.COK_FAZLA_GIRIS,
         retryAfter: Math.ceil(15 * 60),
         limit: 5,
         windowMs: 15 * 60 * 1000,
@@ -61,15 +62,15 @@ export const createRateLimiters = () => {
     windowMs: 60 * 60 * 1000, // 1 hour
     max: 10, // Limit each IP to 10 uploads per hour
     message: {
-      error: 'Too many file uploads, please try again later.',
+      error: HATA.COK_FAZLA_YUKLEME,
       retryAfter: '1 hour',
     },
     standardHeaders: true,
     legacyHeaders: false,
     handler: (_req: Request, res: Response) => {
       res.status(429).json({
-        error: 'Upload rate limit exceeded',
-        message: 'Too many file uploads, please try again later.',
+        error: HATA.COK_FAZLA_YUKLEME,
+        message: HATA.COK_FAZLA_YUKLEME,
         retryAfter: Math.ceil(60 * 60),
         limit: 10,
         windowMs: 60 * 60 * 1000,
@@ -82,15 +83,15 @@ export const createRateLimiters = () => {
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 50, // Limit each IP to 50 requests per windowMs
     message: {
-      error: 'Too many admin requests, please try again later.',
+      error: HATA.COK_FAZLA_YONETIM_ISTEGI,
       retryAfter: '15 minutes',
     },
     standardHeaders: true,
     legacyHeaders: false,
     handler: (_req: Request, res: Response) => {
       res.status(429).json({
-        error: 'Admin rate limit exceeded',
-        message: 'Too many admin requests, please try again later.',
+        error: HATA.COK_FAZLA_YONETIM_ISTEGI,
+        message: HATA.COK_FAZLA_YONETIM_ISTEGI,
         retryAfter: Math.ceil(15 * 60),
         limit: 50,
         windowMs: 15 * 60 * 1000,
@@ -285,9 +286,9 @@ export const enhancedValidation = (_req: Request, res: Response, next: NextFunct
     });
 
     return res.status(400).json({
-      error: 'Validation failed',
+      error: HATA.GIRDI_HATALI,
       details: errors.array(),
-      message: 'Please check your input and try again',
+      message: HATA.GIRDI_HATALI,
     });
   }
 
@@ -379,8 +380,8 @@ export const requestSizeLimit = (req: Request, res: Response, next: NextFunction
 
   if (contentLength > maxSize) {
     return res.status(413).json({
-      error: 'Request too large',
-      message: 'Request body exceeds maximum allowed size of 10MB',
+      error: HATA.ISTEK_COK_BUYUK,
+      message: HATA.ISTEK_COK_BUYUK,
     });
   }
 
@@ -399,8 +400,8 @@ export const ipRestriction = (allowedIPs?: string[], blockedIPs?: string[]) => {
     if (blockedIPs && clientIP && blockedIPs.includes(clientIP)) {
       logger.warn('Blocked IP access attempt', { ip: clientIP });
       return res.status(403).json({
-        error: 'Access denied',
-        message: 'Your IP address is not allowed to access this resource',
+        error: HATA.ERISIM_ENGELLI,
+        message: HATA.ERISIM_ENGELLI,
       });
     }
 
@@ -408,8 +409,8 @@ export const ipRestriction = (allowedIPs?: string[], blockedIPs?: string[]) => {
     if (allowedIPs && clientIP && !allowedIPs.includes(clientIP)) {
       logger.warn('Unauthorized IP access attempt', { ip: clientIP });
       return res.status(403).json({
-        error: 'Access denied',
-        message: 'Your IP address is not authorized to access this resource',
+        error: HATA.ERISIM_ENGELLI,
+        message: HATA.ERISIM_ENGELLI,
       });
     }
 

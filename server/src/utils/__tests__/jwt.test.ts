@@ -11,6 +11,7 @@ import {
   authorizeRoles,
 } from '../jwt';
 import { Request, Response, NextFunction } from 'express';
+import { HATA } from '../hataMesajlari';
 
 // Mock modules
 vi.mock('jsonwebtoken');
@@ -220,7 +221,7 @@ describe('JWT Utils', () => {
       await authenticateJWT(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Access token required' });
+      expect(res.json).toHaveBeenCalledWith({ error: HATA.GIRIS_GEREKLI });
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -309,7 +310,7 @@ describe('JWT Utils', () => {
       middleware(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Insufficient permissions' });
+      expect(res.json).toHaveBeenCalledWith({ error: HATA.YETKI_YOK });
       expect(next).not.toHaveBeenCalled();
     });
   });
