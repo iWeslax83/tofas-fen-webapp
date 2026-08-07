@@ -1190,6 +1190,11 @@
   margin: var(--space-4) 0 0 0;
 }
 
+.loading-container-bar {
+  width: 160px;
+  margin: 0 auto;
+}
+
 .loading-logo {
   height: 64px;
   width: auto;
