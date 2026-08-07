@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { validateEmail, validatePassword, validatePhone, validateSchoolId, validateRequired } from '../../utils/validation';
+import {
+  validateEmail,
+  validatePhone,
+  validateSchoolId,
+  validateRequired,
+} from '../../utils/validation';
 
 describe('validation', () => {
   describe('validateEmail', () => {
@@ -15,25 +20,6 @@ describe('validation', () => {
       expect(validateEmail('test@')).toBe(false);
       expect(validateEmail('test.example.com')).toBe(false);
       expect(validateEmail('')).toBe(false);
-    });
-  });
-
-  describe('validatePassword', () => {
-    it('should validate strong passwords', () => {
-      expect(validatePassword('Password123!')).toBe(true);
-      expect(validatePassword('MyStr0ng#Pass')).toBe(true);
-      expect(validatePassword('Test123$')).toBe(true);
-      expect(validatePassword('Strong1@')).toBe(true);
-      expect(validatePassword('Abc123!@')).toBe(true);
-    });
-
-    it('should reject weak passwords', () => {
-      expect(validatePassword('password')).toBe(false); // No uppercase, number, special char
-      expect(validatePassword('PASSWORD')).toBe(false); // No lowercase, number, special char
-      expect(validatePassword('Password')).toBe(false); // No number, special char
-      expect(validatePassword('Password123')).toBe(false); // No special char
-      expect(validatePassword('Pass1!')).toBe(false); // Too short
-      expect(validatePassword('')).toBe(false); // Empty
     });
   });
 

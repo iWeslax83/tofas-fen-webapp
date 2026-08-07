@@ -100,53 +100,6 @@ export class InputSanitizer {
   }
 }
 
-// Password Policy Validation
-export class PasswordPolicy {
-  static validate(password: string): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (password.length < 8) {
-      errors.push('Şifre en az 8 karakter olmalıdır');
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      errors.push('Şifre en az bir büyük harf içermelidir');
-    }
-
-    if (!/[a-z]/.test(password)) {
-      errors.push('Şifre en az bir küçük harf içermelidir');
-    }
-
-    if (!/\d/.test(password)) {
-      errors.push('Şifre en az bir rakam içermelidir');
-    }
-
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      errors.push('Şifre en az bir özel karakter içermelidir');
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
-  }
-
-  static getStrength(password: string): 'weak' | 'medium' | 'strong' {
-    let score = 0;
-
-    if (password.length >= 8) score++;
-    if (password.length >= 12) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[a-z]/.test(password)) score++;
-    if (/\d/.test(password)) score++;
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
-
-    if (score <= 3) return 'weak';
-    if (score <= 5) return 'medium';
-    return 'strong';
-  }
-}
-
 // XSS Protection
 export class XSSProtection {
   static escapeHtml(text: string): string {
