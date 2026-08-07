@@ -118,7 +118,17 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />
-      <Toaster position="top-right" richColors closeButton toastOptions={{ duration: 4000 }} />
+      {/* Panel başlığı 56px yüksekliğinde ve sabit (ModernDashboardLayout.css:185).
+          Varsayılan konumda bildirimler başlığın üstüne biniyordu; altından
+          başlasınlar diye 72px aşağı alındı. */}
+      <Toaster
+        position="top-right"
+        offset={{ top: 72 }}
+        mobileOffset={{ top: 68, right: 12, left: 12 }}
+        richColors
+        closeButton
+        toastOptions={{ duration: 4000 }}
+      />
       {/* React Query DevTools - only in development */}
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>

@@ -64,7 +64,7 @@ interface SectionProps {
 
 function Section({ title, children }: SectionProps) {
   return (
-    <Card contentClassName="p-5">
+    <Card contentClassName="p-4 sm:p-5">
       <div className="text-xs font-medium text-[var(--ink-dim)] border-b border-[var(--rule)] pb-3 mb-4 uppercase tracking-wider">
         {title}
       </div>
@@ -312,7 +312,7 @@ export default function SettingsPage() {
 
   return (
     <ModernDashboardLayout pageTitle="Ayarlar" breadcrumb={breadcrumb}>
-      <div className="p-6 max-w-2xl space-y-5">
+      <div className="p-4 sm:p-6 max-w-2xl space-y-5">
         <header>
           <h1 className="font-serif text-2xl text-[var(--ink)] mt-1">Ayarlar</h1>
         </header>
@@ -337,24 +337,33 @@ export default function SettingsPage() {
 
             <div className="sm:col-span-2 flex flex-col gap-1">
               <span className="text-xs font-medium text-[var(--ink-dim)]">E-posta</span>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
+              {/* Dar ekranda alan ve düğme yan yana durunca adresin ancak yarısı
+                  görünüyordu. Telefonda alt alta, tabletten itibaren yan yana. */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="relative flex-1 min-w-0">
+                  {/* Simge dar ekranda alanın 24px'ini yiyor ve uzun adresin
+                      sonu görünmüyordu; telefonda gizli. */}
                   <Mail
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-dim)] pointer-events-none"
+                    className="hidden sm:block absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-dim)] pointer-events-none"
                   />
                   <Input
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    spellCheck={false}
+                    autoCapitalize="none"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     placeholder="ornek@gmail.com"
                     disabled={emailSaving}
-                    className="pl-9"
+                    className="sm:pl-9 text-base sm:text-sm"
                   />
                 </div>
                 <Button
                   variant="secondary"
                   size="sm"
+                  className="w-full sm:w-auto shrink-0"
                   onClick={handleEmailSave}
                   disabled={emailSaving || newEmail.trim() === (user?.email || '')}
                   loading={emailSaving}

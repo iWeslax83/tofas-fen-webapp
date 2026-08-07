@@ -55,3 +55,19 @@
 .email-verification-banner .btn-send-code:hover {
   background: var(--accent-strong);
 }
+
+/* Dar ekranda metin ile düğme yan yana sıkışıp ikon çevresine sarılıyordu. */
+@media (max-width: 640px) {
+  .email-verification-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .email-verification-banner .banner-actions {
+    width: 100%;
+  }
+
+  .email-verification-banner .btn-send-code {
+    width: 100%;
+  }
+}
