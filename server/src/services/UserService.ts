@@ -73,6 +73,8 @@ export interface CreateUserResult {
   typeError?: true;
   /** Set when a user with this id already exists */
   duplicate?: true;
+  /** Set when the e-mail address already belongs to another account */
+  emailTaken?: true;
   /** Set when someone tries to create a personal 'parent' account directly */
   directParentCreationBlocked?: true;
   /** The saved Mongoose document (intentionally includes sifre hash — callers send it as-is) */
@@ -97,6 +99,8 @@ export interface CreateUserLegacyParams {
 export interface CreateUserLegacyResult {
   missingFields?: true;
   duplicate?: true;
+  /** Set when the e-mail address already belongs to another account */
+  emailTaken?: true;
   missingPassword?: true;
   directParentCreationBlocked?: true;
   success?: true;
@@ -349,6 +353,12 @@ export async function createUser(params: CreateUserParams): Promise<CreateUserRe
     return { duplicate: true };
   }
 
+  // E-posta benzersiz. Önceden bakmazsak mongo E11000 fırlatıyor ve çağıran
+  // katman bunu 500'e çeviriyor, kullanıcı sebebini öğrenemiyor.
+  if (email && (await emailTakenByAnotherUser(email, id))) {
+    return { emailTaken: true };
+  }
+
   const hashedPassword = await bcrypt.hash(sifre, BCRYPT_COST);
   const user = new User({
     id,
@@ -391,6 +401,10 @@ export async function createUserLegacy(
 
   if (!sifre) {
     return { missingPassword: true };
+  }
+
+  if (email && (await emailTakenByAnotherUser(email, id))) {
+    return { emailTaken: true };
   }
 
   const hashedPassword = await bcrypt.hash(sifre, BCRYPT_COST);
@@ -476,6 +490,25 @@ export async function getUserEmailById(userId: string): Promise<string | null> {
     email?: string;
   } | null;
   return doc?.email ?? null;
+}
+
+/**
+ * Bu e-posta başka bir hesapta kayıtlı mı. E-posta benzersiz bir alan, ama
+ * çakışmayı kaydetmeden önce yakalamak istiyoruz: mongo'nun E11000 hatası
+ * çağıran katmanda "Internal server error"a dönüşüyor ve kullanıcıya hiçbir
+ * şey anlatmıyor.
+ */
+export async function emailTakenByAnotherUser(email: string, userId: string): Promise<boolean> {
+  const doc = await User.findOne({ email, id: { $ne: userId } })
+    .select('id')
+    .lean();
+  return doc !== null;
+}
+
+/** Mongo'nun benzersiz e-posta indeksinden gelen çakışma hatası mı. */
+export function isDuplicateEmailError(error: unknown): boolean {
+  const e = error as { code?: number; keyPattern?: Record<string, unknown> } | null;
+  return e?.code === 11000 && Object.prototype.hasOwnProperty.call(e.keyPattern ?? {}, 'email');
 }
 
 /**

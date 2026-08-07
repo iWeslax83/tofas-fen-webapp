@@ -13,6 +13,8 @@ import {
   updateUser,
   updateUserLegacy,
   getUserEmailById,
+  emailTakenByAnotherUser,
+  isDuplicateEmailError,
   deleteUser,
   getChildrenForParent,
 } from '../services/UserService';
@@ -336,6 +338,15 @@ router.put('/:userId', authenticateJWT, async (req, res) => {
     delete updateData.tckn;
   }
 
+  // Legacy uçtaki ile aynı ön kontrol: e-posta çakışması mongo'nun E11000
+  // hatasına düşmeden anlaşılır bir cevaba dönsün.
+  if (updateData.email && (await emailTakenByAnotherUser(updateData.email, userId))) {
+    return res.status(409).json({
+      error:
+        'Bu e-posta adresi başka bir hesapta kayıtlı. Farklı bir adres girin ya da kendi hesabınız olduğunu düşünüyorsanız okul yönetimine başvurun.',
+    });
+  }
+
   const result = await updateUser({ userId, updateData });
   if (result.notFound) return res.status(404).json({ error: 'User not found' });
   if (result.updateFailed) return res.status(400).json({ error: 'Update failed' });
@@ -420,6 +431,16 @@ router.put('/:userId/update', authenticateJWT, async (req, res) => {
   if (updateData.email) {
     const currentEmail = await getUserEmailById(userId);
     if (currentEmail !== null && currentEmail !== updateData.email) {
+      // E-posta benzersiz. Kaydetmeden önce bakıyoruz ki kullanıcı mongo'nun
+      // E11000 hatasından türeyen "Internal server error" yerine ne olduğunu
+      // anlatan bir cevap alsın.
+      if (await emailTakenByAnotherUser(updateData.email, userId)) {
+        return res.status(409).json({
+          error:
+            'Bu e-posta adresi başka bir hesapta kayıtlı. Farklı bir adres girin ya da kendi hesabınız olduğunu düşünüyorsanız okul yönetimine başvurun.',
+        });
+      }
+
       updateData.emailVerified = false;
       updateData.emailVerificationCode = null;
       updateData.emailVerificationExpiry = null;
@@ -436,6 +457,14 @@ router.put('/:userId/update', authenticateJWT, async (req, res) => {
     }
     res.json({ success: true, user: result.user });
   } catch (error) {
+    // Yukarıdaki ön kontrolle aramızda küçük bir yarış penceresi var; benzersiz
+    // indeks yine de devreye girerse aynı anlaşılır cevabı verelim.
+    if (isDuplicateEmailError(error)) {
+      return res.status(409).json({
+        error:
+          'Bu e-posta adresi başka bir hesapta kayıtlı. Farklı bir adres girin ya da kendi hesabınız olduğunu düşünüyorsanız okul yönetimine başvurun.',
+      });
+    }
     logger.error('User update error', { error: error instanceof Error ? error.message : error });
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -498,6 +527,12 @@ router.post('/', authenticateJWT, authorizeRoles(['admin']), async (req, res) =>
   }
   if (result.typeError) {
     return res.status(400).json({ error: 'Invalid input types' });
+  }
+  if (result.emailTaken) {
+    return res.status(409).json({
+      error:
+        'Bu e-posta adresi başka bir hesapta kayıtlı. Farklı bir adres girin ya da kendi hesabınız olduğunu düşünüyorsanız okul yönetimine başvurun.',
+    });
   }
   if (result.duplicate) {
     return res.status(400).json({ error: 'User already exists (duplicate)' });
@@ -590,6 +625,13 @@ router.post('/create', authenticateJWT, authorizeRoles(['admin']), async (req, r
 
   if (result.missingFields) {
     res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    return;
+  }
+  if (result.emailTaken) {
+    res.status(409).json({
+      error:
+        'Bu e-posta adresi başka bir hesapta kayıtlı. Farklı bir adres girin ya da kendi hesabınız olduğunu düşünüyorsanız okul yönetimine başvurun.',
+    });
     return;
   }
   if (result.duplicate) {
