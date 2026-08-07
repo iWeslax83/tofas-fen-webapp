@@ -1195,7 +1195,7 @@
   margin: 0 auto;
 }
 
-.loading-logo {
+.loading-container .loading-logo {
   height: 64px;
   width: auto;
   animation: loading-pulse 2s ease-in-out infinite;
