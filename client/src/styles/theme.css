@@ -1195,7 +1195,7 @@
   margin: 0 auto;
 }
 
-.loading-container .loading-logo {
+.app-loading-logo {
   height: 64px;
   width: auto;
   animation: loading-pulse 2s ease-in-out infinite;
@@ -1213,7 +1213,7 @@
 .loading-progress-bar-fill {
   height: 100%;
   width: 40%;
-  background: var(--primary-red);
+  background: var(--accent);
   border-radius: 2px;
   animation: loading-progress-slide 1.4s ease-in-out infinite;
 }

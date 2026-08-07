@@ -17,7 +17,7 @@ function ScrollToTop() {
 // Loading component for Suspense
 export const LoadingSpinner = ({ slowMessage }: { slowMessage?: string } = {}) => (
   <div className="loading-container">
-    <img src="/tofaslogo.png" alt="Tofaş Fen Lisesi" className="loading-logo" />
+    <img src="/tofaslogo.png" alt="Tofaş Fen Lisesi" className="app-loading-logo" />
     <div className="loading-progress-bar">
       <div className="loading-progress-bar-fill" />
     </div>
