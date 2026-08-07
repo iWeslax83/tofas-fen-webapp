@@ -146,7 +146,6 @@ GEMINI.md
 # AI-generated artifacts
 **/.omc/
 .superpowers/
-docs/superpowers/
 .playwright-mcp/
 CODE_REVIEW_REPORT*.md
 AI_*.md
