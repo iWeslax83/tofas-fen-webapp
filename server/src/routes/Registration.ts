@@ -254,7 +254,7 @@ router.put(
             <p>Kayıt başvurunuz onaylandı. Hesabınızı aktifleştirmek için aşağıdaki bağlantıya tıklayarak şifrenizi belirleyin:</p>
             <div style="text-align: center; margin: 24px 0;">
               <a href="${resetUrl}"
-                 style="display: inline-block; background: #0f766e; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600;">
+                 style="display: inline-block; background: #c8102e; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600;">
                 Şifremi Belirle
               </a>
             </div>

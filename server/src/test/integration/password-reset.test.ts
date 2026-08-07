@@ -123,12 +123,14 @@ describe('Password reset flow (B-H4)', () => {
         tokenVersion: previousTokenVersion,
       });
 
+      // 6 karakter, büyük harfsiz, rakamsız: gevşetilen kuralın kabul ettiği
+      // en kısa şifre. Ayarlardaki şifre değiştirme formuyla aynı sınır.
       const response = await request(app)
         .post('/api/auth/reset-password')
         .send({
           id: 'pwreset_user',
           token,
-          newPassword: 'NewStrongPassword123',
+          newPassword: 'gizlim',
         })
         .expect(200);
 
@@ -145,7 +147,7 @@ describe('Password reset flow (B-H4)', () => {
       expect(afterWithSifre!.sifre).toBeDefined();
       expect(afterWithSifre!.sifre!.startsWith('$2')).toBe(true);
       // And it must verify.
-      const ok = await bcrypt.compare('NewStrongPassword123', afterWithSifre!.sifre!);
+      const ok = await bcrypt.compare('gizlim', afterWithSifre!.sifre!);
       expect(ok).toBe(true);
     });
 
@@ -169,7 +171,10 @@ describe('Password reset flow (B-H4)', () => {
         .expect(400);
     });
 
-    it('rejects a password shorter than 8 characters', async () => {
+    // Şifre kuralı tek: 6-100 karakter. Bu uç da ayarlardaki şifre değiştirme
+    // formuyla aynı kuralı uygulamalı, yoksa 6 karakterlik şifre bir yerde
+    // kabul edilip diğerinde reddediliyor.
+    it('rejects a password shorter than 6 characters', async () => {
       const token = crypto.randomBytes(32).toString('base64url');
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
@@ -180,10 +185,10 @@ describe('Password reset flow (B-H4)', () => {
 
       const response = await request(app)
         .post('/api/auth/reset-password')
-        .send({ id: 'pwreset_user', token, newPassword: 'short' })
+        .send({ id: 'pwreset_user', token, newPassword: 'kisa1' })
         .expect(400);
 
-      expect(response.body.error).toContain('8 karakter');
+      expect(response.body.error).toContain('6 karakter');
     });
 
     it('rejects when id is missing from the body', async () => {

@@ -38,6 +38,7 @@ const NotFoundPage = lazy(() => import('../pages/Dashboard/NotFoundPage'));
 // Auth Pages
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const RegistrationFormPage = lazy(() => import('../pages/RegistrationFormPage'));
+const ResetPasswordPage = lazy(() => import('../pages/ResetPasswordPage'));
 // Legal Pages
 const GizlilikPolitikasiPage = lazy(() => import('../pages/Legal/GizlilikPolitikasiPage'));
 const KullanimSartlariPage = lazy(() => import('../pages/Legal/KullanimSartlariPage'));
@@ -120,6 +121,9 @@ export default function AppRoutes() {
             <Route path="/" element={<RootRedirect />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/kayit-basvurusu" element={<RegistrationFormPage />} />
+            {/* Hesap aktifleştirme ve şifremi unuttum e-postalarındaki bağlantı
+                buraya iniyor. Giriş gerektirmez: gelen kişinin henüz şifresi yok. */}
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/gizlilik-politikasi" element={<GizlilikPolitikasiPage />} />
             <Route path="/kullanim-sartlari" element={<KullanimSartlariPage />} />
             <Route path="/kvkk-aydinlatma-metni" element={<KvkkAydinlatmaMetniPage />} />
