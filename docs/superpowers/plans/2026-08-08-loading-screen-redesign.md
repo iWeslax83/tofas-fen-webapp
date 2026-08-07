@@ -11,10 +11,10 @@
 ## Global Constraints
 
 - No gradients, no glassmorphism, no purple. Flat background + the one accent color (`--primary-red` teal) already used by the app.
-- No pill/rounded-full badges — not applicable here (no status chip in this component), but do not introduce one.
+- No pill/rounded-full badges, not applicable here (no status chip in this component), but do not introduce one.
 - No em dashes in code/comments/commit messages.
 - Keep the existing `slowMessage` prop and `useDelayedFlag(6000)` behavior in `AppRoutes.tsx` untouched.
-- Logo asset is `client/public/tofaslogo.png`, natural size 250x298 (portrait) — must size by height and let width scale, never stretch to a square.
+- Logo asset is `client/public/tofaslogo.png`, natural size 250x298 (portrait), must size by height and let width scale, never stretch to a square.
 - Dark mode: rely on existing `--gray-*` / `--primary-red` dark-mode overrides already in `theme.css` (~line 1998+); do not hardcode light-only colors.
 
 ---
@@ -30,11 +30,11 @@
 **Interfaces:**
 
 - Consumes: nothing new. `LoadingSpinner` keeps its existing signature `({ slowMessage }: { slowMessage?: string } = {})`.
-- Produces: same default export usage as before — `<LoadingSpinner />` and `<LoadingSpinner slowMessage={...} />` — used at `AppRoutes.tsx:100` and `AppRoutes.tsx:118`. No other task depends on this one.
+- Produces: same default export usage as before, `<LoadingSpinner />` and `<LoadingSpinner slowMessage={...} />`, used at `AppRoutes.tsx:100` and `AppRoutes.tsx:118`. No other task depends on this one.
 
 - [ ] **Step 1: Write the failing test**
 
-Create `client/src/routes/__tests__/LoadingSpinner.test.tsx`. `LoadingSpinner` is not exported from `AppRoutes.tsx` today — export it as a named export in Step 3, and import it here the same way.
+Create `client/src/routes/__tests__/LoadingSpinner.test.tsx`. `LoadingSpinner` is not exported from `AppRoutes.tsx` today, export it as a named export in Step 3, and import it here the same way.
 
 ```tsx
 import { describe, it, expect } from 'vitest';
@@ -69,7 +69,7 @@ describe('LoadingSpinner', () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `cd client && npx vitest run src/routes/__tests__/LoadingSpinner.test.tsx`
-Expected: FAIL — `LoadingSpinner` is not an exported member of `../AppRoutes` (or the file doesn't resolve the named export).
+Expected: FAIL, `LoadingSpinner` is not an exported member of `../AppRoutes` (or the file doesn't resolve the named export).
 
 - [ ] **Step 3: Update `LoadingSpinner` in `AppRoutes.tsx`**
 
@@ -155,7 +155,7 @@ Replace lines 1176-1225 (from `/* Modern Loading Spinner - Centralized */` throu
 }
 ```
 
-Note: leave the pre-existing `.loading-container-bar` rule (line 1193-1196 in the old numbering) and the `.spinner` rule (used elsewhere, e.g. inline button spinners) as they are — only the `.loading-spinner` rule and its dedicated `@keyframes spin` are being removed. Before deleting `@keyframes spin`, grep for other `.loading-spinner` or `animation: spin` usages in `client/src` — if any other component references them, keep the keyframes and only remove `.loading-spinner`.
+Note: leave the pre-existing `.loading-container-bar` rule (line 1193-1196 in the old numbering) and the `.spinner` rule (used elsewhere, e.g. inline button spinners) as they are, only the `.loading-spinner` rule and its dedicated `@keyframes spin` are being removed. Before deleting `@keyframes spin`, grep for other `.loading-spinner` or `animation: spin` usages in `client/src`, if any other component references them, keep the keyframes and only remove `.loading-spinner`.
 
 - [ ] **Step 5: Run test to verify it passes**
 
@@ -165,7 +165,7 @@ Expected: PASS (all 4 tests)
 - [ ] **Step 6: Verify the client still builds**
 
 Run: `cd client && npm run build`
-Expected: build succeeds with no TypeScript or bundling errors (per project memory, `tsc` passing alone isn't enough — the Vite/Rollup build must succeed too).
+Expected: build succeeds with no TypeScript or bundling errors (per project memory, `tsc` passing alone isn't enough, the Vite/Rollup build must succeed too).
 
 - [ ] **Step 7: Visual check in the running app**
 
@@ -188,5 +188,11 @@ git commit -m "feat(client): markalı yükleme ekranı - logo nabzı ve ilerleme
 ## Self-Review Notes
 
 - Spec coverage: logo pulse ✓ (Step 3/4), progress bar ✓ (Step 3/4), message behavior preserved ✓ (Step 3, no change to prop logic), background/layout preserved ✓ (Step 4 keeps `.loading-container` as-is), dark mode via existing tokens ✓ (uses `var(--gray-50)`, `var(--primary-red)`, `var(--ink-2)`, `var(--gray-200)`, no hardcoded colors).
-- Placeholder scan: none — all code blocks are complete and exact.
+- Placeholder scan: none, all code blocks are complete and exact.
 - Type consistency: single task, no cross-task signatures beyond the existing `{ slowMessage?: string }` prop, unchanged.
+
+## Deviations from Plan (post-implementation, found in review)
+
+- `.loading-logo` as written in Step 4 collided with an unrelated `.loading-logo` class in `client/src/components/ModernDashboard.css` (leaking through a CSS `@import` chain), and a first fix attempt (scoping to `.loading-container .loading-logo`) still left `margin-bottom` leaking non-deterministically. Final fix: renamed to a unique class name that cannot collide with anything else in the stylesheet, no scoping needed.
+- `--primary-red` (the plan's chosen teal token) turns gray (`#9CA3AF`) under this codebase's existing dark-mode overrides, silently losing the brand accent exactly where the redesign was meant to show it. Switched the progress-bar fill to `--accent` (crimson, `#c8102e` light / `#ea4a5e` dark), which stays chromatic in both themes.
+- Step 4's literal replacement range also initially dropped the pre-existing `.loading-container-bar` rule that `ProtectedRoute.tsx` and `ModernDashboard.tsx` depend on; it was restored in a follow-up commit.
