@@ -12,10 +12,10 @@ Suspense fallback olarak kullanılan `LoadingSpinner` bileşeni (`client/src/rou
 ## Tasarım
 
 - **Logo**: `client/public/tofaslogo.png`, ortada, sabit ~64px boyut. Hafif nabız animasyonu (scale 0.96↔1.04, ~2s ease-in-out infinite).
-- **İlerleme göstergesi**: Logonun altında ince (2-3px), 160px genişliğinde, teal (`--primary-red`, #0f766e) renkli indeterminate kayan progress bar. Spinner (dönen çember) kaldırılıyor, yerine bu geliyor.
-- **Metin**: Mevcut davranış korunuyor — varsayılan `Yükleniyor...`, `useDelayedFlag(6000)` sonrası (server uyanma senaryosu) `slowMessage` prop'u ile değişen mesaj.
+- **İlerleme göstergesi**: Logonun altında ince (2-3px), 160px genişliğinde, `--accent` (crimson, light #c8102e / dark #ea4a5e) renkli indeterminate kayan progress bar. Spinner (dönen çember) kaldırılıyor, yerine bu geliyor. Not: `--primary-red` (teal) yerine `--accent` kullanılıyor, çünkü `--primary-red` dark modda gri (#9CA3AF) oluyor ve marka rengi kayboluyor; `--accent` her iki modda da renkli kalıyor.
+- **Metin**: Mevcut davranış korunuyor, varsayılan `Yükleniyor...`, `useDelayedFlag(6000)` sonrası (server uyanma senaryosu) `slowMessage` prop'u ile değişen mesaj.
 - **Arka plan/düzen**: Mevcut `--gray-50` düz renk, `min-height: 100vh`, flex ile ortalanmış düzen korunuyor.
-- **Dark mode**: Mevcut `--gray-*` / `--primary-red` dark mode token override'ları zaten var, otomatik uyum sağlanacak.
+- **Dark mode**: Mevcut `--gray-*` / `--accent` dark mode token override'ları zaten var, otomatik uyum sağlanacak.
 
 ## Kapsam dışı
 
