@@ -1,0 +1,19 @@
+# Tofaş Fen Lisesi Bilgi Sistemi
+
+> Tofaş Fen Lisesi öğrenci, öğretmen, veli ve idari personel için okul bilgi yönetim sistemi.
+
+Bu platform Tofaş Fen Lisesi'nin resmi öğrenci bilgi sistemidir. Notlar, ödevler, devamsızlık takibi,
+duyurular, ders programı, veli-okul iletişimi, yurt yönetimi ve idari süreçler tek bir web uygulamasında
+toplanmıştır. Erişim, okula kayıtlı öğrenci, öğretmen, veli, yönetici ve hizmetli hesaplarıyla sınırlıdır;
+genel kullanıma açık kayıt yoktur.
+
+## Kim için
+
+- Öğrenciler: not, ödev, devamsızlık, ders programı görüntüleme
+- Öğretmenler: not girişi, ödev/performans takibi, duyuru paylaşımı
+- Veliler: çocuklarının akademik durumunu takip etme, okulla iletişim
+- Yönetici/İdari personel: okul geneli yönetim, yurt ve dilekçe süreçleri
+
+## İletişim
+
+Site: https://tofasfen.com/

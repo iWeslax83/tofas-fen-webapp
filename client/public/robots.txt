@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /parent
+Disallow: /dashboard
+Disallow: /protected
+Disallow: /reset-password
+Disallow: /api/
+
+Sitemap: https://tofasfen.com/sitemap.xml
