@@ -265,6 +265,17 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
 
             <div className="header-right">
               {customHeaderActions}
+              {/* Global search collapses to icon-only below 1024px (.global-search
+                  is hidden there) — this is the only way touch users reach the
+                  command palette, Cmd/Ctrl+K has no mobile equivalent. */}
+              <button
+                type="button"
+                className="mobile-search-button"
+                onClick={() => setPaletteOpen(true)}
+                aria-label="Ara (Komut paletini aç)"
+              >
+                <Search size={18} />
+              </button>
               {/* Notification Bell */}
               <div className="notif-container" ref={notifRef}>
                 <button
