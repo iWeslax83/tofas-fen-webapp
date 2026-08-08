@@ -187,29 +187,46 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-top: 56px;
+  padding-top: var(--header-height);
   background: transparent;
 }
 
 
-/* Header Styles */
+/* Header Styles — two rows on desktop: page title, then a utility row
+   (breadcrumb/search/notifications). Collapses to the old single compact
+   row under 1024px, see media query below. */
 .modern-header {
   background: var(--surface);
   color: var(--ink);
-  padding: 10px var(--space-6);
-  height: 56px;
-  min-height: 56px;
-  max-height: 56px;
+  padding: var(--space-3) var(--space-6);
+  height: auto;
+  min-height: var(--header-height);
   border-bottom: 1px solid var(--rule);
   display: flex;
-  align-items: center;
-  gap: var(--space-4);
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-2);
   position: fixed;
   top: 0;
   left: 236px;
   right: 0;
   z-index: 1000;
   transition: left 0.3s ease;
+}
+
+.header-page-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--ink);
+}
+
+.header-utility-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
 }
 
 .header-left {
@@ -277,9 +294,22 @@
 }
 
 .global-search span {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.global-search-kbd {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--ink-dim);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  line-height: 1.4;
 }
 
 .header-right {
@@ -321,11 +351,27 @@
 
   .main-content {
     margin-left: 0;
+    padding-top: 56px;
   }
 
   .modern-header {
     left: 0;
+    flex-direction: row;
+    align-items: center;
+    height: 56px;
+    min-height: 56px;
+    max-height: 56px;
+    padding: 10px var(--space-6);
     padding-left: 60px;
+  }
+
+  .header-page-title {
+    display: none;
+  }
+
+  .header-utility-row {
+    flex: 1;
+    min-width: 0;
   }
 
   .global-search {

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Home, Settings, Menu, X, Bell, CheckCheck, Search } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useInitialized } from '../stores/authStore';
 import { dashboardButtons, type UserRole } from '../pages/Dashboard/dashboardButtonConfig';
@@ -61,6 +62,7 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
   const { notifications, unreadCount, isOpen, setIsOpen, markAsRead, markAllAsRead } =
     useNotifications(user?.id, initialized && !!user);
   const notifRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const navClass = (to: string) => `nav-item${pathname === to ? ' active' : ''}`;
@@ -221,101 +223,117 @@ export const ModernDashboardLayout: React.FC<ModernDashboardLayoutProps> = ({
       <div className="main-content">
         {/* Top Header */}
         <header className="modern-header">
-          <div className="header-left">
-            <div className="breadcrumb">
-              {breadcrumb.length > 0 ? (
-                breadcrumb.map((item, index) => (
-                  <React.Fragment key={index}>
-                    {item.path ? (
-                      <Link to={item.path} className="breadcrumb-link">
-                        {item.label}
-                      </Link>
-                    ) : (
-                      <span>{item.label}</span>
-                    )}
-                    {index < breadcrumb.length - 1 && <span className="separator">/</span>}
-                  </React.Fragment>
-                ))
-              ) : (
-                <>
-                  <span>Ana Sayfa</span>
-                  <span className="separator">/</span>
-                  <span>{pageTitle}</span>
-                </>
-              )}
-            </div>
-          </div>
-          <button
-            type="button"
-            className="global-search"
-            onClick={() => setPaletteOpen(true)}
-            aria-label="Komut paletini aç (Ctrl+K)"
-          >
-            <Search size={16} className="global-search-ico" />
-            <span>Öğrenci, ders, duyuru ara… (⌘K)</span>
-          </button>
+          <h1 className="header-page-title">{pageTitle}</h1>
 
-          <div className="header-right">
-            {customHeaderActions}
-            {/* Notification Bell */}
-            <div className="notif-container" ref={notifRef}>
-              <button
-                className="notif-bell-btn"
-                onClick={() => setIsOpen(!isOpen)}
-                aria-label="Bildirimler"
-              >
-                <Bell size={20} />
-                {unreadCount > 0 && (
-                  <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+          <div className="header-utility-row">
+            <div className="header-left">
+              <div className="breadcrumb">
+                {breadcrumb.length > 0 ? (
+                  breadcrumb.map((item, index) => (
+                    <React.Fragment key={index}>
+                      {item.path ? (
+                        <Link to={item.path} className="breadcrumb-link">
+                          {item.label}
+                        </Link>
+                      ) : (
+                        <span>{item.label}</span>
+                      )}
+                      {index < breadcrumb.length - 1 && <span className="separator">/</span>}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <>
+                    <span>Ana Sayfa</span>
+                    <span className="separator">/</span>
+                    <span>{pageTitle}</span>
+                  </>
                 )}
-              </button>
+              </div>
+            </div>
+            <motion.button
+              type="button"
+              className="global-search"
+              onClick={() => setPaletteOpen(true)}
+              aria-label="Komut paletini aç (Ctrl+K)"
+              whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            >
+              <Search size={16} className="global-search-ico" />
+              <span>Öğrenci, ders, duyuru ara…</span>
+              <kbd className="global-search-kbd">⌘K</kbd>
+            </motion.button>
 
-              {isOpen && (
-                <div className="notif-dropdown">
-                  <div className="notif-dropdown-header">
-                    <span className="notif-dropdown-title">Bildirimler</span>
-                    {unreadCount > 0 && (
-                      <button className="notif-mark-all" onClick={markAllAsRead}>
-                        <CheckCheck size={14} />
-                        Tümünü oku
-                      </button>
-                    )}
-                  </div>
-                  <div className="notif-dropdown-list">
-                    {notifications.length === 0 ? (
-                      <div className="notif-empty">Bildirim yok</div>
-                    ) : (
-                      notifications.map((n) => (
-                        <button
-                          key={n._id}
-                          className={`notif-item${n.read ? '' : ' unread'}`}
-                          onClick={() => {
-                            if (!n.read) markAsRead(n._id);
-                            if (n.actionUrl) {
-                              navigate(n.actionUrl);
-                              setIsOpen(false);
-                            }
-                          }}
-                        >
-                          <div className={`notif-item-dot ${n.read ? 'read' : ''}`} />
-                          <div className="notif-item-content">
-                            <span className="notif-item-title">{n.title}</span>
-                            <span className="notif-item-msg">{n.message}</span>
-                            <span className="notif-item-time">
-                              {new Date(n.createdAt).toLocaleDateString('tr-TR', {
-                                day: 'numeric',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </span>
-                          </div>
+            <div className="header-right">
+              {customHeaderActions}
+              {/* Notification Bell */}
+              <div className="notif-container" ref={notifRef}>
+                <button
+                  className="notif-bell-btn"
+                  onClick={() => setIsOpen(!isOpen)}
+                  aria-label="Bildirimler"
+                >
+                  <Bell size={20} />
+                  {unreadCount > 0 && (
+                    <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                  )}
+                </button>
+
+                {isOpen && (
+                  <div className="notif-dropdown">
+                    <div className="notif-dropdown-header">
+                      <span className="notif-dropdown-title">Bildirimler</span>
+                      {unreadCount > 0 && (
+                        <button className="notif-mark-all" onClick={markAllAsRead}>
+                          <CheckCheck size={14} />
+                          Tümünü oku
                         </button>
-                      ))
-                    )}
+                      )}
+                    </div>
+                    <div className="notif-dropdown-list">
+                      {notifications.length === 0 ? (
+                        <div className="notif-empty">Bildirim yok</div>
+                      ) : (
+                        <AnimatePresence initial={!reduceMotion}>
+                          {notifications.map((n, index) => (
+                            <motion.button
+                              key={n._id}
+                              className={`notif-item${n.read ? '' : ' unread'}`}
+                              onClick={() => {
+                                if (!n.read) markAsRead(n._id);
+                                if (n.actionUrl) {
+                                  navigate(n.actionUrl);
+                                  setIsOpen(false);
+                                }
+                              }}
+                              initial={reduceMotion ? false : { opacity: 0, y: -4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={
+                                reduceMotion
+                                  ? { duration: 0 }
+                                  : { duration: 0.15, delay: Math.min(index, 5) * 0.015 }
+                              }
+                            >
+                              <div className={`notif-item-dot ${n.read ? 'read' : ''}`} />
+                              <div className="notif-item-content">
+                                <span className="notif-item-title">{n.title}</span>
+                                <span className="notif-item-msg">{n.message}</span>
+                                <span className="notif-item-time">
+                                  {new Date(n.createdAt).toLocaleDateString('tr-TR', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                              </div>
+                            </motion.button>
+                          ))}
+                        </AnimatePresence>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </header>
