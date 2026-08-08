@@ -1,7 +1,6 @@
 /* ModernDashboard's actual content is Tailwind (see ModernDashboard.tsx);
    this file only styles the pre-auth loading screen, which renders before
    the design-token CSS custom properties are guaranteed to be painted. */
-@import url('../styles/theme.css');
 
 .modern-dashboard-loading {
   display: flex;

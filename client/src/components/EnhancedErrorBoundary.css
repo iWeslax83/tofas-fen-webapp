@@ -5,7 +5,7 @@
   --error-medium: #dc2626;
   --error-high: #374151;
   --error-critical: #1F2937;
-  --error-bg: var(--primary-red-lighter);
+  --error-bg: var(--accent-tint);
   --error-border: rgba(55, 65, 81, 0.1);
   --error-shadow: rgba(55, 65, 81, 0.1);
 }
@@ -16,7 +16,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: var(--gray-50);
+  background: var(--paper);
   font-family: var(--font-sans);
 }
 
@@ -237,7 +237,15 @@
   animation: spin 1s linear infinite;
 }
 
-/* @keyframes spin moved to theme.css */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
 
 /* Error Help */
 .error-help {
@@ -345,10 +353,6 @@
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
-  .enhanced-error-boundary {
-    background: var(--gray-900);
-  }
-  
   .error-container {
     background: rgba(31, 41, 55, 0.95);
     border-color: rgba(55, 65, 81, 0.2);

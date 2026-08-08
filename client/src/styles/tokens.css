@@ -43,16 +43,98 @@ html {
   /* Shape */
   --radius: 10px;
   --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-3xl: 32px;
   --radius-full: 9999px;
   --shadow:
     0 1px 2px rgba(34, 31, 26, 0.05),
     0 2px 8px rgba(34, 31, 26, 0.04);
+  --shadow-sm: 0 1px 2px rgba(34, 31, 26, 0.05);
+  --shadow-md: var(--shadow);
+  --shadow-lg: 0 10px 24px rgba(34, 31, 26, 0.08), 0 4px 8px rgba(34, 31, 26, 0.05);
+  --shadow-xl: 0 20px 40px rgba(34, 31, 26, 0.10), 0 8px 16px rgba(34, 31, 26, 0.06);
+  --shadow-2xl: 0 25px 50px rgba(34, 31, 26, 0.14);
 
-  /* Type families. Intentionally overrides --font-sans / --font-serif /
-     --font-mono defined in theme.css — this is the single source of
-     truth. Soft Modern self-hosts two typefaces (Source Sans 3, Source
-     Serif 4); --font-mono is deliberately a system stack rather than a
-     third webfont, per the "one typeface" rule. */
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --space-32: 8rem;
+
+  /* Font sizes */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+  --font-size-6xl: 3.75rem;
+  --font-size-7xl: 4.5rem;
+
+  /* Line heights */
+  --line-height-none: 1;
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+
+  /* Font weights */
+  --font-weight-thin: 100;
+  --font-weight-extralight: 200;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+
+  /* Letter spacing */
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  --letter-spacing-widest: 0.1em;
+
+  /* Transitions */
+  --transition-fast: 0.1s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* Z-index scale */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-sidebar: 1080;
+  --z-mobile-nav: 1090;
+
+  /* Layout */
+  --header-height: 90px;
+
+  /* Type families. Soft Modern self-hosts two typefaces (Source Sans 3,
+     Source Serif 4); --font-mono is deliberately a system stack rather
+     than a third webfont, per the "one typeface" rule. */
   --font-sans: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Menlo, Consolas, monospace;
@@ -84,4 +166,9 @@ html {
   --info-tint: #1e2a33;
 
   --shadow: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+  --shadow-2xl: none;
 }

@@ -1,8 +1,5 @@
 /* Modern Dashboard Layout - Shared Styles (Soft Modern) */
 
-/* Import theme variables */
-@import url('../styles/theme.css');
-
 /* Modern Dashboard Layout */
 .modern-dashboard {
   min-height: 100vh;

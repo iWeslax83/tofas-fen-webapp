@@ -1,0 +1,164 @@
+/* Global element defaults. Split out of the old theme.css (deleted) —
+   these are the handful of rules that had real usage: everything else
+   in that file (.btn/.card/.badge/.modal/... component classes) was
+   dead, the app runs on Tailwind + tokens.css. */
+
+/* Wrapped in @layer base: unlayered rules always beat every Tailwind
+   @layer (base/components/utilities) regardless of source order or
+   specificity, so a plain `p { color: ... }` here would silently eat any
+   `text-white/*` utility on a <p>/<h1-6>. @layer base lets Tailwind's
+   utility layer win as intended, while these rules still apply as
+   defaults when no utility overrides them. */
+@layer base {
+  h1,
+  .h1 {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tight);
+    font-family: var(--font-display);
+    color: var(--ink);
+  }
+
+  h2,
+  .h2 {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tight);
+    font-family: var(--font-display);
+    color: var(--ink);
+  }
+
+  h3,
+  .h3 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-snug);
+    color: var(--ink);
+  }
+
+  h4,
+  .h4 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-normal);
+    color: var(--ink);
+  }
+
+  h5,
+  .h5 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
+    color: var(--ink-2);
+  }
+
+  h6,
+  .h6 {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
+    letter-spacing: var(--letter-spacing-wide);
+    color: var(--ink-2);
+  }
+
+  p,
+  .p {
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-relaxed);
+    color: var(--ink-2);
+  }
+
+  /* Global link colour. Disabled underline-on-hover for cleaner dashboard
+     buttons — this only sets colour. */
+  a {
+    transition: color 0.2s ease;
+  }
+
+  a:hover {
+    color: var(--accent-strong);
+  }
+}
+
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Branded pre-auth loading screen */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--paper);
+}
+
+.loading-container p {
+  color: var(--ink-2);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: var(--space-4) 0 0 0;
+}
+
+.loading-container-bar {
+  width: 160px;
+  margin: 0 auto;
+}
+
+.app-loading-logo {
+  height: 64px;
+  width: auto;
+  animation: loading-pulse 2s ease-in-out infinite;
+}
+
+.loading-progress-bar {
+  width: 160px;
+  height: 3px;
+  margin-top: var(--space-4);
+  background: var(--rule);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loading-progress-bar-fill {
+  height: 100%;
+  width: 40%;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: loading-progress-slide 1.4s ease-in-out infinite;
+}
+
+@keyframes loading-pulse {
+  0%,
+  100% {
+    transform: scale(0.96);
+  }
+
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes loading-progress-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(350%);
+  }
+}

@@ -1,5 +1,3 @@
-@import url('../../styles/theme.css');
-
 .confirm-dialog-body {
   display: flex;
   align-items: flex-start;
@@ -20,8 +18,8 @@
 }
 
 .confirm-dialog-icon-danger {
-  background: var(--error-10);
-  color: #ef4444;
+  background: var(--accent-tint);
+  color: var(--accent-strong);
 }
 
 .confirm-dialog-text {
