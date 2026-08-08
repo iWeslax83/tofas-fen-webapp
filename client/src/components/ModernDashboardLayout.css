@@ -1,8 +1,5 @@
 /* Modern Dashboard Layout - Shared Styles (Soft Modern) */
 
-/* Import theme variables */
-@import url('../styles/theme.css');
-
 /* Modern Dashboard Layout — a fixed-height app shell, not a scrolling page.
    Only .dashboard-content scrolls. Before this, .modern-dashboard/.main-content
    used min-height:100vh (allowed the shell to grow) and .dashboard-content

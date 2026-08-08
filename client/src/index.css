@@ -1,6 +1,6 @@
-@import url('./styles/theme.css');
 @import url('./styles/fonts.css');
 @import url('./styles/tokens.css');
+@import url('./styles/base.css');
 
 /* Tailwind v4: import the engine and explicitly load the legacy JS config.
    v4 does NOT auto-load tailwind.config.ts, and the old `@tailwind base/

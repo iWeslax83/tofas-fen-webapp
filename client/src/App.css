@@ -1,6 +1,3 @@
-/* App.css - Global Styles centralized in theme.css */
-@import url('./styles/theme.css');
-
 * {
   box-sizing: border-box;
 }
